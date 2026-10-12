@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pixelreel</title>
+<meta name="description" content="Narrated pixel-art explainer videos, made from a short list of scenes.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 8 8%22%3E%3Crect width=%228%22 height=%228%22 fill=%22%2355d6be%22/%3E%3Crect x=%222%22 y=%222%22 width=%224%22 height=%224%22 fill=%22%230b1220%22/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/orange-kid.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="src/pixelreel.css">
+<script type="module" src="src/main.js"></script>
+</head>
+<!-- data-reel is the reel shown when the address has no ?reel=name -->
+<body data-reel="what-is-pixelreel">
+<main>
+  <h1 id="heading">pixelreel</h1>
+  <div class="stage"><canvas id="stage" width="960" height="540" role="img" aria-label="Scene pictures"></canvas></div>
+  <div class="caption" id="cap" aria-live="polite"><span class="title">Loading</span><span class="body"></span></div>
+  <div class="controls">
+    <button id="back" type="button">Back</button>
+    <button id="play" type="button" class="big">Play</button>
+    <button id="next" type="button">Next</button>
+    <button id="mute" type="button" aria-pressed="true">Sound: on</button>
+    <div class="dots" id="dots" aria-label="Scenes"></div>
+  </div>
+  <p class="note" id="note"></p>
+  <noscript><p class="note">pixelreel needs JavaScript to play.</p></noscript>
+</main>
+</body>
+</html>

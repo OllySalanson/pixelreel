@@ -1,0 +1,39 @@
+/* The player's look. Everything about one reel lives in reels/<name>/reel.js. */
+@font-face { font-family: 'Orange Kid'; src: url('../fonts/orange-kid.woff2') format('woff2'); font-display: block; }
+:root {
+  --page: #0b1220; --bar: #13203a; --cream: #ebeac5; --cream-lit: #f8f7dd;
+  --muted: #9cafc7; --accent: #55d6be; --gold: #ffcc4d; --btn: #24476b; --btn-hi: #2f5d8a; --go: #2e7d32; --go-hi: #388e3c;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--cream-lit); font-family: Verdana, Tahoma, "Segoe UI", sans-serif; }
+/* as wide as fits, but short enough that the controls stay on screen */
+main { max-width: max(360px, min(980px, calc((100vh - 330px) * 16 / 9 + 32px))); margin: 0 auto; padding: 16px; }
+h1 { font: 34px 'Orange Kid', monospace; margin: 2px 0 10px; color: var(--accent); letter-spacing: 1px; }
+.stage { background: #000; border: 4px solid var(--cream); border-radius: 4px 4px 0 0; overflow: hidden; }
+canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; image-rendering: pixelated; }
+.caption { min-height: 150px; background: var(--bar); border: 4px solid var(--cream); border-top: 0;
+  border-radius: 0 0 4px 4px; padding: 12px 20px 14px; font-size: 23px; line-height: 1.55; letter-spacing: 0.3px; }
+.caption .title { font: 34px 'Orange Kid', monospace; color: var(--gold); display: block; margin-bottom: 4px; }
+.caption.error .body { white-space: pre-line; font-size: 18px; }
+.controls { display: flex; gap: 10px; margin-top: 14px; align-items: center; flex-wrap: wrap; }
+.controls[hidden] { display: none; }
+button { font: bold 20px Verdana, sans-serif; color: var(--cream-lit); background: var(--btn); border: 3px solid var(--cream);
+  border-radius: 4px; padding: 10px 18px; cursor: pointer; }
+button:hover { background: var(--btn-hi); }
+button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+button.big { background: var(--go); min-width: 128px; }
+button.big:hover { background: var(--go-hi); }
+.dots { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+.dot { width: 16px; height: 16px; padding: 0; background: #33506e; border: 2px solid var(--cream); border-radius: 0; }
+.dot:hover { background: var(--btn-hi); }
+.dot.on { background: var(--gold); }
+.note { color: var(--muted); font-size: 15px; margin-top: 12px; line-height: 1.5; }
+.note a { color: var(--accent); }
+@media (max-width: 600px) {
+  main { padding: 12px; }
+  .caption { font-size: 18px; min-height: 130px; padding: 10px 14px 12px; }
+  .caption .title { font-size: 26px; }
+  button { font-size: 16px; padding: 8px 12px; }
+  button.big { min-width: 96px; }
+  .dots { margin-left: 0; width: 100%; }
+}
