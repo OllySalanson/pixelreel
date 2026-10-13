@@ -48,6 +48,10 @@ button { font: bold 20px Verdana, sans-serif; color: var(--cream-lit); backgroun
 button:hover { background: var(--btn-hi); }
 button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 button.big { background: var(--go); min-width: 116px; }
+/* a button whose words change stacks them all and shows one, so it is always as wide as the longest */
+button.labels { display: inline-grid; justify-items: center; }
+button.labels > span { grid-area: 1 / 1; }
+button.labels > span:not(.on) { visibility: hidden; }
 button.big:hover { background: var(--go-hi); }
 .dots { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
 .dot { width: 16px; height: 16px; padding: 0; background: #33506e; border: 2px solid var(--cream); border-radius: 0; }

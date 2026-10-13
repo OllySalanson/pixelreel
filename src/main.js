@@ -14,6 +14,11 @@ const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 const calm = matchMedia('(prefers-reduced-motion: reduce)');
 
+/** Shows the one of a button's stacked labels that reads `text`; the rest keep their room, so it never changes width. */
+function showLabel(button, text) {
+  for (const span of button.children) span.classList.toggle('on', span.textContent === text);
+}
+
 function showError(message) {
   $('heading').textContent = 'This reel could not be played';
   $('cap-title').textContent = 'Something is wrong';
@@ -114,8 +119,8 @@ async function start() {
       d.classList.toggle('on', j === state.index);
       if (j === state.index) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current');
     });
-    playBtn.textContent = state.playing ? 'Pause' : state.ended ? 'Play again' : 'Play';
-    muteBtn.textContent = state.muted ? 'Sound: off' : 'Sound: on';
+    showLabel(playBtn, state.playing ? 'Pause' : state.ended ? 'Replay' : 'Play');
+    showLabel(muteBtn, state.muted ? 'Sound: off' : 'Sound: on');
     muteBtn.setAttribute('aria-pressed', String(!state.muted));
     bigPlay.hidden = !(intro || state.ended);
     $('bigplay-label').textContent = state.ended ? 'Play again' : 'Play';
