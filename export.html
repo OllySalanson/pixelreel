@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banner maker - pixelreel</title>
+<meta name="description" content="Turn a few seconds of a pixelreel into an animated picture for a README or a web page.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 8 8%22%3E%3Crect width=%228%22 height=%228%22 fill=%22%2355d6be%22/%3E%3Crect x=%222%22 y=%222%22 width=%224%22 height=%224%22 fill=%22%230b1220%22/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/orange-kid.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="src/pixelreel.css">
+<style>
+  main.maker { max-width: 980px; }
+  .maker p.lede { font-size: 18px; line-height: 1.6; color: var(--cream); margin: 0 0 18px; }
+  .maker .stage canvas { cursor: default; }
+  .maker form { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px 16px; margin: 18px 0; align-items: end; }
+  .maker label { display: grid; gap: 6px; font-size: 15px; color: var(--muted); }
+  .maker label.check { display: flex; align-items: center; gap: 10px; color: var(--cream-lit); font-size: 17px; white-space: nowrap; }
+  .maker input, .maker select { font: 18px Verdana, sans-serif; color: var(--cream-lit); background: var(--bar); border: 3px solid var(--cream); border-radius: 4px; padding: 0 10px; width: 100%; height: 46px; }
+  .maker input[type=checkbox] { width: 22px; height: 22px; accent-color: var(--gold); }
+  .maker .wide { grid-column: 1 / -1; display: flex; gap: 12px 16px; align-items: end; flex-wrap: wrap; }
+  .maker .wide button { height: 46px; padding-top: 0; padding-bottom: 0; }
+  .maker .wide label.check, .maker .wide .status { align-self: center; }
+  .maker .wide label { flex: 1 1 260px; }
+  .maker .wide label.check { flex: 0 0 auto; }
+  .maker .status { color: var(--muted); font-size: 16px; min-height: 1.5em; }
+  .maker .result { margin-top: 22px; display: grid; gap: 12px; }
+  .maker .result[hidden] { display: none; }
+  .maker .result img { width: 100%; height: auto; border: 4px solid var(--cream); border-radius: 4px; background: #000; }
+  .maker textarea { font: 15px ui-monospace, Menlo, Consolas, monospace; color: var(--cream-lit); background: var(--bar); border: 3px solid var(--cream); border-radius: 4px; padding: 10px; width: 100%; resize: vertical; }
+  .maker a.download { color: var(--page); background: var(--gold); border: 3px solid var(--cream); border-radius: 4px; padding: 10px 18px; font: bold 18px Verdana, sans-serif; text-decoration: none; justify-self: start; }
+</style>
+<script type="module" src="src/export.js"></script>
+</head>
+<!-- data-reel is the reel loaded when the address has no ?reel=name -->
+<body data-reel="what-is-pixelreel">
+<main class="maker">
+  <h1>Banner maker</h1>
+  <p class="lede">Turn a few seconds of a reel into an animated picture for a README or a web page. It plays right there on GitHub, stays crisp at any size, and can link straight to the reel.</p>
+  <div class="stage"><canvas id="preview" width="960" height="540" role="img" aria-label="A preview of the banner"></canvas></div>
+  <form id="form">
+    <div class="wide">
+      <label>Reel <input id="reel" name="reel" autocomplete="off" spellcheck="false"></label>
+      <button type="button" id="load">Load</button>
+    </div>
+    <label>Scene <select id="scene"></select></label>
+    <label>From (seconds in) <input id="from" type="number" min="0" step="0.5" value="2"></label>
+    <label>Length (seconds) <input id="length" type="number" min="0.5" max="12" step="0.5" value="4"></label>
+    <label>Frames a second <select id="fps"><option>10</option><option selected>15</option><option>20</option></select></label>
+    <label>Detail <select id="detail"><option value="1">1x: smallest file</option><option value="2" selected>2x</option><option value="3">3x: sharpest text</option></select></label>
+    <div class="wide">
+      <button type="submit" class="big" id="make">Make the banner</button>
+      <label class="check"><input type="checkbox" id="badge" checked> Add a Watch button</label>
+      <span class="status" id="status" role="status"></span>
+    </div>
+  </form>
+  <section class="result" id="result" hidden>
+    <img id="out" alt="The finished banner">
+    <a class="download" id="download" download="banner.svg">Download banner.svg</a>
+    <label>Paste this into your README (it links the banner to the reel):
+      <textarea id="snippet" rows="3" readonly></textarea>
+    </label>
+  </section>
+  <p class="note">Made with pixelreel. Put the downloaded file next to your README, and change the link if your reel lives somewhere else.</p>
+</main>
+</body>
+</html>

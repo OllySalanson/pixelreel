@@ -7,8 +7,11 @@ const scenes = [{ say: 'Recorded line.' }, { say: 'A line with no recording at a
 const clipFor = (s) => (s === scenes[0] ? { url: 'audio/a.mp3', seconds: 6 } : null);
 
 function fakeAudio({ fails = false } = {}) {
+  let src = '';
   return {
-    src: '', currentTime: 0, paused: true, onended: null, onerror: null,
+    loads: 0, currentTime: 0, paused: true, onended: null, onerror: null,
+    get src() { return src; },
+    set src(v) { src = v; this.loads++; },
     play() { this.paused = false; return fails ? Promise.reject(Object.assign(new Error('nope'), { name: 'NotSupportedError' })) : Promise.resolve(); },
     pause() { this.paused = true; }
   };
@@ -113,14 +116,54 @@ describe('createNarrator', () => {
     const audio = fakeAudio(), speech = fakeSpeech();
     const n = createNarrator({ scenes, clipFor, audio, speech, Utterance });
     let done = 0;
-    n.speak(0, { muted: false }, () => done++)();
+    n.speak(0, { muted: false }, () => done++).stop();
     assert.equal(audio.paused, true);
     assert.equal(audio.onended, null);
-    const stop = n.speak(1, { muted: false }, () => done++);
+    const { stop } = n.speak(1, { muted: false }, () => done++);
     const before = speech.cancelled;
     stop();
     assert.equal(speech.cancelled, before + 1);
     mock.timers.tick(speechWatchdogMs(scenes[1].say) * 2);
     assert.equal(done, 0);
+  });
+
+  it('starts a clip part of the way in, and resumes it without loading it again', () => {
+    const audio = fakeAudio();
+    const n = createNarrator({ scenes, clipFor, audio, speech: fakeSpeech(), Utterance });
+    const first = n.speak(0, { muted: false, from: 0 }, () => {});
+    first.stop();
+    const again = n.speak(0, { muted: false, from: 2500 }, () => {});
+    assert.equal(again.from, 2500);
+    assert.equal(audio.currentTime, 2.5);
+    assert.equal(audio.loads, 1, 'the same clip is not fetched twice');
+    assert.equal(audio.paused, false);
+  });
+
+  it('says from the top with the browser voice, and says so', () => {
+    const speech = fakeSpeech();
+    const n = createNarrator({ scenes, clipFor, audio: fakeAudio(), speech, Utterance });
+    const said = n.speak(1, { muted: false, from: 3000 }, () => {});
+    assert.equal(said.from, 0);
+    assert.equal(speech.spoken[0].text, scenes[1].say);
+  });
+
+  it('muted part of the way in, waits only for the rest', () => {
+    const n = createNarrator({ scenes, clipFor, audio: fakeAudio(), speech: fakeSpeech(), Utterance });
+    let done = 0;
+    const said = n.speak(0, { muted: true, from: 2000 }, () => done++);
+    assert.equal(said.from, 2000);
+    mock.timers.tick(3999);
+    assert.equal(done, 0);
+    mock.timers.tick(1);
+    assert.equal(done, 1);
+  });
+
+  it('with no voice at all, part of the way in, waits only for the rest', () => {
+    const n = createNarrator({ scenes, clipFor, audio: fakeAudio() });
+    let done = 0;
+    const said = n.speak(1, { muted: false, from: 1000 }, () => done++);
+    assert.equal(said.from, 1000);
+    mock.timers.tick(estimateSpeechMs(scenes[1].say) - 1000);
+    assert.equal(done, 1);
   });
 });
