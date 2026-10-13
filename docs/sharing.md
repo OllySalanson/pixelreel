@@ -43,7 +43,9 @@ links to one. The banner maker turns a few seconds of any scene into exactly tha
 
 1. Run `npm start` and open <http://localhost:8000/export.html?reel=my-reel> (or
    `export.html` on your Pages site).
-2. Pick a scene, where to start and how long, and whether to add a Watch button.
+2. Pick a scene, where to start and how long, and whether to add a Watch button. For a
+   montage, list several clips instead, as `scene:from-to`: `2:0-2, 4:8.3-9.6, 9:6.3-7.5`
+   plays two seconds of scene 2, then a moment of scene 4, then one of scene 9.
 3. Press **Make the banner**, download the SVG, and paste the snippet it gives you:
 
 ```md

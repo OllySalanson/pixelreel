@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { inflateSync } from 'node:zlib';
 import { describe, it } from 'node:test';
-import { flipbookSvg } from '../src/flipbook.js';
+import { changedBox, crop, flipbookSvg, parseClips } from '../src/flipbook.js';
 import { base64, crc32, palettePng } from '../src/png.js';
 
 /** Reads a palette PNG back into RGBA pixels, checking every chunk on the way. */
@@ -68,7 +68,12 @@ describe('palette PNGs', () => {
 });
 
 describe('flipbook SVGs', () => {
-  const svg = flipbookSvg(['a.png', 'a.png', 'b.png', 'c&d.png'], { width: 320, height: 180, fps: 4, scale: 2, title: 'Tea <time>', desc: 'A "cup"' });
+  const layers = [
+    { href: 'a.png', start: 0, x: 0, y: 0, w: 320, h: 180 },
+    { href: 'patch&1.png', start: 1, x: 10, y: 20, w: 30, h: 40 },
+    { href: 'b.png', start: 3, x: 0, y: 0, w: 320, h: 180 }
+  ];
+  const svg = flipbookSvg(layers, { width: 320, height: 180, fps: 4, frames: 4, scale: 2, title: 'Tea <time>', desc: 'A "cup"' });
 
   it('shows the picture at its pixel size, scaled up crisply', () => {
     assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 320 180" width="640" height="360" image-rendering="optimizeSpeed">\n/);
@@ -76,24 +81,48 @@ describe('flipbook SVGs', () => {
     assert.match(svg, /<title>Tea &lt;time&gt;<\/title>\n<desc>A &quot;cup&quot;<\/desc>/);
   });
 
-  it('holds repeated frames as one picture, each starting on its beat', () => {
-    const images = svg.match(/<image [^>]*\/>/g);
-    assert.deepEqual(images, [
-      '<image class="h2" href="a.png" width="320" height="180"/>',
-      '<image class="h1" href="b.png" width="320" height="180" style="animation-delay:0.5s"/>',
-      '<image class="h1" href="c&amp;d.png" width="320" height="180" style="animation-delay:0.75s"/>'
+  it('lays each patch over the frames before it, from its own frame to the end of the loop', () => {
+    assert.deepEqual(svg.match(/<image [^>]*\/>/g), [
+      '<image href="a.png" width="320" height="180"/>',
+      '<image class="f1" href="patch&amp;1.png" x="10" y="20" width="30" height="40"/>',
+      '<image class="f3" href="b.png" width="320" height="180"/>'
     ]);
     assert.match(svg, /animation:1s step-end infinite/);
-    assert.match(svg, /@keyframes h2\{0%\{opacity:1\}50%\{opacity:0\}\}/);
-    assert.match(svg, /@keyframes h1\{0%\{opacity:1\}25%\{opacity:0\}\}/);
+    assert.match(svg, /@keyframes f1\{0%\{opacity:0\}25%\{opacity:1\}100%\{opacity:1\}\}/);
+    assert.match(svg, /@keyframes f3\{0%\{opacity:0\}75%\{opacity:1\}100%\{opacity:1\}\}/);
   });
 
-  it('stands still for anyone who prefers less motion, on the first frame', () => {
+  it('stands still on the first frame for anyone who prefers less motion', () => {
     assert.match(svg, /image:first-of-type\{opacity:1\}/);
     assert.match(svg, /@media \(prefers-reduced-motion:reduce\)\{image\{animation:none\}\}/);
   });
 
-  it('needs a frame', () => {
-    assert.throws(() => flipbookSvg([], { width: 1, height: 1, fps: 1 }), /at least one frame/);
+  it('starts with a whole frame', () => {
+    assert.throws(() => flipbookSvg([], { width: 1, height: 1, fps: 1, frames: 1 }), /starts with a whole frame/);
+    assert.throws(() => flipbookSvg([{ href: 'x', start: 2 }], { width: 1, height: 1, fps: 1, frames: 3 }), /starts with a whole frame/);
+  });
+
+  it('finds the patch that changed between two frames, and crops it out', () => {
+    const w = 6, h = 4, a = new Uint8ClampedArray(w * h * 4), b = new Uint8ClampedArray(a);
+    assert.equal(changedBox(a, b, w, h), null);
+    b[(1 * w + 2) * 4] = 255; b[(2 * w + 4) * 4 + 3] = 9;
+    assert.deepEqual(changedBox(a, b, w, h), { x: 2, y: 1, w: 3, h: 2 });
+    const patch = crop(b, w, { x: 2, y: 1, w: 3, h: 2 });
+    assert.equal(patch.length, 3 * 2 * 4);
+    assert.equal(patch[0], 255);
+    assert.equal(patch[(1 * 3 + 2) * 4 + 3], 9);
+  });
+});
+
+describe('banner clips', () => {
+  it('reads several clips, counting scenes from 1', () => {
+    assert.deepEqual(parseClips(' 2:0-2, 4:8.3-9.6 ,', 5), [{ scene: 1, from: 0, to: 2 }, { scene: 3, from: 8.3, to: 9.6 }]);
+    assert.equal(parseClips('  ', 5), null);
+  });
+
+  it('says what is wrong with a clip', () => {
+    assert.throws(() => parseClips('2-4', 5), /"2-4" should look like 2:1.5-4/);
+    assert.throws(() => parseClips('9:0-1', 5), /There is no scene 9: this reel has 5/);
+    assert.throws(() => parseClips('2:3-1', 5), /the end should come after the start/);
   });
 });

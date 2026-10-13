@@ -7,7 +7,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--page); color: var(--cream-lit); font-family: Verdana, Tahoma, "Segoe UI", sans-serif; }
 /* as wide as fits, but short enough that the controls stay on screen */
-main { max-width: max(360px, min(980px, calc((100vh - 350px) * 16 / 9 + 32px))); margin: 0 auto; padding: 16px; }
+main { max-width: max(360px, min(980px, calc((100vh - 392px) * 16 / 9 + 32px))); margin: 0 auto; padding: 16px; }
 h1 { font: 34px 'Orange Kid', monospace; margin: 2px 0 10px; color: var(--accent); letter-spacing: 1px; }
 .stage { position: relative; background: #000; border: 4px solid var(--cream); border-radius: 4px 4px 0 0; overflow: hidden; }
 canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; image-rendering: pixelated; cursor: pointer; }
@@ -31,6 +31,8 @@ canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; image-
 .caption { min-height: 150px; background: var(--bar); border: 4px solid var(--cream);
   border-radius: 0 0 4px 4px; padding: 12px 20px 14px; font-size: 23px; line-height: 1.55; letter-spacing: 0.3px; }
 .caption .title { font: 34px 'Orange Kid', monospace; color: var(--gold); display: block; margin-bottom: 4px; }
+/* the running time sits on the caption's heading line, at the right */
+.caption .time { float: right; font: 26px 'Orange Kid', monospace; color: var(--muted); margin: 6px 0 0 16px; white-space: nowrap; }
 .caption .rest { visibility: hidden; }
 /* the typewriter's cursor takes no room, so lines never reflow as the words arrive */
 .caption.typing #cap-typed::after { content: ''; display: inline-block; width: 0.42em; height: 0.95em; margin-right: -0.42em;
@@ -41,14 +43,15 @@ canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; image-
 .controls { display: flex; gap: 10px; margin-top: 14px; align-items: center; flex-wrap: wrap; }
 .controls[hidden] { display: none; }
 button { font: bold 20px Verdana, sans-serif; color: var(--cream-lit); background: var(--btn); border: 3px solid var(--cream);
-  border-radius: 4px; padding: 10px 18px; cursor: pointer; }
+  border-radius: 4px; padding: 10px 15px; cursor: pointer; }
 button:hover { background: var(--btn-hi); }
 button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
-button.big { background: var(--go); min-width: 128px; }
+button.big { background: var(--go); min-width: 116px; }
 button.big:hover { background: var(--go-hi); }
-.time { font: 26px 'Orange Kid', monospace; color: var(--muted); min-width: 88px; padding-left: 4px; white-space: nowrap; }
 .dots { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
 .dot { width: 16px; height: 16px; padding: 0; background: #33506e; border: 2px solid var(--cream); border-radius: 0; }
+.dots.many { gap: 4px; }
+.dots.many .dot { width: 12px; height: 12px; }
 .dot:hover { background: var(--btn-hi); }
 .dot.on { background: var(--gold); }
 .note { color: var(--muted); font-size: 15px; margin-top: 12px; line-height: 1.5; }
@@ -58,6 +61,7 @@ button.big:hover { background: var(--go-hi); }
   main { padding: 12px; }
   .caption { font-size: 18px; min-height: 130px; padding: 10px 14px 12px; }
   .caption .title { font-size: 26px; }
+  .caption .time { font-size: 20px; margin-top: 4px; }
   button { font-size: 16px; padding: 8px 12px; }
   button.big { min-width: 96px; }
   .bigplay { font-size: 32px; padding: 8px 18px 10px 16px; gap: 10px; }
@@ -76,6 +80,6 @@ body.embed .controls > button { font-size: 15px; padding: 6px 12px; }
 body.embed .controls > button.big { min-width: 88px; }
 body.embed .bigplay { font-size: clamp(26px, 6vw, 44px); padding: 0.25em 0.6em 0.3em 0.55em; gap: 0.3em; }
 body.embed .bigplay svg { width: 0.65em; height: 0.75em; }
-body.embed .time { font-size: 22px; }
+body.embed .caption .time { font-size: clamp(16px, 3vw, 22px); margin-top: 2px; }
 body.embed .dot { width: 12px; height: 12px; }
 button:disabled { opacity: 0.6; cursor: progress; }

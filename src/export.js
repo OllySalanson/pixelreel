@@ -1,6 +1,6 @@
 // The banner maker (export.html): draws a few seconds of a scene, frame by frame, and wraps
 // them in an animated SVG for a README or a web page, with a link back to the reel.
-import { flipbookSvg } from './flipbook.js';
+import { changedBox, crop, flipbookSvg, parseClips } from './flipbook.js';
 import { createKit, W, H } from './kit.js';
 import { loadReel } from './load.js';
 import { base64, palettePng } from './png.js';
@@ -14,6 +14,7 @@ const kb = (bytes) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
 let loaded = null;   // { name, reel, images } once a reel has loaded
 let preview = null;  // the pixel kit for the preview canvas
 let made = null;     // the address of the last banner, so it can be let go
+let problem = null;  // what is wrong with the clips or the scene, while it is wrong
 
 /** A pixel Watch button in the corner that bobs gently, so the banner says "press me". */
 function watchBadge(px, t) {
@@ -28,24 +29,32 @@ function watchBadge(px, t) {
 }
 
 function choices() {
+  const scene = Number($('scene').value) || 0, from = Math.max(0, Number($('from').value) || 0);
+  const length = Math.min(12, Math.max(0.5, Number($('length').value) || 4));
   return {
-    scene: Number($('scene').value) || 0,
-    from: Math.max(0, Number($('from').value) || 0),
-    length: Math.min(12, Math.max(0.5, Number($('length').value) || 4)),
+    clips: parseClips($('clips').value, loaded.reel.scenes.length) ?? [{ scene, from, to: from + length }],
     fps: Number($('fps').value) || 15,
     detail: Number($('detail').value) || 2,
     badge: $('badge').checked
   };
 }
 
-/** Draws frame `t` of the chosen scene, and the Watch button if wanted. */
-function draw(g, px, k, t, { scene, badge }) {
+/** The scene and moment for each frame of the banner, clip after clip, and the banner's own clock. */
+function* moments({ clips, fps }) {
+  let frame = 0;
+  for (const { scene, from, to } of clips) {
+    for (let i = 0; i < Math.max(1, Math.round((to - from) * fps)); i++) yield { scene, t: from + i / fps, clock: frame++ / fps };
+  }
+}
+
+/** Draws one frame of the banner, and the Watch button if wanted. */
+function draw(g, px, k, { scene, t, clock }, badge) {
   g.setTransform(k, 0, 0, k, 0, 0);
   g.imageSmoothingEnabled = false;
   g.clearRect(0, 0, W, H);
   const s = loaded.reel.scenes[scene];
   s.draw(t, px, s);
-  if (badge) watchBadge(px, t);
+  if (badge) watchBadge(px, clock);
 }
 
 async function load(name) {
@@ -70,23 +79,31 @@ async function load(name) {
 }
 
 async function make() {
-  const c = choices(), k = c.detail, scene = loaded.reel.scenes[c.scene];
+  const c = choices(), k = c.detail, all = [...moments(c)];
   const canvas = document.createElement('canvas');
   canvas.width = W * k;
   canvas.height = H * k;
   const g = canvas.getContext('2d', { willReadFrequently: true }), px = createKit(g, loaded.images);
-  const count = Math.max(1, Math.round(c.length * c.fps)), frames = [];
+  const { width, height } = canvas, count = all.length, layers = [];
+  let previous = null;
   for (let i = 0; i < count; i++) {
     status(`Drawing frame ${i + 1} of ${count}...`);
-    draw(g, px, k, c.from + i / c.fps, c);
-    const png = await palettePng(canvas.width, canvas.height, g.getImageData(0, 0, canvas.width, canvas.height).data);
-    frames.push('data:image/png;base64,' + base64(png));
+    draw(g, px, k, all[i], c.badge);
+    const pixels = g.getImageData(0, 0, width, height).data;
+    // after the first frame, keep only the patch that changed, unless most of it did
+    let box = previous ? changedBox(previous, pixels, width, height) : { x: 0, y: 0, w: width, h: height };
+    previous = pixels;
+    if (!box) continue;
+    if (box.w * box.h > width * height * 0.6) box = { x: 0, y: 0, w: width, h: height };
+    const png = await palettePng(box.w, box.h, box.w === width && box.h === height ? pixels : crop(pixels, width, box));
+    layers.push({ href: 'data:image/png;base64,' + base64(png), start: i, ...box });
     if (i % 4 === 3) await new Promise((ok) => requestAnimationFrame(ok));   // let the page breathe
   }
-  const svg = flipbookSvg(frames, {
-    width: canvas.width, height: canvas.height, fps: c.fps, scale: 3 / k,
+  const titles = [...new Set(c.clips.map((clip) => `"${loaded.reel.scenes[clip.scene].title}"`))];
+  const svg = flipbookSvg(layers, {
+    width, height, fps: c.fps, frames: count, scale: 3 / k,
     title: loaded.reel.title,
-    desc: `A few seconds of the scene "${scene.title}" from the pixelreel "${loaded.reel.title}".`
+    desc: `A few seconds of ${titles.join(', ')} from the pixelreel "${loaded.reel.title}".`
   });
   const blob = new Blob([svg], { type: 'image/svg+xml' });
   if (made) URL.revokeObjectURL(made);
@@ -106,11 +123,15 @@ function frame(now) {
   requestAnimationFrame(frame);
   if (!loaded || now - last < FRAME_MS) return;
   last = now;
-  const c = choices(), canvas = $('preview');
+  const canvas = $('preview');
   try {
-    draw(canvas.getContext('2d'), preview, canvas.width / W, c.from + ((now / 1000) % c.length), c);
+    const c = choices(), total = c.clips.reduce((sum, clip) => sum + (clip.to - clip.from), 0);
+    let at = (now / 1000) % total;
+    const clip = c.clips.find((x) => { if (at < x.to - x.from) return true; at -= x.to - x.from; return false; }) ?? c.clips[0];
+    draw(canvas.getContext('2d'), preview, canvas.width / W, { scene: clip.scene, t: clip.from + at, clock: now / 1000 }, c.badge);
+    if (problem) { problem = null; status(''); }
   } catch (err) {
-    status(`This scene could not draw: ${err.message}`);
+    if (problem !== err.message) { problem = err.message; status(problem); }
   }
 }
 

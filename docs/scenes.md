@@ -162,7 +162,7 @@ worked out from `t` moves in time with the narration and holds still when paused
 | Helper | Draws | Example |
 | --- | --- | --- |
 | `px.rect(colour, x, y, w, h)` | A filled rectangle. | `px.rect('#ffcc4d', 10, 10, 40, 20)` |
-| `px.sprite(rows, x, y, scale, flip)` | Pixel art from rows of letters ([palette below](#sprite-letters)). `.` is see-through. | `px.sprite(['.kk.', 'kyyk', '.kk.'], 50, 50, 4)` |
+| `px.sprite(rows, x, y, scale, flip, colours)` | Pixel art from rows of letters ([palette below](#sprite-letters)). `.` is see-through; `colours` adds letters of your own. | `px.sprite(['.hh.', 'hyyh'], 50, 50, 4, false, { h: '#6b3e2e' })` |
 | `px.text(str, x, y, size, colour, align, shadow)` | Text in the Orange Kid pixel font; `shadow` is a colour for a drop shadow. | `px.text('HELLO', 160, 20, 24, '#ffcc4d', 'center', '#1a1a1a')` |
 | `px.textW(str, size)` | How wide that text would be. | `const w = px.textW('HELLO', 24)` |
 | `px.wrap(str, maxW, size)` | The text broken into lines that fit. | `px.wrap(longText, 200, 12).forEach((l, i) => px.text(l, 10, 10 + i * 13))` |
@@ -225,7 +225,8 @@ easing curves.
 
 `k` ink, `w` white, `r` red, `g` green, `b` blue, `y` yellow, `o` orange, `p` purple, `t` teal,
 `s` skin, `n` brown, `e` grey, `c` cream, and capitals `B`, `R`, `N`, `G` for darker shades of
-blue, red, brown and green. Any other character is used as a CSS colour.
+blue, red, brown and green. Pass `colours`, such as `{ h: '#6b3e2e', s: '#c68642' }`, to add
+letters or change these for one sprite.
 
 For anything else, write your own helpers at the top of the reel file, as the
 [example reel](../reels/what-is-pixelreel/reel.js) does for its film reel and speech bubble.

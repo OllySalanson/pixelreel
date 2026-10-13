@@ -7,6 +7,7 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - node's `mock.timers` counts a timer set inside a callback from the end of the current `tick()`, so tests tick to one timer boundary at a time.
 - Clips are matched to scenes by their exact `say` text through `audio/manifest.json`, not by position. Editing a scene's words makes it fall back to the browser voice until `npm run voices <reel>` is rerun, and CI (`npm run check -- --recorded`, `test/reel.test.js`) fails until it is. Clip files named as 16-hex-digit hashes are made by the tool; any other name is a hand-made recording that `voices` never replaces or deletes.
 - Re-recording needs Kokoro (see docs/voices.md); keep committed audio small (mono 48k) and record in one batch.
+- The showreel (`reels/showreel/reel.js`) is the site's default reel and the README's source: its gags are timed to `CUES` taken from the recorded clips, and `docs/readme/README.md` lists the banner maker settings that remake the README's animated pictures. Changing a scene's words means re-recording, re-timing its cues, and remaking any picture that shows it.
 - To check pictures by eye, `?reel=<name>&scene=N&t=S` holds one frame; for many frames, draw them with `createKit` on a canvas of your own rather than timing screenshots of the live player.
 - House style for all text: plain dash, never an em dash (`test/hygiene.test.js` enforces it).
 

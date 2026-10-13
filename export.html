@@ -32,7 +32,7 @@
 <script type="module" src="src/export.js"></script>
 </head>
 <!-- data-reel is the reel loaded when the address has no ?reel=name -->
-<body data-reel="what-is-pixelreel">
+<body data-reel="showreel">
 <main class="maker">
   <h1>Banner maker</h1>
   <p class="lede">Turn a few seconds of a reel into an animated picture for a README or a web page. It plays right there on GitHub, stays crisp at any size, and can link straight to the reel.</p>
@@ -47,6 +47,7 @@
     <label>Length (seconds) <input id="length" type="number" min="0.5" max="12" step="0.5" value="4"></label>
     <label>Frames a second <select id="fps"><option>10</option><option selected>15</option><option>20</option></select></label>
     <label>Detail <select id="detail"><option value="1">1x: smallest file</option><option value="2" selected>2x</option><option value="3">3x: sharpest text</option></select></label>
+    <div class="wide"><label>Or several clips, one after another (scene:from-to, ...) <input id="clips" placeholder="2:0-2, 4:8.3-9.6, 9:6.3-7.5" autocomplete="off" spellcheck="false"></label></div>
     <div class="wide">
       <button type="submit" class="big" id="make">Make the banner</button>
       <label class="check"><input type="checkbox" id="badge" checked> Add a Watch button</label>

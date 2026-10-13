@@ -53,6 +53,7 @@ async function start() {
     seek.appendChild(tick);
   }
 
+  dots.classList.toggle('many', scenes.length > 10);
   scenes.forEach((s, i) => {
     const d = document.createElement('button');
     d.className = 'dot';
@@ -72,11 +73,11 @@ async function start() {
 
   function leaveIntro() { intro = false; }
 
-  // The picture's clock: the narration's while playing or paused part-way; a free-running
-  // preview for a scene that has not started (before Play, or browsing while paused).
+  // The picture's clock: the narration's while playing or paused part-way; a preview that
+  // loops through the scene for one that has not started (before Play, or browsing paused).
   function sceneTime(now) {
     if (player.playing || player.ended || player.held) return player.elapsedMs / 1000;
-    return (now - previewStart) / 1000;
+    return ((now - previewStart) % player.timeline.spans[player.index]) / 1000;
   }
 
   function render(state) {

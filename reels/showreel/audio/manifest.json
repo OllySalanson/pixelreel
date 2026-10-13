@@ -1,0 +1,82 @@
+{
+  "voice": "bm_george",
+  "speed": 0.92,
+  "lang": "en-gb",
+  "clips": [
+    {
+      "text": "Let's be honest. Nobody reads the docs. Not the read me, not the wiki, and definitely not the change log. So here's a cartoon instead.",
+      "file": "bf8ee0fbe6f303d9.mp3",
+      "seconds": 9.56
+    },
+    {
+      "text": "This is pixel reel. Give it a list of scenes, and it plays them back as a narrated pixel art video, right in your browser. No video editor. No timeline. No progress bar stuck at ninety nine percent.",
+      "file": "085449afe1b27162.mp3",
+      "seconds": 14.08
+    },
+    {
+      "text": "A reel is one small file with a list of scenes. Each scene has a title, a caption, the words to say, and a picture. That's it. Your shopping list is more complicated.",
+      "file": "9c507e4bb8fe3964.mp3",
+      "seconds": 11.67
+    },
+    {
+      "text": "Pictures are drawn in code, with a little pixel kit. Sprites. Parallax. Typewriter text. And, most importantly, confetti.",
+      "file": "b34aebb32721a036.mp3",
+      "seconds": 9.09
+    },
+    {
+      "text": "Can't draw? Same. Pick a ready-made picture, like a list, a terminal or a chat, and just fill in the words.",
+      "file": "4ff35d5c4bb91acb.mp3",
+      "seconds": 7.3
+    },
+    {
+      "text": "This voice was recorded offline by Kokoro, an open speech model. No cloud, no A P I key, no subscription. Don't fancy me? Pick another voice, or plug in any speech engine.",
+      "file": "bd2d305b5cbab94f.mp3",
+      "seconds": 12.74
+    },
+    {
+      "text": "No recording yet? Your browser reads it out instead, like a satnav having a moment, so a brand new reel plays straight away.",
+      "file": "b7e8c1d2cc305ef1.mp3",
+      "seconds": 8.53
+    },
+    {
+      "text": "Captions type along as I talk. Pause me, skip me, drag me back and forth, or switch me off entirely. Rude, but fine.",
+      "file": "bd4d020dd126847b.mp3",
+      "seconds": 8.45
+    },
+    {
+      "text": "Scenes can fade, wipe, dissolve, slide, or close with an iris, like an old cartoon. There's also a star wipe. We're not proud of it.",
+      "file": "2cb35d82207f9662.mp3",
+      "seconds": 9.32
+    },
+    {
+      "text": "Where does it help? Onboarding new starters. Release notes people actually watch. Walking a reviewer through a pull request. School lessons that keep the back row awake.",
+      "file": "077660eae292d893.mp3",
+      "seconds": 10.79
+    },
+    {
+      "text": "Pitch decks. Game trailers. Status updates for a boss who won't read a document, but will absolutely watch a cartoon. And change logs, finally seen by human eyes.",
+      "file": "f220688a7b0fb463.mp3",
+      "seconds": 11.95
+    },
+    {
+      "text": "It's just static files, so it goes anywhere: GitHub Pages, any web host, or an animated banner in your read me. Like the one you probably clicked to get here.",
+      "file": "486e7741690b15d0.mp3",
+      "seconds": 10.58
+    },
+    {
+      "text": "Scenes are just data, so robots can write them too. Turn release notes into a reel in one command, have C I make one for every release, or let an A I agent do the lot. No pay rise required.",
+      "file": "0340dfbd322ea2b0.mp3",
+      "seconds": 13.91
+    },
+    {
+      "text": "Making your own takes about a minute. Clone it, start it, make a reel, record the voices. That's it. The hardest part is deciding what to explain.",
+      "file": "81f88da9de47fd2e.mp3",
+      "seconds": 10.2
+    },
+    {
+      "text": "That's pixel reel. Thanks for watching to the very end, which is more than anyone has ever done for a read me. Now go and explain something.",
+      "file": "da3eb5a91e34eebd.mp3",
+      "seconds": 9.15
+    }
+  ]
+}

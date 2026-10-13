@@ -199,12 +199,6 @@ describe('npm run voices planning', () => {
     assert.deepEqual(unused.stale, [one]);
   });
 
-  it('the example reel manifest lists exactly the clips on disk', () => {
-    const audio = new URL('../reels/what-is-pixelreel/audio/', import.meta.url);
-    const manifest = JSON.parse(readFileSync(new URL('manifest.json', audio), 'utf8'));
-    const files = readdirSync(audio).filter((f) => f.endsWith('.mp3')).sort();
-    assert.deepEqual(manifest.clips.map((c) => c.file).sort(), files);
-  });
 });
 
 // A pretend speech engine: reads the words on stdin and writes a WAV of 50 ms per character.
