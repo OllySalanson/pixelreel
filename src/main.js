@@ -3,6 +3,7 @@
 import { createKit, W, H } from './kit.js';
 import { loadReel } from './load.js';
 import { createNarrator } from './narrator.js';
+import { noSignal } from './pictures.js';
 import { Player } from './player.js';
 import { clockTime, narrationMs, typedLength } from './timing.js';
 import { transitionMs } from './transitions.js';
@@ -13,6 +14,11 @@ const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 const calm = matchMedia('(prefers-reduced-motion: reduce)');
 
+/** Shows the one of a button's stacked labels that reads `text`; the rest keep their room, so it never changes width. */
+function showLabel(button, text) {
+  for (const span of button.children) span.classList.toggle('on', span.textContent === text);
+}
+
 function showError(message) {
   $('heading').textContent = 'This reel could not be played';
   $('cap-title').textContent = 'Something is wrong';
@@ -20,6 +26,21 @@ function showError(message) {
   $('cap-body').removeAttribute('aria-hidden');
   $('cap').classList.add('error');
   for (const el of [document.querySelector('.controls'), $('seek')]) el.hidden = true;
+  const canvas = $('stage'), g = canvas.getContext('2d'), px = createKit(g);
+  canvas.setAttribute('aria-label', 'No signal: the reel could not be played');
+  canvas.style.cursor = 'default';
+  const born = performance.now();
+  let last = -Infinity;
+  const card = (now) => {
+    if (!calm.matches) requestAnimationFrame(card);
+    if (now - last < FRAME_MS) return;
+    last = now;
+    g.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
+    g.imageSmoothingEnabled = false;
+    noSignal(calm.matches ? 0 : (now - born) / 1000, px);
+  };
+  // the font first, so the sign is not drawn in a stand-in
+  (document.fonts ? document.fonts.load("12px 'Orange Kid'").catch(() => {}) : Promise.resolve()).then(() => requestAnimationFrame(card));
 }
 
 async function start() {
@@ -98,8 +119,8 @@ async function start() {
       d.classList.toggle('on', j === state.index);
       if (j === state.index) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current');
     });
-    playBtn.textContent = state.playing ? 'Pause' : state.ended ? 'Play again' : 'Play';
-    muteBtn.textContent = state.muted ? 'Sound: off' : 'Sound: on';
+    showLabel(playBtn, state.playing ? 'Pause' : state.ended ? 'Replay' : 'Play');
+    showLabel(muteBtn, state.muted ? 'Sound: off' : 'Sound: on');
     muteBtn.setAttribute('aria-pressed', String(!state.muted));
     bigPlay.hidden = !(intro || state.ended);
     $('bigplay-label').textContent = state.ended ? 'Play again' : 'Play';
@@ -126,6 +147,41 @@ async function start() {
     $('cap-rest').textContent = text.slice(n);
     $('cap').classList.toggle('typing', n < text.length);
   }
+
+  // Every caption gets the room the longest one needs, so the buttons below never jump as
+  // the scenes change, and the picture shrinks to keep that room on screen. Measured with
+  // each caption in full, then once more at the width that leaves.
+  function fitCaption() {
+    const cap = $('cap'), main = document.querySelector('main');
+    cap.style.minHeight = '';
+    main.style.removeProperty('--caption-extra');
+    const least = parseFloat(getComputedStyle(cap).minHeight) || 0;
+    const all = [['Press Play', reel.intro], ...scenes.map((s, i) => [`${i + 1}. ${s.title}`, s.caption])];
+    cap.classList.remove('typing');
+    $('cap-rest').textContent = '';
+    let room = least;
+    for (let pass = 0; pass < 3; pass++) {
+      cap.style.minHeight = '0px';
+      let tallest = least;
+      for (const [title, text] of all) {
+        $('cap-title').textContent = title;
+        $('cap-typed').textContent = text;
+        tallest = Math.max(tallest, cap.offsetHeight);
+      }
+      cap.style.minHeight = `${tallest}px`;
+      if (tallest === room) break;
+      room = tallest;
+      main.style.setProperty('--caption-extra', `${room - least}px`);
+    }
+    shownCaption = null;
+    paintCaption();
+  }
+  let fitting = false;
+  addEventListener('resize', () => {
+    if (fitting) return;
+    fitting = true;
+    requestAnimationFrame(() => { fitting = false; fitCaption(); });
+  });
 
   let shownSecond = -1;
   function paintProgress() {
@@ -220,6 +276,7 @@ async function start() {
     lastT = t;
   }
   await (document.fonts ? document.fonts.load("12px 'Orange Kid'").catch(() => {}) : null);
+  fitCaption();
   requestAnimationFrame(frame);
 
   // a small window into the player, for automated checks and the curious

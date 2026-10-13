@@ -320,3 +320,25 @@ export function drawPicture(spec, t, px) {
   if (!kind) throw new Error(`there is no ready-made picture called "${spec?.type}"`);
   kind.draw(t, px, spec);
 }
+
+const BARS = [CREAM, GOLD, TEAL, '#3fa34d', '#8e5bd6', '#d63a3a', BLUE];
+
+/** The player's test card, shown when a reel will not load: colour bars, a rolling band of static and NO SIGNAL. */
+export function noSignal(t, px) {
+  const { W, H } = px, bw = W / BARS.length, frame = Math.floor(t * 12);
+  BARS.forEach((c, i) => {
+    const x = Math.round(i * bw), w = Math.round((i + 1) * bw) - x;
+    px.rect(c, x, 0, w, 122);
+    px.rect(i % 2 ? NIGHT : BARS[BARS.length - 1 - i], x, 122, w, 14);
+  });
+  px.rect(NIGHT, 0, 136, W, H - 136);
+  for (let i = 0; i < 4; i++) px.rect(['#05080f', NAVY, '#1a2b47', MUTED][i], 24 + i * 22, 146, 22, 24);
+  const band = Math.round((t * 40) % (H + 16)) - 16;
+  px.dither(LIGHT, 0, band, W, 16, 0.25);
+  for (let i = 0; i < 160; i++) {
+    const x = Math.floor(px.rand(frame * 997 + i) * W), y = Math.floor(px.rand(frame * 991 + i + 0.5) * H);
+    px.rect(i % 3 ? LIGHT : INK, x, y, 1 + (i % 2), 1);
+  }
+  px.sign('NO SIGNAL', W / 2, 44, 24, NIGHT, GOLD);
+  px.sign('Have you tried turning it off and on again?', W / 2, 82, 12, NIGHT, CREAM);
+}

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { createKit } from '../src/kit.js';
-import { highlight, PICTURES, pictureProblems } from '../src/pictures.js';
-import { fakeContext } from './fake-canvas.js';
+import { highlight, noSignal, PICTURES, pictureProblems } from '../src/pictures.js';
+import { coverage, fakeContext } from './fake-canvas.js';
 
 const examples = {
   title: { type: 'title', text: 'PIXELREEL', sub: 'Narrated pixel-art videos from a list of scenes' },
@@ -62,5 +62,21 @@ describe('ready-made pictures', () => {
     assert.notEqual(colours.const, colours.n, 'keywords stand out');
     assert.notEqual(colours["'x'"], colours.n, 'and strings');
     assert.notEqual(colours['// hi'], colours.n, 'and comments');
+  });
+});
+
+describe('the no signal card', () => {
+  it('fills the whole picture, says NO SIGNAL and restores what it changes', () => {
+    const g = fakeContext(), px = createKit(g, {});
+    noSignal(0, px);
+    assert.equal(coverage(g.rects, { x: 0, y: 0, w: 320, h: 180 }), 320 * 180);
+    assert.ok(g.texts.some((x) => x.str === 'NO SIGNAL'));
+    assert.equal(g.depth, 0);
+  });
+
+  it('crackles with static as time passes, and holds still at one moment', () => {
+    const at = (t) => { const g = fakeContext(); noSignal(t, createKit(g, {})); return JSON.stringify(g.rects); };
+    assert.equal(at(1.2), at(1.2));
+    assert.notEqual(at(0), at(1.2));
   });
 });

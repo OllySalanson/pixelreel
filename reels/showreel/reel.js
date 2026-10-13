@@ -269,7 +269,7 @@ function docsScene(t, px) {
     px.sprite(SLEEPER, 105, 95 + (Math.floor(t * 1.2) % 2), 3, false, { H: '#3b2a20', S: SKINS[1], C: TEAL });
     for (let i = 0; i < 3; i++) {
       const k = (t * 0.6 + i / 3) % 1;
-      px.text('z', 150 + i * 5 + Math.sin(k * 6) * 3, 90 - k * 34, 10 + i * 3, k > 0.85 ? MUTED : CREAM);
+      px.text('z', 134 + i * 5 + Math.sin(k * 6) * 3, 76 - k * 32, 10 + i * 3, k > 0.85 ? MUTED : CREAM);
     }
     // the docs nobody reads land on the desk
     if (t >= nobody) {
@@ -633,8 +633,8 @@ function voiceScene(t, px) {
   px.rect(GREEN, 196, 54, 4, 4);
   for (let i = 0; i < 22; i++) {
     const a = speaking ? Math.abs(Math.sin(t * 8 + i * 0.9) * Math.sin(t * 2.7 + i * 0.37)) : 0;
-    const h = 2 + Math.round(a * 30);
-    px.rect(TEAL, 116 + i * 4, 88 - h / 2, 3, h);
+    const h = 2 + Math.round(a * 26);
+    px.rect(TEAL, 116 + i * 4, 80 - h / 2, 3, h);
   }
   px.text('OFFLINE', 160, 101, 12, GREEN, 'center');
   if (t >= model && t < pick) {
@@ -1094,10 +1094,10 @@ function anywhereScene(t, px) {
   px.rect('#9fb3c8', 10, 162, 100, 6);
   px.text('my-reel/', 26, 118, 12, GOLD);
   const files = ['index.html', 'reel.js', 'audio/'];
-  const spots = [[250, 36], [170, 96], [254, 110]];
+  const starts = [39, 64, 85], spots = [[250, 36], [170, 96], [254, 110]];   // spaced so each name fits on the screen
   if (t < goes + 0.6) px.sign('JUST STATIC FILES', 60, 92, 12, GOLD);
   files.forEach((name, i) => {
-    let x = 34 + i * 26, y = 138;
+    let x = starts[i], y = 138;
     if (t >= goes) {
       const at = [pages, host, banner][i] - 1.0, k = px.EASE.inOut(px.clamp((t - at) / 0.9, 0, 1));
       x = px.lerp(x, spots[i][0], k); y = px.lerp(y, spots[i][1], k) - Math.sin(k * Math.PI) * 40;
@@ -1243,8 +1243,11 @@ function makeScene(t, px) {
   const secs = Math.min(59, Math.floor((t / thatsIt) * 59));
   px.circle(INK, 64, 150, 25); px.circle(LIGHT, 64, 150, 23); px.rect(INK, 60, 120, 8, 6); px.rect(GREY, 61, 121, 6, 4);
   const a = (secs / 60) * 6.283 - 1.5708;
-  px.line(RED, 64, 150, 64 + Math.cos(a) * 18, 150 + Math.sin(a) * 18);
-  px.text(`0:${String(secs).padStart(2, '0')}`, 64, 154, 12, INK, 'center');
+  // the hand turns above a little readout window, never through it
+  px.line(RED, 64, 143, 64 + Math.cos(a) * 12, 143 + Math.sin(a) * 12);
+  px.rect(INK, 63, 142, 3, 3);
+  px.window(53, 157, 22, 13, '#cfe3b5');
+  px.text(`0:${String(secs).padStart(2, '0')}`, 64, 158, 12, INK, 'center');
   stamp(px, 'DONE!', 130, 150, t, thatsIt, GREEN, 20);
   if (t >= thatsIt) px.confetti(t, thatsIt, 130, 150, 30);
   // the hard bit

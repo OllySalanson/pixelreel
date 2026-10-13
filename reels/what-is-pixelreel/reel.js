@@ -55,6 +55,17 @@ function button(px, label, x, y, w, lit) {
   px.text(label, x + w / 2, y + 3, 14, lit ? '#202020' : CREAM, 'center');
 }
 
+// When the sentences of the last scene start in its recording, in seconds. Found from the
+// pauses in the clip: ffmpeg -i <clip>.mp3 -af silencedetect=n=-35dB:d=0.2 -f null -
+const MAKE_CUES = [0, 2.52, 4.94, 6.48, 8.34, 9.24];
+// When the 'Watch your way' narrator names each control, found the same way with d=0.05 to
+// catch the commas: play, pause, go back, skip ahead, sound off, keyboard, space bar, arrows.
+const WATCH_CUES = [1.29, 1.74, 2.26, 2.87, 4.15, 7.10, 8.26, 10.56];
+// When the 'A reel is a list of scenes' narrator names each part: title, caption, say, draw.
+const PART_CUES = [4.29, 5.22, 7.30, 9.21];
+// When the 'Share it anywhere' narrator starts 'and send someone the link'.
+const LINK_CUE = 9.28;
+
 const HEART = [
   '.kk.kk.',
   'krrkrrk',
@@ -90,7 +101,7 @@ export default {
         px.rect(NAVY, 0, 0, px.W, px.H);
         const parts = [['TITLE', 'Hello!'], ['CAPTION', 'Read along'], ['SAY', 'Spoken aloud'], ['DRAW', 'The picture']];
         parts.forEach(([name, hint], i) => {
-          const x = 12 + i * 76, y = 48, on = px.shown(t, i, 2.0, 3.2);
+          const x = 12 + i * 76, y = 48, on = t >= PART_CUES[i];
           px.window(x, y + (on ? px.bob(t + i, 2, 1) : 0), 68, 96, on ? CREAM : '#33506e');
           if (!on) return;
           px.text(name, x + 34, y + 8, 16, '#a52222', 'center');
@@ -188,17 +199,18 @@ export default {
         px.rect(NAVY, 0, 0, px.W, px.H);
         // light up each control as the narrator names it
         const during = (from, to) => t >= from && t < to;
-        const btns = [['BACK', 48, 3.4, 4.3], ['PLAY', 56, 1.8, 3.4], ['NEXT', 48, 4.3, 5.4], ['SOUND', 60, 5.4, 8.2]];
+        const [playAt, pauseAt, backAt, nextAt, soundAt, keysAt, spaceAt, arrowsAt] = WATCH_CUES;
+        const btns = [['BACK', 48, backAt, nextAt], ['PLAY', 56, playAt, backAt], ['NEXT', 48, nextAt, soundAt], ['SOUND', 60, soundAt, keysAt]];
         let x = 39;
         btns.forEach(([label, w, from, to]) => {
-          button(px, label === 'PLAY' && during(2.6, 3.4) ? 'PAUSE' : label, x, 46, w, during(from, to));
+          button(px, label === 'PLAY' && during(pauseAt, backAt) ? 'PAUSE' : label, x, 46, w, during(from, to));
           x += w + 10;
         });
         // the keyboard: space bar, then the arrow keys
-        px.window(57, 102, 120, 22, during(8.6, 10.8) ? GOLD : CREAM);
+        px.window(57, 102, 120, 22, during(spaceAt, arrowsAt) ? GOLD : CREAM);
         px.text('SPACE', 117, 106, 14, '#202020', 'center');
         [['<', 197], ['>', 233]].forEach(([k, kx], i) => {
-          px.window(kx, 102, 30, 22, t >= 10.8 && Math.floor(t * 2) % 2 === i ? GOLD : CREAM);
+          px.window(kx, 102, 30, 22, t >= arrowsAt && Math.floor(t * 2) % 2 === i ? GOLD : CREAM);
           px.text(k, kx + 15, 105, 16, '#202020', 'center');
         });
         for (let i = 0; i < 8; i++) px.rect(i === Math.floor(t / 1.5) % 8 ? GOLD : '#33506e', 104 + i * 14, 146, 10, 10);
@@ -226,9 +238,10 @@ export default {
           const tx = cx - 40, ty = cy + 12;
           const fx = 76 + (tx - 76) * p, fy = 118 - (118 - ty) * p - Math.sin(p * Math.PI) * 30;
           px.window(fx - 6, fy - 8, 12, 15, CREAM); px.rect(GOLD, fx - 3, fy - 4, 6, 2);
-          if (p < 0.25) px.text(n, fx, fy + 9, 12, CREAM, 'center');
+          // the computer's screen names the file it is sending
+          if (p < 1 / 3) px.text(n, 76, 133, 12, CREAM, 'center');
         });
-        if (px.shown(t, 0, 1, 7)) px.sign('SEND THE LINK', 214, 128, 16, GOLD);
+        if (px.shown(t, 0, 1, LINK_CUE)) px.sign('SEND THE LINK', 214, 128, 16, GOLD);
       }
     },
     {
@@ -239,15 +252,17 @@ export default {
         px.rect(NIGHT, 0, 0, px.W, px.H);
         px.window(16, 20, 190, 120, '#000000');
         const lines = ['$ npm run new my-reel', '$ edit reels/my-reel/reel.js', '$ npm run voices my-reel'];
+        // when the narrator starts each step, and then thanks us, in the recorded clip
+        const [, newAt, writeAt, recordAt, , thanksAt] = MAKE_CUES;
         lines.forEach((line, i) => {
-          const start = 3 + i * 3.2;
+          const start = [newAt, writeAt, recordAt][i];
           if (t < start) return;
-          const n = Math.min(line.length, Math.floor((t - start) * 14));
+          const n = Math.min(line.length, Math.floor((t - start) * 20));
           px.text(line.slice(0, n), 24, 30 + i * 22, 14, i === 1 ? GOLD : TEAL);
           if (n < line.length && Math.floor(t * 4) % 2) px.rect(CREAM, 24 + px.textW(line.slice(0, n), 14) + 1, 31 + i * 22, 5, 11);
         });
         filmReel(px, 260, 80 + px.bob(t, 3, 3), 30, t * 2, true);
-        if (px.shown(t, 0, 1, 13)) px.sign('THANKS FOR WATCHING', 160, 152, 16, GOLD);
+        if (t >= thanksAt) px.sign('THANKS FOR WATCHING', 160, 152, 16, GOLD);
       }
     }
   ]

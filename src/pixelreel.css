@@ -6,8 +6,9 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--page); color: var(--cream-lit); font-family: Verdana, Tahoma, "Segoe UI", sans-serif; }
-/* as wide as fits, but short enough that the controls stay on screen */
-main { max-width: max(360px, min(980px, calc((100vh - 392px) * 16 / 9 + 32px))); margin: 0 auto; padding: 16px; }
+/* as wide as fits, but short enough that the controls stay on screen; main.js sets
+   --caption-extra when a reel's longest caption needs more than the caption's min-height */
+main { max-width: max(360px, min(980px, calc((100vh - 392px - var(--caption-extra, 0px)) * 16 / 9 + 32px))); margin: 0 auto; padding: 16px; }
 h1 { font: 34px 'Orange Kid', monospace; margin: 2px 0 10px; color: var(--accent); letter-spacing: 1px; }
 .stage { position: relative; background: #000; border: 4px solid var(--cream); border-radius: 4px 4px 0 0; overflow: hidden; }
 canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; image-rendering: pixelated; cursor: pointer; }
@@ -47,6 +48,10 @@ button { font: bold 20px Verdana, sans-serif; color: var(--cream-lit); backgroun
 button:hover { background: var(--btn-hi); }
 button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 button.big { background: var(--go); min-width: 116px; }
+/* a button whose words change stacks them all and shows one, so it is always as wide as the longest */
+button.labels { display: inline-grid; justify-items: center; }
+button.labels > span { grid-area: 1 / 1; }
+button.labels > span:not(.on) { visibility: hidden; }
 button.big:hover { background: var(--go-hi); }
 .dots { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
 .dot { width: 16px; height: 16px; padding: 0; background: #33506e; border: 2px solid var(--cream); border-radius: 0; }
