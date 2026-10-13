@@ -243,6 +243,17 @@ describe('the reels in reels/', () => {
     }
   });
 
+  it('what-is-pixelreel: SEND THE LINK appears as the narrator says it', () => {
+    const { reel } = reels.find((r) => r.name === 'what-is-pixelreel');
+    const scene = reel.scenes.find((s) => s.title === 'Share it anywhere');
+    // during "or any other web host,", then just after "and send someone the link" starts
+    for (const [t, shown] of [[8.5, false], [9.4, true]]) {
+      const g = fakeContext(), px = createKit(g);
+      scene.draw(t, px, scene);
+      assert.equal(g.texts.some((x) => x.str === 'SEND THE LINK'), shown, `sign shown at ${t}s`);
+    }
+  });
+
   it('turns away a reel name that could escape the folder', () => {
     assert.ok(!REEL_NAME.test('../secret'));
     assert.ok(!REEL_NAME.test('Has Spaces'));

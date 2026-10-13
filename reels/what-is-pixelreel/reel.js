@@ -63,6 +63,8 @@ const MAKE_CUES = [0, 2.52, 4.94, 6.48, 8.34, 9.24];
 const WATCH_CUES = [1.29, 1.74, 2.26, 2.87, 4.15, 7.10, 8.26, 10.56];
 // When the 'A reel is a list of scenes' narrator names each part: title, caption, say, draw.
 const PART_CUES = [4.29, 5.22, 7.30, 9.21];
+// When the 'Share it anywhere' narrator starts 'and send someone the link'.
+const LINK_CUE = 9.28;
 
 const HEART = [
   '.kk.kk.',
@@ -238,7 +240,7 @@ export default {
           px.window(fx - 6, fy - 8, 12, 15, CREAM); px.rect(GOLD, fx - 3, fy - 4, 6, 2);
           if (p < 0.25) px.text(n, fx, fy + 9, 12, CREAM, 'center');
         });
-        if (px.shown(t, 0, 1, 7)) px.sign('SEND THE LINK', 214, 128, 16, GOLD);
+        if (px.shown(t, 0, 1, LINK_CUE)) px.sign('SEND THE LINK', 214, 128, 16, GOLD);
       }
     },
     {
