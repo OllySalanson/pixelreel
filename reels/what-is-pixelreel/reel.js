@@ -58,6 +58,9 @@ function button(px, label, x, y, w, lit) {
 // When the sentences of the last scene start in its recording, in seconds. Found from the
 // pauses in the clip: ffmpeg -i <clip>.mp3 -af silencedetect=n=-35dB:d=0.2 -f null -
 const MAKE_CUES = [0, 2.52, 4.94, 6.48, 8.34, 9.24];
+// When the 'Watch your way' narrator names each control, found the same way with d=0.05 to
+// catch the commas: play, pause, go back, skip ahead, sound off, keyboard, space bar, arrows.
+const WATCH_CUES = [1.29, 1.74, 2.26, 2.87, 4.15, 7.10, 8.26, 10.56];
 
 const HEART = [
   '.kk.kk.',
@@ -192,17 +195,18 @@ export default {
         px.rect(NAVY, 0, 0, px.W, px.H);
         // light up each control as the narrator names it
         const during = (from, to) => t >= from && t < to;
-        const btns = [['BACK', 48, 3.4, 4.3], ['PLAY', 56, 1.8, 3.4], ['NEXT', 48, 4.3, 5.4], ['SOUND', 60, 5.4, 8.2]];
+        const [playAt, pauseAt, backAt, nextAt, soundAt, keysAt, spaceAt, arrowsAt] = WATCH_CUES;
+        const btns = [['BACK', 48, backAt, nextAt], ['PLAY', 56, playAt, backAt], ['NEXT', 48, nextAt, soundAt], ['SOUND', 60, soundAt, keysAt]];
         let x = 39;
         btns.forEach(([label, w, from, to]) => {
-          button(px, label === 'PLAY' && during(2.6, 3.4) ? 'PAUSE' : label, x, 46, w, during(from, to));
+          button(px, label === 'PLAY' && during(pauseAt, backAt) ? 'PAUSE' : label, x, 46, w, during(from, to));
           x += w + 10;
         });
         // the keyboard: space bar, then the arrow keys
-        px.window(57, 102, 120, 22, during(8.6, 10.8) ? GOLD : CREAM);
+        px.window(57, 102, 120, 22, during(spaceAt, arrowsAt) ? GOLD : CREAM);
         px.text('SPACE', 117, 106, 14, '#202020', 'center');
         [['<', 197], ['>', 233]].forEach(([k, kx], i) => {
-          px.window(kx, 102, 30, 22, t >= 10.8 && Math.floor(t * 2) % 2 === i ? GOLD : CREAM);
+          px.window(kx, 102, 30, 22, t >= arrowsAt && Math.floor(t * 2) % 2 === i ? GOLD : CREAM);
           px.text(k, kx + 15, 105, 16, '#202020', 'center');
         });
         for (let i = 0; i < 8; i++) px.rect(i === Math.floor(t / 1.5) % 8 ? GOLD : '#33506e', 104 + i * 14, 146, 10, 10);

@@ -218,6 +218,18 @@ describe('the reels in reels/', () => {
     assert.ok(said.includes('THANKS FOR WATCHING'));
   });
 
+  it('what-is-pixelreel: each control lights up as the narrator names it', () => {
+    const { reel } = reels.find((r) => r.name === 'what-is-pixelreel');
+    const scene = reel.scenes.find((s) => s.title === 'Watch your way');
+    // just after "Play,", "pause,", "go back,", "or skip ahead" and "Turn the sound off" in the clip
+    for (const [t, named] of [[1.4, 'PLAY'], [1.9, 'PAUSE'], [2.4, 'BACK'], [3.0, 'NEXT'], [4.3, 'SOUND']]) {
+      const g = fakeContext(), px = createKit(g);
+      scene.draw(t, px, scene);
+      const lit = g.texts.filter((x) => x.c === '#202020' && x.y === 49).map((x) => x.str);
+      assert.deepEqual(lit, [named], `${named} is the lit control at ${t}s`);
+    }
+  });
+
   it('turns away a reel name that could escape the folder', () => {
     assert.ok(!REEL_NAME.test('../secret'));
     assert.ok(!REEL_NAME.test('Has Spaces'));
