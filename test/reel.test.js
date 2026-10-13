@@ -190,6 +190,22 @@ describe('the reels in reels/', () => {
     }
   });
 
+  it('showreel: the laptop waveform stays between its title bar and OFFLINE', () => {
+    const { reel } = reels.find((r) => r.name === 'showreel');
+    const scene = reel.scenes.find((s) => s.title === 'A voice, made at home');
+    for (let t = 0; t <= 13; t += 0.05) {
+      const g = fakeContext(), px = createKit(g);
+      scene.draw(t, px, scene);
+      const label = g.texts.find((x) => x.str === 'OFFLINE');
+      const bars = g.rects.filter((r) => r.c === '#55d6be' && r.w === 3 && r.x >= 116 && r.x < 204);
+      assert.equal(bars.length, 22);
+      for (const b of bars) {
+        assert.ok(b.y >= 63, `a bar reaches the title bar at ${t.toFixed(2)}s`);
+        assert.ok(b.y + b.h <= label.y - 3, `a bar touches OFFLINE at ${t.toFixed(2)}s`);
+      }
+    }
+  });
+
   it('turns away a reel name that could escape the folder', () => {
     assert.ok(!REEL_NAME.test('../secret'));
     assert.ok(!REEL_NAME.test('Has Spaces'));

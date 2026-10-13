@@ -633,8 +633,8 @@ function voiceScene(t, px) {
   px.rect(GREEN, 196, 54, 4, 4);
   for (let i = 0; i < 22; i++) {
     const a = speaking ? Math.abs(Math.sin(t * 8 + i * 0.9) * Math.sin(t * 2.7 + i * 0.37)) : 0;
-    const h = 2 + Math.round(a * 30);
-    px.rect(TEAL, 116 + i * 4, 88 - h / 2, 3, h);
+    const h = 2 + Math.round(a * 26);
+    px.rect(TEAL, 116 + i * 4, 80 - h / 2, 3, h);
   }
   px.text('OFFLINE', 160, 101, 12, GREEN, 'center');
   if (t >= model && t < pick) {
