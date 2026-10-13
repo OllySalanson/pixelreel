@@ -143,6 +143,41 @@ async function start() {
     $('cap').classList.toggle('typing', n < text.length);
   }
 
+  // Every caption gets the room the longest one needs, so the buttons below never jump as
+  // the scenes change, and the picture shrinks to keep that room on screen. Measured with
+  // each caption in full, then once more at the width that leaves.
+  function fitCaption() {
+    const cap = $('cap'), main = document.querySelector('main');
+    cap.style.minHeight = '';
+    main.style.removeProperty('--caption-extra');
+    const least = parseFloat(getComputedStyle(cap).minHeight) || 0;
+    const all = [['Press Play', reel.intro], ...scenes.map((s, i) => [`${i + 1}. ${s.title}`, s.caption])];
+    cap.classList.remove('typing');
+    $('cap-rest').textContent = '';
+    let room = least;
+    for (let pass = 0; pass < 3; pass++) {
+      cap.style.minHeight = '0px';
+      let tallest = least;
+      for (const [title, text] of all) {
+        $('cap-title').textContent = title;
+        $('cap-typed').textContent = text;
+        tallest = Math.max(tallest, cap.offsetHeight);
+      }
+      cap.style.minHeight = `${tallest}px`;
+      if (tallest === room) break;
+      room = tallest;
+      main.style.setProperty('--caption-extra', `${room - least}px`);
+    }
+    shownCaption = null;
+    paintCaption();
+  }
+  let fitting = false;
+  addEventListener('resize', () => {
+    if (fitting) return;
+    fitting = true;
+    requestAnimationFrame(() => { fitting = false; fitCaption(); });
+  });
+
   let shownSecond = -1;
   function paintProgress() {
     const at = player.positionMs;
@@ -236,6 +271,7 @@ async function start() {
     lastT = t;
   }
   await (document.fonts ? document.fonts.load("12px 'Orange Kid'").catch(() => {}) : null);
+  fitCaption();
   requestAnimationFrame(frame);
 
   // a small window into the player, for automated checks and the curious
