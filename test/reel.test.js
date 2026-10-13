@@ -208,6 +208,24 @@ describe('the reels in reels/', () => {
     }
   });
 
+  it('showreel: the laptop\'s file names fit on its screen without touching', () => {
+    const { reel } = reels.find((r) => r.name === 'showreel');
+    const scene = reel.scenes.find((s) => s.title === 'Put it anywhere');
+    const g = fakeContext(), px = createKit(g);
+    // Orange Kid widths at 8px, measured in the browser (the fake canvas's guess is too wide here)
+    const real = { 'index.html': 26.3, 'reel.js': 15.7, 'audio/': 17 };
+    const guess = g.measureText.bind(g);
+    g.measureText = (str) => (str in real && parseInt(g.font, 10) === 8 ? { width: real[str] } : guess(str));
+    scene.draw(0.5, px, scene);
+    const screen = g.rects.find((r) => r.c === '#0d1117' && r.w === 76 && r.h === 42);
+    const names = g.texts.filter((x) => x.str in real).map((x) => ({ str: x.str, l: x.x - real[x.str] / 2, r: x.x + real[x.str] / 2 }));
+    assert.equal(names.length, 3);
+    for (const n of names) {
+      assert.ok(n.l >= screen.x + 1 && n.r <= screen.x + screen.w - 1, `${n.str} spans ${n.l.toFixed(1)}-${n.r.toFixed(1)}, off the screen`);
+    }
+    names.slice(1).forEach((n, i) => assert.ok(n.l - names[i].r >= 3, `${names[i].str} and ${n.str} are too close`));
+  });
+
   it('showreel: the laptop waveform stays between its title bar and OFFLINE', () => {
     const { reel } = reels.find((r) => r.name === 'showreel');
     const scene = reel.scenes.find((s) => s.title === 'A voice, made at home');

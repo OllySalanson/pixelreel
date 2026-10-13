@@ -1094,10 +1094,10 @@ function anywhereScene(t, px) {
   px.rect('#9fb3c8', 10, 162, 100, 6);
   px.text('my-reel/', 26, 118, 12, GOLD);
   const files = ['index.html', 'reel.js', 'audio/'];
-  const spots = [[250, 36], [170, 96], [254, 110]];
+  const starts = [39, 64, 85], spots = [[250, 36], [170, 96], [254, 110]];   // spaced so each name fits on the screen
   if (t < goes + 0.6) px.sign('JUST STATIC FILES', 60, 92, 12, GOLD);
   files.forEach((name, i) => {
-    let x = 34 + i * 26, y = 138;
+    let x = starts[i], y = 138;
     if (t >= goes) {
       const at = [pages, host, banner][i] - 1.0, k = px.EASE.inOut(px.clamp((t - at) / 0.9, 0, 1));
       x = px.lerp(x, spots[i][0], k); y = px.lerp(y, spots[i][1], k) - Math.sin(k * Math.PI) * 40;
