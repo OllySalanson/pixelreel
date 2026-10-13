@@ -230,6 +230,19 @@ describe('the reels in reels/', () => {
     }
   });
 
+  it('what-is-pixelreel: each part of a scene appears as the narrator names it', () => {
+    const { reel } = reels.find((r) => r.name === 'what-is-pixelreel');
+    const scene = reel.scenes.find((s) => s.title === 'A reel is a list of scenes');
+    // during "four parts", then just after "A title.", "A caption,", "The words..." and "And a picture."
+    for (const [t, shown] of [[3.6, []], [4.4, ['TITLE']], [5.3, ['TITLE', 'CAPTION']],
+      [7.4, ['TITLE', 'CAPTION', 'SAY']], [9.3, ['TITLE', 'CAPTION', 'SAY', 'DRAW']]]) {
+      const g = fakeContext(), px = createKit(g);
+      scene.draw(t, px, scene);
+      const names = g.texts.filter((x) => x.c === '#a52222').map((x) => x.str);
+      assert.deepEqual(names, shown, `parts shown at ${t}s`);
+    }
+  });
+
   it('turns away a reel name that could escape the folder', () => {
     assert.ok(!REEL_NAME.test('../secret'));
     assert.ok(!REEL_NAME.test('Has Spaces'));

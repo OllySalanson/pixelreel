@@ -61,6 +61,8 @@ const MAKE_CUES = [0, 2.52, 4.94, 6.48, 8.34, 9.24];
 // When the 'Watch your way' narrator names each control, found the same way with d=0.05 to
 // catch the commas: play, pause, go back, skip ahead, sound off, keyboard, space bar, arrows.
 const WATCH_CUES = [1.29, 1.74, 2.26, 2.87, 4.15, 7.10, 8.26, 10.56];
+// When the 'A reel is a list of scenes' narrator names each part: title, caption, say, draw.
+const PART_CUES = [4.29, 5.22, 7.30, 9.21];
 
 const HEART = [
   '.kk.kk.',
@@ -97,7 +99,7 @@ export default {
         px.rect(NAVY, 0, 0, px.W, px.H);
         const parts = [['TITLE', 'Hello!'], ['CAPTION', 'Read along'], ['SAY', 'Spoken aloud'], ['DRAW', 'The picture']];
         parts.forEach(([name, hint], i) => {
-          const x = 12 + i * 76, y = 48, on = px.shown(t, i, 2.0, 3.2);
+          const x = 12 + i * 76, y = 48, on = t >= PART_CUES[i];
           px.window(x, y + (on ? px.bob(t + i, 2, 1) : 0), 68, 96, on ? CREAM : '#33506e');
           if (!on) return;
           px.text(name, x + 34, y + 8, 16, '#a52222', 'center');
