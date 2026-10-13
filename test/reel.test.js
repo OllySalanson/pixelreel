@@ -190,6 +190,24 @@ describe('the reels in reels/', () => {
     }
   });
 
+  it('showreel: the sleeper\'s z\'s rise clear of the chair and the monitor', () => {
+    const { reel } = reels.find((r) => r.name === 'showreel');
+    const scene = reel.scenes.find((s) => s.title === 'Nobody reads the docs');
+    for (let t = 0; t <= 12; t += 0.05) {
+      const g = fakeContext(), px = createKit(g);
+      scene.draw(t, px, scene);
+      const monitor = g.rects.find((r) => r.c === '#171717' && r.w === 62 && r.h === 40);
+      const chair = g.rects.find((r) => r.c === '#3b2c3f');
+      const zs = g.texts.filter((x) => x.str === 'z');
+      assert.equal(zs.length, 3);
+      for (const z of zs) {
+        const size = parseInt(z.font, 10), clear = z.x + size / 2 <= monitor.x - 1 || z.y + size <= monitor.y;
+        assert.ok(clear, `a z at (${z.x.toFixed(1)}, ${z.y.toFixed(1)}) is over the monitor at ${t.toFixed(2)}s`);
+        assert.ok(z.y + size <= chair.y, `a z at (${z.x.toFixed(1)}, ${z.y.toFixed(1)}) is over the sleeper at ${t.toFixed(2)}s`);
+      }
+    }
+  });
+
   it('showreel: the laptop waveform stays between its title bar and OFFLINE', () => {
     const { reel } = reels.find((r) => r.name === 'showreel');
     const scene = reel.scenes.find((s) => s.title === 'A voice, made at home');

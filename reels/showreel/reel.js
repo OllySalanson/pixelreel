@@ -269,7 +269,7 @@ function docsScene(t, px) {
     px.sprite(SLEEPER, 105, 95 + (Math.floor(t * 1.2) % 2), 3, false, { H: '#3b2a20', S: SKINS[1], C: TEAL });
     for (let i = 0; i < 3; i++) {
       const k = (t * 0.6 + i / 3) % 1;
-      px.text('z', 150 + i * 5 + Math.sin(k * 6) * 3, 90 - k * 34, 10 + i * 3, k > 0.85 ? MUTED : CREAM);
+      px.text('z', 134 + i * 5 + Math.sin(k * 6) * 3, 76 - k * 32, 10 + i * 3, k > 0.85 ? MUTED : CREAM);
     }
     // the docs nobody reads land on the desk
     if (t >= nobody) {
