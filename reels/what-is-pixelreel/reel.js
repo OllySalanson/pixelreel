@@ -55,6 +55,10 @@ function button(px, label, x, y, w, lit) {
   px.text(label, x + w / 2, y + 3, 14, lit ? '#202020' : CREAM, 'center');
 }
 
+// When the sentences of the last scene start in its recording, in seconds. Found from the
+// pauses in the clip: ffmpeg -i <clip>.mp3 -af silencedetect=n=-35dB:d=0.2 -f null -
+const MAKE_CUES = [0, 2.52, 4.94, 6.48, 8.34, 9.24];
+
 const HEART = [
   '.kk.kk.',
   'krrkrrk',
@@ -239,15 +243,17 @@ export default {
         px.rect(NIGHT, 0, 0, px.W, px.H);
         px.window(16, 20, 190, 120, '#000000');
         const lines = ['$ npm run new my-reel', '$ edit reels/my-reel/reel.js', '$ npm run voices my-reel'];
+        // when the narrator starts each step, and then thanks us, in the recorded clip
+        const [, newAt, writeAt, recordAt, , thanksAt] = MAKE_CUES;
         lines.forEach((line, i) => {
-          const start = 3 + i * 3.2;
+          const start = [newAt, writeAt, recordAt][i];
           if (t < start) return;
-          const n = Math.min(line.length, Math.floor((t - start) * 14));
+          const n = Math.min(line.length, Math.floor((t - start) * 20));
           px.text(line.slice(0, n), 24, 30 + i * 22, 14, i === 1 ? GOLD : TEAL);
           if (n < line.length && Math.floor(t * 4) % 2) px.rect(CREAM, 24 + px.textW(line.slice(0, n), 14) + 1, 31 + i * 22, 5, 11);
         });
         filmReel(px, 260, 80 + px.bob(t, 3, 3), 30, t * 2, true);
-        if (px.shown(t, 0, 1, 13)) px.sign('THANKS FOR WATCHING', 160, 152, 16, GOLD);
+        if (t >= thanksAt) px.sign('THANKS FOR WATCHING', 160, 152, 16, GOLD);
       }
     }
   ]

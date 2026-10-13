@@ -206,6 +206,18 @@ describe('the reels in reels/', () => {
     }
   });
 
+  it('what-is-pixelreel: the last scene types its steps and says thanks before its words end', () => {
+    const { reel, manifest } = reels.find((r) => r.name === 'what-is-pixelreel');
+    const scene = reel.scenes.find((s) => s.title === 'Make your own');
+    const g = fakeContext(), px = createKit(g);
+    scene.draw(clipLookup(manifest, '')(scene).seconds - 0.1, px, scene);
+    const said = g.texts.map((x) => x.str);
+    for (const line of ['$ npm run new my-reel', '$ edit reels/my-reel/reel.js', '$ npm run voices my-reel']) {
+      assert.ok(said.includes(line), `"${line}" is typed out in full`);
+    }
+    assert.ok(said.includes('THANKS FOR WATCHING'));
+  });
+
   it('turns away a reel name that could escape the folder', () => {
     assert.ok(!REEL_NAME.test('../secret'));
     assert.ok(!REEL_NAME.test('Has Spaces'));
