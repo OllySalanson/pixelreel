@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import { createKit } from '../src/kit.js';
 import { CAPTION_STYLES, clipLookup, defaultDraw, normalizeReel, REEL_NAME, ReelError } from '../src/reel.js';
-import { fakeContext } from './fake-canvas.js';
+import { coverage, fakeContext } from './fake-canvas.js';
 
 const scene = (extra = {}) => ({ title: 'A', caption: 'Read this.', ...extra });
 
@@ -177,6 +177,18 @@ describe('the reels in reels/', () => {
       });
     });
   }
+
+  it('showreel: the stopwatch hand never sweeps through its readout', () => {
+    const { reel } = reels.find((r) => r.name === 'showreel');
+    const scene = reel.scenes.find((s) => s.title === 'Make your own');
+    for (let t = 0; t <= 8; t += 0.1) {
+      const g = fakeContext(), px = createKit(g);
+      scene.draw(t, px, scene);
+      const readout = g.texts.find((x) => /^0:\d\d$/.test(x.str));
+      const w = readout.str.length * 6, box = { x: readout.x - w / 2, y: readout.y, w, h: 12 };
+      assert.equal(coverage(g.rects.filter((r) => r.c === '#d63a3a'), box), 0, `the hand stays clear of ${readout.str}`);
+    }
+  });
 
   it('turns away a reel name that could escape the folder', () => {
     assert.ok(!REEL_NAME.test('../secret'));

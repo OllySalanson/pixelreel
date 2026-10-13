@@ -1243,8 +1243,11 @@ function makeScene(t, px) {
   const secs = Math.min(59, Math.floor((t / thatsIt) * 59));
   px.circle(INK, 64, 150, 25); px.circle(LIGHT, 64, 150, 23); px.rect(INK, 60, 120, 8, 6); px.rect(GREY, 61, 121, 6, 4);
   const a = (secs / 60) * 6.283 - 1.5708;
-  px.line(RED, 64, 150, 64 + Math.cos(a) * 18, 150 + Math.sin(a) * 18);
-  px.text(`0:${String(secs).padStart(2, '0')}`, 64, 154, 12, INK, 'center');
+  // the hand turns above a little readout window, never through it
+  px.line(RED, 64, 143, 64 + Math.cos(a) * 12, 143 + Math.sin(a) * 12);
+  px.rect(INK, 63, 142, 3, 3);
+  px.window(53, 157, 22, 13, '#cfe3b5');
+  px.text(`0:${String(secs).padStart(2, '0')}`, 64, 158, 12, INK, 'center');
   stamp(px, 'DONE!', 130, 150, t, thatsIt, GREEN, 20);
   if (t >= thatsIt) px.confetti(t, thatsIt, 130, 150, 30);
   // the hard bit
