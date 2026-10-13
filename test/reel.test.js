@@ -254,6 +254,23 @@ describe('the reels in reels/', () => {
     }
   });
 
+  it('what-is-pixelreel: the file being sent is named inside the computer screen', () => {
+    const { reel } = reels.find((r) => r.name === 'what-is-pixelreel');
+    const scene = reel.scenes.find((s) => s.title === 'Share it anywhere');
+    const names = ['index.html', 'reel.js', 'audio'];
+    // the screen inside the computer's black frame
+    const [sx, sy, sw, sh] = [43, 121, 66, 36];
+    for (let t = 0; t < 6; t += 0.05) {
+      const g = fakeContext(), px = createKit(g);
+      scene.draw(t, px, scene);
+      const labels = g.texts.filter((x) => names.includes(x.str));
+      assert.equal(labels.length, 1, `one file named at ${t.toFixed(2)}s`);
+      const [{ str, x, y }] = labels, w = px.textW(str, 12);
+      assert.ok(x - w / 2 >= sx && x + w / 2 <= sx + sw && y >= sy && y + 12 <= sy + sh,
+        `${str} at (${x}, ${y.toFixed(1)}) stays inside the screen at ${t.toFixed(2)}s`);
+    }
+  });
+
   it('turns away a reel name that could escape the folder', () => {
     assert.ok(!REEL_NAME.test('../secret'));
     assert.ok(!REEL_NAME.test('Has Spaces'));

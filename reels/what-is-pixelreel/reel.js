@@ -238,7 +238,8 @@ export default {
           const tx = cx - 40, ty = cy + 12;
           const fx = 76 + (tx - 76) * p, fy = 118 - (118 - ty) * p - Math.sin(p * Math.PI) * 30;
           px.window(fx - 6, fy - 8, 12, 15, CREAM); px.rect(GOLD, fx - 3, fy - 4, 6, 2);
-          if (p < 0.25) px.text(n, fx, fy + 9, 12, CREAM, 'center');
+          // the computer's screen names the file it is sending
+          if (p < 1 / 3) px.text(n, 76, 133, 12, CREAM, 'center');
         });
         if (px.shown(t, 0, 1, LINK_CUE)) px.sign('SEND THE LINK', 214, 128, 16, GOLD);
       }
