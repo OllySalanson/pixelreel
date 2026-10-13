@@ -1,20 +1,43 @@
 /* The player's look. Everything about one reel lives in reels/<name>/reel.js. */
 @font-face { font-family: 'Orange Kid'; src: url('../fonts/orange-kid.woff2') format('woff2'); font-display: block; }
 :root {
-  --page: #0b1220; --bar: #13203a; --cream: #ebeac5; --cream-lit: #f8f7dd;
+  --page: #0b1220; --bar: #13203a; --track: #22344f; --cream: #ebeac5; --cream-lit: #f8f7dd;
   --muted: #9cafc7; --accent: #55d6be; --gold: #ffcc4d; --btn: #24476b; --btn-hi: #2f5d8a; --go: #2e7d32; --go-hi: #388e3c;
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--page); color: var(--cream-lit); font-family: Verdana, Tahoma, "Segoe UI", sans-serif; }
 /* as wide as fits, but short enough that the controls stay on screen */
-main { max-width: max(360px, min(980px, calc((100vh - 330px) * 16 / 9 + 32px))); margin: 0 auto; padding: 16px; }
+main { max-width: max(360px, min(980px, calc((100vh - 350px) * 16 / 9 + 32px))); margin: 0 auto; padding: 16px; }
 h1 { font: 34px 'Orange Kid', monospace; margin: 2px 0 10px; color: var(--accent); letter-spacing: 1px; }
-.stage { background: #000; border: 4px solid var(--cream); border-radius: 4px 4px 0 0; overflow: hidden; }
-canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; image-rendering: pixelated; }
-.caption { min-height: 150px; background: var(--bar); border: 4px solid var(--cream); border-top: 0;
+.stage { position: relative; background: #000; border: 4px solid var(--cream); border-radius: 4px 4px 0 0; overflow: hidden; }
+canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; image-rendering: pixelated; cursor: pointer; }
+
+/* the big Play button over the picture, before the reel starts and after it ends */
+.bigplay { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 14px;
+  font: 44px 'Orange Kid', monospace; letter-spacing: 1px; line-height: 1; padding: 12px 28px 14px 24px; background: var(--go);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.5); }
+.bigplay svg { width: 28px; height: 32px; fill: currentColor; shape-rendering: crispEdges; }
+.bigplay:hover { background: var(--go-hi); }
+.bigplay[hidden] { display: none; }
+
+/* the progress bar: click or drag to move through the reel; the ticks are scene starts */
+.seek { position: relative; height: 16px; background: var(--track); border: solid var(--cream); border-width: 0 4px; cursor: pointer; touch-action: none; }
+.seek[hidden] { display: none; }
+.seek:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.seek-fill { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--gold); }
+.seek-fill::after { content: ''; position: absolute; top: 0; bottom: 0; right: -3px; width: 6px; background: var(--cream-lit); }
+.seek .tick { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--page); opacity: 0.55; pointer-events: none; }
+
+.caption { min-height: 150px; background: var(--bar); border: 4px solid var(--cream);
   border-radius: 0 0 4px 4px; padding: 12px 20px 14px; font-size: 23px; line-height: 1.55; letter-spacing: 0.3px; }
 .caption .title { font: 34px 'Orange Kid', monospace; color: var(--gold); display: block; margin-bottom: 4px; }
+.caption .rest { visibility: hidden; }
+/* the typewriter's cursor takes no room, so lines never reflow as the words arrive */
+.caption.typing #cap-typed::after { content: ''; display: inline-block; width: 0.42em; height: 0.95em; margin-right: -0.42em;
+  vertical-align: -0.12em; background: var(--gold); }
 .caption.error .body { white-space: pre-line; font-size: 18px; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+
 .controls { display: flex; gap: 10px; margin-top: 14px; align-items: center; flex-wrap: wrap; }
 .controls[hidden] { display: none; }
 button { font: bold 20px Verdana, sans-serif; color: var(--cream-lit); background: var(--btn); border: 3px solid var(--cream);
@@ -23,17 +46,36 @@ button:hover { background: var(--btn-hi); }
 button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 button.big { background: var(--go); min-width: 128px; }
 button.big:hover { background: var(--go-hi); }
+.time { font: 26px 'Orange Kid', monospace; color: var(--muted); min-width: 88px; padding-left: 4px; white-space: nowrap; }
 .dots { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
 .dot { width: 16px; height: 16px; padding: 0; background: #33506e; border: 2px solid var(--cream); border-radius: 0; }
 .dot:hover { background: var(--btn-hi); }
 .dot.on { background: var(--gold); }
 .note { color: var(--muted); font-size: 15px; margin-top: 12px; line-height: 1.5; }
 .note a { color: var(--accent); }
+
 @media (max-width: 600px) {
   main { padding: 12px; }
   .caption { font-size: 18px; min-height: 130px; padding: 10px 14px 12px; }
   .caption .title { font-size: 26px; }
   button { font-size: 16px; padding: 8px 12px; }
   button.big { min-width: 96px; }
+  .bigplay { font-size: 32px; padding: 8px 18px 10px 16px; gap: 10px; }
+  .bigplay svg { width: 21px; height: 24px; }
   .dots { margin-left: 0; width: 100%; }
 }
+
+/* ?embed: just the player, to sit in an iframe on another page */
+body.embed { background: var(--page); }
+body.embed main { max-width: max(320px, min(100%, calc((100vh - 230px) * 16 / 9))); padding: 6px; }
+body.embed h1, body.embed .note { display: none; }
+body.embed .caption { min-height: 0; font-size: clamp(14px, 2.6vw, 20px); padding: 8px 14px 10px; }
+body.embed .caption .title { font-size: clamp(20px, 3.6vw, 28px); margin-bottom: 2px; }
+body.embed .controls { margin-top: 8px; gap: 8px; }
+body.embed .controls > button { font-size: 15px; padding: 6px 12px; }
+body.embed .controls > button.big { min-width: 88px; }
+body.embed .bigplay { font-size: clamp(26px, 6vw, 44px); padding: 0.25em 0.6em 0.3em 0.55em; gap: 0.3em; }
+body.embed .bigplay svg { width: 0.65em; height: 0.75em; }
+body.embed .time { font-size: 22px; }
+body.embed .dot { width: 12px; height: 12px; }
+button:disabled { opacity: 0.6; cursor: progress; }

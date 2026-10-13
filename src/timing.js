@@ -38,3 +38,51 @@ export function narrationMs(scene, clip) {
 export function speechWatchdogMs(text) {
   return estimateSpeechMs(text) * 2 + 5000;
 }
+
+/**
+ * Lays the scenes end to end: where each one starts on the reel's clock and how long it
+ * lasts, its narration plus the pause after it. `durations` are narration lengths in ms.
+ * Returns { starts, spans, total }, all in milliseconds.
+ */
+export function timeline(durations, gapMs = GAP_MS) {
+  const starts = [], spans = [];
+  let at = 0;
+  for (const d of durations) {
+    starts.push(at);
+    const span = Math.max(0, Number(d) || 0) + gapMs;
+    spans.push(span);
+    at += span;
+  }
+  return { starts, spans, total: at };
+}
+
+/** Which scene is playing `ms` into the reel, and how far into it: { index, offset }. */
+export function locate(line, ms) {
+  const { starts, total } = line;
+  if (!starts.length) return { index: 0, offset: 0 };
+  const at = Math.max(0, Math.min(total, Number(ms) || 0));
+  let index = starts.length - 1;
+  while (index > 0 && starts[index] > at) index--;
+  return { index, offset: at - starts[index] };
+}
+
+/** A time for people: 83000 becomes "1:23". */
+export function clockTime(ms) {
+  const s = Math.max(0, Math.floor((Number(ms) || 0) / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+/** Typewriter captions finish typing at this share of the narration, so the words lead the voice. */
+export const TYPE_SHARE = 0.7;
+
+/** ...but never type slower than this many characters a second. */
+export const TYPE_MIN_CPS = 12;
+
+/** How many characters of `text` a typewriter caption shows `elapsedMs` into narration lasting `narrationMs`. */
+export function typedLength(text, elapsedMs, narrationMs) {
+  const len = String(text ?? '').length;
+  if (!len) return 0;
+  const typingMs = Math.min(narrationMs * TYPE_SHARE, (len / TYPE_MIN_CPS) * 1000);
+  if (!(typingMs > 0)) return len;
+  return Math.max(0, Math.min(len, Math.ceil((len * elapsedMs) / typingMs)));
+}

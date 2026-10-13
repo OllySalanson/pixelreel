@@ -1,60 +1,36 @@
-// Wires a reel to the page: loads reels/<name>/reel.js and its audio manifest, then
-// draws scenes on the canvas and keeps the caption, buttons and dots in step.
+// Wires a reel to the page: loads it, then draws scenes on the canvas and keeps the
+// caption, progress bar, buttons and dots in step with the player.
 import { createKit, W, H } from './kit.js';
-import { normalizeReel, clipLookup, REEL_NAME } from './reel.js';
+import { loadReel } from './load.js';
 import { createNarrator } from './narrator.js';
 import { Player } from './player.js';
+import { clockTime, narrationMs, typedLength } from './timing.js';
+import { transitionMs } from './transitions.js';
 
 const FRAME_MS = 50;   // about 20 frames a second: plenty for pixel art, and easy on the machine
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
-
-async function loadManifest(url) {
-  try {
-    const res = await fetch(url, { cache: 'no-cache' });
-    return res.ok ? await res.json() : null;
-  } catch {
-    return null;   // no recordings yet (or opened from disk): the browser's voice reads instead
-  }
-}
+const calm = matchMedia('(prefers-reduced-motion: reduce)');
 
 function showError(message) {
   $('heading').textContent = 'This reel could not be played';
-  const cap = $('cap');
-  cap.querySelector('.title').textContent = 'Something is wrong';
-  cap.querySelector('.body').textContent = message;
-  cap.classList.add('error');
-  document.querySelector('.controls').hidden = true;
+  $('cap-title').textContent = 'Something is wrong';
+  $('cap-typed').textContent = message;
+  $('cap-body').removeAttribute('aria-hidden');
+  $('cap').classList.add('error');
+  for (const el of [document.querySelector('.controls'), $('seek')]) el.hidden = true;
 }
 
 async function start() {
-  const name = params.get('reel') || document.body.dataset.reel;
-  if (!REEL_NAME.test(name ?? '')) throw new Error(`"${name}" is not a reel name. Use lowercase letters, digits and dashes, for example ?reel=my-reel.`);
-  const base = `reels/${name}/`;
-
-  let mod;
-  try {
-    mod = await import(new URL(base + 'reel.js', location.href).href);
-  } catch (err) {
-    console.error(err);
-    throw new Error(`Could not load ${base}reel.js. Check the reel name, and look in the browser console for a typo in the file.`, { cause: err });
-  }
-  const reel = normalizeReel(mod.default, { base });
-  const clipFor = clipLookup(await loadManifest(base + 'audio/manifest.json'), base + 'audio/');
+  if (params.has('embed')) document.body.classList.add('embed');
+  const { reel, clipFor, images } = await loadReel(params.get('reel') || document.body.dataset.reel);
   const scenes = reel.scenes;
-
-  const images = {};
-  for (const [key, src] of Object.entries(reel.images)) {
-    const im = new Image();
-    im.onerror = () => console.warn(`picture "${key}" did not load from ${src}`);
-    im.src = src;
-    images[key] = im;
-  }
+  const durations = scenes.map((s) => narrationMs(s, clipFor(s)));
 
   const canvas = $('stage'), g = canvas.getContext('2d');
   const px = createKit(g, images);
-  const cap = $('cap'), dots = $('dots'), playBtn = $('play'), muteBtn = $('mute');
+  const dots = $('dots'), playBtn = $('play'), muteBtn = $('mute'), bigPlay = $('bigplay'), seek = $('seek');
   document.title = reel.title + ' - pixelreel';
   $('heading').textContent = reel.title;
   $('note').textContent = reel.note;
@@ -67,26 +43,56 @@ async function start() {
     speech: window.speechSynthesis,
     Utterance: window.SpeechSynthesisUtterance
   });
-
-  let sceneStart = performance.now(), introShowing = !params.has('scene');
-  const player = new Player({ count: scenes.length, narrator, onChange: render });
+  const player = new Player({ count: scenes.length, narrator, onChange: render, durations });
+  const total = player.timeline.total;
+  seek.setAttribute('aria-valuemax', String(Math.round(total / 1000)));
+  for (const at of player.timeline.starts.slice(1)) {
+    const tick = document.createElement('div');
+    tick.className = 'tick';
+    tick.style.left = `${(100 * at) / total}%`;
+    seek.appendChild(tick);
+  }
 
   scenes.forEach((s, i) => {
     const d = document.createElement('button');
     d.className = 'dot';
     d.title = `${i + 1}. ${s.title}`;
     d.setAttribute('aria-label', `Scene ${i + 1}: ${s.title}`);
-    d.onclick = () => player.goTo(i);
+    d.onclick = () => { leaveIntro(); player.goTo(i); };
     dots.appendChild(d);
   });
 
-  let shownIndex = -1;
+  let intro = !params.has('scene');        // the "Press Play" card, until anyone does anything
+  let shownIndex = -1, previewStart = performance.now(), lastT = 0;
+  let fade = null;                          // a transition in progress: { from, kind, start, ms, t }
+  let scrubbing = null;                     // dragging the progress bar: { resume }
+  let typed = 0, typedText = null;          // typewriter captions: how much of which caption is typed
+  let shownCaption = null;
+  const warmed = new Set(), broken = new Set();
+
+  function leaveIntro() { intro = false; }
+
+  // The picture's clock: the narration's while playing or paused part-way; a free-running
+  // preview for a scene that has not started (before Play, or browsing while paused).
+  function sceneTime(now) {
+    if (player.playing || player.ended || player.held) return player.elapsedMs / 1000;
+    return (now - previewStart) / 1000;
+  }
+
   function render(state) {
-    if (state.index !== shownIndex) { shownIndex = state.index; sceneStart = performance.now(); }
-    if (state.playing || state.index > 0) introShowing = false;
-    const s = scenes[state.index];
-    cap.querySelector('.title').textContent = introShowing ? 'Press Play' : `${state.index + 1}. ${s.title}`;
-    cap.querySelector('.body').textContent = introShowing ? reel.intro : s.caption;
+    const now = performance.now();
+    if (state.index !== shownIndex) {
+      const kind = calm.matches || scrubbing || shownIndex < 0 ? 'cut' : scenes[state.index].transition;
+      fade = transitionMs(kind) ? { from: shownIndex, kind, start: now, ms: transitionMs(kind), t: lastT } : null;
+      shownIndex = state.index;
+      previewStart = now;
+      typedText = null;
+      const s = scenes[state.index];
+      $('cap-live').textContent = `Scene ${state.index + 1} of ${scenes.length}: ${s.title}. ${s.caption}`;
+      const next = scenes[state.index + 1], nextClip = next && clipFor(next);
+      if (nextClip && !warmed.has(nextClip.url)) { warmed.add(nextClip.url); new Audio().src = nextClip.url; }   // so it starts at once
+    }
+    if (state.started) intro = false;
     [...dots.children].forEach((d, j) => {
       d.classList.toggle('on', j === state.index);
       if (j === state.index) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current');
@@ -94,38 +100,123 @@ async function start() {
     playBtn.textContent = state.playing ? 'Pause' : state.ended ? 'Play again' : 'Play';
     muteBtn.textContent = state.muted ? 'Sound: off' : 'Sound: on';
     muteBtn.setAttribute('aria-pressed', String(!state.muted));
-    const next = scenes[state.index + 1];
-    const nextClip = next && clipFor(next);
-    if (nextClip) new Audio().src = nextClip.url;   // warm the next clip so it starts at once
+    bigPlay.hidden = !(intro || state.ended);
+    $('bigplay-label').textContent = state.ended ? 'Play again' : 'Play';
+    paintCaption();
   }
 
-  playBtn.onclick = () => player.toggle();
-  $('next').onclick = () => player.next();
-  $('back').onclick = () => player.back();
+  // The caption, typed out as the narrator speaks when the scene asks for it. It never
+  // un-types, and shows in full whenever the reel is not playing, so it can be read.
+  function paintCaption() {
+    const s = scenes[player.index];
+    const title = intro ? 'Press Play' : `${player.index + 1}. ${s.title}`;
+    const text = intro ? reel.intro : s.caption;
+    if (text !== typedText) { typedText = text; typed = 0; }
+    let n = text.length;
+    if (!intro && s.captions === 'typewriter' && !calm.matches && player.playing) {
+      n = Math.max(typed, typedLength(text, player.elapsedMs, durations[player.index]));
+    }
+    typed = n;
+    const key = `${title}|${text}|${n}`;
+    if (key === shownCaption) return;
+    shownCaption = key;
+    $('cap-title').textContent = title;
+    $('cap-typed').textContent = text.slice(0, n);
+    $('cap-rest').textContent = text.slice(n);
+    $('cap').classList.toggle('typing', n < text.length);
+  }
+
+  let shownSecond = -1;
+  function paintProgress() {
+    const at = player.positionMs;
+    $('seek-fill').style.width = `${(100 * at) / total}%`;
+    const second = Math.floor(at / 1000);
+    if (second === shownSecond) return;
+    shownSecond = second;
+    $('time').textContent = `${clockTime(at)} / ${clockTime(total)}`;
+    seek.setAttribute('aria-valuenow', String(second));
+    seek.setAttribute('aria-valuetext', `${clockTime(at)} of ${clockTime(total)}, scene ${player.index + 1}: ${scenes[player.index].title}`);
+  }
+
+  function seekToPointer(e) {
+    const r = seek.getBoundingClientRect();
+    player.seek(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * total);
+  }
+  seek.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    seek.focus();
+    seek.setPointerCapture(e.pointerId);
+    leaveIntro();
+    scrubbing = { resume: player.playing };
+    player.pause();   // scrub with the picture held, then carry on from wherever it lands
+    seekToPointer(e);
+  });
+  seek.addEventListener('pointermove', (e) => { if (scrubbing) seekToPointer(e); });
+  const stopScrubbing = () => {
+    if (!scrubbing) return;
+    const { resume } = scrubbing;
+    scrubbing = null;
+    if (resume) player.play();
+  };
+  seek.addEventListener('pointerup', stopScrubbing);
+  seek.addEventListener('pointercancel', stopScrubbing);
+  seek.addEventListener('keydown', (e) => {
+    const step = { ArrowLeft: -5000, ArrowDown: -5000, ArrowRight: 5000, ArrowUp: 5000, PageDown: -30000, PageUp: 30000 }[e.key];
+    const to = step ? player.positionMs + step : e.key === 'Home' ? 0 : e.key === 'End' ? total : null;
+    if (to === null) return;
+    e.preventDefault();
+    e.stopPropagation();   // the arrow keys move a whole scene everywhere else
+    leaveIntro();
+    player.seek(to);
+  });
+
+  const play = () => { leaveIntro(); player.toggle(); };
+  playBtn.onclick = play;
+  bigPlay.onclick = () => { leaveIntro(); player.play(); };
+  canvas.onclick = play;
+  $('next').onclick = () => { leaveIntro(); player.next(); };
+  $('back').onclick = () => { leaveIntro(); player.back(); };
   muteBtn.onclick = () => player.toggleMuted();
   document.addEventListener('keydown', (e) => {
     if (e.altKey || e.ctrlKey || e.metaKey) return;
     if (e.target instanceof HTMLButtonElement && (e.key === ' ' || e.key === 'Enter')) return;
-    if (e.key === ' ') { e.preventDefault(); player.toggle(); }
-    else if (e.key === 'ArrowRight') { e.preventDefault(); player.next(); }
-    else if (e.key === 'ArrowLeft') { e.preventDefault(); player.back(); }
+    if (e.key === ' ') { e.preventDefault(); play(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); leaveIntro(); player.next(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); leaveIntro(); player.back(); }
     else if (e.key.toLowerCase() === 'm') player.toggleMuted();
   });
 
-  // ?scene=N&t=S opens scene N (counting from 1), S seconds in: handy for checking a picture
-  player.goTo((Number(params.get('scene')) || 1) - 1);
-  sceneStart -= (Number(params.get('t')) || 0) * 1000;
+  // ?scene=N&t=S holds scene N (counting from 1) at S seconds in: handy for checking a picture
+  player.goTo((Number(params.get('scene')) || 1) - 1, (Number(params.get('t')) || 0) * 1000);
+
+  function paint(s, t, i) {
+    try {
+      s.draw(t, px, s);
+    } catch (err) {
+      if (!broken.has(i)) { broken.add(i); console.error(`scene ${i + 1} could not draw:`, err); }
+    }
+  }
 
   let last = 0;
   function frame(now) {
     requestAnimationFrame(frame);
     if (now - last < FRAME_MS) return;
     last = now;
+    paintCaption();
+    paintProgress();
     g.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
     g.imageSmoothingEnabled = false;
     g.clearRect(0, 0, W, H);
-    const s = scenes[player.index];
-    try { s.draw((now - sceneStart) / 1000, px, s); } catch (err) { console.error(`scene ${player.index + 1} could not draw:`, err); }
+    const i = player.index, t = sceneTime(now);
+    if (fade && now - fade.start >= fade.ms) fade = null;
+    if (fade) {
+      const { from, kind, start, ms } = fade, oldT = fade.t + (now - start) / 1000;
+      px.transition(kind, (now - start) / ms, () => paint(scenes[from], oldT, from), () => paint(scenes[i], t, i));
+    } else {
+      paint(scenes[i], t, i);
+    }
+    lastT = t;
   }
   await (document.fonts ? document.fonts.load("12px 'Orange Kid'").catch(() => {}) : null);
   requestAnimationFrame(frame);

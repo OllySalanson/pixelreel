@@ -1,0 +1,61 @@
+# A reel for every release. When a release is published, this turns its notes into a reel,
+# records the narration with Kokoro, checks it, commits it to the default branch, and runs
+# the Pages workflow so the new reel goes live at ?reel=release-<tag>.
+#
+# To use it, copy this file to .github/workflows/release-reel.yml in your copy of pixelreel
+# (with GitHub Pages turned on, see docs/sharing.md).
+name: Release reel
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write   # to commit the new reel
+  actions: write    # to run the Pages workflow afterwards
+
+jobs:
+  reel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: Cache the Kokoro model
+        uses: actions/cache@v4
+        with:
+          path: models
+          key: kokoro-v1.0
+      - name: Set up the voice
+        run: scripts/setup-voices.sh
+      - name: Make and record the reel
+        env:
+          NOTES: ${{ github.event.release.body }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          name="release-$(printf '%s' "$TAG" | tr 'A-Z.' 'a-z-' | tr -cd 'a-z0-9-')"
+          printf '%s\n' "$NOTES" | npm run new "$name" -- --from - --title "What's new in $TAG"
+          npm run voices "$name"
+          npm run check "$name" -- --recorded
+          echo "REEL=$name" >> "$GITHUB_ENV"
+      - name: Commit the reel
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "reels/$REEL"
+          git commit -m "Add the reel for $TAG"
+          git push
+      - name: Publish it
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref "${{ github.event.repository.default_branch }}"

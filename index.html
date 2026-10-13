@@ -14,13 +14,26 @@
 <body data-reel="what-is-pixelreel">
 <main>
   <h1 id="heading">pixelreel</h1>
-  <div class="stage"><canvas id="stage" width="960" height="540" role="img" aria-label="Scene pictures"></canvas></div>
-  <div class="caption" id="cap" aria-live="polite"><span class="title">Loading</span><span class="body"></span></div>
+  <div class="stage">
+    <canvas id="stage" width="960" height="540" role="img" aria-label="Scene pictures"></canvas>
+    <button id="bigplay" class="bigplay" type="button" hidden>
+      <svg viewBox="0 0 7 8" aria-hidden="true"><path d="M0 0h2v1h2v1h2v1h1v2h-1v1h-2v1h-2v1h-2z"/></svg><span id="bigplay-label">Play</span>
+    </button>
+  </div>
+  <div class="seek" id="seek" role="slider" tabindex="0" aria-label="Position in the reel" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
+    <div class="seek-fill" id="seek-fill"></div>
+  </div>
+  <div class="caption" id="cap">
+    <span class="title" id="cap-title">Loading</span>
+    <span class="body" id="cap-body" aria-hidden="true"><span id="cap-typed"></span><span class="rest" id="cap-rest"></span></span>
+  </div>
+  <p class="sr-only" id="cap-live" aria-live="polite"></p>
   <div class="controls">
     <button id="back" type="button">Back</button>
     <button id="play" type="button" class="big">Play</button>
     <button id="next" type="button">Next</button>
     <button id="mute" type="button" aria-pressed="true">Sound: on</button>
+    <span class="time" id="time" aria-hidden="true">0:00 / 0:00</span>
     <div class="dots" id="dots" aria-label="Scenes"></div>
   </div>
   <p class="note" id="note"></p>

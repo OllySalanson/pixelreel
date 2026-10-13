@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-// Records a reel's narration with Kokoro: npm run voices my-reel [-- --voice bf_emma --speed 1 --all]
+// Records a reel's narration: npm run voices my-reel [-- --voice bf_emma --speed 1 --all]
+// With Kokoro by default, or any other speech engine: --command "piper ... --output_file {out}".
 //
 // Writes one small MP3 per scene into reels/<name>/audio/ plus manifest.json, which the
 // player reads to find each scene's clip. Clips are named after a hash of their words,
 // voice and speed, so a line that has not changed is never recorded twice, and clips
-// nothing uses any more are deleted. See "Record the voices" in the README.
+// nothing uses any more are deleted. See docs/voices.md.
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -23,18 +24,26 @@ export function clipFile(text, { voice, speed, lang }) {
   return createHash('sha256').update(`${voice}|${speed}|${lang}|${text}`).digest('hex').slice(0, 16) + '.mp3';
 }
 
+/** True for a clip file this tool named, as opposed to a recording someone added by hand. */
+export const isMadeClip = (file) => /^[0-9a-f]{16}\.mp3$/.test(file);
+
 /**
  * Works out what to record. Returns { clips, todo, stale }:
  *   clips  the manifest's new clip list, one per distinct line, in scene order
  *   todo   the clips that still need recording
- *   stale  MP3 files in the audio folder that nothing uses any more
+ *   stale  MP3 files this tool made that nothing uses any more
+ * A line with a recording someone added themselves (any other file name) keeps it, even
+ * with `all`, and such files are never cleared away.
  */
 export function planClips(scenes, settings, { manifest = null, existing = [], all = false } = {}) {
   const known = new Map((manifest?.clips ?? []).map((c) => [c.file, c]));
+  const ownVoice = new Map((manifest?.clips ?? []).filter((c) => c?.file && !isMadeClip(c.file) && existing.includes(c.file) && c.seconds > 0).map((c) => [c.text, c]));
   const clips = [], todo = [], seen = new Set();
   for (const scene of scenes) {
     if (seen.has(scene.say)) continue;
     seen.add(scene.say);
+    const own = ownVoice.get(scene.say);
+    if (own) { clips.push({ text: scene.say, file: own.file, seconds: own.seconds }); continue; }
     const file = clipFile(scene.say, settings);
     const prev = known.get(file);
     if (!all && prev && existing.includes(file) && prev.seconds > 0) {
@@ -46,7 +55,7 @@ export function planClips(scenes, settings, { manifest = null, existing = [], al
     }
   }
   const used = new Set(clips.map((c) => c.file));
-  const stale = existing.filter((f) => f.endsWith('.mp3') && !used.has(f));
+  const stale = existing.filter((f) => isMadeClip(f) && !used.has(f));
   return { clips, todo, stale };
 }
 
@@ -64,11 +73,32 @@ function findPython() {
   return existsSync(venv) ? venv : 'python3';
 }
 
-function findFfmpeg() {
+export function findFfmpeg() {
   const candidates = [process.env.FFMPEG, 'ffmpeg', join(homedir(), '.local', 'bin', 'ffmpeg')].filter(Boolean);
   const found = candidates.find((c) => spawnSync(c, ['-version'], { stdio: 'ignore' }).status === 0);
   if (!found) throw new Error('ffmpeg is needed to make the MP3s. Install it (for example: sudo apt install ffmpeg, or brew install ffmpeg), or set FFMPEG to its path.');
   return found;
+}
+
+/** How long an audio file lasts, in seconds, worked out by decoding it with ffmpeg. */
+export function audioSeconds(ffmpeg, file) {
+  const r = spawnSync(ffmpeg, ['-loglevel', 'error', '-i', file, '-ac', '1', '-ar', '16000', '-f', 's16le', '-'], { maxBuffer: 1 << 30 });
+  if (r.status !== 0) throw new Error(`ffmpeg could not read ${file}: ${String(r.stderr).trim()}`);
+  return Math.round((r.stdout.length / 32000) * 100) / 100;   // 16000 two-byte samples a second
+}
+
+/**
+ * Runs another speech engine once per line: `command` gets the words on its standard input
+ * and must write an audio file where {out} says. Calls onDone(wav) as each finishes.
+ */
+export function speakWithCommand(lines, command, onDone) {
+  for (const { text, wav } of lines) {
+    const r = spawnSync(command.replaceAll('{out}', `"${wav}"`), { shell: true, input: text, stdio: ['pipe', 'inherit', 'inherit'] });
+    if (r.error) throw new Error(`Could not run the speech command (${r.error.message}).`);
+    if (r.status !== 0) throw new Error(`The speech command stopped with exit code ${r.status} on "${text.slice(0, 40)}...".`);
+    if (!existsSync(wav)) throw new Error(`The speech command finished but wrote nothing at {out}. It must save its audio where {out} says.`);
+    onDone(wav);
+  }
 }
 
 /** Runs Kokoro over `lines` ([{ text, wav }]), calling onDone(wav, seconds) as each finishes. */
@@ -96,8 +126,10 @@ function speak(lines, settings, modelDir, onDone) {
   });
 }
 
-async function main() {
+/** Records the clips a reel needs. `args` are the command line arguments after npm run voices. */
+export async function main(args = process.argv.slice(2), { log = console.log } = {}) {
   const { values, positionals } = parseArgs({
+    args,
     allowPositionals: true,
     options: {
       voice: { type: 'string', default: DEFAULTS.voice },
@@ -105,13 +137,21 @@ async function main() {
       lang: { type: 'string', default: DEFAULTS.lang },
       bitrate: { type: 'string', default: DEFAULTS.bitrate },
       threads: { type: 'string', default: process.env.THREADS || String(DEFAULTS.threads) },
+      command: { type: 'string' },
       all: { type: 'boolean', default: false }
     }
   });
   const dir = reelDir(positionals[0]);
   const reelFile = join(dir, 'reel.js');
   if (!existsSync(reelFile)) throw new Error(`No reel at ${reelFile}`);
-  const settings = { voice: values.voice, speed: Number(values.speed), lang: values.lang, threads: Number(values.threads) || 2 };
+  const command = values.command?.trim();
+  if (command !== undefined && !command.includes('{out}')) {
+    throw new Error('--command needs {out} where the audio file should go, for example: --command "piper --model voice.onnx --output_file {out}"');
+  }
+  // another engine has no Kokoro voice or speed: the command itself names the voice
+  const settings = command
+    ? { voice: `command: ${command}`, speed: 1, lang: 'any' }
+    : { voice: values.voice, speed: Number(values.speed), lang: values.lang, threads: Number(values.threads) || 2 };
   if (!(settings.speed > 0)) throw new Error('--speed must be a number above 0, for example 0.92');
 
   const reel = normalizeReel((await import(pathToFileURL(reelFile).href)).default);
@@ -126,20 +166,26 @@ async function main() {
   };
   if (todo.length) {
     const ffmpeg = findFfmpeg();
-    const modelDir = process.env.KOKORO_HOME || join(ROOT, 'models');
     const tmp = mkdtempSync(join(tmpdir(), 'pixelreel-'));
     const byWav = new Map(todo.map((c, i) => [join(tmp, `${i}.wav`), c]));
-    console.log(`Recording ${todo.length} of ${clips.length} clips with ${settings.voice} (about half a minute each)...`);
+    const lines = [...byWav].map(([wav, c]) => ({ text: c.text, wav }));
+    const encode = (wav, seconds) => {
+      const clip = byWav.get(wav);
+      const enc = spawnSync(ffmpeg, ['-loglevel', 'error', '-y', '-i', wav, '-ac', '1', '-b:a', values.bitrate, join(audioDir, clip.file)], { stdio: 'inherit' });
+      if (enc.status !== 0) throw new Error(`ffmpeg could not encode ${clip.file}`);
+      clip.seconds = seconds ?? audioSeconds(ffmpeg, wav);
+      log(`  ${clip.file}  ${clip.seconds.toFixed(1)}s  "${clip.text.slice(0, 60)}${clip.text.length > 60 ? '...' : ''}"`);
+    };
+    log(`Recording ${todo.length} of ${clips.length} clips with ${command ? 'your speech command' : `${settings.voice} (about half a minute each)`}...`);
     try {
-      await speak([...byWav].map(([wav, c]) => ({ text: c.text, wav })), settings, modelDir, (wav, seconds) => {
-        const clip = byWav.get(wav);
-        const enc = spawnSync(ffmpeg, ['-loglevel', 'error', '-y', '-i', wav, '-ac', '1', '-b:a', values.bitrate, join(audioDir, clip.file)], { stdio: 'inherit' });
-        if (enc.status !== 0) throw new Error(`ffmpeg could not encode ${clip.file}`);
-        clip.seconds = seconds;
-        console.log(`  ${clip.file}  ${seconds.toFixed(1)}s  "${clip.text.slice(0, 60)}${clip.text.length > 60 ? '...' : ''}"`);
-      });
+      if (command) speakWithCommand(lines, command, (wav) => encode(wav));
+      else await speak(lines, settings, process.env.KOKORO_HOME || join(ROOT, 'models'), encode);
     } catch (err) {
-      save(clips.filter((c) => c.seconds > 0));   // keep what was recorded, so a rerun carries on from here
+      // keep what was recorded, and the old recordings of lines it did not reach, so the reel
+      // still plays and a rerun carries on from here
+      const recorded = clips.filter((c) => c.seconds > 0), done = new Set(recorded.map((c) => c.text));
+      const kept = (manifest?.clips ?? []).filter((c) => c?.text && !done.has(c.text) && c.file && existsSync(join(audioDir, c.file)));
+      save([...recorded, ...kept]);
       throw err;
     } finally {
       rmSync(tmp, { recursive: true, force: true });
@@ -149,7 +195,7 @@ async function main() {
   for (const f of stale) rmSync(join(audioDir, f));
   save(clips);
   const total = clips.reduce((s, c) => s + c.seconds, 0);
-  console.log(`${clips.length} clips (${todo.length} new, ${stale.length} removed), ${(total / 60).toFixed(1)} minutes of speech.`);
+  log(`${clips.length} clips (${todo.length} new, ${stale.length} removed), ${(total / 60).toFixed(1)} minutes of speech.`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

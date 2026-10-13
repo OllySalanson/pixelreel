@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { clipLookup, defaultDraw, normalizeReel, REEL_NAME, ReelError } from '../src/reel.js';
+import { createKit } from '../src/kit.js';
+import { CAPTION_STYLES, clipLookup, defaultDraw, normalizeReel, REEL_NAME, ReelError } from '../src/reel.js';
+import { fakeContext } from './fake-canvas.js';
 import example from '../reels/what-is-pixelreel/reel.js';
 
 const scene = (extra = {}) => ({ title: 'A', caption: 'Read this.', ...extra });
@@ -47,6 +49,62 @@ describe('normalizeReel', () => {
       'scene 4: say must be text (or leave it out to read the caption)'
     ]);
     assert.match(err.message, /^This reel has problems:\n- title/);
+  });
+
+  it('cuts between scenes with plain captions unless asked otherwise', () => {
+    const reel = normalizeReel({ title: 'T', scenes: [scene()] });
+    assert.equal(reel.transition, 'cut');
+    assert.equal(reel.captions, 'plain');
+    assert.deepEqual([reel.scenes[0].transition, reel.scenes[0].captions], ['cut', 'plain']);
+  });
+
+  it('lets each scene override the reel\'s transition and captions', () => {
+    const reel = normalizeReel({
+      title: 'T', transition: 'dissolve', captions: 'typewriter',
+      scenes: [scene(), scene({ transition: 'iris', captions: 'plain' })]
+    });
+    assert.deepEqual(reel.scenes.map((s) => [s.transition, s.captions]), [['dissolve', 'typewriter'], ['iris', 'plain']]);
+    assert.deepEqual(CAPTION_STYLES, ['plain', 'typewriter']);
+  });
+
+  it('names the transitions and caption styles it knows when given another', () => {
+    let err;
+    try {
+      normalizeReel({ title: 'T', transition: 'spin', captions: 'karaoke', scenes: [scene({ transition: 'zoom', captions: 'loud' })] });
+    } catch (e) { err = e; }
+    assert.deepEqual(err.problems, [
+      "transition: must be one of 'cut', 'fade', 'dissolve', 'wipe', 'slide', 'blinds', 'iris', 'flash', 'star'",
+      "captions: must be one of 'plain', 'typewriter'",
+      "scene 1: transition must be one of 'cut', 'fade', 'dissolve', 'wipe', 'slide', 'blinds', 'iris', 'flash', 'star'",
+      "scene 1: captions must be one of 'plain', 'typewriter'"
+    ]);
+  });
+
+  it('turns a ready-made picture into the scene\'s drawing', () => {
+    const reel = normalizeReel({ title: 'T', scenes: [scene({ picture: { type: 'big', text: 'WOW' } })] });
+    const g = fakeContext();
+    reel.scenes[0].draw(2, createKit(g));
+    assert.ok(g.texts.some((x) => x.str === 'WOW'));
+  });
+
+  it('checks pictures, scene by scene', () => {
+    let err;
+    try {
+      normalizeReel({
+        title: 'T', images: { cat: 'cat.png' },
+        scenes: [
+          scene({ picture: { type: 'list' } }),
+          scene({ picture: { type: 'image', name: 'dog' } }),
+          scene({ picture: { type: 'big', text: 'X' }, draw() {} }),
+          scene({ picture: { type: 'image', name: 'cat' } })
+        ]
+      });
+    } catch (e) { err = e; }
+    assert.deepEqual(err.problems, [
+      'scene 1: picture.items is needed for a list picture',
+      "scene 2: picture.name must name one of the reel's images (cat)",
+      'scene 3: give it draw or picture, not both'
+    ]);
   });
 
   it('rejects a reel with no scenes or no object at all', () => {

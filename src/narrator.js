@@ -18,9 +18,10 @@ import { estimateSpeechMs, narrationMs, speechWatchdogMs } from './timing.js';
 export function createNarrator({ scenes, clipFor, audio, speech, Utterance, lang = 'en-GB', timer, now = () => Date.now() }) {
   timer ??= { set: (fn, ms) => setTimeout(fn, ms), clear: (id) => clearTimeout(id) };
   const narrator = { lastSource: 'none', speak };
+  let loaded = null;   // the clip the audio element has loaded, so resuming it does not fetch it again
 
   function quietly(ms, done) {
-    const id = timer.set(done, ms);
+    const id = timer.set(done, Math.max(0, ms));
     return () => timer.clear(id);
   }
 
@@ -32,10 +33,10 @@ export function createNarrator({ scenes, clipFor, audio, speech, Utterance, lang
       ?? null;
   }
 
+  /** Reads the scene with the browser's voice, which can only start a line from the top. */
   function aloud(scene, done) {
-    if (!speech || !Utterance) { narrator.lastSource = 'timer'; return quietly(narrationMs(scene, null), done); }
-    narrator.lastSource = 'browser-voice';
     const u = new Utterance(scene.say);
+    narrator.lastSource = 'browser-voice';
     const voice = pickVoice();
     if (voice) u.voice = voice;
     u.lang = voice?.lang ?? lang;
@@ -58,29 +59,39 @@ export function createNarrator({ scenes, clipFor, audio, speech, Utterance, lang
     return () => { over = true; timer.clear(watchdog); timer.clear(hold); u.onend = u.onerror = null; speech.cancel(); };
   }
 
-  function speak(index, { muted }, done) {
+  function unrecorded(scene, from, done) {
+    if (speech && Utterance) return { stop: aloud(scene, done), from: 0 };
+    narrator.lastSource = 'timer';
+    return { stop: quietly(narrationMs(scene, null) - from, done), from };
+  }
+
+  function speak(index, { muted, from = 0 }, done) {
     const scene = scenes[index];
     const clip = clipFor(scene);
-    if (muted) { narrator.lastSource = 'muted'; return quietly(narrationMs(scene, clip), done); }
-    if (!clip || !audio) return aloud(scene, done);
+    if (muted) { narrator.lastSource = 'muted'; return { stop: quietly(narrationMs(scene, clip) - from, done), from }; }
+    if (!clip || !audio) return unrecorded(scene, from, done);
 
     narrator.lastSource = 'clip';
     let stopped = false, fallback = null;
     const fail = () => {
       if (stopped || fallback) return;
-      fallback = aloud(scene, done);   // the clip is missing or would not play: read it aloud instead
+      loaded = null;
+      fallback = unrecorded(scene, 0, done).stop;   // the clip is missing or would not play: read it aloud instead
     };
     audio.onended = () => { if (!stopped && !fallback) done(); };
     audio.onerror = fail;
-    audio.src = clip.url;
-    audio.currentTime = 0;
+    if (loaded !== clip.url) { audio.src = clip.url; loaded = clip.url; }
+    audio.currentTime = from / 1000;
     const playing = audio.play();
     if (playing?.catch) playing.catch((err) => { if (err?.name !== 'AbortError') fail(); });
-    return () => {
-      stopped = true;
-      audio.onended = audio.onerror = null;
-      audio.pause();
-      if (fallback) fallback();
+    return {
+      from,
+      stop() {
+        stopped = true;
+        audio.onended = audio.onerror = null;
+        audio.pause();
+        if (fallback) fallback();
+      }
     };
   }
 
