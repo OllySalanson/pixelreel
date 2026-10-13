@@ -1,0 +1,27 @@
+{
+  "name": "pixelreel",
+  "version": "0.1.0",
+  "description": "Narrated pixel-art explainer videos, made from a short list of scenes.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OllySalanson/pixelreel.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "new": "node scripts/new-reel.mjs",
+    "voices": "node scripts/voices.mjs",
+    "test": "node --test --test-concurrency=2 \"test/*.test.js\"",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "globals": "^17.13.0"
+  }
+}

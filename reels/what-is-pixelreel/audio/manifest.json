@@ -1,0 +1,47 @@
+{
+  "voice": "bm_george",
+  "speed": 0.92,
+  "lang": "en-gb",
+  "clips": [
+    {
+      "text": "Hello! This is pixelreel. It turns a short list of scenes into a little narrated video, drawn in pixel art, that plays in any web browser. This one explains itself.",
+      "file": "872e968dae5f0a66.mp3",
+      "seconds": 11.9
+    },
+    {
+      "text": "A reel is just a list of scenes. Each scene has four parts. A title. A caption, for reading along. The words the narrator says. And a picture.",
+      "file": "e9dcfd979f790244.mp3",
+      "seconds": 10.09
+    },
+    {
+      "text": "Every picture is a small piece of code that draws on a grid of three hundred and twenty by one hundred and eighty chunky pixels. It knows how long the scene has been playing, so things can move.",
+      "file": "56b7b6e1849927f1.mp3",
+      "seconds": 13.25
+    },
+    {
+      "text": "The voice you are hearing was recorded ahead of time, on an ordinary computer, by Kokoro, an open speech model. One command records every scene. Change a line, and only that scene is recorded again.",
+      "file": "65c733efef323ac0.mp3",
+      "seconds": 14.31
+    },
+    {
+      "text": "No recording yet? That is fine. The browser reads the words aloud with its own built in voice, so a brand new reel plays straight away, while you are still writing it.",
+      "file": "f0ef9d5765d8075d.mp3",
+      "seconds": 10.99
+    },
+    {
+      "text": "Watch it your way. Play, pause, go back, or skip ahead. Turn the sound off and read at your own pace. On a keyboard, the space bar plays and pauses, and the arrow keys move between scenes.",
+      "file": "126e0ce89ebebc4b.mp3",
+      "seconds": 13.01
+    },
+    {
+      "text": "A reel is just a handful of plain files. No server code, and no accounts. Put them on GitHub Pages, or any other web host, and send someone the link.",
+      "file": "9e2bad448856ec10.mp3",
+      "seconds": 10.77
+    },
+    {
+      "text": "Making your own takes three steps. Start a new reel with one command. Write your scenes. Then record the voices. That is all. Thanks for watching!",
+      "file": "075c883f9f86758b.mp3",
+      "seconds": 10.3
+    }
+  ]
+}
