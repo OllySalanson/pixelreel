@@ -22,3 +22,22 @@ describe('the player page', () => {
     });
   }
 });
+
+describe('the banner maker page', () => {
+  const maker = read('export.html');
+
+  // In a 170px column the Scene select cut "7. No recording? No problem" to "7. No recording",
+  // and the Detail select cut "3x: sharpest text", even at 1280px wide.
+  it('puts the Scene select in the wide Reel row, where long scene titles fit', () => {
+    const row = /<div class="wide">((?:(?!<\/div>).)*)<\/div>/s.exec(maker);
+    assert.ok(row && row[1].includes('id="reel"'), 'the first wide row holds the Reel box');
+    assert.match(row[1], /<select id="scene">/);
+  });
+
+  it('keeps the other form columns wide enough for "3x: sharpest text"', () => {
+    const min = /\.maker form \{[^}]*minmax\((\d+)px, 1fr\)/.exec(maker);
+    assert.ok(min, 'the form is a grid of columns with a minimum width');
+    // 18px Verdana: about 155px of text, plus 20px of padding, 6px of border and the select's arrow.
+    assert.ok(Number(min[1]) >= 200, `columns are at least 200px, not ${min[1]}px`);
+  });
+});
