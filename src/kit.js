@@ -75,13 +75,16 @@ export function createKit(g, images = {}) {
     /** A filled rectangle. */
     rect(c, x, y, w, h) { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), w, h); },
 
-    /** Draws rows of palette letters ('.' or ' ' is see-through), each letter `sc` pixels big. */
-    sprite(rows, x, y, sc = 1, flip = false) {
+    /**
+     * Draws rows of palette letters ('.' or ' ' is see-through), each letter `sc` pixels big.
+     * `colours` adds letters of its own, such as { h: '#3b2a20' }, ahead of the palette.
+     */
+    sprite(rows, x, y, sc = 1, flip = false, colours = null) {
       for (let j = 0; j < rows.length; j++) {
         for (let i = 0; i < rows[j].length; i++) {
           const ch = rows[j][flip ? rows[j].length - 1 - i : i];
           if (ch === '.' || ch === ' ') continue;
-          g.fillStyle = PALETTE[ch] || ch;
+          g.fillStyle = colours?.[ch] || PALETTE[ch] || ch;
           g.fillRect(Math.round(x + i * sc), Math.round(y + j * sc), sc, sc);
         }
       }

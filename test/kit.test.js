@@ -59,6 +59,17 @@ describe('the pixel kit: motion', () => {
   });
 });
 
+describe('the pixel kit: sprites', () => {
+  it('draws palette letters, flipped if asked, with colours of its own ahead of the palette', () => {
+    const { g, px } = kit();
+    px.sprite(['k.', '.y'], 10, 20, 2);
+    assert.deepEqual(g.rects.map((r) => [r.x, r.y, r.w, r.c]), [[10, 20, 2, '#1a1a1a'], [12, 22, 2, '#ffcc4d']]);
+    g.rects.length = 0;
+    px.sprite(['kh'], 0, 0, 1, true, { h: '#123456', k: '#abcdef' });
+    assert.deepEqual(g.rects.map((r) => [r.x, r.c]), [[0, '#123456'], [1, '#abcdef']]);
+  });
+});
+
 describe('the pixel kit: shapes and scenery', () => {
   it('draws filled circles and rings symmetrically', () => {
     const { g, px } = kit();

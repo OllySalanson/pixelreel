@@ -1,65 +1,122 @@
-# pixelreel
+<p align="center">
+  <a href="https://ollysalanson.github.io/pixelreel/">
+    <img src="docs/readme/hero.svg" width="800" alt="The pixelreel showreel. The PIXELREEL logo slams down in a burst of confetti, then a parallax sunset, a star wipe, a muted mascot saying RUDE, a robot working for electricity and a fireworks finale. A Watch button sits in the corner.">
+  </a>
+</p>
 
-Narrated pixel-art explainer videos, made from a short list of scenes.
+<p align="center">
+  <b>Explainer videos for people who don't read the docs.</b><br>
+  Write a list of scenes. pixelreel turns it into a narrated pixel-art cartoon that plays in any
+  browser. No video editor, no timeline, no render bar stuck at 99%.
+</p>
 
-You write a reel as one small JavaScript file: a title, then a list of scenes, each with a
-caption, the words to say and a picture, drawn in code or picked ready-made. pixelreel plays
-it in the browser like a video, with a warm recorded voice-over, captions, transitions and a
-progress bar. No video editor, no build step, no server code.
+<p align="center">
+  <a href="https://ollysalanson.github.io/pixelreel/"><img alt="Watch the showreel" src="https://img.shields.io/badge/%E2%96%B6%20WATCH-the%20showreel-ffcc4d?style=for-the-badge&labelColor=0b1220"></a>
+  <img alt="Runtime: 2 min 55" src="https://img.shields.io/badge/runtime-2%20min%2055-55d6be?style=for-the-badge&labelColor=0b1220">
+  <img alt="Build step: none" src="https://img.shields.io/badge/build%20step-none-ebeac5?style=for-the-badge&labelColor=0b1220">
+</p>
 
-![The example reel playing: a film reel mascot, scene cards, a pixel heart, a voice waveform and a terminal](docs/pixelreel.gif)
+<p align="center">
+  <a href="#twenty-seconds-to-your-first-reel">Quick start</a> ·
+  <a href="#whats-in-the-box">Features</a> ·
+  <a href="#where-it-earns-its-keep">Use cases</a> ·
+  <a href="#plug-it-into-things">Integrations</a> ·
+  <a href="#write-a-scene">Write a scene</a> ·
+  <a href="#voices">Voices</a> ·
+  <a href="#faq">FAQ</a>
+</p>
 
-**Watch the example:** [ollysalanson.github.io/pixelreel](https://ollysalanson.github.io/pixelreel/)
-(two minutes, with sound; it explains pixelreel itself).
+---
 
-## What you get
+The banner up there is a few seconds of the [showreel](https://ollysalanson.github.io/pixelreel/):
+pixelreel explaining itself, made with pixelreel, voiced by an open speech model on a perfectly
+ordinary computer. Click it. It's three minutes, there are jokes, and it beats reading the rest
+of this page. (We'll still be here.)
 
-- **A browser player.** Pixel-art pictures on a 320 x 180 canvas, large readable captions
-  (typed out as the narrator speaks, if you like), a progress bar to scrub through, and
-  Play/Pause, Back, Next and Sound buttons. Pause holds the frame; Play carries on from the
-  same moment. Keyboard: Space, the arrow keys and M.
-- **Scenes as data.** One `reel.js` per reel. Draw pictures with the pixel kit (sprites,
-  scrolling hills, tweens with bounce, confetti, a camera that shakes and zooms) or skip the
-  drawing and pick a ready-made picture: a title, a list, a terminal, code, a chat.
-- **Transitions.** Dissolve, wipe, slide, blinds, iris, fade, flash and, for the brave, star.
-- **Offline narration.** `npm run voices` records every scene with
-  [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M), an open speech model that runs on an
-  ordinary CPU. Or bring any other speech engine, or your own voice.
-- **A fallback voice.** A scene with no recording yet is read aloud by the browser, so a
-  brand new reel plays straight away.
-- **Share it anywhere.** A reel is plain files: a GitHub Pages workflow is included, `?embed`
-  fits it in an iframe, and the banner maker turns a few seconds into an animated picture
-  for a README.
-- **Machines welcome.** `npm run new -- --from notes.md` turns a Markdown script (or release
-  notes) into a reel, `npm run check` says exactly what is wrong with one, and an example
-  workflow makes a narrated reel for every release.
+## Twenty seconds to your first reel
 
-## Quick start
-
-You need [Node.js](https://nodejs.org/) 20 or newer.
-
-```sh
-git clone https://github.com/OllySalanson/pixelreel.git
-cd pixelreel
-npm start
-```
-
-Open <http://localhost:8000/> and press Play. (Browsers will not load modules or audio
-from a page opened straight from disk, so `npm start` runs a tiny local web server.
-`PORT=9000 npm start` picks another port.)
-
-Start your own reel:
+You need [Node.js](https://nodejs.org/) 20 or newer. Nothing to install, nothing to build.
 
 ```sh
-npm run new my-reel                         # makes reels/my-reel/reel.js
-npm run new my-reel -- --title "My reel"    # or give it a title
-npm run new my-reel -- --from notes.md      # or lay it out from a Markdown script
+git clone https://github.com/OllySalanson/pixelreel.git && cd pixelreel
+npm start                    # http://localhost:8000 plays the showreel
+npm run new my-reel          # then open http://localhost:8000/?reel=my-reel
 ```
 
-Then open <http://localhost:8000/?reel=my-reel>. Edit `reels/my-reel/reel.js` and reload
-to see your changes. Until you record voices, the browser reads each scene aloud.
+Edit `reels/my-reel/reel.js`, reload, and watch. Until you record the voices, your browser reads
+each scene aloud in its own voice, which sounds like a satnav having a moment. When you're happy,
+`npm run voices my-reel` records the real narration ([setup](#voices)).
 
-## Write scenes
+## What's in the box
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/readme/pictures.svg" alt="A telly flicking through ready-made pictures: a ticked list, a terminal, a chat and a title."></td>
+    <td><b>Scenes as data.</b> A reel is one small file: a list of scenes, each with a title, a
+    caption, the words to say and a picture. Draw the picture in code, or skip the drawing and
+    pick a ready-made one: a title, a list, a terminal, highlighted code, a chat. Fill in the
+    words and it animates itself.</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/readme/kit.svg" alt="A film reel mascot walking through a parallax sunset as the layers separate, then a huge burst of confetti."></td>
+    <td><b>A pixel kit with ideas above its station.</b> Sprites, parallax hills, tweens with
+    bounce, typewriter text, speech bubbles, dithering, screen shake, a camera that zooms, and
+    confetti. Everything runs off the scene's clock, so every gag lands on the word that sets it
+    up, and holds still when you pause.</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/readme/transitions.svg" alt="Five little screens looping a fade, a wipe, a dissolve, a slide and an iris between day and night."></td>
+    <td><b>Transitions.</b> Fade, dissolve, wipe, slide, blinds, a cartoon iris, a flash and,
+    yes, a star wipe. Set one for the whole reel or per scene. Anyone who asks their system for
+    less motion gets plain cuts.</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/readme/controls.svg" alt="A tiny player being paused, skipped, scrubbed and muted by a mouse pointer. The mascot gets tape over its mouth and says RUDE."></td>
+    <td><b>Captions and controls.</b> Captions type along as the narrator talks. Pause holds the
+    frame, Play carries on from the same moment, the progress bar scrubs to any second, and the
+    keyboard works too. Screen readers get every caption in full.</td>
+  </tr>
+</table>
+
+- **A voice worth listening to.** [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) records the
+  narration offline, on your own CPU. No cloud, no API key, no subscription. Change one line
+  and only that line records again.
+- **Plain files.** No server code, no accounts, no build step. Host it anywhere that serves a web page.
+- **Banners for READMEs.** The banner maker turns a few seconds of any reel into an animated SVG
+  that plays on GitHub. The one at the top of this page came out of it.
+
+## Where it earns its keep
+
+| Made for | Why it lands |
+| --- | --- |
+| **Onboarding** | New starters watch a two-minute tour instead of being handed the forty-page wiki and a lanyard. |
+| **Release notes** | People actually watch them. Shocking, we know. |
+| **Explaining a codebase or a pull request** | Walk a reviewer through the change before they open the diff and start having opinions. |
+| **School lessons** | Volcanoes, fractions, the water cycle: short, narrated, captioned, and they keep the back row awake. |
+| **Pitch decks** | A deck that presents itself, so you can concentrate on looking confident. |
+| **Game trailers** | Pixel art is already your whole aesthetic. COMING SOON, in glorious 320 x 180. |
+| **Status updates for a busy boss** | They won't read a document. They will absolutely watch a cartoon. Twice. |
+| **Changelogs nobody reads** | Until now. |
+
+## Plug it into things
+
+- **GitHub Pages.** A workflow is included: turn on Pages and every push publishes every reel at
+  `https://<you>.github.io/<repo>/?reel=<name>`.
+- **Your website.** Add `&embed` to a reel's address and drop it in an iframe.
+- **Your README.** The banner maker makes an animated, clickable banner from any reel, like the one
+  you probably clicked to get here.
+- **A script.** `npm run new my-reel -- --from notes.md` lays out a whole reel from a Markdown
+  script, or from release notes as they come.
+- **CI.** [An example workflow](docs/examples/release-reel.yml) turns every release's notes into a
+  narrated reel and publishes it. Nobody lifts a finger. Fingers are overrated.
+- **An AI agent.** Scenes are plain data, so an agent can write a reel, and `npm run check` tells it
+  exactly what to fix. It won't even ask for a pay rise.
+- **Other voices.** Pick any of Kokoro's voices, plug in another speech engine with `--command`, or
+  record your own.
+
+How-tos for all of it: [docs/sharing.md](docs/sharing.md).
+
+## Write a scene
 
 ```js
 export default {
@@ -86,76 +143,88 @@ export default {
 };
 ```
 
-Each scene has a `title`, a `caption` to read along with, the words to `say` (leave it out to
-read the caption) and a picture: a `draw(t, px)` function, where `t` is seconds since the
-scene started and `px` is the pixel kit, or a ready-made `picture`. When the narration ends
-the player moves on by itself.
+Pictures are drawn on a 320 x 180 grid, scaled up crisply. `t` is seconds since the scene
+started, so anything worked out from `t` moves in time with the voice. When the narration ends,
+the player moves on by itself. To check a picture by eye, open `?reel=my-reel&scene=3&t=12`.
 
-[docs/scenes.md](docs/scenes.md) has every field, every ready-made picture, every
-transition and every kit helper, each with a tiny example. To check one picture by eye,
-open `?reel=my-reel&scene=3&t=12`: scene 3, held at twelve seconds in. `npm run check my-reel`
-checks the whole reel without a browser.
+The full reference, with a tiny example of every field, picture, transition and kit helper, is
+in [docs/scenes.md](docs/scenes.md). For a bigger example, the showreel is
+[one file](reels/showreel/reel.js).
 
-## Record the voices
+## Voices
 
 ```sh
 scripts/setup-voices.sh      # once: Kokoro and its model files, about 350 MB
 npm run voices my-reel       # one small MP3 per scene
 ```
 
-Only lines that changed are recorded again. Pick another of Kokoro's voices with
-`-- --voice bf_emma`, plug in another speech engine with `-- --command "..."`, or record
-lines yourself. [docs/voices.md](docs/voices.md) has the details.
+The showreel's narrator is Kokoro's `bm_george`, recorded on a laptop. Fancy another? Try
+`-- --voice bf_emma`, plug in Piper, eSpeak or your Mac's own voice with `-- --command`, or record
+the lines yourself: your recordings are never touched. Details in [docs/voices.md](docs/voices.md).
 
-## Share it
+## FAQ
 
-The player and reels are static files, so any web host works. The included workflow
-(`.github/workflows/pages.yml`) publishes the site to GitHub Pages on every push to `main`
-once you set **Settings > Pages > Source** to **GitHub Actions**.
-[docs/sharing.md](docs/sharing.md) covers embedding a reel in a page, making a README
-banner, building a reel from a script or release notes, a reel for every release in CI,
-and letting an AI agent write one.
+**Is it a video file?**
+No, it's a web page that plays like a video, which is why it's tiny, sharp at any size, and you
+can fix a typo without re-exporting anything. Need an MP4 for a slide deck? Screen-record it. We
+won't tell.
+
+**Does the voice need the internet, or an account?**
+Neither. Kokoro runs offline on an ordinary CPU, about half a minute a clip on a laptop. The
+recordings are committed with the reel, so viewers just get small MP3s.
+
+**Why pixel art?**
+It's charming, it's quick to draw in code, a two-minute reel weighs less than one stock photo,
+and nobody expects it to look like a Hollywood film. Low expectations, high delight.
+
+**I can't draw.**
+Same. Use the ready-made pictures: titles, lists, terminals, code and chats need no drawing at all.
+
+**Can my AI agent write one?**
+Yes. Point it at [docs/scenes.md](docs/scenes.md), have it run `npm run check`, and go and make a
+cup of tea.
+
+**Is there really a star wipe?**
+`transition: 'star'`. We're not proud of it.
 
 ## Project layout
 
 ```
 index.html                  the player page
 export.html                 the banner maker
-src/                        the player: main.js (page), player.js (timing), narrator.js
+src/                        the player: main.js (the page), player.js (timing), narrator.js
                             (clip, browser voice or timer), reel.js (checks a reel), kit.js
-                            (pixel kit), pictures.js (ready-made pictures), transitions.js,
+                            (the pixel kit), pictures.js (ready-made pictures), transitions.js,
                             timing.js, load.js, and png.js and flipbook.js for banners
-reels/<name>/reel.js        a reel
-reels/<name>/audio/         its recorded clips and manifest.json
-scripts/                    npm start, new, voices and check, setup-voices.sh
-docs/                       how to write scenes, record voices and share reels
+reels/showreel/             the showreel, and its recorded narration
+reels/what-is-pixelreel/    a smaller example
+scripts/                    npm start, new, voices and check, and setup-voices.sh
+docs/                       writing scenes, voices, sharing, and the pictures in this README
 test/                       unit tests (node --test)
 fonts/                      Orange Kid, the pixel font (CC0)
 ```
 
-## Develop
-
 ```sh
 npm install     # the linter
-npm test        # unit tests: player timing, narrator, kit, pictures, transitions, tools
+npm test        # player timing, narrator, kit, pictures, transitions, tools, and every reel
 npm run lint
 npm run check   # every reel valid, and how much of it is recorded
 ```
 
-## Licence
+## Credits and licences
 
 pixelreel is released under the [MIT licence](LICENSE).
 
 It stands on the shoulders of:
 
-- **[Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)** by hexgrad, the speech
-  model that records the narration. Its weights are released under the Apache 2.0 licence.
-  pixelreel does not include the model; `scripts/setup-voices.sh` downloads it.
-- **[kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx)** by thewh1teagle (MIT),
-  which runs Kokoro on the CPU and hosts the model files used here.
-- **Orange Kid**, the pixel font, by Ray Larabie of
-  [Typodermic Fonts](https://typodermicfonts.com/), released under
-  [CC0](https://creativecommons.org/publicdomain/zero/1.0/) (public domain). See
+- **[Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)** by hexgrad, the speech model that
+  records the narration. Its weights are released under the Apache 2.0 licence. pixelreel does not
+  include the model; `scripts/setup-voices.sh` downloads it.
+- **[kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx)** by thewh1teagle (MIT), which runs
+  Kokoro on the CPU and hosts the model files used here.
+- **Orange Kid**, the pixel font, by Ray Larabie of [Typodermic Fonts](https://typodermicfonts.com/),
+  released under [CC0](https://creativecommons.org/publicdomain/zero/1.0/) (public domain). See
   [fonts/LICENSE.txt](fonts/LICENSE.txt).
 
-The example reel's narration was recorded with Kokoro, voice `bm_george`.
+The showreel and the example reel are narrated by Kokoro, voice `bm_george`. Reelie, the film reel
+in the showreel, is drawn in code and released with everything else under the MIT licence.

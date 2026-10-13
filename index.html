@@ -11,7 +11,7 @@
 <script type="module" src="src/main.js"></script>
 </head>
 <!-- data-reel is the reel shown when the address has no ?reel=name -->
-<body data-reel="what-is-pixelreel">
+<body data-reel="showreel">
 <main>
   <h1 id="heading">pixelreel</h1>
   <div class="stage">
@@ -24,6 +24,7 @@
     <div class="seek-fill" id="seek-fill"></div>
   </div>
   <div class="caption" id="cap">
+    <span class="time" id="time" aria-hidden="true"></span>
     <span class="title" id="cap-title">Loading</span>
     <span class="body" id="cap-body" aria-hidden="true"><span id="cap-typed"></span><span class="rest" id="cap-rest"></span></span>
   </div>
@@ -33,7 +34,6 @@
     <button id="play" type="button" class="big">Play</button>
     <button id="next" type="button">Next</button>
     <button id="mute" type="button" aria-pressed="true">Sound: on</button>
-    <span class="time" id="time" aria-hidden="true">0:00 / 0:00</span>
     <div class="dots" id="dots" aria-label="Scenes"></div>
   </div>
   <p class="note" id="note"></p>

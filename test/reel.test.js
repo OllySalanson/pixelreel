@@ -1,10 +1,9 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import { createKit } from '../src/kit.js';
 import { CAPTION_STYLES, clipLookup, defaultDraw, normalizeReel, REEL_NAME, ReelError } from '../src/reel.js';
 import { fakeContext } from './fake-canvas.js';
-import example from '../reels/what-is-pixelreel/reel.js';
 
 const scene = (extra = {}) => ({ title: 'A', caption: 'Read this.', ...extra });
 
@@ -130,27 +129,56 @@ describe('clipLookup', () => {
   });
 });
 
-describe('the example reel', () => {
-  const reel = normalizeReel(example, { base: 'reels/what-is-pixelreel/' });
-  const manifest = JSON.parse(readFileSync(new URL('../reels/what-is-pixelreel/audio/manifest.json', import.meta.url), 'utf8'));
+const root = new URL('../reels/', import.meta.url);
+const names = readdirSync(root, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
+const reels = await Promise.all(names.map(async (name) => {
+  const reel = normalizeReel((await import(new URL(`${name}/reel.js`, root).href)).default, { base: `reels/${name}/` });
+  const manifest = JSON.parse(readFileSync(new URL(`${name}/audio/manifest.json`, root), 'utf8'));
+  return { name, reel, manifest };
+}));
 
-  it('is a valid reel with a picture for every scene', () => {
-    assert.ok(reel.scenes.length >= 6);
-    for (const s of reel.scenes) assert.notEqual(s.draw, defaultDraw, `${s.title} draws its own picture`);
+describe('the reels in reels/', () => {
+  it('includes the showreel and the example', () => {
+    assert.ok(names.includes('showreel') && names.includes('what-is-pixelreel'));
   });
 
-  it('has an up-to-date recording for every scene', () => {
-    const find = clipLookup(manifest, 'audio/');
-    for (const s of reel.scenes) {
-      const clip = find(s);
-      assert.ok(clip, `"${s.title}" has a recording (run npm run voices what-is-pixelreel)`);
-      assert.ok(clip.seconds > 2);
-      assert.ok(readFileSync(new URL('../reels/what-is-pixelreel/' + clip.url, import.meta.url)).length > 1000);
-    }
+  it('plays the reel named in index.html when there is no ?reel=', () => {
+    const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+    assert.ok(names.includes(/data-reel="([^"]+)"/.exec(html)[1]));
   });
 
-  it('keeps its folder name a valid reel name', () => {
-    assert.ok(REEL_NAME.test('what-is-pixelreel'));
+  for (const { name, reel, manifest } of reels) {
+    it(`${name}: valid, with a name fit for an address and a picture for every scene`, () => {
+      assert.ok(REEL_NAME.test(name));
+      assert.ok(reel.scenes.length >= 6);
+      for (const s of reel.scenes) assert.notEqual(s.draw, defaultDraw, `${s.title} draws its own picture`);
+    });
+
+    it(`${name}: an up-to-date recording for every scene, and no stray clips`, () => {
+      const find = clipLookup(manifest, 'audio/');
+      for (const s of reel.scenes) {
+        const clip = find(s);
+        assert.ok(clip, `"${s.title}" has a recording (run npm run voices ${name})`);
+        assert.ok(clip.seconds > 2);
+        assert.ok(readFileSync(new URL(`${name}/${clip.url}`, root)).length > 1000);
+      }
+      const files = readdirSync(new URL(`${name}/audio/`, root)).filter((f) => f.endsWith('.mp3')).sort();
+      assert.deepEqual(manifest.clips.map((c) => c.file).sort(), files);
+    });
+
+    it(`${name}: every scene draws from start to finish without a hitch`, () => {
+      const find = clipLookup(manifest, '');
+      reel.scenes.forEach((s, i) => {
+        const g = fakeContext(), px = createKit(g);
+        const seconds = (find(s)?.seconds ?? 10) + 3;
+        for (let t = 0; t <= seconds; t += 0.37) s.draw(t, px, s);
+        assert.ok(g.rects.length > 0, `scene ${i + 1} draws something`);
+        assert.equal(g.depth, 0, `scene ${i + 1} restores everything it changes`);
+      });
+    });
+  }
+
+  it('turns away a reel name that could escape the folder', () => {
     assert.ok(!REEL_NAME.test('../secret'));
     assert.ok(!REEL_NAME.test('Has Spaces'));
   });
