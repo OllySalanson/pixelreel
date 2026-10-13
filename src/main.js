@@ -3,6 +3,7 @@
 import { createKit, W, H } from './kit.js';
 import { loadReel } from './load.js';
 import { createNarrator } from './narrator.js';
+import { noSignal } from './pictures.js';
 import { Player } from './player.js';
 import { clockTime, narrationMs, typedLength } from './timing.js';
 import { transitionMs } from './transitions.js';
@@ -20,6 +21,21 @@ function showError(message) {
   $('cap-body').removeAttribute('aria-hidden');
   $('cap').classList.add('error');
   for (const el of [document.querySelector('.controls'), $('seek')]) el.hidden = true;
+  const canvas = $('stage'), g = canvas.getContext('2d'), px = createKit(g);
+  canvas.setAttribute('aria-label', 'No signal: the reel could not be played');
+  canvas.style.cursor = 'default';
+  const born = performance.now();
+  let last = -Infinity;
+  const card = (now) => {
+    if (!calm.matches) requestAnimationFrame(card);
+    if (now - last < FRAME_MS) return;
+    last = now;
+    g.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
+    g.imageSmoothingEnabled = false;
+    noSignal(calm.matches ? 0 : (now - born) / 1000, px);
+  };
+  // the font first, so the sign is not drawn in a stand-in
+  (document.fonts ? document.fonts.load("12px 'Orange Kid'").catch(() => {}) : Promise.resolve()).then(() => requestAnimationFrame(card));
 }
 
 async function start() {
