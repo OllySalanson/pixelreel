@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -7,7 +7,7 @@ import { after, describe, it } from 'node:test';
 import { checkReel } from '../scripts/check-reel.mjs';
 import { parseScript, plainWords, reelSource } from '../scripts/from-script.mjs';
 import { createReel, titleFromName } from '../scripts/new-reel.mjs';
-import { clipFile, DEFAULTS, findFfmpeg, main as recordVoices, planClips } from '../scripts/voices.mjs';
+import { clipFile, ENGINES, findFfmpeg, main as recordVoices, narrator, planClips } from '../scripts/voices.mjs';
 import { normalizeReel } from '../src/reel.js';
 
 describe('npm run new', () => {
@@ -152,15 +152,23 @@ describe('reels from a script', () => {
 });
 
 describe('npm run voices planning', () => {
-  const settings = { voice: DEFAULTS.voice, speed: DEFAULTS.speed, lang: DEFAULTS.lang };
+  const settings = narrator({});
   const scenes = [{ say: 'One.' }, { say: 'Two.' }, { say: 'One.' }];
 
-  it('names a clip after its words, voice, speed and language', () => {
+  it('names a clip after its words and its narrator', () => {
     assert.equal(clipFile('One.', settings), clipFile('One.', settings));
     assert.notEqual(clipFile('One.', settings), clipFile('One!', settings));
-    assert.notEqual(clipFile('One.', settings), clipFile('One.', { ...settings, voice: 'bf_emma' }));
-    assert.notEqual(clipFile('One.', settings), clipFile('One.', { ...settings, speed: 1 }));
+    assert.notEqual(clipFile('One.', settings), clipFile('One.', { ...settings, voice: 'stuart_bell' }));
+    const kokoro = narrator({ engine: 'kokoro' });
+    assert.notEqual(clipFile('One.', kokoro), clipFile('One.', { ...kokoro, voice: 'bf_emma' }));
+    assert.notEqual(clipFile('One.', kokoro), clipFile('One.', { ...kokoro, speed: 1 }));
+    assert.notEqual(clipFile('One.', settings), clipFile('One.', kokoro));
     assert.match(clipFile('One.', settings), /^[0-9a-f]{16}\.mp3$/);
+  });
+
+  it('gives Kokoro clips the names they always had, so recorded reels stay up to date', () => {
+    const text = "Let's be honest. Nobody reads the docs. Not the read me, not the wiki, and definitely not the change log. So here's a cartoon instead.";
+    assert.equal(clipFile(text, narrator({ engine: 'kokoro' })), 'bf8ee0fbe6f303d9.mp3', 'the showreel\'s first clip');
   });
 
   it('records each distinct line once, the first time', () => {
@@ -199,6 +207,36 @@ describe('npm run voices planning', () => {
     assert.deepEqual(unused.stale, [one]);
   });
 
+});
+
+describe('npm run voices narrator', () => {
+  const george = { voice: 'bm_george', speed: 0.92, lang: 'en-gb', clips: [] };
+
+  it('narrates a new reel with Pocket TTS, voice peter_yearsley', () => {
+    assert.deepEqual(narrator({}), { engine: 'pocket', voice: 'peter_yearsley' });
+    assert.deepEqual(narrator({ voice: 'stuart_bell' }), { engine: 'pocket', voice: 'stuart_bell' });
+  });
+
+  it('picks Kokoro for a Kokoro voice name, or when asked', () => {
+    assert.deepEqual(narrator({ voice: 'bf_emma', speed: '1' }), { engine: 'kokoro', voice: 'bf_emma', speed: 1, lang: 'en-gb' });
+    const { voice, speed, lang } = ENGINES.kokoro;
+    assert.deepEqual(narrator({ engine: 'kokoro' }), { engine: 'kokoro', voice, speed, lang });
+  });
+
+  it('keeps the narrator a reel was recorded with, unless told otherwise', () => {
+    assert.deepEqual(narrator({}, george), { engine: 'kokoro', voice: 'bm_george', speed: 0.92, lang: 'en-gb' }, 'a manifest from before Pocket TTS');
+    assert.deepEqual(narrator({ speed: '1' }, george), { engine: 'kokoro', voice: 'bm_george', speed: 1, lang: 'en-gb' });
+    assert.deepEqual(narrator({}, { engine: 'pocket', voice: 'charles', clips: [] }), { engine: 'pocket', voice: 'charles' });
+    assert.deepEqual(narrator({ engine: 'pocket' }, george), { engine: 'pocket', voice: 'peter_yearsley' });
+    assert.deepEqual(narrator({}, { voice: 'command: say -o {out}', speed: 1, lang: 'any', clips: [] }), narrator({}), 'a command is never run from a manifest');
+  });
+
+  it('says what is wrong with a mixed-up choice', () => {
+    assert.throws(() => narrator({ speed: '1' }), /Pocket TTS has no --speed/);
+    assert.throws(() => narrator({ engine: 'piper' }), /--engine must be pocket or kokoro/);
+    assert.throws(() => narrator({ engine: 'kokoro', speed: 'fast' }), /--speed must be a number/);
+    assert.throws(() => narrator({ command: 'say {out}', voice: 'bm_george' }), /cannot go with --engine/);
+  });
 });
 
 // A pretend speech engine: reads the words on stdin and writes a WAV of 50 ms per character.
@@ -251,6 +289,77 @@ describe('npm run voices --command', { skip: !ffmpeg && 'needs ffmpeg' }, () => 
     const before = manifest();
     await assert.rejects(recordVoices([reel, '--all', '--command', 'node -e "process.exit(3)" {out}'], quiet), /exit code 3/);
     assert.deepEqual(manifest().clips, before.clips, 'a failed run keeps the recordings it had');
+  });
+});
+
+// A pretend Python: given pocket_speak.py or kokoro_tts.py and a job on stdin, it notes the job in
+// jobs.jsonl and answers like the real script, with a WAV of 50 ms per character for each line.
+// It fails at once for the voice "nobody".
+const FAKE_PYTHON = `#!/usr/bin/env node
+import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join } from 'node:path';
+const job = JSON.parse(readFileSync(0, 'utf8'));
+appendFileSync(join(dirname(process.argv[1]), 'jobs.jsonl'), JSON.stringify({ script: basename(process.argv[2]), ...job }) + '\\n');
+if (job.voice === 'nobody') process.exit(1);
+for (const { text, wav } of job.lines) {
+  const rate = 8000, n = Math.round(rate * text.length * 0.05), b = Buffer.alloc(44 + n * 2);
+  b.write('RIFF', 0); b.writeUInt32LE(36 + n * 2, 4); b.write('WAVEfmt ', 8); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20);
+  b.writeUInt16LE(1, 22); b.writeUInt32LE(rate, 24); b.writeUInt32LE(rate * 2, 28); b.writeUInt16LE(2, 32); b.writeUInt16LE(16, 34);
+  b.write('data', 36); b.writeUInt32LE(n * 2, 40);
+  for (let i = 0; i < n; i++) b.writeInt16LE(Math.round(Math.sin(i / 9) * 6000), 44 + i * 2);
+  writeFileSync(wav, b);
+  console.log(JSON.stringify({ wav, seconds: n / rate }));
+}
+`;
+
+describe('npm run voices with Pocket TTS and Kokoro', { skip: (!ffmpeg && 'needs ffmpeg') || (process.platform === 'win32' && 'needs a script it can run directly') }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'pixelreel-engines-'));
+  const python = join(dir, 'python.mjs'), jobsFile = join(dir, 'jobs.jsonl');
+  const before = process.env.PIXELREEL_PYTHON;
+  after(() => {
+    if (before === undefined) delete process.env.PIXELREEL_PYTHON; else process.env.PIXELREEL_PYTHON = before;
+    rmSync(dir, { recursive: true, force: true });
+  });
+  writeFileSync(python, FAKE_PYTHON);
+  chmodSync(python, 0o755);
+  const reel = join(dir, 'reel');
+  mkdirSync(reel);
+  writeFileSync(join(reel, 'reel.js'), "export default { title: 'T', scenes: [{ title: 'A', caption: 'One.', say: 'Hello there.' }] };\n");
+  const quiet = { log: () => {} };
+  const manifest = () => JSON.parse(readFileSync(join(reel, 'audio', 'manifest.json'), 'utf8'));
+  const jobs = () => readFileSync(jobsFile, 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+
+  it('records a new reel with Pocket TTS, then keeps that narrator', async () => {
+    process.env.PIXELREEL_PYTHON = python;
+    await recordVoices([reel, '--threads', '3'], quiet);
+    const [job] = jobs();
+    assert.equal(job.script, 'pocket_speak.py');
+    assert.deepEqual({ voice: job.voice, threads: job.threads, text: job.lines[0].text }, { voice: 'peter_yearsley', threads: 3, text: 'Hello there.' });
+    const m = manifest();
+    assert.deepEqual([m.engine, m.voice, m.clips[0].seconds], ['pocket', 'peter_yearsley', 0.6]);
+    await recordVoices([reel], quiet);
+    assert.equal(jobs().length, 1, 'nothing to record again');
+  });
+
+  it('switches to Kokoro when asked, recording again, and stays with it', async () => {
+    process.env.PIXELREEL_PYTHON = python;
+    await recordVoices([reel, '--voice', 'bm_george'], quiet);
+    const job = jobs().at(-1);
+    assert.equal(job.script, 'kokoro_tts.py');
+    assert.deepEqual([job.voice, job.speed, job.lang], ['bm_george', 0.92, 'en-gb']);
+    assert.match(job.model, /kokoro-v1\.0\.onnx$/);
+    assert.deepEqual([manifest().engine, readdirSync(join(reel, 'audio')).filter((f) => f.endsWith('.mp3')).length], ['kokoro', 1], 'the Pocket TTS clip is cleared away');
+    await recordVoices([reel], quiet);
+    assert.equal(jobs().length, 2);
+  });
+
+  it('goes on naming the old narrator when a new one fails before recording anything', async () => {
+    process.env.PIXELREEL_PYTHON = python;
+    const before = manifest();
+    await assert.rejects(recordVoices([reel, '--voice', 'nobody'], quiet), /Pocket TTS stopped with exit code 1/);
+    assert.deepEqual(manifest(), before);
+    await recordVoices([reel], quiet);
+    assert.equal(jobs().length, 3, 'only the failed attempt ran');
   });
 });
 

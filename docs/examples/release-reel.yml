@@ -1,5 +1,5 @@
 # A reel for every release. When a release is published, this turns its notes into a reel,
-# records the narration with Kokoro, checks it, commits it to the default branch, and runs
+# records the narration with Pocket TTS, checks it, commits it to the default branch, and runs
 # the Pages workflow so the new reel goes live at ?reel=release-<tag>.
 #
 # To use it, copy this file to .github/workflows/release-reel.yml in your copy of pixelreel
@@ -29,11 +29,11 @@ jobs:
           python-version: '3.12'
       - name: Install ffmpeg
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
-      - name: Cache the Kokoro model
+      - name: Cache the Pocket TTS model
         uses: actions/cache@v4
         with:
-          path: models
-          key: kokoro-v1.0
+          path: ~/.cache/huggingface
+          key: pocket-tts-4
       - name: Set up the voice
         run: scripts/setup-voices.sh
       - name: Make and record the reel

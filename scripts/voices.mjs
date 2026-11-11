@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Records a reel's narration: npm run voices my-reel [-- --voice bf_emma --speed 1 --all]
-// With Kokoro by default, or any other speech engine: --command "piper ... --output_file {out}".
+// Records a reel's narration: npm run voices my-reel [-- --voice stuart_bell --all]
+// With Pocket TTS by default, Kokoro (--engine kokoro), or any other speech engine:
+// --command "piper ... --output_file {out}". A reel keeps the narrator it was recorded with.
 //
 // Writes one small MP3 per scene into reels/<name>/audio/ plus manifest.json, which the
 // player reads to find each scene's clip. Clips are named after a hash of their words,
@@ -17,11 +18,60 @@ import { parseArgs } from 'node:util';
 import { normalizeReel, REEL_NAME } from '../src/reel.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-export const DEFAULTS = { voice: 'bm_george', speed: 0.92, lang: 'en-gb', bitrate: '48k', threads: 2 };
+/** The speech engines npm run voices runs itself, and each one's own settings. */
+export const ENGINES = {
+  pocket: { name: 'Pocket TTS', script: 'pocket_speak.py', voice: 'peter_yearsley' },
+  kokoro: { name: 'Kokoro', script: 'kokoro_tts.py', voice: 'bm_george', speed: 0.92, lang: 'en-gb' }
+};
+export const DEFAULTS = { engine: 'pocket', bitrate: '48k', threads: 2 };
 
-/** The file name a clip gets: the same words, voice, speed and language always give the same name. */
-export function clipFile(text, { voice, speed, lang }) {
-  return createHash('sha256').update(`${voice}|${speed}|${lang}|${text}`).digest('hex').slice(0, 16) + '.mp3';
+/** Kokoro's voices are named like bm_george or af_heart; Pocket TTS's like peter_yearsley. */
+const KOKORO_VOICE = /^[a-z][fm]_[a-z]+$/;
+
+/** The file name a clip gets: the same words and the same narrator always give the same name. */
+export function clipFile(text, { engine, voice, speed, lang }) {
+  // Kokoro and --command clips keep the names they had before there was a choice of engine
+  const narrator = engine === 'pocket' ? `pocket|${voice}` : `${voice}|${speed}|${lang}`;
+  return createHash('sha256').update(`${narrator}|${text}`).digest('hex').slice(0, 16) + '.mp3';
+}
+
+/** The narrator a manifest says its clips were recorded with, or null when it was --command or unknown. */
+function recordedWith(manifest) {
+  const { engine, voice, speed, lang } = manifest ?? {};
+  if (typeof voice !== 'string' || voice.startsWith('command: ')) return null;
+  if (engine === 'pocket') return { engine, voice };
+  if ((engine ?? 'kokoro') === 'kokoro' && speed > 0 && typeof lang === 'string') return { engine: 'kokoro', voice, speed, lang };
+  return null;
+}
+
+/**
+ * Works out who narrates. `options` are the command line's --engine, --voice, --speed, --lang
+ * and --command (each undefined when not given). Without them a reel keeps the narrator its
+ * manifest says it was recorded with, so recording one changed line never changes the voice;
+ * a new reel gets Pocket TTS's peter_yearsley. A Kokoro voice name picks Kokoro by itself.
+ */
+export function narrator(options, manifest = null) {
+  const { engine: wanted, voice, speed, lang } = options;
+  const command = options.command?.trim();
+  if (command !== undefined) {
+    if (!command.includes('{out}')) {
+      throw new Error('--command needs {out} where the audio file should go, for example: --command "piper --model voice.onnx --output_file {out}"');
+    }
+    if (wanted || voice || speed || lang) throw new Error('--command names its own voice, so it cannot go with --engine, --voice, --speed or --lang.');
+    // another engine has no voice or speed of ours: the command itself names the voice
+    return { voice: `command: ${command}`, speed: 1, lang: 'any' };
+  }
+  if (wanted && !ENGINES[wanted]) throw new Error(`--engine must be ${Object.keys(ENGINES).join(' or ')}, or use --command for any other speech engine.`);
+  const before = recordedWith(manifest);
+  const engine = wanted ?? (voice ? (KOKORO_VOICE.test(voice) ? 'kokoro' : 'pocket') : before?.engine ?? DEFAULTS.engine);
+  const base = before?.engine === engine && !voice ? before : ENGINES[engine];
+  if (engine === 'pocket') {
+    if (speed || lang) throw new Error('Pocket TTS has no --speed or --lang. Those are for Kokoro: add --engine kokoro.');
+    return { engine, voice: voice ?? base.voice };
+  }
+  const settings = { engine, voice: voice ?? base.voice, speed: speed === undefined ? base.speed : Number(speed), lang: lang ?? base.lang };
+  if (!(settings.speed > 0)) throw new Error('--speed must be a number above 0, for example 0.92');
+  return settings;
 }
 
 /** True for a clip file this tool named, as opposed to a recording someone added by hand. */
@@ -101,10 +151,15 @@ export function speakWithCommand(lines, command, onDone) {
   }
 }
 
-/** Runs Kokoro over `lines` ([{ text, wav }]), calling onDone(wav, seconds) as each finishes. */
-function speak(lines, settings, modelDir, onDone) {
+/** Runs Pocket TTS or Kokoro over `lines` ([{ text, wav }]), calling onDone(wav, seconds) as each finishes. */
+function speak(lines, settings, threads, onDone) {
+  const engine = ENGINES[settings.engine];
+  const modelDir = process.env.KOKORO_HOME || join(ROOT, 'models');
+  const job = settings.engine === 'kokoro'
+    ? { model: join(modelDir, 'kokoro-v1.0.onnx'), voices: join(modelDir, 'voices-v1.0.bin'), voice: settings.voice, speed: settings.speed, lang: settings.lang, threads, lines }
+    : { voice: settings.voice, threads, lines };
   return new Promise((ok, fail) => {
-    const child = spawn(findPython(), [join(ROOT, 'scripts', 'kokoro_tts.py')], { stdio: ['pipe', 'pipe', 'inherit'] });
+    const child = spawn(findPython(), [join(ROOT, 'scripts', engine.script)], { stdio: ['pipe', 'pipe', 'inherit'] });
     child.on('error', (err) => fail(new Error(`Could not start Python (${err.message}). Run scripts/setup-voices.sh, or set PIXELREEL_PYTHON.`)));
     let failed = null;
     createInterface({ input: child.stdout }).on('line', (line) => {
@@ -115,14 +170,9 @@ function speak(lines, settings, modelDir, onDone) {
     child.on('close', (code) => {
       if (failed) fail(failed);
       else if (code === 0) ok();
-      else fail(new Error(`Kokoro stopped with exit code ${code}; see the message above.`));
+      else fail(new Error(`${engine.name} stopped with exit code ${code}; see the message above.`));
     });
-    child.stdin.end(JSON.stringify({
-      model: join(modelDir, 'kokoro-v1.0.onnx'),
-      voices: join(modelDir, 'voices-v1.0.bin'),
-      voice: settings.voice, speed: settings.speed, lang: settings.lang, threads: settings.threads,
-      lines
-    }));
+    child.stdin.end(JSON.stringify(job));
   });
 }
 
@@ -132,9 +182,10 @@ export async function main(args = process.argv.slice(2), { log = console.log } =
     args,
     allowPositionals: true,
     options: {
-      voice: { type: 'string', default: DEFAULTS.voice },
-      speed: { type: 'string', default: String(DEFAULTS.speed) },
-      lang: { type: 'string', default: DEFAULTS.lang },
+      engine: { type: 'string' },
+      voice: { type: 'string' },
+      speed: { type: 'string' },
+      lang: { type: 'string' },
       bitrate: { type: 'string', default: DEFAULTS.bitrate },
       threads: { type: 'string', default: process.env.THREADS || String(DEFAULTS.threads) },
       command: { type: 'string' },
@@ -144,25 +195,18 @@ export async function main(args = process.argv.slice(2), { log = console.log } =
   const dir = reelDir(positionals[0]);
   const reelFile = join(dir, 'reel.js');
   if (!existsSync(reelFile)) throw new Error(`No reel at ${reelFile}`);
-  const command = values.command?.trim();
-  if (command !== undefined && !command.includes('{out}')) {
-    throw new Error('--command needs {out} where the audio file should go, for example: --command "piper --model voice.onnx --output_file {out}"');
-  }
-  // another engine has no Kokoro voice or speed: the command itself names the voice
-  const settings = command
-    ? { voice: `command: ${command}`, speed: 1, lang: 'any' }
-    : { voice: values.voice, speed: Number(values.speed), lang: values.lang, threads: Number(values.threads) || 2 };
-  if (!(settings.speed > 0)) throw new Error('--speed must be a number above 0, for example 0.92');
-
-  const reel = normalizeReel((await import(pathToFileURL(reelFile).href)).default);
   const audioDir = join(dir, 'audio');
-  mkdirSync(audioDir, { recursive: true });
   const manifestPath = join(audioDir, 'manifest.json');
   const manifest = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')) : null;
+  const settings = narrator(values, manifest);
+  const command = settings.engine ? null : values.command.trim();
+
+  const reel = normalizeReel((await import(pathToFileURL(reelFile).href)).default);
+  mkdirSync(audioDir, { recursive: true });
   const { clips, todo, stale } = planClips(reel.scenes, settings, { manifest, existing: readdirSync(audioDir), all: values.all });
 
-  const save = (list) => {
-    writeFileSync(manifestPath, JSON.stringify({ voice: settings.voice, speed: settings.speed, lang: settings.lang, clips: list }, null, 2) + '\n');
+  const save = (list, header = settings) => {
+    writeFileSync(manifestPath, JSON.stringify({ ...header, clips: list }, null, 2) + '\n');
   };
   if (todo.length) {
     const ffmpeg = findFfmpeg();
@@ -176,16 +220,18 @@ export async function main(args = process.argv.slice(2), { log = console.log } =
       clip.seconds = seconds ?? audioSeconds(ffmpeg, wav);
       log(`  ${clip.file}  ${clip.seconds.toFixed(1)}s  "${clip.text.slice(0, 60)}${clip.text.length > 60 ? '...' : ''}"`);
     };
-    log(`Recording ${todo.length} of ${clips.length} clips with ${command ? 'your speech command' : `${settings.voice} (about half a minute each)`}...`);
+    log(`Recording ${todo.length} of ${clips.length} clips with ${command ? 'your speech command' : `${ENGINES[settings.engine].name}, voice ${settings.voice}`}...`);
     try {
       if (command) speakWithCommand(lines, command, (wav) => encode(wav));
-      else await speak(lines, settings, process.env.KOKORO_HOME || join(ROOT, 'models'), encode);
+      else await speak(lines, settings, Number(values.threads) || DEFAULTS.threads, encode);
     } catch (err) {
       // keep what was recorded, and the old recordings of lines it did not reach, so the reel
-      // still plays and a rerun carries on from here
+      // still plays and a rerun carries on from here; until the new narrator has recorded
+      // something, the manifest goes on naming the old one
       const recorded = clips.filter((c) => c.seconds > 0), done = new Set(recorded.map((c) => c.text));
       const kept = (manifest?.clips ?? []).filter((c) => c?.text && !done.has(c.text) && c.file && existsSync(join(audioDir, c.file)));
-      save([...recorded, ...kept]);
+      const before = Object.fromEntries(Object.entries(manifest ?? {}).filter(([key]) => key !== 'clips'));
+      save([...recorded, ...kept], todo.some((c) => c.seconds > 0) ? settings : before);
       throw err;
     } finally {
       rmSync(tmp, { recursive: true, force: true });

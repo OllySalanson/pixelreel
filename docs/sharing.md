@@ -109,7 +109,7 @@ gh release view v1.2.0 --json body --jq .body | npm run new release-1-2 -- --fro
 
 [docs/examples/release-reel.yml](examples/release-reel.yml) is a GitHub Actions workflow
 that runs whenever you publish a release: it turns the release notes into a reel, records
-the narration with Kokoro, checks it, commits it, and redeploys your Pages site. Copy it to
+the narration with Pocket TTS, checks it, commits it, and redeploys your Pages site. Copy it to
 `.github/workflows/` in a copy of pixelreel, and every release gets its own two-minute
 cartoon without anyone lifting a finger. The model files are cached, so after the first run
 it takes a few minutes.
