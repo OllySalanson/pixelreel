@@ -1,4 +1,5 @@
 {
+  "engine": "kokoro",
   "voice": "bm_george",
   "speed": 0.92,
   "lang": "en-gb",

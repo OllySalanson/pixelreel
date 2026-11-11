@@ -78,9 +78,9 @@ each scene aloud in its own voice, which sounds like a satnav having a moment. W
   </tr>
 </table>
 
-- **A voice worth listening to.** [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) records the
-  narration offline, on your own CPU. No cloud, no API key, no subscription. Change one line
-  and only that line records again.
+- **A voice worth listening to.** [Pocket TTS](https://github.com/kyutai-labs/pocket-tts) records
+  the narration offline, on your own CPU, in a warm British storyteller's voice. No cloud, no API
+  key, no subscription. Change one line and only that line records again.
 - **Plain files.** No server code, no accounts, no build step. Host it anywhere that serves a web page.
 - **Banners for READMEs.** The banner maker turns a few seconds of any reel into an animated SVG
   that plays on GitHub. The one at the top of this page came out of it.
@@ -111,8 +111,8 @@ each scene aloud in its own voice, which sounds like a satnav having a moment. W
   narrated reel and publishes it. Nobody lifts a finger. Fingers are overrated.
 - **An AI agent.** Scenes are plain data, so an agent can write a reel, and `npm run check` tells it
   exactly what to fix. It won't even ask for a pay rise.
-- **Other voices.** Pick any of Kokoro's voices, plug in another speech engine with `--command`, or
-  record your own.
+- **Other voices.** Pick another Pocket TTS voice, switch to Kokoro, plug in another speech engine
+  with `--command`, or record your own.
 
 How-tos for all of it: [docs/sharing.md](docs/sharing.md).
 
@@ -154,13 +154,15 @@ in [docs/scenes.md](docs/scenes.md). For a bigger example, the showreel is
 ## Voices
 
 ```sh
-scripts/setup-voices.sh      # once: Kokoro and its model files, about 350 MB
+scripts/setup-voices.sh      # once: Pocket TTS and its model, about 220 MB
 npm run voices my-reel       # one small MP3 per scene
 ```
 
-The showreel's narrator is Kokoro's `bm_george`, recorded on a laptop. Fancy another? Try
-`-- --voice bf_emma`, plug in Piper, eSpeak or your Mac's own voice with `-- --command`, or record
-the lines yourself: your recordings are never touched. Details in [docs/voices.md](docs/voices.md).
+New reels are narrated by Pocket TTS's `peter_yearsley`, a warm British storyteller. The showreel
+was recorded earlier with Kokoro's `bm_george`, and a reel keeps the narrator it was recorded
+with. Fancy another? Try `-- --voice stuart_bell`, switch to Kokoro with `-- --voice bf_emma`,
+plug in Piper, eSpeak or your Mac's own voice with `-- --command`, or record the lines yourself:
+your recordings are never touched. Details in [docs/voices.md](docs/voices.md).
 
 ## FAQ
 
@@ -170,8 +172,8 @@ can fix a typo without re-exporting anything. Need an MP4 for a slide deck? Scre
 won't tell.
 
 **Does the voice need the internet, or an account?**
-Neither. Kokoro runs offline on an ordinary CPU, about half a minute a clip on a laptop. The
-recordings are committed with the reel, so viewers just get small MP3s.
+Neither. Pocket TTS runs offline on an ordinary CPU, taking about as long to record a line as
+to say it. The recordings are committed with the reel, so viewers just get small MP3s.
 
 **Why pixel art?**
 It's charming, it's quick to draw in code, a two-minute reel weighs less than one stock photo,
@@ -217,9 +219,15 @@ pixelreel is released under the [MIT licence](LICENSE).
 
 It stands on the shoulders of:
 
-- **[Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)** by hexgrad, the speech model that
-  records the narration. Its weights are released under the Apache 2.0 licence. pixelreel does not
-  include the model; `scripts/setup-voices.sh` downloads it.
+- **[Pocket TTS](https://github.com/kyutai-labs/pocket-tts)** by Kyutai, the speech model that
+  records the narration. Its code is MIT and its weights are released under the
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) licence. The default voice,
+  `peter_yearsley`, comes from [Voice-Zero](https://github.com/OwenTyme/voice-zero)'s selection of
+  public domain LibriVox readings (CC0). pixelreel does not include the model;
+  `scripts/setup-voices.sh` downloads it.
+- **[Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M)** by hexgrad, the other speech model
+  pixelreel can record with, and the one that narrates the example reels. Its weights are released
+  under the Apache 2.0 licence. `scripts/setup-voices.sh kokoro` downloads it.
 - **[kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx)** by thewh1teagle (MIT), which runs
   Kokoro on the CPU and hosts the model files used here.
 - **Orange Kid**, the pixel font, by Ray Larabie of [Typodermic Fonts](https://typodermicfonts.com/),
