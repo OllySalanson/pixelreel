@@ -116,6 +116,8 @@ each scene aloud in its own voice, which sounds like a satnav having a moment. W
   Schema to hand it.
 - **One file.** `npm run page my-reel` packs a `reel.json` reel, its pictures and its recordings into
   a single HTML file. Email it, drop it in a chat, open it from a download. No hosting, no internet.
+- **A video.** `npm run video my-reel` draws the reel frame by frame into an MP4, captions and
+  voice included, for WhatsApp, slide decks and video sites. No screen recording, no browser.
 - **Claude.** Upload [the pixel-reel skill](#use-it-in-claude) and Claude makes reels for you in
   the chat.
 - **Other voices.** Pick another Pocket TTS voice, switch to Kokoro, plug in another speech engine
@@ -191,7 +193,7 @@ your recordings are never touched. Details in [docs/voices.md](docs/voices.md).
 **Is it a video file?**
 No, it's a web page that plays like a video, which is why it's tiny, sharp at any size, and you
 can fix a typo without re-exporting anything. `npm run page` even makes it one file you can send.
-Need an MP4 for a slide deck? Screen-record it. We won't tell.
+Need an MP4 for WhatsApp or a slide deck? `npm run video` draws one, frame by frame, voice and all.
 
 **Does the voice need the internet, or an account?**
 Neither. Pocket TTS runs offline on an ordinary CPU, taking about as long to record a line as
@@ -225,7 +227,8 @@ src/                        the player: main.js (the page), player.js (timing), 
                             flipbook.js for banners
 reels/showreel/             the showreel, and its recorded narration
 reels/what-is-pixelreel/    a smaller example
-scripts/                    npm start, new, voices, check, page and skill, and setup-voices.sh
+scripts/                    npm start, new, voices, check, page, video and skill, and
+                            setup-voices.sh
 skill/                      the Claude skill: SKILL.md and example.json, and the ZIP to upload
 docs/                       writing scenes, voices, sharing, and the pictures in this README
 test/                       unit tests (node --test)

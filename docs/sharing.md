@@ -5,6 +5,7 @@ it easy to put almost anywhere, and easy for other tools to make.
 
 - [Host it](#host-it)
 - [Send it as one file](#send-it-as-one-file)
+- [Make it a video](#make-it-a-video)
 - [Embed it in a page](#embed-it-in-a-page)
 - [Put a banner in a README](#put-a-banner-in-a-readme)
 - [Make a reel from a script](#make-a-reel-from-a-script)
@@ -38,6 +39,31 @@ Email it, send it in a chat, or put it on a USB stick: it opens in any browser, 
 download or straight from the disk, with nothing to host and no internet. A minute of
 narration adds about half a megabyte. A page with no recordings starts with the sound off.
 Only a `reel.json` can be packed, because it holds no code of its own.
+
+## Make it a video
+
+Where a web page will not go (WhatsApp, a slide deck, a video site), make an MP4:
+
+```sh
+npm run video my-reel                  # writes my-reel.mp4
+npm run video my-reel -- --out tea.mp4 --fps 30
+```
+
+Every frame is drawn by the player's own pixel kit on the player's own clock, so the video
+matches the web page: the same scene lengths and pauses, transitions and typewriter
+captions, with the caption under the picture and each recording starting with its scene.
+The voice is brought up to the loudness phones expect. It runs in Node, with no browser:
+it needs [ffmpeg](https://ffmpeg.org/) and the `@napi-rs/canvas` package that `npm install`
+fetches.
+
+| Option (after `--`) | Default | |
+| --- | --- | --- |
+| `--out` | `<name>.mp4` | Where to write the video. |
+| `--fps` | `20` | Frames a second, as the player draws. 30 is a little smoother and bigger. |
+| `--scale` | `4` | How many video pixels each picture pixel becomes: 4 makes 1280 x 1080. |
+
+A scene with no up-to-date recording is silent in the video (there is no browser to read it
+aloud), and the command says which ones, so record first with `npm run voices`.
 
 ## Embed it in a page
 
