@@ -284,6 +284,16 @@ describe('npm run voices --command', { skip: !ffmpeg && 'needs ffmpeg' }, () => 
     assert.equal(readdirSync(join(reel, 'audio')).filter((f) => f.endsWith('.mp3')).length, 2, 'old clips are cleared away');
   });
 
+  it('records a reel.json just the same, found by its folder or its file', async () => {
+    const data = join(dir, 'data');
+    mkdirSync(data);
+    writeFileSync(join(data, 'reel.json'), JSON.stringify({ format: 'pixelreel/1', title: 'T', scenes: [{ title: 'A', caption: 'Data reels talk too.' }] }));
+    await recordVoices([join(data, 'reel.json'), '--command', command], quiet);
+    const m = JSON.parse(readFileSync(join(data, 'audio', 'manifest.json'), 'utf8'));
+    assert.deepEqual(m.clips.map((c) => c.text), ['Data reels talk too.']);
+    assert.equal((await checkReel(data, { recorded: true })).ok, true);
+  });
+
   it('insists on {out}, and says when the engine fails', async () => {
     await assert.rejects(recordVoices([reel, '--command', 'say hello'], quiet), /--command needs \{out\}/);
     const before = manifest();
@@ -388,6 +398,30 @@ describe('npm run check', () => {
     assert.equal((await checkReel(d, { recorded: true })).ok, false);
   });
 
+  it('checks a reel.json, the format included', async () => {
+    mkdirSync(join(dir, 'data'));
+    const good = { format: 'pixelreel/1', title: 'Tea', scenes: [{ title: 'One', caption: 'Hi.', picture: { type: 'big', text: 'HI' } }] };
+    writeFileSync(join(dir, 'data', 'reel.json'), JSON.stringify(good));
+    const { ok, report } = await checkReel(join(dir, 'data'));
+    assert.equal(ok, true);
+    assert.match(report[0], /"Tea", 1 scene, about 0:0\d\./);
+    writeFileSync(join(dir, 'data', 'reel.json'), JSON.stringify({ ...good, format: undefined, scenes: [{ title: 'One', caption: 'Hi.', draw: 'x' }] }));
+    const broken = await checkReel(join(dir, 'data'));
+    assert.equal(broken.ok, false);
+    assert.match(broken.report[0], /format: say which format this is/);
+    assert.match(broken.report[0], /scene 1: draw is code, which a reel\.json cannot hold/);
+    writeFileSync(join(dir, 'data', 'reel.json'), '{ "title": ');
+    assert.match((await checkReel(join(dir, 'data'))).report[0], /this is not valid JSON/);
+  });
+
+  it('will not guess between a reel.js and a reel.json in one folder', async () => {
+    const d = reel('both', "export default { title: 'T', scenes: [{ title: 'One', caption: 'Hi.' }] };\n");
+    writeFileSync(join(d, 'reel.json'), '{}');
+    const { ok, report } = await checkReel(d);
+    assert.equal(ok, false);
+    assert.match(report[0], /has both reel\.js and reel\.json\. Keep one of them\./);
+  });
+
   it('says what is wrong with a broken reel, and a missing picture', async () => {
     const broken = await checkReel(reel('broken', "export default { title: 'T', scenes: [{ title: 'One' }] };\n"));
     assert.equal(broken.ok, false);
@@ -395,6 +429,8 @@ describe('npm run check', () => {
     const pictures = await checkReel(reel('pictures', "export default { title: 'T', images: { cat: 'cat.png' }, scenes: [{ title: 'One', caption: 'Hi.' }] };\n"));
     assert.equal(pictures.ok, false);
     assert.match(pictures.report.join('\n'), /picture "cat" is missing: there is no cat\.png/);
-    assert.equal((await checkReel(join(dir, 'nothing-here'))).ok, false);
+    const nothing = await checkReel(join(dir, 'nothing-here'));
+    assert.equal(nothing.ok, false);
+    assert.match(nothing.report[0], /there is no reel\.js or reel\.json here\./);
   });
 });

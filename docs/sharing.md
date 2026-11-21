@@ -4,6 +4,7 @@ A reel is a handful of static files: no server code, no accounts, no build step.
 it easy to put almost anywhere, and easy for other tools to make.
 
 - [Host it](#host-it)
+- [Send it as one file](#send-it-as-one-file)
 - [Embed it in a page](#embed-it-in-a-page)
 - [Put a banner in a README](#put-a-banner-in-a-readme)
 - [Make a reel from a script](#make-a-reel-from-a-script)
@@ -22,6 +23,21 @@ plays when there is no `?reel=`.
 **Anywhere else.** Upload `index.html`, `src/`, `fonts/` and `reels/` together, keeping the
 same folders (and `export.html` too, if you want the banner maker online). Any static host
 works: Netlify, an S3 bucket, a shared drive behind a web server, a Raspberry Pi.
+
+## Send it as one file
+
+A reel written as a [`reel.json`](scenes.md#a-reel-as-data-reeljson) can be packed into a
+single HTML file, with the player, the font, its pictures and its recordings all inside:
+
+```sh
+npm run page my-reel                  # writes my-reel.html
+npm run page my-reel -- --out tea.html
+```
+
+Email it, send it in a chat, or put it on a USB stick: it opens in any browser, from a
+download or straight from the disk, with nothing to host and no internet. A minute of
+narration adds about half a megabyte. A page with no recordings starts with the sound off.
+Only a `reel.json` can be packed, because it holds no code of its own.
 
 ## Embed it in a page
 
@@ -123,6 +139,9 @@ ask for something like:
 > Follow docs/scenes.md. Use 8 to 12 scenes of 20 to 45 spoken words each, and the
 > ready-made pictures unless a custom draw function would explain it better. Run
 > `npm run check login` and fix anything it reports, then `npm run voices login`.
+
+To be sure the reel carries no code, ask for `reels/login/reel.json` instead: the
+[data-only format](scenes.md#a-reel-as-data-reeljson), with ready-made pictures only.
 
 `npm run check` gives the agent exact problems to fix ("scene 4: picture.items is needed for
 a list picture"), and the browser's voice reads any scene before it is recorded, so you can

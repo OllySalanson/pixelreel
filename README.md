@@ -110,11 +110,32 @@ each scene aloud in its own voice, which sounds like a satnav having a moment. W
 - **CI.** [An example workflow](docs/examples/release-reel.yml) turns every release's notes into a
   narrated reel and publishes it. Nobody lifts a finger. Fingers are overrated.
 - **An AI agent.** Scenes are plain data, so an agent can write a reel, and `npm run check` tells it
-  exactly what to fix. It won't even ask for a pay rise.
+  exactly what to fix. It won't even ask for a pay rise. For a reel that carries no code at all,
+  it writes a [`reel.json`](docs/scenes.md#a-reel-as-data-reeljson) instead, and there's a JSON
+  Schema to hand it.
+- **One file.** `npm run page my-reel` packs a `reel.json` reel, its pictures and its recordings into
+  a single HTML file. Email it, drop it in a chat, open it from a download. No hosting, no internet.
+- **Claude.** Upload [the pixel-reel skill](#use-it-in-claude) and Claude makes reels for you in
+  the chat.
 - **Other voices.** Pick another Pocket TTS voice, switch to Kokoro, plug in another speech engine
   with `--command`, or record your own.
 
 How-tos for all of it: [docs/sharing.md](docs/sharing.md).
+
+## Use it in Claude
+
+No install, no code: Claude writes the reel for you and hands you the page.
+
+1. Download [`skill/pixel-reel.zip`](skill/pixel-reel.zip).
+2. In Claude, turn on code execution (Settings > Capabilities), then go to Customize > Skills,
+   press **+**, choose **Upload a skill** and pick the ZIP. Skills work on every Claude plan.
+3. Ask for one: *"Make me a pixel reel explaining how my new boiler's timer works."*
+
+Claude writes the scenes, checks them with the player's own checks, and gives you one HTML file
+to open and press Play. That page has no recorded voice: it starts with the sound off and moves
+on by itself, and the Sound button reads it with your device's voice. For the warm recorded
+narrator, put the same `reel.json` in `reels/<name>/` here, then run `npm run voices <name>`
+and `npm run page <name>`.
 
 ## Write a scene
 
@@ -168,8 +189,8 @@ your recordings are never touched. Details in [docs/voices.md](docs/voices.md).
 
 **Is it a video file?**
 No, it's a web page that plays like a video, which is why it's tiny, sharp at any size, and you
-can fix a typo without re-exporting anything. Need an MP4 for a slide deck? Screen-record it. We
-won't tell.
+can fix a typo without re-exporting anything. `npm run page` even makes it one file you can send.
+Need an MP4 for a slide deck? Screen-record it. We won't tell.
 
 **Does the voice need the internet, or an account?**
 Neither. Pocket TTS runs offline on an ordinary CPU, taking about as long to record a line as
@@ -184,7 +205,7 @@ Same. Use the ready-made pictures: titles, lists, terminals, code and chats need
 
 **Can my AI agent write one?**
 Yes. Point it at [docs/scenes.md](docs/scenes.md), have it run `npm run check`, and go and make a
-cup of tea.
+cup of tea. In Claude, [the skill](#use-it-in-claude) does it for you.
 
 **Is there really a star wipe?**
 `transition: 'star'`. We're not proud of it.
@@ -197,10 +218,12 @@ export.html                 the banner maker
 src/                        the player: main.js (the page), player.js (timing), narrator.js
                             (clip, browser voice or timer), reel.js (checks a reel), kit.js
                             (the pixel kit), pictures.js (ready-made pictures), transitions.js,
-                            timing.js, load.js, and png.js and flipbook.js for banners
+                            timing.js, load.js, format.js (reel.json), and png.js and
+                            flipbook.js for banners
 reels/showreel/             the showreel, and its recorded narration
 reels/what-is-pixelreel/    a smaller example
-scripts/                    npm start, new, voices and check, and setup-voices.sh
+scripts/                    npm start, new, voices, check, page and skill, and setup-voices.sh
+skill/                      the Claude skill: SKILL.md and example.json, and the ZIP to upload
 docs/                       writing scenes, voices, sharing, and the pictures in this README
 test/                       unit tests (node --test)
 fonts/                      Orange Kid, the pixel font (CC0)
