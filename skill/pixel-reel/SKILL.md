@@ -71,10 +71,26 @@ Any other field is an error. There is no drawing code: every picture is a ready-
 | `terminal` | `lines` (list of text), `title?` | A terminal window. Lines starting with `$ ` type out; the rest is output. |
 | `code` | `lines` (list of text), `title?` | An editor that types out the code, with simple highlighting. |
 | `image` | `name` | One of the reel's `images` (`"images": { "name": "https://..." }`), slowly pushing in. |
+| `icons` | `items` (1 to 4 `{ "icon": "...", "label": "..." }`, label optional), `heading?`, `every?`, `start?` | Everyday icons dropping in one by one, each with a short label underneath. |
+| `flow` | `items` (as for `icons`), `heading?`, `every?`, `start?` | The same icons joined by arrows: how one thing leads to the next. |
+| `compare` | `bad` and `good` (each `{ "icon": "...", "label": "..." }`), `heading?`, `every?`, `start?` | Two cards side by side: the one to avoid, with a cross, then the one to choose, with a tick. |
+| `sprite` | `rows` (list of text), `colours?`, `label?` | Your own pixel art, scaled up to fill the picture. See below. |
+
+The icons are `letter`, `document`, `phone`, `money`, `house`, `calendar`, `clock`, `person`,
+`people`, `heart`, `tick`, `cross`, `warning`, `lock`, `computer`, `lightbulb`, `cup`, `car`,
+`question` and `star`. Keep labels to two or three words.
+
+A `sprite` is drawn from rows of letters, one letter a pixel, up to 40 rows of up to 64: `k`
+black, `w` white, `r` red, `g` green, `b` blue, `y` yellow, `o` orange, `p` purple, `t` teal,
+`s` skin, `n` brown, `e` grey, `c` cream, capitals `B`, `R`, `N`, `G` for darker blue, red,
+brown and green, and `.` for see-through. `colours` adds letters of your own, such as
+`{ "h": "#6b3e2e" }`. Keep sprites small and bold (about 8 to 16 pixels across): a face, a
+sun, a simple object.
 
 A scene with no `picture` shows its title on a plain card. Mix the pictures so the reel
-moves: open with `title`, use `list` for steps, `big` for one number or word that matters,
-and `chat` for a conversation. `example.json` beside this file is a finished reel.
+moves: open with `title`, use `icons` or `list` for what is involved, `flow` for steps that
+lead to each other, `compare` for do this, not that, `big` for one number or word that
+matters, and `chat` for a conversation. `example.json` beside this file is a finished reel.
 
 ## What the person gets
 

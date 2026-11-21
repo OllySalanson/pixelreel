@@ -54,7 +54,8 @@ each scene aloud in its own voice, which sounds like a satnav having a moment. W
     <td width="50%"><img src="docs/readme/pictures.svg" alt="A telly flicking through ready-made pictures: a ticked list, a terminal, a chat and a title."></td>
     <td><b>Scenes as data.</b> A reel is one small file: a list of scenes, each with a title, a
     caption, the words to say and a picture. Draw the picture in code, or skip the drawing and
-    pick a ready-made one: a title, a list, a terminal, highlighted code, a chat. Fill in the
+    pick a ready-made one: a title, a list, everyday icons, a flow of steps, a do-this-not-that, a
+    terminal, highlighted code, a chat, or pixel art of your own from rows of letters. Fill in the
     words and it animates itself.</td>
   </tr>
   <tr>
@@ -201,7 +202,8 @@ It's charming, it's quick to draw in code, a two-minute reel weighs less than on
 and nobody expects it to look like a Hollywood film. Low expectations, high delight.
 
 **I can't draw.**
-Same. Use the ready-made pictures: titles, lists, terminals, code and chats need no drawing at all.
+Same. Use the ready-made pictures: titles, lists, icons, flows, comparisons, terminals, code and
+chats need no drawing at all.
 
 **Can my AI agent write one?**
 Yes. Point it at [docs/scenes.md](docs/scenes.md), have it run `npm run check`, and go and make a
@@ -217,7 +219,8 @@ index.html                  the player page
 export.html                 the banner maker
 src/                        the player: main.js (the page), player.js (timing), narrator.js
                             (clip, browser voice or timer), reel.js (checks a reel), kit.js
-                            (the pixel kit), pictures.js (ready-made pictures), transitions.js,
+                            (the pixel kit), pictures.js (ready-made pictures), icons.js and
+                            palette.js (their icons and colours), transitions.js,
                             timing.js, load.js, format.js (reel.json), and png.js and
                             flipbook.js for banners
 reels/showreel/             the showreel, and its recorded narration
