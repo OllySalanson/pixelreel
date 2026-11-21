@@ -110,7 +110,9 @@ each scene aloud in its own voice, which sounds like a satnav having a moment. W
 - **CI.** [An example workflow](docs/examples/release-reel.yml) turns every release's notes into a
   narrated reel and publishes it. Nobody lifts a finger. Fingers are overrated.
 - **An AI agent.** Scenes are plain data, so an agent can write a reel, and `npm run check` tells it
-  exactly what to fix. It won't even ask for a pay rise.
+  exactly what to fix. It won't even ask for a pay rise. For a reel that carries no code at all,
+  it writes a [`reel.json`](docs/scenes.md#a-reel-as-data-reeljson) instead, and there's a JSON
+  Schema to hand it.
 - **Other voices.** Pick another Pocket TTS voice, switch to Kokoro, plug in another speech engine
   with `--command`, or record your own.
 

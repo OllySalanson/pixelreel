@@ -1,6 +1,17 @@
-// Loads a reel by name in the browser: reels/<name>/reel.js, checked, plus its recorded
+// Loads a reel by name in the browser: reels/<name>/reel.js (or reel.json), checked, plus its recorded
 // clips and pictures. Shared by the player (main.js) and the banner maker (export.js).
-import { clipLookup, normalizeReel, REEL_NAME } from './reel.js';
+import { parseReelJson } from './format.js';
+import { clipLookup, normalizeReel, REEL_NAME, ReelError } from './reel.js';
+
+/** The text at `url`, or null if it is not there. */
+async function fetchText(url) {
+  try {
+    const res = await fetch(url, { cache: 'no-cache' });
+    return res.ok ? await res.text() : null;
+  } catch {
+    return null;
+  }
+}
 
 async function loadManifest(url) {
   try {
@@ -18,14 +29,19 @@ async function loadManifest(url) {
 export async function loadReel(name) {
   if (!REEL_NAME.test(name ?? '')) throw new Error(`"${name}" is not a reel name. Use lowercase letters, digits and dashes, for example ?reel=my-reel.`);
   const base = `reels/${name}/`;
-  let mod;
+  let reel;
   try {
-    mod = await import(new URL(base + 'reel.js', location.href).href);
+    reel = normalizeReel((await import(new URL(base + 'reel.js', location.href).href)).default, { base });
   } catch (err) {
-    console.error(err);
-    throw new Error(`Could not load ${base}reel.js. Check the reel name, and look in the browser console for a typo in the file.`, { cause: err });
+    if (err instanceof ReelError) throw err;
+    // No reel.js (or one that will not load): a reel made of data is a reel.json instead.
+    const json = await fetchText(base + 'reel.json');
+    if (json === null) {
+      console.error(err);
+      throw new Error(`Could not load ${base}reel.js or ${base}reel.json. Check the reel name, and look in the browser console for a typo in the file.`, { cause: err });
+    }
+    reel = parseReelJson(json, { base });
   }
-  const reel = normalizeReel(mod.default, { base });
   const clipFor = clipLookup(await loadManifest(base + 'audio/manifest.json'), base + 'audio/');
   const images = {};
   for (const [key, src] of Object.entries(reel.images)) {

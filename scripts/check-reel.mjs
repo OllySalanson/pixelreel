@@ -7,8 +7,9 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { basename, dirname, join, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
-import { clipLookup, normalizeReel } from '../src/reel.js';
+import { clipLookup } from '../src/reel.js';
 import { clockTime, narrationMs, timeline } from '../src/timing.js';
+import { readReel, reelFile } from './reel-file.mjs';
 import { reelDir } from './voices.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -16,11 +17,10 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 /** Checks the reel in folder `dir`. Returns { ok, report: [lines to print] }. */
 export async function checkReel(dir, { recorded = false } = {}) {
   const name = relative(process.cwd(), dir) || basename(dir);
-  const file = join(dir, 'reel.js');
-  if (!existsSync(file)) return { ok: false, report: [`${name}: there is no reel.js here.`] };
   let reel;
   try {
-    reel = normalizeReel((await import(pathToFileURL(file).href)).default);
+    if (!reelFile(dir)) return { ok: false, report: [`${name}: there is no reel.js or reel.json here.`] };
+    reel = await readReel(dir);
   } catch (err) {
     const why = err.problems ? err.problems.map((p) => `  - ${p}`).join('\n') : `  ${err.message}`;
     return { ok: false, report: [`${name}: this reel has problems:\n${why}`] };

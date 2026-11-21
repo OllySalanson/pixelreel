@@ -5,6 +5,7 @@ Everything a reel can do, with a tiny example of each. For the voice, see
 
 - [The reel file](#the-reel-file)
 - [Scenes](#scenes)
+- [A reel as data: reel.json](#a-reel-as-data-reeljson)
 - [Ready-made pictures](#ready-made-pictures)
 - [Transitions](#transitions)
 - [Typewriter captions](#typewriter-captions)
@@ -69,6 +70,37 @@ A scene with neither `draw` nor `picture` gets a plain title card. When the narr
 the player waits a moment, then moves on by itself. Aim for 6 to 16 scenes of 20 to 50
 spoken words each. If a reel has a mistake, the player (and `npm run check`) says what and
 where instead of playing.
+
+## A reel as data: reel.json
+
+A reel can also be plain JSON: `reels/<name>/reel.json` in place of `reel.js` (a folder has
+one or the other). It is the same reel without the code: every scene uses a
+[ready-made picture](#ready-made-pictures) or the plain title card, and nothing in it ever
+runs. That makes it the format to use when a script, an AI agent or a web service writes the
+reel, or when you play a reel someone else sent you.
+
+```json
+{
+  "format": "pixelreel/1",
+  "title": "How tea is made",
+  "transition": "dissolve",
+  "scenes": [
+    { "title": "Tea", "caption": "From the bush to the cup.",
+      "picture": { "type": "title", "text": "TEA", "sub": "From the bush to the cup" } },
+    { "title": "Steep", "caption": "Three minutes, no more.",
+      "say": "Leave it for three minutes. No more.",
+      "picture": { "type": "big", "text": "3 MIN" } }
+  ]
+}
+```
+
+- `format` is needed, and says which version of the format this is: `"pixelreel/1"`.
+- The other fields are the ones in the tables above, except `draw`. A field the format does
+  not know is a mistake, so a typo such as `captoin` is pointed out rather than ignored.
+- `npm run check`, `npm run voices` and the player all take a `reel.json` just like a `reel.js`.
+- `reelSchema()` in `src/format.js` gives the whole format as a JSON Schema, made from the
+  ready-made pictures themselves, to hand to a tool or an AI agent as the shape to write.
+  `reelFromData()` checks a reel and says every problem at once.
 
 ## Ready-made pictures
 

@@ -124,6 +124,9 @@ ask for something like:
 > ready-made pictures unless a custom draw function would explain it better. Run
 > `npm run check login` and fix anything it reports, then `npm run voices login`.
 
+To be sure the reel carries no code, ask for `reels/login/reel.json` instead: the
+[data-only format](scenes.md#a-reel-as-data-reeljson), with ready-made pictures only.
+
 `npm run check` gives the agent exact problems to fix ("scene 4: picture.items is needed for
 a list picture"), and the browser's voice reads any scene before it is recorded, so you can
 watch a draft straight away.

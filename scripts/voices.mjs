@@ -15,7 +15,8 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
-import { normalizeReel, REEL_NAME } from '../src/reel.js';
+import { REEL_NAME } from '../src/reel.js';
+import { readReel, REEL_FILES, reelFile } from './reel-file.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 /** The speech engines npm run voices runs itself, and each one's own settings. */
@@ -109,12 +110,12 @@ export function planClips(scenes, settings, { manifest = null, existing = [], al
   return { clips, todo, stale };
 }
 
-/** Finds the reel folder from a name ("my-reel") or a path ("reels/my-reel" or ".../reel.js"). */
+/** Finds the reel folder from a name ("my-reel") or a path ("reels/my-reel", ".../reel.js" or ".../reel.json"). */
 export function reelDir(arg) {
   if (!arg) throw new Error('Which reel? For example: npm run voices what-is-pixelreel');
   if (REEL_NAME.test(arg) && !existsSync(arg)) return join(ROOT, 'reels', arg);
   const full = resolve(arg);
-  return basename(full) === 'reel.js' ? dirname(full) : full;
+  return REEL_FILES.includes(basename(full)) ? dirname(full) : full;
 }
 
 function findPython() {
@@ -193,15 +194,14 @@ export async function main(args = process.argv.slice(2), { log = console.log } =
     }
   });
   const dir = reelDir(positionals[0]);
-  const reelFile = join(dir, 'reel.js');
-  if (!existsSync(reelFile)) throw new Error(`No reel at ${reelFile}`);
+  if (!reelFile(dir)) throw new Error(`There is no reel.js or reel.json in ${dir}`);
   const audioDir = join(dir, 'audio');
   const manifestPath = join(audioDir, 'manifest.json');
   const manifest = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, 'utf8')) : null;
   const settings = narrator(values, manifest);
   const command = settings.engine ? null : values.command.trim();
 
-  const reel = normalizeReel((await import(pathToFileURL(reelFile).href)).default);
+  const reel = await readReel(dir);
   mkdirSync(audioDir, { recursive: true });
   const { clips, todo, stale } = planClips(reel.scenes, settings, { manifest, existing: readdirSync(audioDir), all: values.all });
 
