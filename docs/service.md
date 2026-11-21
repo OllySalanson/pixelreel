@@ -12,6 +12,7 @@ code or install on their side. It is a small Node server with two faces:
 - [Add it to Claude](#add-it-to-claude)
 - [The tools](#the-tools)
 - [The player in the chat](#the-player-in-the-chat)
+- [Limits](#limits)
 - [What it keeps, and for how long](#what-it-keeps-and-for-how-long)
 - [How it fits together](#how-it-fits-together)
 
@@ -74,6 +75,22 @@ Results come as plain words for Claude to pass on, and as `structuredContent` (`
 - Its content security policy lets it reach the service's own address and nothing else.
 - Where a host does not show apps, nothing changes: Claude passes on the link.
 
+## Limits
+
+So a reel stays short enough to watch, and nobody (or no runaway agent) can use the service up:
+
+- A reel has at most 12 scenes, 70 spoken words and 160 caption characters a scene, 8 items
+  in a list, terminal, code or chat picture, and runs under 4 minutes. It cannot carry images
+  from elsewhere (they could track whoever watches); icons and sprites cover most needs.
+  `reel_format` tells Claude these up front, and `make_reel` says exactly what is over.
+- Each caller (by address) can make 10 reels and 10 videos an hour, and the service 300 reels
+  a day in all. Set them with `PIXELREEL_REELS_PER_HOUR`, `PIXELREEL_VIDEOS_PER_HOUR` and
+  `PIXELREEL_REELS_PER_DAY`. Behind a proxy that sets `X-Forwarded-For` (most hosts), set
+  `PIXELREEL_TRUST_PROXY=1` so callers are told apart.
+- With 20 jobs waiting, it asks people to try again in a few minutes.
+
+The local tools (`npm run voices`, `page`, `video`) have no such limits.
+
 ## What it keeps, and for how long
 
 - The reel as it was sent, its recordings and, if asked for, its video. Nothing else: no
@@ -94,6 +111,7 @@ Results come as plain words for Claude to pass on, and as `structuredContent` (`
 | `service/mcp.mjs` | The connector's tools, and the player shown in the chat. |
 | `service/app-bridge.js` | The in-chat player's side of the MCP Apps protocol. |
 | `service/reels.mjs` | Making, recording, videos, expiry and deleting: one job at a time. |
+| `service/limits.mjs` | How big a reel may be, and how many each caller may make. |
 | `service/store.mjs` | Where reels are kept: a folder now, behind an interface an S3-style store can take over. |
 
 A job copies its reel out of the store into a folder of its own, runs the same

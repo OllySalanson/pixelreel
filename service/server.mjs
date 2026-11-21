@@ -78,13 +78,19 @@ async function readBody(req) {
 const rpcError = (res, status, code, message) => res.writeHead(status, { ...SAFE, 'content-type': 'application/json' })
   .end(JSON.stringify({ jsonrpc: '2.0', error: { code, message }, id: null }));
 
-async function handleMcp(req, res, { reels, baseUrl, log }) {
+/** Who is asking: the connecting address, or behind a trusted proxy, the first it forwarded for. */
+function callerOf(req, trustProxy) {
+  const forwarded = trustProxy ? String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() : '';
+  return forwarded || req.socket.remoteAddress || 'unknown';
+}
+
+async function handleMcp(req, res, { reels, baseUrl, log, limits, trustProxy }) {
   if (req.method !== 'POST') { res.setHeader('allow', 'POST'); rpcError(res, 405, -32000, 'Send MCP requests with POST.'); return; }
   const raw = await readBody(req);
   if (raw === null) { rpcError(res, 413, -32600, `A request may carry at most ${MAX_BODY / 1024} KB.`); return; }
   let body;
   try { body = JSON.parse(raw); } catch { rpcError(res, 400, -32700, 'The request is not valid JSON.'); return; }
-  const server = createMcpServer({ reels, baseUrl });
+  const server = createMcpServer({ reels, baseUrl, limits, client: callerOf(req, trustProxy) });
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   res.on('close', () => { transport.close(); server.close(); });
   try {
@@ -133,9 +139,13 @@ async function handleReel(req, res, id, rest, { reels, baseUrl }) {
   sendBytes(req, res, bytes, key.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg');
 }
 
-/** The service as an HTTP server (not yet listening). `baseUrl` is the address people reach it at. */
-export function createService({ reels, baseUrl, log = () => {} }) {
-  const context = { reels, baseUrl: baseUrl.replace(/\/$/, ''), log };
+/**
+ * The service as an HTTP server (not yet listening). `baseUrl` is the address people reach it
+ * at; `limits` ({ reels, videos }, RateLimits) cap what each caller asks for; `trustProxy`
+ * takes the caller's address from X-Forwarded-For, for a service behind a proxy that sets it.
+ */
+export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false }) {
+  const context = { reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, trustProxy };
   return createServer(async (req, res) => {
     try {
       const path = new URL(req.url, 'http://localhost').pathname;

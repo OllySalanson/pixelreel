@@ -10,7 +10,8 @@ import { PICTURE_NOTES, REEL_FORMAT, reelSchema } from '../src/format.js';
 import { ICON_NAMES, PICTURES } from '../src/pictures.js';
 import { ReelError } from '../src/reel.js';
 import { clockTime } from '../src/timing.js';
-import { KEEP_DAYS } from './reels.mjs';
+import { LIMITS } from './limits.mjs';
+import { BusyError, KEEP_DAYS } from './reels.mjs';
 
 /** The player shown inside the chat (an MCP App), and how hosts are told to show it. */
 export const PLAYER_URI = 'ui://pixelreel/player.html';
@@ -98,6 +99,7 @@ export function formatGuide() {
     'A sprite is drawn from rows of letters, one a pixel: k black, w white, r red, g green, b blue, y yellow, o orange, p purple, t teal, s skin, n brown, e grey, c cream, B R N G darker blue, red, brown, green, and . see-through. Keep sprites about 8 to 16 pixels across.',
     '',
     'Transitions: cut (default), fade, dissolve, wipe, slide, blinds, iris, flash, star.',
+    `Limits here: at most ${LIMITS.scenes} scenes, ${LIMITS.sayWords} spoken words and ${LIMITS.captionChars} caption characters a scene, ${LIMITS.listItems} items in a picture, under ${LIMITS.minutes} minutes in all, and no images from elsewhere.`,
     `Reels are kept for ${KEEP_DAYS} days, unlisted: only people with the link can watch.`
   ].join('\n');
 }
@@ -124,8 +126,11 @@ function describe(status, baseUrl) {
   };
 }
 
-/** An MCP server for `reels` (a Reels), giving links on `baseUrl` (such as https://pixelreel.example). */
-export function createMcpServer({ reels, baseUrl, version = '0.1.0' }) {
+/**
+ * An MCP server for `reels` (a Reels), giving links on `baseUrl` (such as https://pixelreel.example).
+ * `limits` ({ reels, videos }, each a RateLimit) count what `client` (the caller's address) asks for.
+ */
+export function createMcpServer({ reels, baseUrl, client = 'local', limits = null, version = '0.1.0' }) {
   const server = new Server(
     { name: 'pixelreel', title: 'Pixel Reel', version },
     { capabilities: { tools: {}, resources: {} }, instructions: 'Pixel Reel makes short narrated pixel-art explainers from a list of scenes. reel_format explains how to write one.' }
@@ -152,18 +157,27 @@ export function createMcpServer({ reels, baseUrl, version = '0.1.0' }) {
     switch (params.name) {
       case 'reel_format':
         return text(formatGuide());
-      case 'make_reel':
+      case 'make_reel': {
+        const refused = limits?.reels.hit(client);
+        if (refused) return failure(`No more reels for now. ${refused}`);
         try {
           return describe(await reels.create(args), baseUrl);
         } catch (err) {
           if (err instanceof ReelError) return failure(`This reel has problems. Fix them all, then call make_reel again:\n- ${err.problems.join('\n- ')}`);
+          if (err instanceof BusyError) return failure(err.message);
           throw err;
         }
+      }
       case 'get_reel': {
         const status = await reels.status(args.id);
         return status ? describe(status, baseUrl) : failure(`There is no reel with the id "${args.id}". It may have been deleted, or kept past its ${KEEP_DAYS} days.`);
       }
       case 'get_reel_video': {
+        const before = await reels.status(args.id);
+        if (before?.state === 'ready' && (before.video === 'none' || before.video === 'failed')) {
+          const refused = limits?.videos.hit(client);
+          if (refused) return failure(`No more videos for now. ${refused}`);
+        }
         const status = await reels.requestVideo(args.id);
         if (!status) return failure(`There is no reel with the id "${args.id}".`);
         if (status.state === 'failed') return failure(`"${status.title}" could not be made, so it has no video.`);
