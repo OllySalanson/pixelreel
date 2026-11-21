@@ -18,6 +18,7 @@
     "voices": "node scripts/voices.mjs",
     "check": "node scripts/check-reel.mjs",
     "page": "node scripts/page.mjs",
+    "service": "node service/main.mjs",
     "skill": "node scripts/skill.mjs",
     "video": "node scripts/video.mjs",
     "test": "node --test --test-concurrency=2 \"test/*.test.js\"",
@@ -28,5 +29,8 @@
     "@napi-rs/canvas": "^1.2.0",
     "eslint": "^10.12.0",
     "globals": "^17.13.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2"
   }
 }

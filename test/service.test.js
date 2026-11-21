@@ -146,9 +146,102 @@ describe('the reels service', () => {
     const store = freshStore();
     const before = new Reels({ store, record: () => new Promise(() => {}), video: fakeVideo });
     const { id } = await before.create(tea);   // its recording never finishes: the service stopped
+    while ((await before.status(id)).state !== 'recording') await new Promise((ok) => setImmediate(ok));
     const after = new Reels({ store, record: fakeRecord, video: fakeVideo });
     await after.resume();
     await after.idle();
     assert.equal((await after.status(id)).state, 'ready');
+  });
+});
+
+describe('the service over HTTP', async () => {
+  const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
+  const { StreamableHTTPClientTransport } = await import('@modelcontextprotocol/sdk/client/streamableHttp.js');
+  const { createService, MAX_BODY } = await import('../service/server.mjs');
+  const reels = new Reels({ store: freshStore(), record: fakeRecord, video: fakeVideo });
+  const server = createService({ reels, baseUrl: 'https://reels.example/' });
+  await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
+  const local = `http://127.0.0.1:${server.address().port}`;
+  after(() => server.close());
+
+  const connect = async () => {
+    const client = new Client({ name: 'test', version: '1' });
+    await client.connect(new StreamableHTTPClientTransport(new URL(`${local}/mcp`)));
+    return client;
+  };
+  const words = (result) => result.content.map((c) => c.text).join('\n');
+
+  it('lists its tools, each titled and marked read-only or destructive', async () => {
+    const client = await connect();
+    const { tools } = await client.listTools();
+    assert.deepEqual(tools.map((t) => t.name), ['reel_format', 'make_reel', 'get_reel', 'get_reel_video', 'delete_reel']);
+    for (const t of tools) {
+      assert.ok(t.title && t.annotations.title, `${t.name} has a title`);
+      assert.equal(typeof t.annotations.readOnlyHint, 'boolean', `${t.name} says if it only reads`);
+      if (!t.annotations.readOnlyHint) assert.equal(typeof t.annotations.destructiveHint, 'boolean', `${t.name} says if it destroys`);
+      assert.ok(t.name.length <= 64);
+    }
+    assert.equal(tools.find((t) => t.name === 'delete_reel').annotations.destructiveHint, true);
+    assert.equal(tools.find((t) => t.name === 'make_reel').inputSchema.properties.format.const, 'pixelreel/1');
+    assert.match(words(await client.callTool({ name: 'reel_format', arguments: {} })), /Icons: letter, document, phone/);
+    await client.close();
+  });
+
+  it('makes a reel, shows it, makes its video and deletes it', async () => {
+    const client = await connect();
+    const made = await client.callTool({ name: 'make_reel', arguments: tea });
+    assert.equal(made.isError, undefined);
+    const { id, watch } = made.structuredContent;
+    assert.equal(watch, `https://reels.example/r/${id}`, 'links use the address people reach the service at');
+    assert.match(words(made), /being recorded|waiting its turn/);
+
+    const waiting = await fetch(`${local}/r/${id}`);
+    await reels.idle();
+    const ready = await client.callTool({ name: 'get_reel', arguments: { id } });
+    assert.match(words(ready), /^"Tea" is ready: 2 scenes, 0:14\. Watch it at https:\/\/reels\.example\/r\//);
+    assert.match(await waiting.text(), /Nearly ready|<canvas/);
+
+    const page = await fetch(`${local}/r/${id}`);
+    const html = await page.text();
+    assert.equal(page.status, 200);
+    assert.match(page.headers.get('content-security-policy'), /default-src 'none'.*media-src 'self'/);
+    assert.match(html, /<title>Tea - pixelreel<\/title>/);
+    assert.match(html, new RegExp(`"file":"/r/${id}/audio/clip0\\.mp3"`), 'the page plays the recordings from the service');
+    const audio = await fetch(`${local}/r/${id}/audio/clip0.mp3`, { headers: { range: 'bytes=1-2' } });
+    assert.equal(audio.status, 206);
+    assert.equal(await audio.text(), 'D3');
+
+    assert.match(words(await client.callTool({ name: 'get_reel_video', arguments: { id } })), /being made/);
+    await reels.idle();
+    const video = await client.callTool({ name: 'get_reel_video', arguments: { id } });
+    assert.equal(video.structuredContent.video, `https://reels.example/r/${id}/video.mp4`);
+    assert.equal(await (await fetch(`${local}/r/${id}/video.mp4`)).text(), 'video of Tea');
+
+    assert.match(words(await client.callTool({ name: 'delete_reel', arguments: { id } })), /^Deleted\./);
+    assert.equal((await fetch(`${local}/r/${id}`)).status, 404);
+    assert.equal((await client.callTool({ name: 'get_reel', arguments: { id } })).isError, true);
+    await client.close();
+  });
+
+  it('gives Claude every problem in a reel at once, as a tool error to fix', async () => {
+    const client = await connect();
+    const result = await client.callTool({ name: 'make_reel', arguments: { ...tea, scenes: [{ title: 'A', picture: { type: 'icons', items: [] } }] } });
+    assert.equal(result.isError, true);
+    assert.match(words(result), /^This reel has problems\. Fix them all, then call make_reel again:\n- scene 1: needs a caption\n- scene 1: picture\.items must be/);
+    await client.close();
+  });
+
+  it('answers odd requests plainly, and serves nothing it should not', async () => {
+    assert.equal((await fetch(`${local}/mcp`)).status, 405);
+    assert.equal((await fetch(`${local}/mcp`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{oops' })).status, 400);
+    assert.equal((await fetch(`${local}/mcp`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: 'x'.repeat(MAX_BODY + 1) })).status, 413);
+    assert.equal((await fetch(`${local}/r/${newId()}`)).status, 404);
+    assert.equal((await fetch(`${local}/r/../../package.json`)).status, 404);
+    const { id } = await reels.create(tea);
+    await reels.idle();
+    for (const bad of ['audio/manifest.json', 'reel.json', 'status.json', 'audio/..%2Freel.json', 'audio/clip0.wav']) {
+      assert.equal((await fetch(`${local}/r/${id}/${bad}`)).status, 404, bad);
+    }
+    assert.equal(await (await fetch(`${local}/health`)).text(), 'ok');
   });
 });

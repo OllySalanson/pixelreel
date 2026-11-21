@@ -1,0 +1,85 @@
+# The Pixel Reel service
+
+The service lets anyone make reels from their own Claude, with the recorded narrator, and no
+code or install on their side. It is a small Node server with two faces:
+
+- **A Claude connector** (an MCP server) at `/mcp`. Claude writes the reel's scenes, and the
+  service records the voice and gives back a link to watch it.
+- **A page for each reel** at `/r/<id>`, which plays it in the real player, with its
+  recordings, and `/r/<id>/video.mp4` once a video has been asked for.
+
+- [Run it](#run-it)
+- [Add it to Claude](#add-it-to-claude)
+- [The tools](#the-tools)
+- [What it keeps, and for how long](#what-it-keeps-and-for-how-long)
+- [How it fits together](#how-it-fits-together)
+
+## Run it
+
+You need what `npm run voices` and `npm run video` need: Pocket TTS
+([setup](voices.md#record-with-pocket-tts)), ffmpeg, and `npm install`. Then:
+
+```sh
+npm run service
+```
+
+| Setting | Default | |
+| --- | --- | --- |
+| `PORT` | `8787` | Where it listens. |
+| `PIXELREEL_URL` | `http://localhost:8787` | The address people reach it at, used in the links it gives. |
+| `PIXELREEL_DATA` | `.service-data` | The folder it keeps reels in. |
+| `PIXELREEL_PYTHON` | `.venv/bin/python` | The Python with Pocket TTS installed, as for `npm run voices`. |
+
+It records one reel at a time, and carries on with any waiting after a restart. Stopping it
+(Ctrl+C) finishes the job in hand first.
+
+## Add it to Claude
+
+Claude reaches connectors over the internet, so the service needs a public `https://` address
+for this: a server of your own, or for a quick try a tunnel to your machine (such as
+`cloudflared tunnel --url http://localhost:8787`), with `PIXELREEL_URL` set to that address.
+
+Then in Claude, open **Customize > Connectors**, add a custom connector, and paste the address
+with `/mcp` on the end. It needs no sign-in. Custom connectors work on every Claude plan (the
+Free plan allows one).
+
+Ask for something like *"Make me a pixel reel explaining how to read my gas meter."* Claude
+reads the format, writes the scenes, and gives you a link to the reel, which plays as soon as
+the voice is recorded: about as long as the reel itself.
+
+## The tools
+
+| Tool | Does | Hint |
+| --- | --- | --- |
+| `reel_format` | Explains how to write a reel: the fields, every picture and icon, and writing for people who find reading hard. | read-only |
+| `make_reel` | Checks a reel and starts recording it. Its input is the [reel.json format](scenes.md#a-reel-as-data-reeljson) as a JSON Schema. A reel with problems comes back as a tool error listing every one, for Claude to fix. | |
+| `get_reel` | Says whether a reel is waiting, being recorded, ready or failed, with its links. | read-only |
+| `get_reel_video` | Asks for a ready reel's MP4 and gives its link once it is made. | |
+| `delete_reel` | Deletes a reel, its recordings and its video at once. | destructive |
+
+Results come as plain words for Claude to pass on, and as `structuredContent` (`id`, `state`,
+`watch`, `video`, ...) for any other client.
+
+## What it keeps, and for how long
+
+- The reel as it was sent, its recordings and, if asked for, its video. Nothing else: no
+  accounts, no names, no addresses.
+- Each reel has a random 22-character id, so only people with its link can watch it.
+- Reels are deleted after 30 days, or at once with `delete_reel`.
+- The voice is recorded on the service's own machine. The words are never sent to another
+  company.
+- A reel's page loads nothing from anywhere else: its content security policy allows only the
+  page itself, its font and its own recordings.
+
+## How it fits together
+
+| File | Does |
+| --- | --- |
+| `service/main.mjs` | Starts it: settings, restart, the hourly sweep of expired reels. |
+| `service/server.mjs` | HTTP: `/mcp`, the reel pages, their recordings and videos. |
+| `service/mcp.mjs` | The connector's tools. |
+| `service/reels.mjs` | Making, recording, videos, expiry and deleting: one job at a time. |
+| `service/store.mjs` | Where reels are kept: a folder now, behind an interface an S3-style store can take over. |
+
+A job copies its reel out of the store into a folder of its own, runs the same
+`npm run voices` and `npm run video` code as on your machine, and puts the results back.

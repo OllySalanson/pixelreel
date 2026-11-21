@@ -135,7 +135,13 @@ export class Reels {
     }
   }
 
-  /** Resolves once every queued job is done: for tests, and for shutting down tidily. */
+  /** Stops taking jobs: resolves once the one in hand is done. resume() picks up the rest on the next start. */
+  async stop() {
+    this.queue = [];
+    await this.running?.done;
+  }
+
+  /** Resolves once every queued job is done. */
   async idle() {
     while (this.running || this.queue.length) await this.running?.done;
   }
