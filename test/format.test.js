@@ -68,7 +68,7 @@ describe('reelFromData', () => {
       'scene 1: draw is code, which a reel.json cannot hold; give the scene a picture instead',
       'title: give the reel a title',
       'scene 1: needs a caption',
-      'scene 1: picture.type must be one of: title, list, terminal, code, chat, big, image'
+      'scene 1: picture.type must be one of: title, list, terminal, code, chat, big, image, icons, flow, compare, sprite'
     ]);
   });
 
@@ -101,13 +101,16 @@ function schemaErrors(schema, value, root = schema, path = '') {
   if (schema.type && schema.type !== type) return [...errors, `${path}: must be ${schema.type}`];
   if (type === 'string' && schema.pattern && !new RegExp(schema.pattern).test(value)) errors.push(`${path}: is empty`);
   if (type === 'string' && schema.minLength && value.length < schema.minLength) errors.push(`${path}: is too short`);
+  if (type === 'string' && schema.maxLength && value.length > schema.maxLength) errors.push(`${path}: is too long`);
   if (type === 'number' && 'minimum' in schema && value < schema.minimum) errors.push(`${path}: is too small`);
   if (type === 'array') {
     if (schema.minItems && value.length < schema.minItems) errors.push(`${path}: has too few items`);
+    if (schema.maxItems && value.length > schema.maxItems) errors.push(`${path}: has too many items`);
     if (schema.items) value.forEach((v, i) => errors.push(...schemaErrors(schema.items, v, root, `${path}[${i}]`)));
   }
   if (type === 'object') {
     for (const key of schema.required ?? []) if (!(key in value)) errors.push(`${path}.${key}: is needed`);
+    if (schema.propertyNames) for (const key of Object.keys(value)) errors.push(...schemaErrors({ type: 'string', ...schema.propertyNames }, key, root, `${path}[${key}]`));
     for (const [key, v] of Object.entries(value)) {
       const sub = schema.properties?.[key] ?? (typeof schema.additionalProperties === 'object' ? schema.additionalProperties : null);
       if (sub) errors.push(...schemaErrors(sub, v, root, `${path}.${key}`));
@@ -147,7 +150,11 @@ describe('reelSchema', () => {
       { title: 'E', caption: 'e', picture: { type: 'chat', messages: [{ from: 'Kettle', text: 'Ready.' }], every: 2 } },
       { title: 'F', caption: 'f', picture: { type: 'big', text: '3 MIN' }, captions: 'typewriter' },
       { title: 'G', caption: 'g', picture: { type: 'image', name: 'garden' }, transition: 'star' },
-      { title: 'H', caption: 'h', say: 'Thanks.' }
+      { title: 'H', caption: 'h', say: 'Thanks.' },
+      { title: 'I', caption: 'i', picture: { type: 'icons', heading: 'NEED', items: [{ icon: 'letter', label: 'Letter' }, { icon: 'phone' }], every: 1 } },
+      { title: 'J', caption: 'j', picture: { type: 'flow', items: [{ icon: 'person' }, { icon: 'heart', label: 'Love' }] } },
+      { title: 'K', caption: 'k', picture: { type: 'compare', bad: { icon: 'car', label: 'Drive' }, good: { icon: 'phone', label: 'Ring' } } },
+      { title: 'L', caption: 'l', picture: { type: 'sprite', rows: ['.hh.', 'hyyh'], colours: { h: '#6b3e2e' }, label: 'Hi' } }
     ];
     const good = { format: REEL_FORMAT, title: 'Tea', intro: 'Hi.', note: 'Made with tea.', transition: 'fade', captions: 'plain', images: { garden: 'garden.png' }, scenes };
     assert.doesNotThrow(() => reelFromData(good));
@@ -167,7 +174,12 @@ describe('reelSchema', () => {
       reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'list', items: [] } }] }),
       reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'list', items: ['x'], every: -1 } }] }),
       reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'chat', messages: [{ from: 'A' }] } }] }),
-      reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'title', text: 'T', colour: 'red' } }] })
+      reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'title', text: 'T', colour: 'red' } }] }),
+      reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'icons', items: [{ icon: 'castle' }] } }] }),
+      reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'icons', items: Array(5).fill({ icon: 'tick' }) } }] }),
+      reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'compare', bad: { icon: 'car' }, good: { icon: 'tick', label: 'Yes' } } }] }),
+      reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'sprite', rows: ['y'], colours: { '.': '#fff' } } }] }),
+      reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'sprite', rows: ['y'], colours: { h: 'brown' } } }] })
     ];
     for (const raw of bad) {
       assert.throws(() => reelFromData(raw), ReelError, JSON.stringify(raw));

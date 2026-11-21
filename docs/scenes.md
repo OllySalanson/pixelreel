@@ -150,6 +150,38 @@ picture: { type: 'big', text: '3 MIN', sub: 'and not a second more' }
 picture: { type: 'image', name: 'garden' }
 ```
 
+**icons**: one to four everyday icons dropping in one by one, each with a label underneath.
+Good for "what you need" or "who is involved". A `label` is optional.
+
+```js
+picture: { type: 'icons', heading: 'YOU NEED', items: [{ icon: 'letter', label: 'The letter' }, { icon: 'phone', label: 'Your phone' }] }
+```
+
+**flow**: the same icons joined by arrows, arriving in turn: how one thing leads to the next.
+
+```js
+picture: { type: 'flow', items: [{ icon: 'person', label: 'You ask' }, { icon: 'computer', label: 'We check' }, { icon: 'letter', label: 'You hear back' }] }
+```
+
+**compare**: two cards side by side, the one to avoid (with a cross) and then the one to
+choose (with a tick). Both need an `icon` and a `label`.
+
+```js
+picture: { type: 'compare', bad: { icon: 'document', label: 'A long letter' }, good: { icon: 'computer', label: 'A pixel reel' } }
+```
+
+The icons are `letter`, `document`, `phone`, `money`, `house`, `calendar`, `clock`, `person`,
+`people`, `heart`, `tick`, `cross`, `warning`, `lock`, `computer`, `lightbulb`, `cup`, `car`,
+`question` and `star`. `every` and `start` set their timing, as for a list.
+
+**sprite**: pixel art of your own, from rows of [sprite letters](#sprite-letters), scaled up to
+fill the picture and dropped in, with an optional `label`. `colours` adds letters of your own.
+Up to 40 rows of up to 64 letters; `.` is see-through.
+
+```js
+picture: { type: 'sprite', label: 'MY CAT', colours: { h: '#6b3e2e' }, rows: ['.h....h.', 'hhh..hhh', 'hkhhhhkh', 'hhhyyhhh', '.hhhhhh.'] }
+```
+
 ## Transitions
 
 How one scene gives way to the next: set `transition` on the reel for every scene, or on a

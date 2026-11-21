@@ -33,7 +33,7 @@ describe('bundle', () => {
   it('takes each module once, after the ones it needs', () => {
     const script = bundle([src('format.js'), src('reel.js')]);
     const order = [...script.matchAll(/^__m\['([a-z]+\.js)'\]/gm)].map((m) => m[1]);
-    assert.deepEqual(order, ['pictures.js', 'transitions.js', 'reel.js', 'format.js']);
+    assert.deepEqual(order, ['icons.js', 'palette.js', 'pictures.js', 'transitions.js', 'reel.js', 'format.js']);
   });
 
   it('refuses forms of import and export it does not understand', () => {

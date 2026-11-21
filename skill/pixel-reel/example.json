@@ -26,7 +26,7 @@
       "title": "Brew",
       "caption": "Pour the water on the tea bag. Wait three minutes.",
       "say": "Put the tea bag in the mug and pour on the hot water. Then wait. Three minutes is about right.",
-      "picture": { "type": "big", "text": "3 MIN", "sub": "then take the bag out" }
+      "picture": { "type": "flow", "items": [{ "icon": "cup", "label": "Pour" }, { "icon": "clock", "label": "Wait 3 min" }, { "icon": "tick", "label": "Bag out" }], "every": 1.6, "start": 1 }
     },
     {
       "title": "Milk?",

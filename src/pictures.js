@@ -1,6 +1,8 @@
 // Ready-made pictures: a scene can say picture: { type: 'list', items: [...] } instead of
 // writing draw(t, px). Each one animates in time with the scene. Data only, so a script or
 // an AI agent can write a whole reel without a line of drawing code.
+import { ICON_SIZE, ICONS } from './icons.js';
+import { PALETTE } from './palette.js';
 
 const INK = '#1a1a1a', NIGHT = '#0b1220', NAVY = '#13203a', CREAM = '#ebeac5', LIGHT = '#fdf6e3', GOLD = '#ffcc4d';
 const TEAL = '#55d6be', BLUE = '#24476b', GREY = '#9fb3c8', PINK = '#ff7eb6', MUTED = '#6f87a3';
@@ -73,10 +75,16 @@ function title(t, px, p) {
 
 const TICK = ['.........g', '........gg', 'g......gg.', 'gg....gg..', '.gg..gg...', '..gggg....', '...gg.....'];
 
-function list(t, px, p) {
+/** A navy backdrop with a faint grid of dots, for pictures that set things out on it. */
+function dotted(px) {
   const { W, H } = px;
   px.rect(NAVY, 0, 0, W, H);
   for (let y = 4; y < H; y += 8) for (let x = 4; x < W; x += 8) px.rect('#1a2b47', x, y, 1, 1);
+}
+
+function list(t, px, p) {
+  const { W, H } = px;
+  dotted(px);
   const top = p.heading ? 36 : 10, room = H - top - 8;
   if (p.heading) px.sign(p.heading, W / 2, 9, fit(px, p.heading, 16, W - 40), GOLD);
   const n = p.items.length, rowH = Math.min(30, Math.floor(room / n));
@@ -267,9 +275,89 @@ function image(t, px, p) {
   px.zoom(k, W / 2, H / 2, () => px.image(p.name, 16, 12, W - 32, H - 24));
 }
 
+/** A chunky arrow pointing right, `len` pixels long, centred on `y`, with an ink shadow. */
+function arrow(px, x, y, len, c = GOLD) {
+  const head = Math.min(6, len);
+  for (const [dx, col] of [[1, INK], [0, c]]) {
+    if (len > head) px.rect(col, x + dx, y - 2 + dx, len - head, 4);
+    for (let i = 0; i < head; i++) px.rect(col, x + len - head + i + dx, y - (head - i) + dx, 1, 2 * (head - i));
+  }
+}
+
+/** Icons in a row, arriving one by one with their labels; `arrows` joins each to the next. */
+function iconRow(t, px, p, arrows) {
+  const { W, H } = px;
+  dotted(px);
+  const top = p.heading ? 34 : 8;
+  if (p.heading) px.sign(p.heading, W / 2, 9, fit(px, p.heading, 16, W - 40), GOLD);
+  const n = p.items.length, slot = W / n;
+  const sc = n <= 2 ? 5 : n === 3 ? 4 : 3, size = ICON_SIZE * sc;
+  const labelled = p.items.some((it) => it.label);
+  const labelSize = memo(p, 'labelSize', () => Math.min(16, ...p.items.map((it) => (it.label ? fit(px, it.label, 16, slot - 10) : 16))));
+  const y0 = top + Math.round((H - top - 6 - size - (labelled ? 8 + labelSize : 0)) / 2);
+  const every = p.every ?? 1.4, start = p.start ?? 0.6;
+  const latest = Math.floor((t - start) / every);
+  p.items.forEach((item, i) => {
+    const at = start + i * every, cx = Math.round(slot * (i + 0.5));
+    if (arrows && i > 0 && t >= at - 0.4) {
+      const from = Math.round(cx - slot + size / 2 + 5), to = Math.round(cx - size / 2 - 5);
+      const len = Math.round((to - from) * px.clamp((t - at + 0.4) / 0.3, 0, 1));
+      if (len > 0) arrow(px, from, y0 + size / 2, len);
+    }
+    if (t < at) return;
+    const drop = Math.round(px.tween(t, at, 0.6, -size - y0, 0, 'bounce'));
+    px.sprite(ICONS[item.icon], cx - size / 2, y0 + drop + (t > at + 0.6 ? px.bob(t + i, 2, 1) : 0), sc);
+    if (item.label) px.text(item.label, cx, y0 + size + 8, labelSize, i === latest && t < at + every + 1 ? GOLD : CREAM, 'center', INK);
+  });
+}
+
+function icons(t, px, p) { iconRow(t, px, p, false); }
+function flow(t, px, p) { iconRow(t, px, p, true); }
+
+/** Two cards side by side: the one to avoid, with a cross, then the one to choose, with a tick. */
+function compare(t, px, p) {
+  const { W, H } = px;
+  dotted(px);
+  const top = p.heading ? 34 : 12;
+  if (p.heading) px.sign(p.heading, W / 2, 9, fit(px, p.heading, 16, W - 40), GOLD);
+  const w = 128, h = H - top - 10, every = p.every ?? 2, start = p.start ?? 0.6;
+  const labelSize = memo(p, 'labelSize', () => Math.min(fit(px, p.bad.label, 16, w - 12), fit(px, p.good.label, 16, w - 12)));
+  [[p.bad, 'cross', '#d63a3a', 0], [p.good, 'tick', '#3fa34d', 1]].forEach(([side, mark, colour, i]) => {
+    const at = start + i * every;
+    if (t < at) return;
+    const x = i ? W - 22 - w : 22, y = top + Math.round(px.tween(t, at, 0.5, H, 0, 'back'));
+    px.rect('#0b1220', x + 3, y + 3, w, h);
+    px.window(x, y, w, h, LIGHT);
+    px.rect(colour, x + 1, y + 1, w - 2, 20);
+    px.rect(INK, x + 1, y + 21, w - 2, 1);
+    px.window(x + w / 2 - 10, y + 2, 20, 18, LIGHT);
+    px.sprite(ICONS[mark], x + w / 2 - 8, y + 3, 1);
+    const sc = 4, size = ICON_SIZE * sc, room = h - 22 - (side.label ? labelSize + 10 : 0);
+    const iy = y + 22 + Math.max(2, Math.round((room - size) / 2));
+    px.sprite(ICONS[side.icon], x + w / 2 - size / 2, iy + (t > at + 0.5 ? px.bob(t + i * 2, 2, 1) : 0), sc);
+    if (side.label) px.text(side.label, x + w / 2, y + h - labelSize - 8, labelSize, INK, 'center');
+  });
+}
+
+/** Pixel art of the reel's own, from rows of palette letters, scaled to fill the picture. */
+function sprite(t, px, p) {
+  const { W, H } = px;
+  px.sky(NAVY, BLUE);
+  px.stars(t);
+  const cols = Math.max(...p.rows.map((r) => r.length)), rows = p.rows.length;
+  const room = H - (p.label ? 44 : 20);
+  const sc = Math.max(1, Math.min(12, Math.floor((W - 32) / cols), Math.floor(room / rows)));
+  const x = Math.round((W - cols * sc) / 2), y = Math.round(10 + (room - rows * sc) / 2);
+  const drop = Math.round(px.tween(t, 0.2, 0.7, -y - rows * sc, 0, 'bounce'));
+  px.sprite(p.rows, x, y + drop + (t > 0.9 ? px.bob(t, 2, 2) : 0), sc, false, p.colours ?? null);
+  if (p.label && t >= 0.9) px.sign(p.label, W / 2, H - 30, fit(px, p.label, 16, W - 40), GOLD);
+}
+
 /**
- * Every ready-made picture: its fields (a trailing ? marks optional ones) and how it draws.
- * Kinds: text, list (of text), messages ([{ from, text }]), number, flag (true or false), image (a name from images).
+ * Every ready-made picture: its fields (a trailing ? marks optional ones), how it draws, and
+ * any check beyond its fields. Kinds: text, list (of text), messages ([{ from, text }]), number,
+ * flag (true or false), image (a name from images), items (1 to 4 { icon, label? }), item
+ * ({ icon, label }), rows (sprite rows of palette letters) and colours ({ letter: '#rrggbb' }).
  */
 export const PICTURES = {
   title: { fields: { text: 'text', sub: 'text?' }, draw: title },
@@ -278,8 +366,32 @@ export const PICTURES = {
   code: { fields: { lines: 'list', title: 'text?' }, draw: code },
   chat: { fields: { messages: 'messages', title: 'text?', every: 'number?', start: 'number?' }, draw: chat },
   big: { fields: { text: 'text', sub: 'text?' }, draw: big },
-  image: { fields: { name: 'image' }, draw: image }
+  image: { fields: { name: 'image' }, draw: image },
+  icons: { fields: { items: 'items', heading: 'text?', every: 'number?', start: 'number?' }, draw: icons },
+  flow: { fields: { items: 'items', heading: 'text?', every: 'number?', start: 'number?' }, draw: flow },
+  compare: { fields: { bad: 'item', good: 'item', heading: 'text?', every: 'number?', start: 'number?' }, draw: compare },
+  sprite: { fields: { rows: 'rows', colours: 'colours?', label: 'text?' }, draw: sprite, check: spriteLetters }
 };
+
+/** The names a picture can use for an icon. */
+export const ICON_NAMES = Object.keys(ICONS);
+
+/** The most rows, and letters in a row, a sprite picture can have. */
+export const SPRITE_MAX = { rows: 40, cols: 64 };
+
+/** Any letter in a sprite's rows that is neither see-through, a palette letter, nor one of its colours. */
+function spriteLetters(p) {
+  const own = p.colours && typeof p.colours === 'object' ? Object.keys(p.colours) : [];
+  for (const [i, row] of (Array.isArray(p.rows) ? p.rows : []).entries()) {
+    const odd = typeof row === 'string' && [...row].find((ch) => ch !== '.' && ch !== ' ' && !(ch in PALETTE) && !own.includes(ch));
+    if (odd) return [`picture.rows[${i}] uses "${odd}", which is not a palette letter: add it to colours, such as { "${odd}": "#336699" }`];
+  }
+  return [];
+}
+
+const isIconItem = (v, labelled) => v !== null && typeof v === 'object' && !Array.isArray(v) && ICON_NAMES.includes(v.icon) &&
+  (labelled ? isText(v.label) : v.label === undefined || isText(v.label)) && Object.keys(v).every((k) => k === 'icon' || k === 'label');
+const iconHelp = `icons: ${Object.keys(ICONS).join(', ')}`;
 
 const isText = (v) => typeof v === 'string' && v.trim() !== '';
 const KINDS = {
@@ -287,7 +399,15 @@ const KINDS = {
   list: [(v) => Array.isArray(v) && v.length > 0 && v.every((s) => typeof s === 'string'), 'must be a list of text, for example ["One", "Two"]'],
   messages: [(v) => Array.isArray(v) && v.length > 0 && v.every((m) => m && isText(m.from) && isText(m.text)), 'must be a list of { from: "Name", text: "Hello" }'],
   number: [(v) => typeof v === 'number' && Number.isFinite(v) && v >= 0, 'must be a number of seconds'],
-  flag: [(v) => typeof v === 'boolean', 'must be true or false']
+  flag: [(v) => typeof v === 'boolean', 'must be true or false'],
+  items: [(v) => Array.isArray(v) && v.length >= 1 && v.length <= 4 && v.every((it) => isIconItem(it, false)),
+    `must be a list of 1 to 4 { icon, label }, such as [{ "icon": "house", "label": "Home" }], with ${iconHelp}`],
+  item: [(v) => isIconItem(v, true), `must be { icon, label }, such as { "icon": "phone", "label": "Ring us" }, with ${iconHelp}`],
+  rows: [(v) => Array.isArray(v) && v.length >= 1 && v.length <= SPRITE_MAX.rows && v.every((r) => typeof r === 'string' && r.length <= SPRITE_MAX.cols) && v.some((r) => r.length),
+    `must be a list of rows of palette letters, such as ["..yy..", ".yyyy."], up to ${SPRITE_MAX.rows} rows of up to ${SPRITE_MAX.cols} letters`],
+  colours: [(v) => v !== null && typeof v === 'object' && !Array.isArray(v) &&
+    Object.entries(v).every(([k, c]) => [...k].length === 1 && k !== '.' && k !== ' ' && typeof c === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)),
+    'must be letters and the colours they stand for, such as { "h": "#6b3e2e" }']
 };
 
 /** Everything wrong with a scene's `picture`, as a list of messages (empty when it is fine). */
@@ -311,6 +431,7 @@ export function pictureProblems(picture, imageNames = []) {
     const [ok, says] = KINDS[kind];
     if (!ok(value)) problems.push(`picture.${key} ${says}`);
   }
+  if (spec.check && !problems.length) problems.push(...spec.check(picture));
   return problems;
 }
 

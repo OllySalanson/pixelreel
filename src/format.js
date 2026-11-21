@@ -2,7 +2,8 @@
 // a reel can be written by a tool, an AI agent or a web service and played safely, since
 // nothing in it ever runs. Every picture comes from the ready-made ones (pictures.js).
 // Pure: no DOM, so the same checks run in the browser, in the tools and in the tests.
-import { PICTURES } from './pictures.js';
+import { ICON_NAMES, PICTURES, SPRITE_MAX } from './pictures.js';
+import { PALETTE } from './palette.js';
 import { CAPTION_STYLES, normalizeReel, ReelError } from './reel.js';
 import { TRANSITIONS } from './transitions.js';
 
@@ -20,7 +21,11 @@ export const PICTURE_NOTES = {
   code: 'An editor that types out the code, with simple highlighting.',
   chat: 'Messages arriving with a typing indicator. The first sender sits on the left.',
   big: 'One huge word or number, punched in, with a line underneath.',
-  image: "One of the reel's own images, named in images, slowly pushing in."
+  image: "One of the reel's own images, named in images, slowly pushing in.",
+  icons: 'One to four everyday icons dropping in one by one, each with a label underneath.',
+  flow: 'One to four icons joined by arrows, arriving in turn: how one thing leads to the next.',
+  compare: 'Two cards side by side: the one to avoid, with a cross, then the one to choose, with a tick.',
+  sprite: 'Pixel art of your own from rows of palette letters, scaled up to fill the picture, with an optional label.'
 };
 
 const isPlainObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -104,14 +109,40 @@ const KIND_SCHEMAS = {
   },
   number: { type: 'number', minimum: 0, description: 'Seconds.' },
   flag: { type: 'boolean' },
-  image: { type: 'string', description: "The name of one of the reel's images." }
+  image: { type: 'string', description: "The name of one of the reel's images." },
+  item: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['icon', 'label'],
+    properties: { icon: { enum: ICON_NAMES }, label: TEXT }
+  },
+  items: {
+    type: 'array',
+    minItems: 1,
+    maxItems: 4,
+    items: { type: 'object', additionalProperties: false, required: ['icon'], properties: { icon: { enum: ICON_NAMES }, label: TEXT } }
+  },
+  rows: {
+    type: 'array',
+    minItems: 1,
+    maxItems: SPRITE_MAX.rows,
+    items: { type: 'string', maxLength: SPRITE_MAX.cols },
+    description: `Rows of pixels, one letter each: ${Object.keys(PALETTE).join(' ')} from the palette, a letter of your own from colours, or "." for see-through.`
+  },
+  colours: {
+    type: 'object',
+    propertyNames: { pattern: '^[^. ]$' },
+    additionalProperties: { type: 'string', pattern: '^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$' },
+    description: 'Letters of your own for the rows, and the colours they stand for, such as { "h": "#6b3e2e" }.'
+  }
 };
 
 /**
  * The reel.json format as a JSON Schema (draft 2020-12), built from the ready-made pictures,
  * so it can never drift from what the player draws. Tools can hand it to an AI agent as the
  * shape to write. A few rules are beyond a schema (an image picture must name one of the
- * reel's images), so reelFromData stays the final word.
+ * reel's images, and a sprite's letters must be in the palette or its colours), so
+ * reelFromData stays the final word.
  */
 export function reelSchema() {
   const pictures = Object.entries(PICTURES).map(([type, { fields }]) => {
