@@ -6,6 +6,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { pageHtml } from '../scripts/page.mjs';
 import { createMcpServer } from './mcp.mjs';
 import { isId } from './reels.mjs';
+import { SITE_PAGES, sitePage } from './site.mjs';
 
 /** The most a request to /mcp may carry. A long reel is a few kilobytes. */
 export const MAX_BODY = 256 * 1024;
@@ -151,6 +152,10 @@ export function createService({ reels, baseUrl, log = () => {}, limits = null, t
       const path = new URL(req.url, 'http://localhost').pathname;
       if (path === '/mcp') { await handleMcp(req, res, context); return; }
       if (path === '/health') { res.writeHead(200, { ...SAFE, 'content-type': 'text/plain' }).end('ok'); return; }
+      if (SITE_PAGES[path] && (req.method === 'GET' || req.method === 'HEAD')) {
+        sendPage(res, 200, sitePage(SITE_PAGES[path], context.baseUrl), { 'cache-control': 'public, max-age=300', 'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'" });
+        return;
+      }
       const reel = /^\/r\/([^/]+)(?:\/(.*))?$/.exec(path);
       if (reel && isId(reel[1]) && (req.method === 'GET' || req.method === 'HEAD')) { await handleReel(req, res, reel[1], reel[2] ?? '', context); return; }
       sendPage(res, 404, notice('Not here', 'There is nothing at this address.'));
