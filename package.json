@@ -19,11 +19,13 @@
     "check": "node scripts/check-reel.mjs",
     "page": "node scripts/page.mjs",
     "skill": "node scripts/skill.mjs",
+    "video": "node scripts/video.mjs",
     "test": "node --test --test-concurrency=2 \"test/*.test.js\"",
     "lint": "eslint ."
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@napi-rs/canvas": "^1.2.0",
     "eslint": "^10.12.0",
     "globals": "^17.13.0"
   }
