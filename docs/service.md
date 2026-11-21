@@ -33,7 +33,7 @@ npm run service
 | `PIXELREEL_PYTHON` | `.venv/bin/python` | The Python with Pocket TTS installed, as for `npm run voices`. |
 
 It records one reel at a time, and carries on with any waiting after a restart. Stopping it
-(Ctrl+C) finishes the job in hand first.
+(Ctrl+C) finishes the job in hand first. To put it online, see [deploy.md](deploy.md).
 
 ## Add it to Claude
 

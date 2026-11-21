@@ -1,0 +1,8 @@
+.git
+node_modules
+.venv
+models
+.service-data
+**/__pycache__
+*.mp4
+zz-*
