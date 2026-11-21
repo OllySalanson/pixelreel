@@ -153,29 +153,45 @@ async function start() {
 
   // Every caption gets the room the longest one needs, so the buttons below never jump as
   // the scenes change, and the picture shrinks to keep that room on screen. Measured with
-  // each caption in full, then once more at the width that leaves.
+  // each caption in full, then again at the width that leaves. If the page still needs a
+  // scrollbar (the buttons wrap onto a second row in a narrower player, say), the picture
+  // shrinks a little more, but only when that makes the whole page fit: a window too short
+  // for any size of player keeps the bigger picture and scrolls.
   function fitCaption() {
-    const cap = $('cap'), main = document.querySelector('main');
+    const cap = $('cap'), main = document.querySelector('main'), page = document.documentElement;
     cap.style.minHeight = '';
-    main.style.removeProperty('--caption-extra');
     const least = parseFloat(getComputedStyle(cap).minHeight) || 0;
     const all = [['Press Play', reel.intro], ...scenes.map((s, i) => [`${i + 1}. ${s.title}`, s.caption])];
     cap.classList.remove('typing');
     $('cap-rest').textContent = '';
-    let room = least;
-    for (let pass = 0; pass < 3; pass++) {
-      cap.style.minHeight = '0px';
-      let tallest = least;
-      for (const [title, text] of all) {
-        $('cap-title').textContent = title;
-        $('cap-typed').textContent = text;
-        tallest = Math.max(tallest, cap.offsetHeight);
+    // Sizes the caption for the player as wide as it can be with `more` pixels taken off the
+    // picture's height, and says by how much the page is then too tall for the window.
+    const fit = (more) => {
+      main.style.setProperty('--caption-extra', `${more}px`);
+      let room = least;
+      for (let pass = 0; pass < 3; pass++) {
+        cap.style.minHeight = '0px';
+        let tallest = least;
+        for (const [title, text] of all) {
+          $('cap-title').textContent = title;
+          $('cap-typed').textContent = text;
+          tallest = Math.max(tallest, cap.offsetHeight);
+        }
+        cap.style.minHeight = `${tallest}px`;
+        if (tallest === room && pass > 0) break;
+        room = tallest;
+        main.style.setProperty('--caption-extra', `${room - least + more}px`);
       }
-      cap.style.minHeight = `${tallest}px`;
-      if (tallest === room) break;
-      room = tallest;
-      main.style.setProperty('--caption-extra', `${room - least}px`);
+      return Math.ceil(page.scrollHeight - page.clientHeight);
+    };
+    let over = fit(0), more = 0;
+    for (let pass = 0; pass < 4 && over > 0; pass++) {
+      const width = main.offsetWidth;
+      more += over;
+      over = fit(more);
+      if (main.offsetWidth === width) break;   // as small as the player goes
     }
+    if (over > 0 && more > 0) fit(0);
     shownCaption = null;
     paintCaption();
   }
