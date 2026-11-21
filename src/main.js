@@ -1,7 +1,7 @@
 // Wires a reel to the page: loads it, then draws scenes on the canvas and keeps the
 // caption, progress bar, buttons and dots in step with the player.
 import { createKit, W, H } from './kit.js';
-import { loadReel } from './load.js';
+import { inlineReel, loadReel } from './load.js';
 import { createNarrator } from './narrator.js';
 import { noSignal } from './pictures.js';
 import { Player } from './player.js';
@@ -45,7 +45,10 @@ function showError(message) {
 
 async function start() {
   if (params.has('embed')) document.body.classList.add('embed');
-  const { reel, clipFor, images } = await loadReel(params.get('reel') || document.body.dataset.reel);
+  // A one-file reel carries its reel (and any recordings) in the page; any other loads by name.
+  const inline = $('reel-data');
+  const { reel, clipFor, images } = inline ? inlineReel(inline.textContent, $('reel-audio')?.textContent)
+    : await loadReel(params.get('reel') || document.body.dataset.reel);
   const scenes = reel.scenes;
   const durations = scenes.map((s) => narrationMs(s, clipFor(s)));
 
@@ -246,6 +249,7 @@ async function start() {
 
   // ?scene=N&t=S holds scene N (counting from 1) at S seconds in: handy for checking a picture
   player.goTo((Number(params.get('scene')) || 1) - 1, (Number(params.get('t')) || 0) * 1000);
+  if (document.body.dataset.sound === 'off') player.setMuted(true);   // a one-file reel with no recordings starts quiet
 
   function paint(s, t, i) {
     try {

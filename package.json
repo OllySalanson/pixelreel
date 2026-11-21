@@ -17,6 +17,8 @@
     "new": "node scripts/new-reel.mjs",
     "voices": "node scripts/voices.mjs",
     "check": "node scripts/check-reel.mjs",
+    "page": "node scripts/page.mjs",
+    "skill": "node scripts/skill.mjs",
     "test": "node --test --test-concurrency=2 \"test/*.test.js\"",
     "lint": "eslint ."
   },

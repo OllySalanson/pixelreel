@@ -43,12 +43,26 @@ export async function loadReel(name) {
     reel = parseReelJson(json, { base });
   }
   const clipFor = clipLookup(await loadManifest(base + 'audio/manifest.json'), base + 'audio/');
+  return { name, base, reel, clipFor, images: loadImages(reel.images) };
+}
+
+/**
+ * Reads a reel carried inside the page itself (a one-file reel, made by npm run page): the
+ * text of a reel.json, and optionally an audio manifest whose clips are data: URLs.
+ */
+export function inlineReel(reelText, manifestText) {
+  const reel = parseReelJson(reelText);
+  const clipFor = clipLookup(manifestText ? JSON.parse(manifestText) : null);
+  return { name: '', base: '', reel, clipFor, images: loadImages(reel.images) };
+}
+
+function loadImages(sources) {
   const images = {};
-  for (const [key, src] of Object.entries(reel.images)) {
+  for (const [key, src] of Object.entries(sources)) {
     const im = new Image();
     im.onerror = () => console.warn(`picture "${key}" did not load from ${src}`);
     im.src = src;
     images[key] = im;
   }
-  return { name, base, reel, clipFor, images };
+  return images;
 }
