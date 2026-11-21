@@ -12,6 +12,6 @@ export default [
       eqeqeq: ['error', 'smart']
     }
   },
-  { files: ['src/**/*.js', 'reels/**/*.js', 'scripts/templates/*.js'], languageOptions: { globals: globals.browser } },
+  { files: ['src/**/*.js', 'reels/**/*.js', 'scripts/templates/*.js', 'service/app-bridge.js'], languageOptions: { globals: globals.browser } },
   { files: ['scripts/**/*.mjs', 'service/**/*.mjs', 'test/**/*.js', 'eslint.config.js'], languageOptions: { globals: globals.node } }
 ];

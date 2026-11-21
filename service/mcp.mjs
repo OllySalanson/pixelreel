@@ -3,12 +3,29 @@
 // a fresh server over the stateless Streamable HTTP transport, so nothing is held between
 // calls except the reels themselves.
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { readFileSync } from 'node:fs';
+import { CallToolRequestSchema, ListResourcesRequestSchema, ListToolsRequestSchema, ReadResourceRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { pageHtml } from '../scripts/page.mjs';
 import { PICTURE_NOTES, REEL_FORMAT, reelSchema } from '../src/format.js';
 import { ICON_NAMES, PICTURES } from '../src/pictures.js';
 import { ReelError } from '../src/reel.js';
 import { clockTime } from '../src/timing.js';
 import { KEEP_DAYS } from './reels.mjs';
+
+/** The player shown inside the chat (an MCP App), and how hosts are told to show it. */
+export const PLAYER_URI = 'ui://pixelreel/player.html';
+const APP_MIME = 'text/html;profile=mcp-app';
+const SHOWS_PLAYER = { ui: { resourceUri: PLAYER_URI } };
+
+/** The in-chat player page for a service at `baseUrl`. Built once per address, as it never changes. */
+const players = new Map();
+export function playerHtml(baseUrl) {
+  if (!players.has(baseUrl)) {
+    const bridge = readFileSync(new URL('./app-bridge.js', import.meta.url), 'utf8');
+    players.set(baseUrl, pageHtml({ title: 'Pixel Reel', app: { service: baseUrl, bridge } }));
+  }
+  return players.get(baseUrl);
+}
 
 const ID_INPUT = {
   type: 'object',
@@ -35,14 +52,16 @@ export function toolList() {
       description: 'Makes a pixel reel: a short pixel-art explainer, one idea per scene, narrated by a warm recorded British voice. ' +
         'Takes the reel as JSON (see reel_format) and returns a link to watch it. The voice takes about as long to record as the reel lasts.',
       inputSchema: reel,
-      annotations: { title: 'Make a pixel reel', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false }
+      annotations: { title: 'Make a pixel reel', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      _meta: SHOWS_PLAYER
     },
     {
       name: 'get_reel',
       title: 'Check on a pixel reel',
       description: 'Says whether a reel is still being recorded, ready to watch, or failed, with its links.',
       inputSchema: ID_INPUT,
-      annotations: { title: 'Check on a pixel reel', readOnlyHint: true, openWorldHint: false }
+      annotations: { title: 'Check on a pixel reel', readOnlyHint: true, openWorldHint: false },
+      _meta: SHOWS_PLAYER
     },
     {
       name: 'get_reel_video',
@@ -109,9 +128,25 @@ function describe(status, baseUrl) {
 export function createMcpServer({ reels, baseUrl, version = '0.1.0' }) {
   const server = new Server(
     { name: 'pixelreel', title: 'Pixel Reel', version },
-    { capabilities: { tools: {} }, instructions: 'Pixel Reel makes short narrated pixel-art explainers from a list of scenes. reel_format explains how to write one.' }
+    { capabilities: { tools: {}, resources: {} }, instructions: 'Pixel Reel makes short narrated pixel-art explainers from a list of scenes. reel_format explains how to write one.' }
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: toolList() }));
+  server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+    resources: [{ uri: PLAYER_URI, name: 'player', title: 'Pixel Reel player', description: 'Plays a reel inside the chat.', mimeType: APP_MIME }]
+  }));
+  server.setRequestHandler(ReadResourceRequestSchema, async ({ params }) => {
+    if (params.uri !== PLAYER_URI) throw new Error(`There is no resource ${params.uri}`);
+    const origin = new URL(baseUrl).origin;
+    return {
+      contents: [{
+        uri: PLAYER_URI,
+        mimeType: APP_MIME,
+        text: playerHtml(baseUrl),
+        // it may ask the service whether a reel is ready, and play its recordings; nothing else
+        _meta: { ui: { csp: { connectDomains: [origin], resourceDomains: [origin] }, prefersBorder: false } }
+      }]
+    };
+  });
   server.setRequestHandler(CallToolRequestSchema, async ({ params }) => {
     const args = params.arguments ?? {};
     switch (params.name) {

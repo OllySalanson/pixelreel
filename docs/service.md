@@ -11,6 +11,7 @@ code or install on their side. It is a small Node server with two faces:
 - [Run it](#run-it)
 - [Add it to Claude](#add-it-to-claude)
 - [The tools](#the-tools)
+- [The player in the chat](#the-player-in-the-chat)
 - [What it keeps, and for how long](#what-it-keeps-and-for-how-long)
 - [How it fits together](#how-it-fits-together)
 
@@ -60,6 +61,19 @@ the voice is recorded: about as long as the reel itself.
 Results come as plain words for Claude to pass on, and as `structuredContent` (`id`, `state`,
 `watch`, `video`, ...) for any other client.
 
+## The player in the chat
+
+`make_reel` and `get_reel` also point Claude at a player to show inside the chat (an
+[MCP App](https://claude.com/docs/connectors/building/mcp-apps/getting-started),
+`ui://pixelreel/player.html`), so the reel plays right there, with a link to its own page.
+
+- It is the real player, in one page, plus `service/app-bridge.js`, which speaks the MCP Apps
+  protocol to Claude over `postMessage`: it takes `make_reel`'s result, asks the service at
+  `/r/<id>/play.json` until the voice is recorded, then starts the player, and tells Claude
+  how tall it is.
+- Its content security policy lets it reach the service's own address and nothing else.
+- Where a host does not show apps, nothing changes: Claude passes on the link.
+
 ## What it keeps, and for how long
 
 - The reel as it was sent, its recordings and, if asked for, its video. Nothing else: no
@@ -77,7 +91,8 @@ Results come as plain words for Claude to pass on, and as `structuredContent` (`
 | --- | --- |
 | `service/main.mjs` | Starts it: settings, restart, the hourly sweep of expired reels. |
 | `service/server.mjs` | HTTP: `/mcp`, the reel pages, their recordings and videos. |
-| `service/mcp.mjs` | The connector's tools. |
+| `service/mcp.mjs` | The connector's tools, and the player shown in the chat. |
+| `service/app-bridge.js` | The in-chat player's side of the MCP Apps protocol. |
 | `service/reels.mjs` | Making, recording, videos, expiry and deleting: one job at a time. |
 | `service/store.mjs` | Where reels are kept: a folder now, behind an interface an S3-style store can take over. |
 

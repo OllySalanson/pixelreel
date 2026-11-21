@@ -96,9 +96,13 @@ async function handleMcp(req, res, { reels, baseUrl, log }) {
   }
 }
 
-async function handleReel(req, res, id, rest, { reels }) {
+async function handleReel(req, res, id, rest, { reels, baseUrl }) {
   const status = await reels.status(id);
-  if (!status) { sendPage(res, 404, notice('No reel here', 'This reel has been deleted, or kept past its 30 days, or the link is not quite right.')); return; }
+  if (!status) {
+    if (rest === 'play.json') { res.writeHead(404, { ...SAFE, 'content-type': 'application/json', 'access-control-allow-origin': '*' }).end('{"state":"gone"}'); return; }
+    sendPage(res, 404, notice('No reel here', 'This reel has been deleted, or kept past its 30 days, or the link is not quite right.'));
+    return;
+  }
   if (rest === '') {
     if (status.state === 'failed') { sendPage(res, 200, notice('This reel could not be made', status.error ?? 'Something went wrong.')); return; }
     if (status.state !== 'ready') {
@@ -109,6 +113,17 @@ async function handleReel(req, res, id, rest, { reels }) {
     const clips = (manifest?.clips ?? []).map((c) => ({ text: c.text, file: `/r/${id}/audio/${c.file}`, seconds: c.seconds }));
     const page = pageHtml({ reelJson: JSON.stringify(await reels.reel(id)), manifest: { clips }, title: `${status.title} - pixelreel` });
     sendPage(res, 200, page, { 'content-security-policy': PAGE_POLICY });
+    return;
+  }
+  if (rest === 'play.json') {
+    // what the player inside a chat needs, asked for from another origin (the chat's frame)
+    const play = { state: status.state, title: status.title, watch: `${baseUrl}/r/${id}` };
+    if (status.state === 'failed') play.error = status.error;
+    if (status.state === 'ready') {
+      play.reel = await reels.reel(id);
+      play.clips = ((await reels.manifest(id))?.clips ?? []).map((c) => ({ text: c.text, file: `${baseUrl}/r/${id}/audio/${c.file}`, seconds: c.seconds }));
+    }
+    res.writeHead(200, { ...SAFE, 'content-type': 'application/json', 'cache-control': 'no-store', 'access-control-allow-origin': '*' }).end(JSON.stringify(play));
     return;
   }
   const audio = /^audio\/(.+)$/.exec(rest);

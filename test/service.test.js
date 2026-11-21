@@ -231,6 +231,39 @@ describe('the service over HTTP', async () => {
     await client.close();
   });
 
+  it('offers a player to show inside the chat, allowed to reach only the service', async () => {
+    const client = await connect();
+    const { tools } = await client.listTools();
+    for (const name of ['make_reel', 'get_reel']) assert.equal(tools.find((t) => t.name === name)._meta.ui.resourceUri, 'ui://pixelreel/player.html');
+    const { resources } = await client.listResources();
+    assert.deepEqual(resources.map((r) => [r.uri, r.mimeType]), [['ui://pixelreel/player.html', 'text/html;profile=mcp-app']]);
+    const [player] = (await client.readResource({ uri: 'ui://pixelreel/player.html' })).contents;
+    assert.equal(player.mimeType, 'text/html;profile=mcp-app');
+    assert.deepEqual(player._meta.ui.csp, { connectDomains: ['https://reels.example'], resourceDomains: ['https://reels.example'] });
+    assert.match(player.text, /<body class="embed app" data-service="https:\/\/reels\.example">/);
+    assert.match(player.text, /function startPixelreel\(\) \{/);
+    assert.match(player.text, /'ui\/initialize'/);
+    assert.doesNotMatch(player.text, /id="reel-data"/, 'the reel arrives later, from the tool result');
+    await assert.rejects(client.readResource({ uri: 'ui://pixelreel/other.html' }));
+    await client.close();
+  });
+
+  it('tells the player in the chat when a reel is ready, from any origin', async () => {
+    const { id } = await reels.create(tea);
+    const early = await fetch(`${local}/r/${id}/play.json`);
+    assert.equal(early.headers.get('access-control-allow-origin'), '*');
+    assert.match((await early.json()).state, /queued|recording/);
+    await reels.idle();
+    const ready = await (await fetch(`${local}/r/${id}/play.json`)).json();
+    assert.equal(ready.state, 'ready');
+    assert.equal(ready.watch, `https://reels.example/r/${id}`);
+    assert.deepEqual(ready.reel, tea);
+    assert.deepEqual(ready.clips.map((c) => c.file), [`https://reels.example/r/${id}/audio/clip0.mp3`, `https://reels.example/r/${id}/audio/clip1.mp3`]);
+    const gone = await fetch(`${local}/r/${newId()}/play.json`);
+    assert.equal(gone.status, 404);
+    assert.deepEqual(await gone.json(), { state: 'gone' });
+  });
+
   it('answers odd requests plainly, and serves nothing it should not', async () => {
     assert.equal((await fetch(`${local}/mcp`)).status, 405);
     assert.equal((await fetch(`${local}/mcp`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{oops' })).status, 400);
