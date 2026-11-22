@@ -328,6 +328,22 @@ describe('a reel that is still being written', () => {
     assert.equal(await reels.write(begun.id, tea), null, 'and it is written only once');
   });
 
+  it('gives whoever began it a key, which alone says they own it', async () => {
+    const begun = await reels.begin('Your reel', { owned: true });
+    assert.match(begun.key, /^[A-Za-z0-9_-]{32}$/);
+    assert.equal((await reels.status(begun.id)).key, undefined, 'the key itself is kept nowhere');
+    assert.ok(!JSON.stringify(await store.get(`reels/${begun.id}/owner.txt`).then(String)).includes(begun.key));
+    assert.equal(await reels.owns(begun.id, begun.key), true);
+    for (const wrong of [`${begun.key}x`, 'x', '', undefined, 7, begun.id]) assert.equal(await reels.owns(begun.id, wrong), false);
+    const other = await reels.begin('Your reel', { owned: true });
+    assert.equal(await reels.owns(other.id, begun.key), false, 'a key opens its own reel only');
+    const plain = await reels.begin('Your reel');
+    assert.equal(plain.key, undefined);
+    assert.equal(await reels.owns(plain.id, ''), false, 'and a reel begun without one is nobody\'s to delete');
+    assert.equal(await reels.owns('abcdefghijklmnopqrstuv', begun.key), false);
+    for (const each of [begun, other, plain]) await reels.remove(each.id);
+  });
+
   it('is given up on, and whoever is waiting told so, if the service restarts before it is written', async () => {
     const begun = await reels.begin('Your reel');
     const after = new Reels({ store, record: fakeRecord, video: async () => {} });
@@ -476,6 +492,36 @@ describe('make it right here, over HTTP', () => {
     assert.equal((await give('application/json', JSON.stringify({ again: first.id, how: 'ruder' }))).status, 400);
     assert.equal(calls.length, before, 'and none of those reaches Claude');
     await reels.fail(begun.id, 'Given up on.');
+  });
+
+  it('lets whoever made a reel delete it for good, and nobody else', async () => {
+    const res = await ask('tea');
+    const made = await res.clone().json();
+    assert.deepEqual(Object.keys(made), ['id', 'watch', 'title', 'expires', 'key'], 'they are given a key with it, and what its page will call it');
+    assert.equal(made.title, 'Your reel');
+    await outcome(res);
+    const forget = (id, headers = {}) => fetch(`${local}/r/${id}`, { method: 'DELETE', headers: { origin: 'https://reels.example', ...headers } });
+    assert.equal((await forget(made.id)).status, 403, 'not without the key');
+    assert.equal((await forget(made.id, { 'x-reel-key': 'a guess' })).status, 403);
+    assert.equal((await forget(made.id, { 'x-reel-key': made.key, origin: 'https://elsewhere.example' })).status, 403, 'nor from another site');
+    const connector = await reels.create(tea);
+    assert.equal((await forget(connector.id, { 'x-reel-key': made.key })).status, 403, 'nor a reel that was made some other way');
+    assert.equal((await reels.status(made.id)).state, 'ready');
+    const gone = await forget(made.id, { 'x-reel-key': made.key });
+    assert.equal(gone.status, 200);
+    assert.deepEqual(await gone.json(), { deleted: true });
+    assert.equal(await reels.status(made.id), null);
+    assert.equal((await fetch(`${local}/r/${made.id}/play.json`)).status, 404, 'it is gone at once, for everyone');
+    assert.equal((await forget(made.id, { 'x-reel-key': made.key })).status, 404);
+    // one that is still being written can be deleted too, and what Claude then writes goes nowhere
+    let release;
+    answers = [new Promise((ok) => { release = ok; }).then(() => tea)];
+    const early = await (await ask('tea')).json();
+    assert.equal((await forget(early.id, { 'x-reel-key': early.key })).status, 200);
+    release();
+    await server.written();
+    await reels.idle();
+    assert.equal(await reels.status(early.id), null);
   });
 
   it('offers to write a reel again only where the service can, once it plays', async () => {

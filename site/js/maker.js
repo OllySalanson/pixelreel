@@ -6,6 +6,7 @@
 // service answers at once with the reel's own page, which shows it being made (watch.js).
 import { calm } from './calm.js';
 import { canTake, GivenError, givenFrom, isLink, nameOf, PICTURE_SIDE, requestFor } from './given.js';
+import { mineStorage, rememberMine } from './mine.js';
 import { copyText } from './send.js';
 
 const EXAMPLE = 'my gas bill';
@@ -156,6 +157,7 @@ function makeHere(form, box, update) {
       const answer = await res.json().catch(() => ({}));
       if (!res.ok || !answer.watch) throw new GivenError(answer.error || 'That did not work. Try again in a minute.');
       keep(given.file ? '' : given.words);
+      rememberMine(mineStorage(), answer);   // so it can be found again, renamed and deleted, from this device
       location.assign(answer.watch);   // the reel's own page, which shows it being written and recorded
     } catch (err) {
       setBusy(false);

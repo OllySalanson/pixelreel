@@ -57,6 +57,9 @@ seen by whoever might get the link.
   reel. Pixel Reel does not keep what you gave it: only the reel. Your browser remembers
   the words you asked about until you close the tab, so they are still in the box if you
   come back.
+- A list of the reels you have made here is kept on your own device, so that you can find
+  them again, name them, and delete them. The list is never sent to Pixel Reel. Delete a
+  reel from it and the reel is gone at once, with its recordings and video.
 
 ## Questions
 

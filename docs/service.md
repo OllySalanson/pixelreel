@@ -306,6 +306,13 @@ page of its own, under the same name while it is written, and the first stays as
 counts as one of the visitor's reels for the hour, and costs about as much as a reel from a
 few words.
 
+**Your reels.** The home page lists the reels a visitor has made here, under the box, so
+that they can find them again, call them what they like, and delete them. The list is kept
+in the visitor's own browser and never sent to the service. When a reel is begun, `/try`
+gives back a `key` with its id, which the service keeps only the hash of; `DELETE /r/<id>`
+with that key (`x-reel-key`) deletes the reel, its recordings and its video at once. Having
+a reel's link is enough to watch it, never to delete it.
+
 What can be known before Claude is asked is said in the box, before the visitor leaves it:
 nothing typed, a file Pixel Reel cannot read, too much of it, a PDF too long to read, too
 many reels in the last hour.

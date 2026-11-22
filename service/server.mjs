@@ -217,7 +217,7 @@ async function handleTry(req, res, context) {
   let begun;
   try {
     await writer.fits?.(source);   // too long to read is said here and now, while what was given is still in front of them
-    begun = await reels.begin(source.kind === 'reel' ? String(source.reel.title) : WRITING_TITLE);   // one made again keeps its name while it waits
+    begun = await reels.begin(source.kind === 'reel' ? String(source.reel.title) : WRITING_TITLE, { owned: true });   // one made again keeps its name while it waits
   } catch (err) {
     limits?.tries.undo(caller);   // nothing has reached Claude yet
     if (!(err instanceof TryError || err instanceof BusyError)) throw err;
@@ -226,7 +226,8 @@ async function handleTry(req, res, context) {
   }
   // The visitor goes to the reel's own page at once, and waits there with something to
   // watch. Claude writes the scenes after this request has been answered.
-  sendJson(res, 200, { id: begun.id, watch: `/r/${begun.id}` });
+  // `key` is theirs alone, to delete the reel with: the page keeps it on their device, with the list of their reels.
+  sendJson(res, 200, { id: begun.id, watch: `/r/${begun.id}`, title: begun.title, expires: begun.expires, key: begun.key });
   const job = writeReel(context, begun.id, source, caller).finally(() => context.writing.delete(job));
   context.writing.add(job);
 }
@@ -236,6 +237,21 @@ const unpaced = (reel) => ({
   ...reel,
   scenes: reel.scenes.map((scene) => (scene.picture ? { ...scene, picture: Object.fromEntries(Object.entries(scene.picture).filter(([key]) => key !== 'every' && key !== 'start')) } : scene))
 });
+
+/**
+ * DELETE /r/<id>: whoever made a reel on the website deletes it, with its recordings and
+ * video, at once. They say who they are with the key they were given when it was begun
+ * (x-reel-key), which nobody else has: having a reel's link is enough to watch it, never to
+ * delete it. Only the website's own page may ask.
+ */
+async function handleForget(req, res, id, { reels, baseUrl, log }) {
+  if (req.headers.origin !== new URL(baseUrl).origin) { sendJson(res, 403, { error: 'Ask from the Pixel Reel website.' }); return; }
+  if (!(await reels.status(id))) { sendJson(res, 404, { error: 'That reel has gone already.' }); return; }
+  if (!(await reels.owns(id, req.headers['x-reel-key']))) { sendJson(res, 403, { error: 'Only whoever made a reel can delete it.' }); return; }
+  await reels.remove(id);
+  log(`${id}: deleted by whoever made it`);
+  sendJson(res, 200, { deleted: true });
+}
 
 /** What a reel is called on its page until Claude has given it a title. */
 export const WRITING_TITLE = 'Your reel';
@@ -361,6 +377,7 @@ export function createService({ reels, baseUrl, log = () => {}, limits = null, t
       if (reading && sendStatic(req, res, path, SAFE, fresh)) return;
       const reel = /^\/r\/([^/]+)(?:\/(.*))?$/.exec(path);
       if (reel && isId(reel[1]) && reading) { await handleReel(req, res, reel[1], reel[2] ?? '', context); return; }
+      if (reel && isId(reel[1]) && !reel[2] && req.method === 'DELETE') { await handleForget(req, res, reel[1], context); return; }
       sendSitePage(req, res, 404, 'not-found', context);
     } catch (err) {
       log(`${req.method} ${req.url}: ${err.stack ?? err}`);
