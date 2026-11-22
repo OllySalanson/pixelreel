@@ -39,16 +39,27 @@ const siteFile = (path) => new URL(`../site/${path}`, import.meta.url);
 
 /**
  * Every narrator the site knows, by first name: the reel in reels/ whose first line is their
- * hello, for "Hear Anna", and a few words on the voice. Peter comes first, and is who reads
- * unless someone chooses otherwise.
+ * hello, for "Hear Anna", a few words on the voice, and where the recording the voice is
+ * modelled on comes from (`from`, one of VOICE_SOURCES: Pocket TTS's own table of voices
+ * says which). Peter comes first, and is who reads unless someone chooses otherwise.
  */
 export const NARRATORS = {
-  peter: { hello: 'site-peter', kind: "A man's voice" },
-  anna: { hello: 'voice-anna', kind: "A woman's voice" },
-  vera: { hello: 'voice-vera', kind: "A woman's voice" },
-  stuart: { hello: 'voice-stuart', kind: "A man's voice" },
-  charles: { hello: 'voice-charles', kind: "A man's voice" },
-  paul: { hello: 'voice-paul', kind: "A man's voice" }
+  peter: { hello: 'site-peter', kind: "A man's voice", from: 'voice-zero' },
+  anna: { hello: 'voice-anna', kind: "A woman's voice", from: 'vctk' },
+  vera: { hello: 'voice-vera', kind: "A woman's voice", from: 'vctk' },
+  stuart: { hello: 'voice-stuart', kind: "A man's voice", from: 'voice-zero' },
+  charles: { hello: 'voice-charles', kind: "A man's voice", from: 'vctk' },
+  paul: { hello: 'voice-paul', kind: "A man's voice", from: 'vctk' }
+};
+
+/**
+ * Where narrators' voices come from, and the licence each is used under. The credits page
+ * (site/pages/credits.md) must name every one a narrator uses, and a test holds it to that:
+ * the VCTK corpus's licence asks for credit, so a narrator added without one is a fault.
+ */
+export const VOICE_SOURCES = {
+  'voice-zero': { name: 'Voice-Zero', licence: 'CC0' },
+  vctk: { name: 'CSTR VCTK Corpus', licence: 'CC BY 4.0' }
 };
 
 const named = (narrator) => narrator[0].toUpperCase() + narrator.slice(1);
@@ -88,8 +99,8 @@ ${cards.join('\n')}
 export const whoReads = (narrators = []) => {
   const offered = narrators.filter((narrator) => narrator !== 'peter' && NARRATORS[narrator]).map(named);
   return offered.length
-    ? `Yes. Peter reads it unless you choose ${oneOf(offered)}. None of them can copy a real person's voice.`
-    : "Not here, yet. Peter reads every reel. He cannot copy a real person's voice.";
+    ? `Yes. Peter reads it unless you choose ${oneOf(offered)}. Pixel Reel cannot copy anybody else's voice.`
+    : "Not here, yet. Peter reads every reel. Pixel Reel cannot copy anybody's voice.";
 };
 
 /** Inline Markdown: `code`, **bold**, *emphasis* and [links](address), on escaped text. */
