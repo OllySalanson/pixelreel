@@ -1,0 +1,189 @@
+{
+  "format": "pixelreel/1",
+  "title": "Why the sky is blue",
+  "transition": "dissolve",
+  "scenes": [
+    {
+      "title": "The sky",
+      "caption": "Why is it blue?",
+      "say": "Why is the sky blue? It is a very good question, and the answer starts with the sun.",
+      "picture": {
+        "type": "title",
+        "text": "THE SKY",
+        "sub": "Why is it blue?"
+      }
+    },
+    {
+      "title": "Sunlight",
+      "caption": "Sunlight looks white. It is really every colour at once.",
+      "say": "Sunlight looks white. But it is really every colour at once, all mixed together.",
+      "picture": {
+        "type": "sprite",
+        "label": "EVERY COLOUR",
+        "rows": [
+          "........................................................",
+          "........................................................",
+          ".....................................................r..",
+          "..................................................rrrr..",
+          "...............................................rrrrrr...",
+          "........kkkkkkk..............................rrrrr......",
+          "......kkyyyyyyykk.........................rrrrr.........",
+          ".....kyyyyyyyyyyyk.....................rrrrrr........o..",
+          "....kyyLLLLLyyyyyyk.................rrrrrr......oooooo..",
+          "...kyyLLLLLLLyyyyyyk.............rrrrrr.....ooooooooo...",
+          "..kyyLLLLLLLLLyyyyyyk.........rrrrrr...ooooooooo........",
+          "..kyLLLLLLLLLLLyyyyyk......rrrrrr.oooooooooo............",
+          ".kyyLLLLLLLLLLLyyyyyyk...rrrroooooooooo..............y..",
+          ".kyyLLLLLLLLLLLyyyyyyk..rooooooooo.....yyyyyyyyyyyyyyy..",
+          ".kyyLLLLLLLLLLLyyyyyywwwoyyyyyyyyyyyyyyyyyyyyyyyyyyyy...",
+          ".kyyLLLLLLLLLLLyyyyyywwwyyyyyyyyyyyyyyy.................",
+          ".kyyyLLLLLLLLLyyyyyyywwwggggggggggggggg.................",
+          ".kyyyyLLLLLLLyyyyyyyyk..bbbbbgggggggggggggggggggggggg...",
+          ".kyyyyyLLLLLyyyyyyyyyk..pppbbbbbbb.....ggggggggggggggg..",
+          "..kyyyyyyyyyyyyyyyyyk...ppppppbbbbbbbbb..............g..",
+          "..kyyyyyyyyyyyyyyyyyk......pppppp.bbbbbbbbbb............",
+          "...kyyyyyyyyyyyyyyyk..........pppppp...bbbbbbbbb........",
+          "....kyyyyyyyyyyyyyk..............pppppp.....bbbbbbbbb...",
+          ".....kyyyyyyyyyyyk..................pppppp......bbbbbb..",
+          "......kkyyyyyyykk......................ppppp.........b..",
+          "........kkkkkkk...........................ppppp.........",
+          "............................................pppppp......",
+          "...............................................pppppp...",
+          "..................................................pppp..",
+          ".....................................................p.."
+        ],
+        "colours": {
+          "L": "#ffe08a"
+        }
+      }
+    },
+    {
+      "title": "Into the air",
+      "caption": "When light hits the air, it gets bounced about.",
+      "say": "When that light reaches our air, it bumps into it, and gets bounced about in all directions.",
+      "picture": {
+        "type": "flow",
+        "items": [
+          {
+            "icon": "lightbulb",
+            "label": "Light"
+          },
+          {
+            "icon": "warning",
+            "label": "Hits the air"
+          },
+          {
+            "icon": "star",
+            "label": "Bounces"
+          }
+        ],
+        "start": 0.5,
+        "every": 1.3
+      }
+    },
+    {
+      "title": "Blue bounces most",
+      "caption": "Blue light bounces about far more than red.",
+      "say": "Here is the trick. Blue light bounces about far more than red or yellow light does.",
+      "picture": {
+        "type": "big",
+        "text": "BLUE",
+        "sub": "bounces the most"
+      }
+    },
+    {
+      "title": "So the sky is blue",
+      "caption": "Blue comes at you from every part of the sky.",
+      "say": "So wherever you look, blue light is coming at you, from every part of the sky. And that is why it looks blue.",
+      "picture": {
+        "type": "sprite",
+        "label": "BLUE, FROM EVERYWHERE",
+        "rows": [
+          "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAAAAAyyyyyAAAAAA",
+          "AAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAAAAwAAAAAAAAAyyyyyyyAAAAA",
+          "AAAAAAwAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAAAyyLLLyyyyAAAA",
+          "AAAAAAAAAAAAAAAAAAAAAwAAAAAAAAwAAAAAAwAAAAAAAAAyyLLLyyyyAAAA",
+          "CCCCCCCCwCCCCCCCCCCCCCwCCCCCCCCCCCCCwCCCCCCCCCCyyyyyyyyyCCCC",
+          "CCCCCCCCCwCCCCCCCCCCCCCCCCCCCCwCCCCCCCCCCCCCCCCyyyyyyyyyCCCC",
+          "CCCCCCCCCCCCCCCCCCCCCCCwCCCCCCCCCCCCwCCCCCCCCCCyyyyyyyyyCCCC",
+          "CCCCCCCCCCCwCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCyyyyyyyCCCCC",
+          "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCyyyyyCCCCCC",
+          "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+          "DDDDDDDDDDDDDDwDDDDDDDDDDDDDDDDDDDDDDDDDDDDDwDDDDDDDDDDDDDDD",
+          "DDDDDDDDDDDDDDDDwDDDDDDDDDDDDDDDDDDDDDDDDDwDDDDDDDDDDDDDDDDD",
+          "DDDDDDDDDDDDDDDDDwDDDDDDDDDDnnnnDDDDDDDDDwDDDDDDDDDDDDDDDDDD",
+          "DDDDDDDDDDDDDDDDDDDwDDDDDDDDssssDDDDDDDwDDDDDDDDDDDDDDDDDDDD",
+          "DDDDwDwDDDDDDDDDDDDDDDDDDDDDssssDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+          "DDDDDDDwDwDDDDDDDDDDDDDDDDDDssssDDDDDDDDDDDDDDDDDDDDwDwDDDDD",
+          "EEEEEEEEEEEEEEEEEEEEEEEEEEsrrrrrrsEEEEEEEEEEEEEEEwEwEEEEEEEE",
+          "EEEEEEEEEEEEEEEEEEEEEEEEEEsrrrrrrsEEEEEEEEEEEEEEEEEEEEEEEEEE",
+          "EEEEEEEEEEEEEEEEEEEEEEEEEEsrrrrrrsEEEEEEEEEEEEEEEEEEEEEEEEEE",
+          "EEEEEEEEEEEEEEEEEEEEEEEEEEErrrrrrEEEEEEEEEEEEEEEEEEEEEEEEEEE",
+          "EEEEEEEEEEEEEEEEEEEEEEEEEEEEBBBBEEEEEEEEEEEEEEEEEEEEEEEEEEEE",
+          "EEEEEEEEEEEEEEEEEEEEEEEEEEEEBBBBEEEEEEEEEEEEEEEEEEEEEEEEEEEE",
+          "GGGGGGGGGGGGGGGGGGGGGGGGGGGGkGGkGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+          "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
+          "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
+          "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
+          "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg",
+          "gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg"
+        ],
+        "colours": {
+          "A": "#3d7fd9",
+          "C": "#5a9bea",
+          "D": "#7db6f5",
+          "E": "#a9d2fb",
+          "L": "#ffe08a"
+        }
+      }
+    },
+    {
+      "title": "And sunsets?",
+      "caption": "At sunset the light goes the long way round, and the blue gets lost.",
+      "say": "And at sunset? The light has to go the long way through the air. The blue gets lost on the way, and the reds and oranges are what is left.",
+      "picture": {
+        "type": "sprite",
+        "label": "THE LONG WAY ROUND",
+        "rows": [
+          "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+          "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+          "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+          "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR",
+          "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR",
+          "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR",
+          "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+          "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+          "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+          "oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo",
+          "oooooooooooooooooooooooooooLLLLLLLoooooooooooooooooooooooooo",
+          "oooooooooooooooooooooooooLLLLLLLLLLLoooooooooooooooooooooooo",
+          "OOOOOOOOOOOOOOOOOOOOOOOOLLLLyyyyyLLLLOOOOOOOOOOOOOOOOOOOOOOO",
+          "OOOOOOOOOOOOOOOOOOOOOOOLLLyyyyyyyyyLLLOOOOOOOOOOOOOOOOOOOOOO",
+          "OOOOOOOOOOOOOOOOOOOOOOLLLyyyyyyyyyyyLLLOOOOOOOOOOOOOOOOOOOOO",
+          "yyyyyyyyyyyyyyyyyyyyyyLLyyyyyyyyyyyyyLLyyyyyyyyyyyyyyyyyyyyy",
+          "yyyyyyyyyyyyyyyyyyyyyLLLyyyyyyyyyyyyyLLLyyyyyyyyyyyyyyyyyyyy",
+          "kkkkkkkyyyyyyyyyyyyyyLLyyyyyyyyyyyyyyyLLyyyyyyyyyyyykkkkkkkk",
+          "kkkkkkkkkkkk.........LLyyyyyyyyyyyyyyyLL......kkkkkkkkkkkkkk",
+          "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          "BBBBBBBBBBBBBBBBBBBBBBooooooooooooooooBBBBBBBBBBBBBBBBBBBBBB",
+          "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          "BBBBBBBBBBBBBBBBBBBBBBBBooooooooooooBBBBBBBBBBBBBBBBBBBBBBBB",
+          "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          "BBBBBBBBBBBBBBBBBBBBBBooooooooooooooooBBBBBBBBBBBBBBBBBBBBBB",
+          "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          "BBBBBBBBBBBBBBBBBBBBBBBBooooooooooooBBBBBBBBBBBBBBBBBBBBBBBB",
+          "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+          "BBBBBBBBBBBBBBBBBBBBBBooooooooooooooooBBBBBBBBBBBBBBBBBBBBBB",
+          "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+        ],
+        "colours": {
+          "L": "#ffe08a",
+          "P": "#4a3a7a",
+          "O": "#ffb347"
+        }
+      }
+    }
+  ]
+}

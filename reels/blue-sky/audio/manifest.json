@@ -1,0 +1,36 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "Why is the sky blue? It is a very good question, and the answer starts with the sun.",
+      "file": "b400bd5bf433cb21.mp3",
+      "seconds": 5.52
+    },
+    {
+      "text": "Sunlight looks white. But it is really every colour at once, all mixed together.",
+      "file": "5743ea02a54e66ed.mp3",
+      "seconds": 5.12
+    },
+    {
+      "text": "When that light reaches our air, it bumps into it, and gets bounced about in all directions.",
+      "file": "7c77855910a4039f.mp3",
+      "seconds": 5.12
+    },
+    {
+      "text": "Here is the trick. Blue light bounces about far more than red or yellow light does.",
+      "file": "ce8952cff57604ee.mp3",
+      "seconds": 4.96
+    },
+    {
+      "text": "So wherever you look, blue light is coming at you, from every part of the sky. And that is why it looks blue.",
+      "file": "bb57954bfbe6e1d6.mp3",
+      "seconds": 5.92
+    },
+    {
+      "text": "And at sunset? The light has to go the long way through the air. The blue gets lost on the way, and the reds and oranges are what is left.",
+      "file": "d3717c276715b42d.mp3",
+      "seconds": 8.24
+    }
+  ]
+}
