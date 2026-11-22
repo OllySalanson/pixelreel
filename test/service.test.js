@@ -308,7 +308,8 @@ describe('the service over HTTP', async () => {
     const html = await page.text();
     assert.equal(page.status, 200);
     assert.match(page.headers.get('content-security-policy'), /default-src 'none'.*media-src 'self'/);
-    assert.match(html, /<title>Tea - pixelreel<\/title>/);
+    assert.match(html, /<title>Tea - Pixel Reel<\/title>/);
+    assert.match(html, /<p class="note made"><a href="https:\/\/reels\.example\/">Made with Pixel Reel\.<\/a>[^<]+<\/p>\n<\/main>/, 'whoever is sent a reel can find out what made it');
     assert.match(html, new RegExp(`"file":"/r/${id}/audio/clip0\\.mp3"`), 'the page plays the recordings from the service');
     const audio = await fetch(`${local}/r/${id}/audio/clip0.mp3`, { headers: { range: 'bytes=1-2' } });
     assert.equal(audio.status, 206);

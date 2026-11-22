@@ -29,7 +29,9 @@
             "label": "Under the stairs"
           }
         ],
-        "every": 2.2
+        "every": 1.7,
+        "heading": "WHERE IS IT?",
+        "start": 3.3
       }
     },
     {
@@ -103,7 +105,8 @@
             "label": "Done"
           }
         ],
-        "every": 1.6
+        "every": 2.4,
+        "start": 0.5
       }
     },
     {
@@ -119,7 +122,9 @@
         "good": {
           "icon": "money",
           "label": "The right bill"
-        }
+        },
+        "start": 0.8,
+        "every": 1.4
       }
     }
   ]

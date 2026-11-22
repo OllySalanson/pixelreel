@@ -1,6 +1,7 @@
 <!--
 title: Pixel Reel - Watch it. Don't read it.
 description: Pixel Reel turns anything wordy into a short cartoon, read to you in a warm voice. Free, and made for anyone who would rather watch than read.
+fetch: /reels/pixel-reel/reel.json /reels/pixel-reel/audio/manifest.json
 -->
 
 <section class="hero night" aria-labelledby="hero-title">
@@ -18,6 +19,39 @@ description: Pixel Reel turns anything wordy into a short cartoon, read to you i
       <a class="btn btn-gold btn-big" href="/claude">Add Pixel Reel to Claude</a>
       <a class="btn btn-paper btn-big" href="#make">Make a pixel reel now</a>
       <p class="hero-small">Free. Nothing to sign up for. Works with every Claude plan.</p>
+      <p class="hero-watch"><span>Rather not read the rest?</span>
+        <button class="btn btn-reel" type="button" data-reels="site-what site-how site-who site-peter site-make site-good site-questions" data-kicker="This page, as a reel">Watch this whole page</button></p>
+    </div>
+  </div>
+</section>
+
+<section class="section ways" id="ways" aria-labelledby="ways-title">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">The idea</p>
+      <h2 id="ways-title">Same letter. Two ways to take it in.</h2>
+      <p class="lead">One of them takes 41 seconds, and comes with a piggy bank.</p>
+    </div>
+    <div class="two-ways">
+      <div class="way way-read">
+        <h3><span class="way-n">1</span> Read it</h3>
+        <p class="sr-only">An example of a long, dense pension letter, in small print.</p>
+        <div class="letter" aria-hidden="true">
+          <p class="letter-ref">Ref: ABS/2026/00417729/DC &nbsp; Private and confidential</p>
+          <p class="letter-title">ANNUAL BENEFIT STATEMENT FOR THE SCHEME YEAR ENDING 5 APRIL 2026</p>
+          <p>Dear Member,</p>
+          <p>We are writing to provide you with your Annual Benefit Statement for the above Scheme year, as required under the Occupational and Personal Pension Schemes (Disclosure of Information) Regulations 2013. This statement sets out the value of your accumulated fund as at the statement date, the contributions received during the Scheme year, and a Statutory Money Purchase Illustration of the benefits which may become payable to you at your Selected Retirement Age.</p>
+          <p>As at the statement date, the value of your accumulated fund, after the deduction of the annual management charge and any applicable transaction costs, was £18,204.37. During the Scheme year, member contributions of £1,512.00 and employer contributions of £1,134.00 were received and invested in accordance with your current investment instructions, or, where no instructions are held, in the default lifestyle arrangement.</p>
+          <p>The illustration overleaf is prepared in accordance with the relevant actuarial technical memorandum and is expressed in today's prices, on the assumption that contributions continue at their present level until your Selected Retirement Age and that future price inflation is 2.5% per annum. The illustration is not guaranteed. The benefits ultimately payable will depend upon the contributions actually paid, the investment returns achieved (which may be negative), the charges deducted, and the cost of securing an income at the point of retirement, and may therefore be higher or lower than the amounts shown.</p>
+          <p>Please check the personal details recorded in Section 1 and notify the Scheme Administrator in writing of any discrepancy, quoting the reference above. You are not required to take any further action in respect of this statement, which should be retained with your records. Further information regarding your options at retirement, including the availability of free and impartial guidance, is set out in Sections 4 to 7.</p>
+        </div>
+        <p class="way-note">Three pages of this. We made this one up, but you know the sort.</p>
+      </div>
+      <div class="way way-watch">
+        <h3><span class="way-n">2</span> Or watch it</h3>
+        {{player:pension-letter}}
+        <p class="way-note">The same letter, as a pixel reel. Press Play.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -108,32 +142,32 @@ description: Pixel Reel turns anything wordy into a short cartoon, read to you i
     </div>
     <ul class="people">
       <li class="person">
-        {{icon:document:4}}
+        <span class="tile tile-gold">{{icon:document:4}}</span>
         <h3>Reading is hard work</h3>
         <p>Dyslexia, or just tired eyes. Let the reel do the reading.</p>
       </li>
       <li class="person">
-        {{icon:lightbulb:4}}
+        <span class="tile tile-teal">{{icon:lightbulb:4}}</span>
         <h3>Your mind wanders</h3>
         <p>ADHD, or a busy head. Short scenes keep things moving.</p>
       </li>
       <li class="person">
-        {{icon:clock:4}}
+        <span class="tile tile-pink">{{icon:clock:4}}</span>
         <h3>You're short on time</h3>
         <p>Most reels are done in two minutes. About one cup of tea.</p>
       </li>
       <li class="person">
-        {{icon:star:4}}
+        <span class="tile tile-sky">{{icon:star:4}}</span>
         <h3>You've got children</h3>
         <p>Volcanoes. Fractions. Why the sky is blue. Homework, but a cartoon.</p>
       </li>
       <li class="person">
-        {{icon:letter:4}}
+        <span class="tile tile-lilac">{{icon:letter:4}}</span>
         <h3>It's late, and it's long</h3>
         <p>The letter can wait until morning. Or Peter can read it to you now.</p>
       </li>
       <li class="person">
-        {{icon:people:4}}
+        <span class="tile tile-peach">{{icon:people:4}}</span>
         <h3>You're the one explaining</h3>
         <p>Send a reel, not an essay. People will actually watch it.</p>
       </li>
@@ -211,7 +245,7 @@ description: Pixel Reel turns anything wordy into a short cartoon, read to you i
     </div>
     <form class="maker" id="maker" action="/claude">
       <label for="maker-what">What do you want explained?</label>
-      <input id="maker-what" name="about" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste a link, or type a few words" maxlength="2000">
+      <input id="maker-what" name="about" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="A link, or a few words" maxlength="2000">
       <ul class="tries" aria-label="Or try one of these">
         <li><button type="button" data-try="my gas bill">My gas bill</button></li>
         <li><button type="button" data-try="how a mortgage works">How a mortgage works</button></li>

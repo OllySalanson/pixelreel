@@ -18,11 +18,13 @@ async function fetchReel(name) {
   const reel = parseReelJson(text);
   const clipFor = clipLookup(manifest, `${base}audio/`);
   const durations = reel.scenes.map((s) => narrationMs(s, clipFor(s)));
-  return { name, reel, clipFor, durations, line: timeline(durations) };
+  // the kind of picture the reel opens on, so the Play button can keep off a title's words
+  const opens = JSON.parse(text).scenes[0]?.picture?.type ?? 'card';
+  return { name, reel, clipFor, durations, line: timeline(durations), opens };
 }
 
 /**
- * The reel called `name`, ready to play: { name, reel, clipFor, durations, line }. Each reel
+ * The reel called `name`, ready to play: { name, reel, clipFor, durations, line, opens }. Each reel
  * is fetched once, however many players and pictures ask for it.
  */
 export function loadReel(name) {

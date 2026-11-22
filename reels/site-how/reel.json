@@ -33,7 +33,8 @@
             "label": "Pixel Reel"
           }
         ],
-        "every": 1.3
+        "every": 0.7,
+        "start": 0.4
       }
     },
     {
@@ -43,7 +44,7 @@
       "picture": {
         "type": "chat",
         "title": "Claude",
-        "every": 2.4,
+        "every": 1.4,
         "messages": [
           {
             "from": "Claude",
@@ -57,7 +58,8 @@
             "from": "Claude",
             "text": "Writing the scenes now."
           }
-        ]
+        ],
+        "start": 0.6
       }
     },
     {

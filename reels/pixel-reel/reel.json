@@ -76,7 +76,9 @@
         "good": {
           "icon": "computer",
           "label": "A pixel reel"
-        }
+        },
+        "start": 0.3,
+        "every": 1.1
       }
     },
     {
@@ -89,11 +91,10 @@
         "items": [
           "One idea",
           "A few plain words",
-          "A picture",
-          "A voice"
+          "A picture"
         ],
         "every": 1.7,
-        "start": 0.8
+        "start": 1
       }
     },
     {
@@ -131,7 +132,7 @@
       "picture": {
         "type": "chat",
         "title": "Claude",
-        "every": 2.2,
+        "every": 1.9,
         "messages": [
           {
             "from": "Claude",
@@ -145,7 +146,8 @@
             "from": "Claude",
             "text": "Ready. Press play."
           }
-        ]
+        ],
+        "start": 1
       }
     },
     {
@@ -164,15 +166,16 @@
             "label": "Bills"
           },
           {
-            "icon": "lightbulb",
-            "label": "Ideas"
+            "icon": "calendar",
+            "label": "Plans"
           },
           {
             "icon": "star",
             "label": "Homework"
           }
         ],
-        "every": 1.3
+        "every": 0.95,
+        "start": 0.7
       }
     },
     {
@@ -187,8 +190,8 @@
           "Only your link opens it",
           "Gone after 30 days"
         ],
-        "every": 2,
-        "start": 2.6
+        "every": 1.8,
+        "start": 2.8
       }
     },
     {

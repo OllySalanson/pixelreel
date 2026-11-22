@@ -113,7 +113,9 @@
             "label": "Your pot"
           }
         ],
-        "every": 1.5
+        "every": 1.4,
+        "heading": "WHAT WENT IN",
+        "start": 2.3
       }
     },
     {
@@ -137,8 +139,8 @@
           "Check your details",
           "Keep it safe"
         ],
-        "every": 2.2,
-        "start": 3.4
+        "every": 1.9,
+        "start": 3.5
       }
     },
     {
@@ -152,7 +154,8 @@
             "icon": "phone",
             "label": "Ring them"
           }
-        ]
+        ],
+        "start": 1.6
       }
     }
   ]

@@ -28,8 +28,14 @@
       "caption": "No. It's free.",
       "say": "Does it cost anything? No. It's free.",
       "picture": {
-        "type": "big",
-        "text": "FREE"
+        "type": "icons",
+        "items": [
+          {
+            "icon": "tick",
+            "label": "No. It's free."
+          }
+        ],
+        "start": 2.5
       }
     },
     {
@@ -52,7 +58,8 @@
             "label": "You watch"
           }
         ],
-        "every": 1.2
+        "every": 1.2,
+        "start": 1.6
       }
     },
     {
@@ -66,7 +73,8 @@
             "icon": "clock",
             "label": "A minute or two"
           }
-        ]
+        ],
+        "start": 2
       }
     },
     {
@@ -80,7 +88,8 @@
             "icon": "warning",
             "label": "Check what matters"
           }
-        ]
+        ],
+        "start": 1.8
       }
     },
     {

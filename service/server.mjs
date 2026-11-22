@@ -105,8 +105,10 @@ async function handleReel(req, res, id, rest, { reels, baseUrl }) {
     }
     const manifest = await reels.manifest(id);
     const clips = (manifest?.clips ?? []).map((c) => ({ text: c.text, file: `/r/${id}/audio/${c.file}`, seconds: c.seconds }));
-    const page = pageHtml({ reelJson: JSON.stringify(await reels.reel(id)), manifest: { clips }, title: `${status.title} - pixelreel` });
-    sendPage(res, 200, page, { ...UNLISTED, 'content-security-policy': PAGE_POLICY });
+    const page = pageHtml({ reelJson: JSON.stringify(await reels.reel(id)), manifest: { clips }, title: `${status.title} - Pixel Reel` });
+    // under the player, a way home: whoever is sent a reel can find out what made it
+    const made = `<p class="note made"><a href="${escapeHtml(baseUrl)}/">Made with Pixel Reel.</a> Free, for anything you would rather watch than read.</p>\n</main>`;
+    sendPage(res, 200, page.replace('</main>', () => made), { ...UNLISTED, 'content-security-policy': PAGE_POLICY });
     return;
   }
   if (rest === 'play.json') {
