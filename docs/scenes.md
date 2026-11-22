@@ -173,9 +173,9 @@ picture: { type: 'compare', bad: { icon: 'document', label: 'A long letter' }, g
 The icons, by what they are about:
 
 - **Paperwork and money:** `letter`, `document`, `money`, `card`, `bank`, `calendar`, `clock`, `hourglass`, `bag`, `basket`, `gift`, `chart`
-- **People and home:** `person`, `people`, `baby`, `heart`, `house`, `bed`, `key`, `lock`, `bin`, `cup`, `apple`, `egg`, `pan`, `pill`, `thermometer`, `dog`, `cat`
+- **People and home:** `person`, `people`, `baby`, `heart`, `house`, `bed`, `key`, `lock`, `bin`, `cup`, `apple`, `egg`, `bread`, `bowl`, `bottle`, `pan`, `tap`, `shirt`, `tooth`, `pill`, `thermometer`, `dog`, `cat`
 - **Out and about:** `car`, `bus`, `train`, `plane`, `pin`, `world`, `flag`, `ball`, `trophy`, `music`, `book`, `pencil`
-- **Technology:** `phone`, `computer`, `camera`, `wifi`, `battery`, `cog`, `search`, `speech`, `bell`, `eye`, `shield`, `rocket`
+- **Technology:** `phone`, `computer`, `camera`, `wifi`, `battery`, `plug`, `cog`, `search`, `speech`, `bell`, `eye`, `shield`, `rocket`
 - **Weather and nature:** `sun`, `moon`, `cloud`, `rain`, `water`, `fire`, `bolt`, `tree`
 - **Signs:** `tick`, `cross`, `warning`, `question`, `star`, `lightbulb`
 
