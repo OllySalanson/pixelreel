@@ -224,7 +224,9 @@ Three things it cannot see, so look at them by hand:
   headless browser says it has no mouse, so the rule never applies there. Switch it on by
   setting that rule's `media.mediaText` to `screen` through `document.styleSheets`.
 - **The printed page.** Set every `@media print` rule's `mediaText` to `screen` the same
-  way, at 794 by 1123 pixels, which is a sheet of A4.
+  way, at 794 by 1123 pixels, which is a sheet of A4, after `dispatchEvent(new Event('beforeprint'))`.
+  Look at a plain page, the home page and a reel's page: a print rule meant for one has
+  twice now reached the others.
 
 A device is told apart by what the browser says it is (`deviceOf` in `site/js/app.js`), so
 to see what a phone is shown (`data-on-phone`), give the headless browser an iPhone's user
@@ -1301,3 +1303,30 @@ Looked at the home page on a tablet (820 pixels wide), which nobody had.
 | The three steps on a tablet, and the scenes under a reel |
 | --- |
 | ![On a tablet: the three steps side by side across the page. Beside it, the six scenes of a reel, three across.](log/v56-steps-tablet.jpg) |
+
+### Version 57
+
+- **Every page but a reel's printed as a blank sheet.** Since a reel could be printed on
+  one page (Version 32), the rule that leaves only the reel's sheet on paper applied to
+  every page. Print the privacy page, or the terms, or how to add Pixel Reel to Claude, and
+  nothing came out. That rule now applies only to the pages a reel is watched on.
+- **A page on paper is its words.** Black on white whatever paper was chosen, without the
+  bar, the foot, the players and the buttons, which do nothing on paper. On the plain pages
+  a link that leads off the site says where it leads. Closed questions are opened for the
+  printing and closed again after, since on paper a closed question has no answer.
+- **No empty frames.** A picture is only drawn once someone scrolls to it, so one not yet
+  seen printed as an empty box. It is now left out, and a step keeps its number above its
+  heading when its picture is.
+- On paper the home page leaves out its parts that are only things to press or to watch.
+
+Found by looking, not by a test: no test prints a page. Making this, my first rule for the
+empty frames also took the pictures off a reel's own sheet, which only a look at that page
+showed. There are tests now for both.
+
+Tried with the print rules switched on in the headless browser at the size of a sheet of
+A4: the privacy, terms, press and make pages, the home page, the page that adds Pixel Reel
+to Claude, and a reel's page. Not printed on a real printer.
+
+| The privacy page and the page that adds Pixel Reel to Claude, as they print |
+| --- |
+| ![The privacy page as it prints: its heading and its words, black on white. Beside it, Add Pixel Reel to Claude as it prints: the steps, with their numbers and pictures.](log/v57-on-paper.jpg) |

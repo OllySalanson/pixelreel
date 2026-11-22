@@ -713,7 +713,7 @@ describe('the whole reel on one page', () => {
 
   it('is the only thing on paper, black on white, with no scene cut in two by the end of a sheet', () => {
     const print = css.slice(css.indexOf('@media print {\n  .top'));
-    assert.match(print, /main > :not\(\.sheet-part\), #sheet-print \{ display: none !important; \}/);
+    assert.match(print, /\n {2}\.page-reel main > :not\(\.sheet-part\), \.page-watch main > :not\(\.sheet-part\), #sheet-print \{ display: none !important; \}/);
     assert.match(print, /body \{ background: #fff; color: #000; \}/);
     assert.match(print, /\.storyboard \.step \{ break-inside: avoid;/);
     assert.match(print, /\.sheet-made \{ display: block;/, 'and it says where it came from');
@@ -978,6 +978,39 @@ describe('getting the site onto a phone with no address to type', () => {
     const css = readFileSync(root('site/css/site.css'), 'utf8');
     assert.match(css, /\n\.scan \{ display: none;/);
     assert.match(css, /@media \(hover: hover\) and \(pointer: fine\) \{\n {2}\.scan \{ display: flex; \}\n\}/);
+  });
+});
+
+describe('any page on paper', () => {
+  const css = readFileSync(root('site/css/site.css'), 'utf8');
+  const print = css.slice(css.indexOf('@media print {\n  .top'));
+
+  it('prints: only the page a reel is watched on is cut down to its sheet', () => {
+    // the rule that hides everything but the sheet used to apply to every page, which printed blank
+    assert.doesNotMatch(css, /[,{]\s*main > :not\(\.sheet-part\)/, 'never without saying which page');
+    assert.match(html.reel, /<body class="page-reel">/);
+    assert.match(html['watch/offside-rule'], /<body class="page-watch">/);
+    for (const name of ['home', 'claude', 'privacy', 'terms', 'credits', 'press', 'app', 'make']) assert.doesNotMatch(html[name], /<body class="page-(reel|watch)">/, name);
+  });
+
+  it('leaves off what only works on a screen, and is black on white whatever paper was chosen', () => {
+    assert.match(print, /\n {2}\.top, \.foot, \.skip, dialog, \.scene, \.reel, \.reel-end, button, /);
+    assert.match(print, /\n {2}:root:root \{ --paper: #fff; --tint: #fff; --card: #fff; --ink: #000;/, 'over Dark paper too');
+    assert.match(print, /\n {2}\.night \{ background: #fff; color: #000; \}/);
+    assert.match(print, /\.doc a\[href\^="http"\]::after \{ content: ' \(' attr\(href\) '\)';/, 'and a link that leads off the site says where to');
+  });
+
+  it('opens closed questions for the printing, and closes them again after', () => {
+    const main = readFileSync(root('site/js/main.js'), 'utf8');
+    assert.match(main, /addEventListener\('beforeprint', \(\) => \{\s*for \(const closed of document\.querySelectorAll\('details:not\(\[open\]\)'\)\) \{ closed\.open = true; closed\.dataset\.forPaper = ''; \}/);
+    assert.match(main, /addEventListener\('afterprint', \(\) => \{\s*for \(const opened of document\.querySelectorAll\('details\[data-for-paper\]'\)\) \{ opened\.open = false;/);
+  });
+
+  it('leaves out a picture that has not been drawn yet, but never the scenes under a reel', () => {
+    assert.match(print, /\n {2}canvas\.shot\[data-reel\]:not\(\[data-drawn\]\) \{ display: none !important; \}/);
+    assert.match(readFileSync(root('site/js/shots.js'), 'utf8'), /if \(shot\.scene\) shot\.canvas\.dataset\.drawn = '';/, 'drawn means its scene is in it');
+    // the scenes under a reel are drawn by sheet.js with no data-reel, so the rule above cannot touch them
+    assert.doesNotMatch(readFileSync(root('site/js/sheet.js'), 'utf8'), /dataset\.reel|data-reel/);
   });
 });
 
