@@ -12,12 +12,17 @@ description: Give Pixel Reel a link, a letter, a photo or a question, and it com
       <p class="lead" data-here-says="Give it anything wordy. Get back a short cartoon, read aloud.">Say what you want explained. We will write the words to give to Claude.</p>
     </div>
     <form class="maker" id="maker" action="/claude" data-here="{{here}}">
-      <!-- the one thing to do first: a big box that says what goes in it, and a button that pastes it in -->
-      <label class="maker-label" for="maker-what"><span class="tile tile-gold">{{sprite:link:3}}</span><span>Paste a link here</span></label>
+      <!-- the one thing to do first: a big box that says what goes in it, and a button that pastes it in.
+           Its name is a line of words, not a label, so that a press can read it aloud (Press words to hear them, site/js/aloud.js) -->
+      <p class="maker-label" id="maker-label"><span class="tile tile-gold">{{sprite:link:3}}</span><span>Paste a link here</span></p>
       <div class="maker-box">
-        <textarea id="maker-what" name="about" rows="2" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Or type a question"></textarea>
-        <!-- shown by maker.js, where the browser lets a page read what was copied on a press -->
-        <button class="btn btn-paper maker-paste" id="maker-paste" type="button" hidden>{{sprite:paste:2}}<span>Paste</span></button>
+        <textarea id="maker-what" name="about" aria-labelledby="maker-label" rows="2" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Or type a question"></textarea>
+        <div class="maker-box-keys">
+          <!-- shown by maker.js, where the browser lets a page read what was copied on a press -->
+          <button class="btn btn-paper maker-paste" id="maker-paste" type="button" hidden>{{sprite:paste:2}}<span>Paste</span></button>
+          <!-- shown by maker.js while there is something in the box: one press empties it, with no selecting on a phone -->
+          <button class="btn btn-paper maker-clear" id="maker-clear" type="button" hidden>Clear</button>
+        </div>
       </div>
       <!-- who reads the reel, and in which language: one line that says what is chosen, and opens when pressed, to change it.
            Shown by maker.js, and only where there is a choice: more than English, or someone besides Peter. -->

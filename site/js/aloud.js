@@ -15,7 +15,8 @@ export const NOT_READ = 'a, button, input, textarea, select, label, canvas, .ree
 
 const BLOCKS = new Set(['H1', 'H2', 'H3', 'P', 'LI', 'DIV', 'SUMMARY', 'DT', 'DD', 'FIGCAPTION', 'UL', 'OL', 'DETAILS']);
 // what has no words to see, and what does something when pressed: a button's words are what it does, not something to read out with the words round it
-const UNSEEN = new Set(['SCRIPT', 'STYLE', 'SVG', 'CANVAS', 'NOSCRIPT', 'BUTTON', 'LABEL', 'INPUT', 'SELECT', 'TEXTAREA']);
+// (nor is a set of choices: the make page's "Read by Peter in English" opens one, and is read without it)
+const UNSEEN = new Set(['SCRIPT', 'STYLE', 'SVG', 'CANVAS', 'NOSCRIPT', 'BUTTON', 'LABEL', 'INPUT', 'SELECT', 'TEXTAREA', 'FIELDSET']);
 
 /**
  * The words of a part of the page as they are read aloud: what someone looking at it can

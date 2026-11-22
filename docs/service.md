@@ -307,6 +307,7 @@ whichever way is easiest for them:
 
 - **Paste a link** into the one big box, which says "Paste a link here". Its **Paste** button
   puts in whatever was last copied, in one press, so nobody has to press and hold on a phone.
+  **Clear**, beside it once the box has something in it, empties it in one press.
   Then press **Make my reel**, the big button straight under it.
 - **Type a question**, or a few words, into the same box.
 - **Paste some writing** (an email, a letter) into the box. It grows to hold it.
