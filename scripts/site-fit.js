@@ -1,19 +1,22 @@
 // Checks a page of the website in a browser, at every setting of Make it comfy: that the bar
 // across the top is on one row, that no word is cut in two at the end of a line, that no
-// words sit on a pattern in the night scenes, and that nothing is wider than the screen. Paste it into the console of a page (or hand it to a
+// words sit on a pattern in the night scenes, and that nothing is wider than the screen. It
+// opens each panel that lies over the page (the menu, Make it comfy, a reel over the page)
+// and checks those too. Paste it into the console of a page (or hand it to a
 // browser driver) at each screen width you care about. It answers with what it found.
 // docs/site/README.md says when to run it.
 (async () => {
   const root = document.documentElement, before = { ...root.dataset }, found = [];
   const settle = () => new Promise((done) => setTimeout(done, 200));   // long enough for the scenes to be drawn again
 
-  // every run of letters that sits on more than one line; a break after a hyphen or at a slash is fair
-  const cutWords = () => {
+  // every run of letters that sits on more than one line; a break after a hyphen or at a slash is fair.
+  // In the page, or in one panel that is open over it (the page's own words leave the panels out).
+  const cutWords = (panel = null) => {
     const cut = new Set(), range = document.createRange();
-    const texts = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const texts = document.createTreeWalker(panel ?? document.body, NodeFilter.SHOW_TEXT);
     for (let text = texts.nextNode(); text; text = texts.nextNode()) {
       const el = text.parentElement;
-      if (!el?.offsetParent || el.closest('dialog, script, style, noscript, [hidden]')) continue;
+      if (!el?.offsetParent || el.closest(`${panel ? '' : 'dialog, '}script, style, noscript, [hidden]`)) continue;
       for (const word of text.data.matchAll(/[^\s]+/g)) {
         range.setStart(text, word.index);
         range.setEnd(text, word.index + word[0].length);
@@ -74,6 +77,15 @@
         if (cut.length) wrong.push(`cut in two: ${cut.slice(0, 8).join(' ')}`);
         const patterned = onPattern();
         if (patterned.length) wrong.push(`on a pattern: ${patterned.slice(0, 5).join(' | ')}`);
+        // each panel that opens over the page: opened, measured, and closed again
+        for (const panel of document.querySelectorAll('dialog[id]')) {
+          if (panel.open) continue;
+          panel.showModal();
+          if (panel.scrollWidth > panel.clientWidth) wrong.push(`the ${panel.id} panel is ${panel.scrollWidth - panel.clientWidth}px wider than its own width`);
+          const cutIn = cutWords(panel);
+          if (cutIn.length) wrong.push(`cut in two in the ${panel.id} panel: ${cutIn.slice(0, 6).join(' ')}`);
+          panel.close();
+        }
         if (wrong.length) found.push(`${font}, size ${size}, spacing ${space}: ${wrong.join('; ')}`);
       }
     }
@@ -81,5 +93,5 @@
   for (const key of ['font', 'size', 'space']) {
     if (key in before) root.dataset[key] = before[key]; else delete root.dataset[key];
   }
-  return found.length ? found.join('\n') : `All well at ${root.clientWidth} pixels wide: one row, whole words, plain sky behind them, nothing too wide, at all 27 settings.`;
+  return found.length ? found.join('\n') : `All well at ${root.clientWidth} pixels wide: one row, whole words, plain sky behind them, nothing too wide, in the page and in its panels, at all 27 settings.`;
 })();

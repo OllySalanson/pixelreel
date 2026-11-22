@@ -213,7 +213,8 @@ No test can see how a page is laid out, so [`scripts/site-fit.js`](../../scripts
 does it in a browser: paste it into the console of a page, at a phone's width and at a
 laptop's, and it tries all 27 settings of Make it comfy and says where the bar across the
 top is on two rows, where a word is cut in two, where words sit on a pattern in one of the
-night scenes, and where the page is wider than the screen. Fix a layout it complains about by letting it reflow (a `flex-basis` or a column
+night scenes, and where the page is wider than the screen. It opens each panel that lies
+over the page (the menu, Make it comfy, a reel over the page) and checks those the same way. Fix a layout it complains about by letting it reflow (a `flex-basis` or a column
 width in `ch`, which grows with the letters), not by a rule for one size of screen.
 
 It only looks. [`scripts/site-press.js`](../../scripts/site-press.js) presses: run the same
@@ -222,11 +223,8 @@ words to hear them, a reel over the page and the big Play button, and says what 
 what it should. It makes no sound, and puts back what it changed. Run it after changing
 any of the site's scripts, since no test runs a page.
 
-Three things `site-fit.js` cannot see, so look at them by hand:
+Two things `site-fit.js` cannot see, so look at them by hand:
 
-- **Inside a dialog** (the menu, Make it comfy, the theatre). Open it with `showModal()`
-  and compare its `scrollWidth` with its `clientWidth`, at 320 pixels wide with
-  OpenDyslexic, the biggest size and the roomiest spacing.
 - **What only someone with a mouse is shown** (the QR code and its words, `.scan`). A
   headless browser says it has no mouse, so the rule never applies there. Switch it on by
   setting that rule's `media.mediaText` to `screen` through `document.styleSheets`.
@@ -1520,3 +1518,21 @@ aside, and the Menu button did not.
 Tried in the headless browser both ways: as it is, a press opens the menu and the page
 stays where it was; with its script's hold on it taken away, a press goes to the links at
 the foot. `scripts/site-press.js` and `scripts/site-fit.js` say all well with it.
+
+### Version 68
+
+Found by the worker on the make page, who measured it and passed it on.
+
+- **A reel over the page scrolled sideways.** With the biggest, widest, roomiest letters on
+  a phone 320 pixels wide, a reel opened from "Make a pixel reel about this" was wider than
+  the screen: its name and its Close button did not fit side by side. Close now sits beside
+  the name while the name's longest word has room there, and goes above it when it has not.
+- **The layout checker looks inside the panels.** `scripts/site-fit.js` did not look inside
+  anything that opens over the page, which is how this got past, and the menu and Make it
+  comfy before it (Version 44). It now opens each of the three at every setting and
+  measures it: wider than its own width, or a word cut in two. Run on the live site, which
+  still had the fault, it said so: "the theatre panel is 21px wider than its own width".
+
+| At the biggest, widest letters on the narrowest phone, and at the usual ones |
+| --- |
+| ![A reel over the page on a narrow phone with very big letters: Close above the reel's name, which runs to four lines. Beside it, at the usual letters: the name with Close beside it.](log/v68-theatre-head.jpg) |
