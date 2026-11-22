@@ -1,21 +1,60 @@
 {
   "name": "Pixel Reel",
   "short_name": "Pixel Reel",
-  "description": "Watch it. Don't read it.",
+  "description": "Short cartoons with a warm voice, each explaining one thing. Watch it. Don't read it.",
+  "id": "/",
   "start_url": "/",
-  "display": "browser",
+  "scope": "/",
+  "lang": "en-GB",
+  "dir": "ltr",
+  "display": "standalone",
   "background_color": "#0b1220",
   "theme_color": "#0b1220",
+  "categories": [
+    "education",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "/site/art/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/site/art/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/site/art/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/site/art/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Make a pixel reel",
+      "short_name": "Make a reel",
+      "url": "/#make"
+    },
+    {
+      "name": "Watch an example",
+      "short_name": "Examples",
+      "url": "/#examples"
+    },
+    {
+      "name": "Add Pixel Reel to Claude",
+      "short_name": "Add to Claude",
+      "url": "/claude"
     }
   ]
 }

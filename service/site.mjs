@@ -8,7 +8,10 @@ import { ICONS } from '../src/icons.js';
 import { PALETTE } from '../src/palette.js';
 
 /** Each address the site answers, and the page in site/pages/ it shows. */
-export const SITE_PAGES = { '/': 'home', '/claude': 'claude', '/press': 'press', '/privacy': 'privacy', '/terms': 'terms', '/credits': 'credits' };
+export const SITE_PAGES = { '/': 'home', '/claude': 'claude', '/app': 'app', '/press': 'press', '/privacy': 'privacy', '/terms': 'terms', '/credits': 'credits', '/offline': 'offline' };
+
+/** Pages that are no use to a search engine: the one shown when there is no internet (see site/js/sw.js). */
+const UNLISTED_PAGES = new Set(['/offline']);
 
 /** The example reels on the home page, in order: the scene each one's poster shows, and what kind of thing it explains. */
 export const EXAMPLES = [
@@ -226,7 +229,7 @@ export function sitePage(name, baseUrl, { listed = false, values = {}, title = n
     page: escapeHtml(name),
     watchable: WATCH.join(' '),
     canonical: escapeHtml(`${baseUrl}${path}`),
-    robots: listed ? 'index, follow' : 'noindex, nofollow',
+    robots: listed && !UNLISTED_PAGES.has(path) ? 'index, follow' : 'noindex, nofollow',
     main
   });
 }
@@ -238,7 +241,7 @@ export function robotsTxt(baseUrl, listed = false) {
 
 /** The pages a search engine may list, once the site is listed. */
 export function sitemapXml(baseUrl) {
-  const pages = [...Object.keys(SITE_PAGES), ...WATCH.map((name) => `/watch/${name}`)].map((path) => `  <url><loc>${escapeHtml(`${baseUrl}${path}`)}</loc></url>`);
+  const pages = [...Object.keys(SITE_PAGES).filter((path) => !UNLISTED_PAGES.has(path)), ...WATCH.map((name) => `/watch/${name}`)].map((path) => `  <url><loc>${escapeHtml(`${baseUrl}${path}`)}</loc></url>`);
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages.join('\n')}\n</urlset>\n`;
 }
 

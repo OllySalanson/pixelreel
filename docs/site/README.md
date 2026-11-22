@@ -6,6 +6,7 @@ Reel is, how to add it to Claude, the press kit, and privacy, terms and credits.
 
 - [Who it is built for](#who-it-is-built-for)
 - [How it fits together](#how-it-fits-together)
+- [On a phone's home screen](#on-a-phones-home-screen)
 - [Changing it](#changing-it)
 - [The reels it plays](#the-reels-it-plays)
 - [Design log](#design-log)
@@ -36,6 +37,8 @@ People who find reading hard work. Every choice follows from that:
   that plays a reel of that part, made earlier. "Watch this whole page" plays them all.
 - **Calm.** Sound only ever starts on a press. Pictures hold still for anyone whose device
   asks for less motion, or who chooses Still.
+- **One press away.** Pixel Reel can be added to a phone's home screen, so nobody has to
+  type an address or find a tab again. It opens there with no internet, too.
 
 Pixel art is for pictures; words are always in plain letters. One pixel of the page's pixel
 art is `--u` (4px) wide everywhere, so buttons, borders, icons and scenery sit on one grid.
@@ -50,6 +53,7 @@ The voice is Peter's: warm, plain, British, a little cheeky. Plain dashes only.
 | `site/pages/*.html`, `*.md` | A page each. The comment at the top holds its `title` and `description`. Plain pages are Markdown. `reel.html` is the page every shared reel is watched on (`/r/<id>`), and `watch.html` the page each of the site's own reels has to be sent by (`/watch/<name>`: the examples in `EXAMPLES`, in `service/site.mjs`, which also writes their posters). |
 | `site/css/site.css` | The whole look. |
 | `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` is Make it comfy; `boot.js` runs before the page is drawn, to put its settings back and to keep the bar across the top on one row; `signal.js` is the test card on a page that is not there; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `send.js` copies words and passes a reel on; `ruler.js` is the reading ruler; `pace.js` is the clock that lets Peter read slower or quicker; `sprites.js` is the site's own pixel art. |
+| `site/js/app.js`, `site/js/sw.js` | Pixel Reel as an app on a phone: [below](#on-a-phones-home-screen). |
 | `site/fonts/`, `site/art/` | The fonts (with their licences), and the icons, logos and share picture. |
 | `service/site.mjs` | Puts a page together: the layout, the page, and the `{{names}}` in them. |
 | `service/static.mjs` | Serves the files a page loads, and only those. |
@@ -72,6 +76,34 @@ inline styles and scripts, so pages have none (`test/site.test.js` checks).
 Search engines are asked to keep out (`noindex`, and `/robots.txt`) for as long as Pixel
 Reel is by invitation. `PIXELREEL_LISTED=1` lets them list the website. Reels are never
 listed: every `/r/` answer says `noindex`.
+
+## On a phone's home screen
+
+Pixel Reel can be added to a phone's home screen, where it opens on a screen of its own like
+any other app (an installable web app). Three things make it one:
+
+- **What a phone is told** (`site/art/site.webmanifest`, written by `manifest()` in
+  `scripts/site-art.mjs`): its name and icons, that it opens on a screen of its own, and
+  what to offer when its icon is pressed and held. The `maskable` icons keep Reelie well
+  inside the middle, as a phone may cut an icon into a circle.
+- **The service worker** (`site/js/sw.js`, served as `/sw.js`, because a browser lets a
+  worker look after only the pages beside and below its own address). It keeps a copy, on
+  the device, of each page the site has shown, the files they load, and each of the site's
+  own recordings that has been played. With a connection everything still comes from the
+  service, as fresh as ever, so a change to the site shows on the next visit: a kept copy
+  is only for when there is no connection, when the service is in trouble, or when it has
+  not answered in four seconds. A page never kept is answered with `/offline`. It never
+  keeps what the service says not to (`no-store`, as a made reel's page is), and leaves
+  `/mcp`, `/try` and video alone. Change how it keeps things, and change the number at the
+  end of its caches' names, so that it throws away what the older version kept.
+- **The page that shows how** (`/app`), and `site/js/app.js`, which starts the worker and
+  works anything with `data-install`. Chrome on Android (and on a computer) will do the
+  adding itself, so there the button does it in one press. An iPhone will not, so there the
+  button leads to the steps, and the page opens with the ones for the device in hand first.
+
+`test/app.test.js` runs the worker in Node with stand-ins for a browser's caches and network.
+To try it for real, open the site in a browser, stop the service, and reload: pages already
+opened still show, and a reel already played still plays.
 
 ## Changing it
 
@@ -471,3 +503,24 @@ The page a shared reel is watched on is where a reel does its work, so it got th
   under the screen counts the scenes as they are finished ("Claude is writing it: 3 scenes
   so far."), and each one moves the bar on for certain. Writing still fills only the first
   half of the bar; Peter's recording is the other half.
+
+### Version 22
+
+- **Pixel Reel on a phone's home screen.** It can now be added to a phone like an app: it
+  has its own icon, opens on a screen of its own, and needs no app shop. A new page,
+  [/app](../../site/pages/app.html), has one big button, "Add Pixel Reel to your phone".
+  On an Android phone the button does it in one press. An iPhone will not let a page do
+  that, so there the page opens at the two things to press, each with its picture: Share,
+  then Add to Home Screen. The foot of every page leads to it.
+- **It opens with no internet.** A page that has been opened before still opens on a train
+  or in a lift, and a reel of the site's that has been played still plays, voice and all.
+  With a connection nothing changes: every page is as fresh as it ever was.
+- **Not online.** A page that was never opened, asked for with no internet, shows the test
+  card and says so in plain words, with Try again. It tries again by itself the moment the
+  internet comes back.
+- Tried in a browser with the service stopped: the home page opened and its reel played,
+  sound and all. Checked with `scripts/site-fit.js` at 320, 390, 768 and 1280 pixels wide.
+
+| The page that shows how, on a laptop, and the steps an iPhone is shown | With no internet |
+| --- | --- |
+| ![Keep Pixel Reel a press away, beside a phone with Pixel Reel among its apps. And: 1. Press Share. 2. Press Add to Home Screen.](log/v22-on-your-phone.jpg) | ![You are not online, beside a television test card that says no signal.](log/v22-not-online.jpg) |
