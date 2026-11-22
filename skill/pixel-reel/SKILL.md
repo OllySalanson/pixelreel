@@ -101,6 +101,7 @@ one. For any other language, write the reel in it and leave `language` out.
 | `icons` | `items` (1 to 4 `{ "icon": "...", "label": "..." }`, label optional), `heading?`, `every?`, `start?` | Everyday icons dropping in one by one, each with a short label underneath. |
 | `flow` | `items` (as for `icons`), `heading?`, `every?`, `start?` | The same icons joined by arrows: how one thing leads to the next. |
 | `compare` | `bad` and `good` (each `{ "icon": "...", "label": "..." }`), `heading?`, `every?`, `start?` | Two cards side by side: the one to avoid, with a cross, then the one to choose, with a tick. |
+| `table` | `rows` (1 to 5 rows, each a list of 2 to 4 short cells), `columns?` (a heading for each column), `heading?`, `every?`, `start?` | A small table for a timetable, a bill, prices or dates: rows arrive one by one, the newest lit. |
 | `sprite` | `rows` (list of text), `colours?`, `label?` | Your own pixel art, scaled up to fill the picture. See below. |
 
 The icons, by what they are about:
@@ -124,8 +125,9 @@ sun, a simple object.
 
 A scene with no `picture` shows its title on a plain card. Mix the pictures so the reel
 moves: open with `title`, use `icons` or `list` for what is involved, `flow` for steps that
-lead to each other, `compare` for do this, not that, `big` for one number or word that
-matters, and `chat` for a conversation. `example.json` beside this file is a finished reel.
+lead to each other, `compare` for do this, not that, `table` for what is set out in rows
+and columns (times, amounts, dates: never make icons stand for those), `big` for one number
+or word that matters, and `chat` for a conversation. `example.json` beside this file is a finished reel.
 
 ## What the person gets
 

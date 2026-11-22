@@ -18,6 +18,7 @@ const examples = {
   icons: { type: 'icons', heading: 'YOU NEED', items: [{ icon: 'letter', label: 'The letter' }, { icon: 'phone' }, { icon: 'cup', label: 'Tea' }] },
   flow: { type: 'flow', items: [{ icon: 'person', label: 'You ask' }, { icon: 'document', label: 'Scenes' }, { icon: 'heart', label: 'You watch' }], every: 1 },
   compare: { type: 'compare', heading: 'WHICH?', bad: { icon: 'document', label: 'A long letter' }, good: { icon: 'computer', label: 'A pixel reel' } },
+  table: { type: 'table', heading: 'SUNDAY BUSES', columns: ['Stop', '1st bus', '2nd bus'], rows: [['High Street', '9:05', '9:35'], ['Library', '9:12', '9:42'], ['Station', '9:20', '9:50']] },
   sprite: { type: 'sprite', label: 'MY CAT', colours: { h: '#6b3e2e' }, rows: ['.h....h.', 'hhh..hhh', 'hkhhhhkh', 'hhhyyhhh', '.hhhhhh.'] }
 };
 
@@ -46,7 +47,7 @@ describe('ready-made pictures', () => {
 
   it('says exactly what is wrong with a picture', () => {
     assert.deepEqual(pictureProblems(null), ["picture must be an object such as { type: 'title', text: 'Hello' }"]);
-    assert.match(pictureProblems({ type: 'movie' })[0], /^picture.type must be one of: title, list, terminal, code, chat, big, image, icons, flow, compare, sprite$/);
+    assert.match(pictureProblems({ type: 'movie' })[0], /^picture.type must be one of: title, list, terminal, code, chat, big, image, icons, flow, compare, table, sprite$/);
     assert.deepEqual(pictureProblems({ type: 'list', itmes: ['a'] }), [
       'picture: a list picture takes items, heading, numbered, every, start, not itmes',
       'picture.items is needed for a list picture'
@@ -85,6 +86,43 @@ describe('ready-made pictures', () => {
     for (const label of ['You ask', 'Scenes', 'You watch']) assert.ok(g.texts.some((x) => x.str === label), label);
     px.picture(examples.compare, 30);
     for (const label of ['A long letter', 'A pixel reel']) assert.ok(g.texts.some((x) => x.str === label), label);
+  });
+
+  it('fills a table in a row at a time, the headings there from the start', () => {
+    const words = (t) => { const g = fakeContext(); createKit(g, {}).picture(examples.table, t); return g.texts.map((x) => x.str); };
+    const cells = (rows) => ['SUNDAY BUSES', 'Stop', '1st bus', '2nd bus', ...rows.flat()];
+    assert.deepEqual(words(0.2).sort(), cells([]).sort(), 'before any row arrives, only its headings');
+    assert.deepEqual(words(0.6 + 1.4 + 0.1).sort(), cells(examples.table.rows.slice(0, 2)).sort(), 'the second row is there once its turn comes');
+    assert.deepEqual(words(30).sort(), cells(examples.table.rows).sort(), 'and every cell by the end');
+    const paced = (t) => { const g = fakeContext(); createKit(g, {}).picture({ ...examples.table, start: 2, every: 3 }, t); return g.texts.length; };
+    assert.equal(paced(1.9), 4, 'start and every say when its rows arrive, as for a list');
+    assert.equal(paced(5.1), 4 + 6);
+    // the newest row is lit, and stops being once the next one comes
+    const bare = { type: 'table', columns: examples.table.columns, rows: examples.table.rows };   // no heading, whose sign is gold too
+    const lit = (t) => { const g = fakeContext(); createKit(g, {}).picture(bare, t); return g.rects.filter((r) => r.c === '#ffcc4d' && r.w > 100).length; };
+    assert.equal(lit(0.7), 1);
+    assert.equal(lit(30), 0, 'none is left lit at the end');
+    // one with no headings, and one whose cells are as long as they may be, still fit the picture
+    for (const p of [{ type: 'table', rows: [['Monday', 'Bins'], ['Friday', 'Garden waste']] },
+      { type: 'table', columns: ['Appointment type', 'When to book', 'How long'], rows: [['Routine check up', 'Two weeks ahead', '10 minutes'], ['Something urgent', "Ring at 8 o'clock", '5 minutes']] }]) {
+      assert.deepEqual(pictureProblems(p), []);
+      const g = fakeContext();
+      createKit(g, {}).picture(p, 30);
+      for (const r of g.rects) assert.ok(r.x >= 0 && r.x + r.w <= 320 && r.y >= 0 && r.y + r.h <= 180, `inside the picture: ${JSON.stringify(r)}`);
+    }
+  });
+
+  it('says what is wrong with a table: its shape, its size and cells too long to read', () => {
+    const table = (extra) => pictureProblems({ type: 'table', rows: [['High Street', '9:05'], ['Station', '9:20']], ...extra });
+    assert.deepEqual(table({}), []);
+    assert.deepEqual(table({ rows: [['High Street', '9:05'], ['Station']] }), ['picture.rows must be 1 to 5 rows, each a list of 2 to 4 short cells of text, such as [["High Street", "9:05"], ["Station", "9:20"]]'], 'a row of one cell is not a table');
+    assert.deepEqual(table({ rows: [['High Street', '9:05', '9:35'], ['Station', '9:20']] }), ['picture.rows must all have the same number of cells']);
+    assert.deepEqual(table({ columns: ['Stop', 'First', 'Second'] }), ['picture.columns has 3 headings for rows of 2 cells: give one for each column']);
+    assert.match(table({ rows: Array.from({ length: 6 }, () => ['Stop', '9:05']) })[0], /^picture\.rows must be 1 to 5 rows/);
+    assert.match(table({ rows: [['A', 'B', 'C', 'D', 'E']] })[0], /^picture\.rows must be 1 to 5 rows/);
+    assert.match(table({ rows: [['A cell that goes on for far too long', '9:05']] })[0], /^picture\.rows must be 1 to 5 rows/, 'a cell is 24 letters at most');
+    assert.match(table({ rows: [['Twenty letters long..', 'Twenty letters long..', 'Twenty letters long..']] })[0], /^picture: this table is too wide to read: the longest cell of each column comes to 63 letters, and 56 fit\./);
+    assert.deepEqual(table({ rows: [['High Street', 905]] }).length, 1, 'a cell is text, not a number');
   });
 
   it('highlights code without losing a character', () => {

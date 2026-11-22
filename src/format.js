@@ -2,7 +2,7 @@
 // a reel can be written by a tool, an AI agent or a web service and played safely, since
 // nothing in it ever runs. Every picture comes from the ready-made ones (pictures.js).
 // Pure: no DOM, so the same checks run in the browser, in the tools and in the tests.
-import { ICON_NAMES, PICTURES, SPRITE_MAX } from './pictures.js';
+import { ICON_NAMES, PICTURES, SPRITE_MAX, TABLE_MAX } from './pictures.js';
 import { PALETTE } from './palette.js';
 import { CAPTION_STYLES, LANGUAGES, normalizeReel, ReelError } from './reel.js';
 import { TRANSITIONS } from './transitions.js';
@@ -25,6 +25,7 @@ export const PICTURE_NOTES = {
   icons: 'One to four everyday icons dropping in one by one, each with a label underneath.',
   flow: 'One to four icons joined by arrows, arriving in turn: how one thing leads to the next.',
   compare: 'Two cards side by side: the one to avoid, with a cross, then the one to choose, with a tick.',
+  table: 'A small table for things set out in rows and columns (a timetable, a bill, prices, dates): rows arrive one by one, the newest lit.',
   sprite: 'Pixel art of your own from rows of palette letters, scaled up to fill the picture, with an optional label.'
 };
 
@@ -122,6 +123,20 @@ const KIND_SCHEMAS = {
     maxItems: 4,
     items: { type: 'object', additionalProperties: false, required: ['icon'], properties: { icon: { enum: ICON_NAMES }, label: TEXT } }
   },
+  cells: {
+    type: 'array',
+    minItems: 1,
+    maxItems: TABLE_MAX.rows,
+    items: { type: 'array', minItems: TABLE_MAX.minCols, maxItems: TABLE_MAX.cols, items: { ...TEXT, maxLength: TABLE_MAX.cell } },
+    description: 'The rows of the table, each a list of short cells, every row with the same number: a word or two, a time, an amount. Such as [["High Street", "9:05"], ["Station", "9:20"]].'
+  },
+  heads: {
+    type: 'array',
+    minItems: TABLE_MAX.minCols,
+    maxItems: TABLE_MAX.cols,
+    items: { ...TEXT, maxLength: TABLE_MAX.cell },
+    description: 'A heading for each column, such as ["Stop", "Time"].'
+  },
   rows: {
     type: 'array',
     minItems: 1,
@@ -141,8 +156,9 @@ const KIND_SCHEMAS = {
  * The reel.json format as a JSON Schema (draft 2020-12), built from the ready-made pictures,
  * so it can never drift from what the player draws. Tools can hand it to an AI agent as the
  * shape to write. A few rules are beyond a schema (an image picture must name one of the
- * reel's images, and a sprite's letters must be in the palette or its colours), so
- * reelFromData stays the final word.
+ * reel's images, a sprite's letters must be in the palette or its colours, and a table's
+ * rows must be as long as each other and not too wide to read), so reelFromData stays the
+ * final word.
  */
 export function reelSchema() {
   const pictures = Object.entries(PICTURES).map(([type, { fields }]) => {

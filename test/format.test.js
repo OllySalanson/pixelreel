@@ -69,7 +69,7 @@ describe('reelFromData', () => {
       'scene 1: draw is code, which a reel.json cannot hold; give the scene a picture instead',
       'title: give the reel a title',
       'scene 1: needs a caption',
-      'scene 1: picture.type must be one of: title, list, terminal, code, chat, big, image, icons, flow, compare, sprite'
+      'scene 1: picture.type must be one of: title, list, terminal, code, chat, big, image, icons, flow, compare, table, sprite'
     ]);
   });
 
@@ -165,7 +165,8 @@ describe('reelSchema', () => {
       { title: 'I', caption: 'i', picture: { type: 'icons', heading: 'NEED', items: [{ icon: 'letter', label: 'Letter' }, { icon: 'phone' }], every: 1 } },
       { title: 'J', caption: 'j', picture: { type: 'flow', items: [{ icon: 'person' }, { icon: 'heart', label: 'Love' }] } },
       { title: 'K', caption: 'k', picture: { type: 'compare', bad: { icon: 'car', label: 'Drive' }, good: { icon: 'phone', label: 'Ring' } } },
-      { title: 'L', caption: 'l', picture: { type: 'sprite', rows: ['.hh.', 'hyyh'], colours: { h: '#6b3e2e' }, label: 'Hi' } }
+      { title: 'L', caption: 'l', picture: { type: 'sprite', rows: ['.hh.', 'hyyh'], colours: { h: '#6b3e2e' }, label: 'Hi' } },
+      { title: 'M', caption: 'm', picture: { type: 'table', heading: 'BUSES', columns: ['Stop', 'Time'], rows: [['High Street', '9:05'], ['Station', '9:20']], every: 2, start: 1 } }
     ];
     const good = { format: REEL_FORMAT, title: 'Tea', intro: 'Hi.', note: 'Made with tea.', transition: 'fade', captions: 'plain', images: { garden: 'garden.png' }, scenes };
     assert.doesNotThrow(() => reelFromData(good));
@@ -190,7 +191,11 @@ describe('reelSchema', () => {
       reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'icons', items: Array(5).fill({ icon: 'tick' }) } }] }),
       reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'compare', bad: { icon: 'car' }, good: { icon: 'tick', label: 'Yes' } } }] }),
       reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'sprite', rows: ['y'], colours: { '.': '#fff' } } }] }),
-      reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'sprite', rows: ['y'], colours: { h: 'brown' } } }] })
+      reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'sprite', rows: ['y'], colours: { h: 'brown' } } }] }),
+      reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'table', rows: [['Only one cell']] } }] }),
+      reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'table', rows: Array(6).fill(['Stop', '9:05']) } }] }),
+      reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'table', rows: [['A cell that goes on for far too long', '9:05']] } }] }),
+      reel({ scenes: [{ title: 'A', caption: 'a', picture: { type: 'table', rows: [['Stop', '9:05']], columns: ['Stop'] } }] })
     ];
     for (const raw of bad) {
       assert.throws(() => reelFromData(raw), ReelError, JSON.stringify(raw));

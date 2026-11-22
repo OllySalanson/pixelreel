@@ -171,6 +171,16 @@ choose (with a tick). Both need an `icon` and a `label`.
 picture: { type: 'compare', bad: { icon: 'document', label: 'A long letter' }, good: { icon: 'computer', label: 'A pixel reel' } }
 ```
 
+**table**: a small table on a paper card, for what is set out in rows and columns: a
+timetable, a bill, prices, dates. `rows` is one to five rows, each a list of two to four
+short cells, every row the same length; `columns` (optional) gives a heading for each
+column. The rows arrive one by one, the newest lit. Keep a cell to a word or two, a time or
+an amount: the longest cell of each column may come to 56 letters between them.
+
+```js
+picture: { type: 'table', heading: 'SUNDAY BUSES', columns: ['Stop', '1st bus', '2nd bus'], rows: [['High Street', '9:05', '9:35'], ['Station', '9:20', '9:50']] }
+```
+
 The icons, by what they are about:
 
 - **Paperwork and money:** `letter`, `document`, `money`, `card`, `bank`, `calendar`, `clock`, `hourglass`, `bag`, `basket`, `gift`, `chart`
