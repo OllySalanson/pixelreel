@@ -1,0 +1,11 @@
+{
+  "engine": "pocket",
+  "voice": "stuart_bell",
+  "clips": [
+    {
+      "text": "Hello. I'm Stuart. I can read your pixel reel to you, if you like.",
+      "file": "f50e3256d87b68bd.mp3",
+      "seconds": 5.28
+    }
+  ]
+}

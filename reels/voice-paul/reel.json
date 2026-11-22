@@ -1,0 +1,16 @@
+{
+  "format": "pixelreel/1",
+  "title": "Paul, one of the narrators",
+  "scenes": [
+    {
+      "title": "Paul",
+      "caption": "Hello. I'm Paul.",
+      "say": "Hello. I'm Paul. I can read your pixel reel to you, if you like.",
+      "picture": {
+        "type": "title",
+        "text": "PAUL",
+        "sub": "One of the narrators"
+      }
+    }
+  ]
+}

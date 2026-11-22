@@ -286,11 +286,11 @@ async function writeReel({ reels, writer, limits, log }, id, source, caller) {
  * once and kept, compressed (unless `fresh`, when it is made again each time, for working on
  * the site), and a browser that already has it is told so.
  */
-function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages, writer }, extra = {}) {
+function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages, writer, reels }, extra = {}) {
   let page = fresh ? null : pages.get(name);
   if (!page) {
     // "watch/<reel>" is the page of one of the site's own reels
-    const html = name.startsWith('watch/') ? watchPage(name.slice(6), baseUrl, { listed }) : sitePage(name, baseUrl, { listed, values: { here: writer ? 'on' : 'off' } });
+    const html = name.startsWith('watch/') ? watchPage(name.slice(6), baseUrl, { listed }) : sitePage(name, baseUrl, { listed, narrators: reels.narrators ?? [], values: { here: writer ? 'on' : 'off' } });
     page = squeezed(html);
     page.tag = tagOf(page.bytes);
     if (!fresh) pages.set(name, page);

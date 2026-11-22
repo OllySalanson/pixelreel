@@ -1213,6 +1213,19 @@ describe('the service over HTTP', async () => {
     }
   });
 
+  it('offers the narrators it has on the home page, each to hear and to choose, and none where it has only Peter', async () => {
+    assert.doesNotMatch(await (await fetch(`${local}/`)).text(), /id="voices"/);
+    const voiced = createService({ reels: new Reels({ store: freshStore(), record: fakeRecord, video: fakeVideo, picture: fakePicture, narrators: ['anna', 'stuart'] }), baseUrl: 'https://reels.example' });
+    await new Promise((ok) => voiced.listen(0, '127.0.0.1', ok));
+    try {
+      const page = await (await fetch(`http://127.0.0.1:${voiced.address().port}/`)).text();
+      assert.deepEqual([...page.matchAll(/name="narrator" value="([a-z]+)"/g)].map(([, value]) => value), ['peter', 'anna', 'stuart']);
+      assert.match(page, /unless you choose Anna or Stuart\./);
+    } finally {
+      voiced.close();
+    }
+  });
+
   it('sends something shared from a phone on to the make-one box, without reading it', async () => {
     // the page's own service worker takes what is shared, on the phone: this is for when it was not there to
     const form = new FormData();

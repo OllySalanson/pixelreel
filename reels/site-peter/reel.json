@@ -6,7 +6,7 @@
     {
       "title": "Hello",
       "caption": "Hello. I'm Peter.",
-      "say": "Hello. I'm Peter. I read every pixel reel out loud, so you don't have to.",
+      "say": "Hello. I'm Peter. I read pixel reels out loud, so you don't have to.",
       "picture": {
         "type": "sprite",
         "label": "PETER",
@@ -87,17 +87,19 @@
       }
     },
     {
-      "title": "Only me",
-      "caption": "One voice. It can't copy anyone else.",
-      "say": "And there's only me. Pixel Reel can't be made to sound like anybody else. Which I find rather reassuring.",
+      "title": "Not only me",
+      "caption": "Choose another narrator, if you like.",
+      "say": "And it needn't be me. There are other narrators to choose from, if you'd rather. I shan't take it personally. Much.",
       "picture": {
         "type": "icons",
         "items": [
           {
-            "icon": "lock",
-            "label": "One voice only"
+            "icon": "people",
+            "label": "Other narrators"
           }
-        ]
+        ],
+        "start": 1.6,
+        "every": 1.4
       }
     }
   ]

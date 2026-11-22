@@ -295,6 +295,34 @@ h1 { font-size: clamp(2.6rem, 4.2vw + 1rem, 4.75rem); line-height: 1.06; letter-
 .playing .waves i:nth-child(7) { animation-duration: 0.85s; animation-delay: -0.4s; }
 @keyframes wave { from { height: calc(var(--u) * 2); } to { height: calc(var(--u) * 12); } }
 
+/* who else can read: a card each, to hear and to choose */
+.voices { margin-top: clamp(2.5rem, 5vw, 4rem); padding: 0; border: 0; min-width: 0; }
+.voices legend { padding: 0; font-size: 1.5rem; font-weight: 800; line-height: 1.25; }
+.voices-lead { margin-top: 0.5rem; color: var(--ink-soft); }
+/* three across, so six make two full rows, while each card has room for its words: fewer across if not, and one on a phone */
+.voices-list { --gap: clamp(1rem, 2vw, 1.5rem); display: grid; gap: var(--gap); margin-top: 1.75rem; max-width: 62rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(21ch, (100% - 2 * var(--gap)) / 3)), 1fr)); }
+.voice { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0 calc(var(--u) * 3); padding: 1.1rem 1.1rem 1.25rem; background: var(--card); margin: var(--u);
+  box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line), calc(var(--u) * 3) calc(var(--u) * 3) 0 0 rgba(20, 27, 45, 0.16); }
+.voice:has(input:checked) { background: var(--tint); }
+.voice-name, .voice-kind { flex-basis: 100%; max-width: none; }
+.voice-name { font-size: 1.5rem; font-weight: 800; line-height: 1.25; }
+.voice-kind { font-size: 1.0625rem; color: var(--ink-soft); }
+/* to hear and to choose: side by side where a card has room for both, one under the other where it has not */
+.voice .btn, .voice-pick { flex: 1 1 11ch; width: auto; margin: 0.9rem var(--u) 0; }
+.voice .btn { min-height: 2.75rem; margin-bottom: calc(var(--u) * 2); }
+.voice-pick { position: relative; display: grid; cursor: pointer; margin-bottom: calc(var(--u) * 2); }
+.voice-pick input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.voice-pick > span { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; padding: 0.5rem 0.75rem; font-size: 1.0625rem; font-weight: 700; line-height: 1.3; text-align: center; background: var(--paper);
+  box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line); }
+.voice-pick input:checked + span { background: var(--gold); color: #141b2d; }
+/* it says which it is: Choose, or once chosen, Chosen with a tick */
+.voice-pick .voice-on, .voice-pick input:checked + span .voice-off { display: none; }
+.voice-pick input:checked + span .voice-on { display: inline; }
+.voice-pick input:checked + span .voice-on::before { content: '\2713\00a0'; }
+.voice-pick input:focus-visible + span { outline: var(--u) solid var(--focus); outline-offset: calc(var(--u) * 2); }
+.voices .said { margin-top: 1.25rem; }
+
 /* make one now */
 .maker { padding: clamp(1.5rem, 3vw, 2.25rem); }
 .maker > label { display: block; font-size: 1.375rem; font-weight: 700; }

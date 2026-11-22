@@ -14,6 +14,7 @@ import { startShared } from './shared.js';
 import { startShots } from './shots.js';
 import { startSignal } from './signal.js';
 import { startHearing, startTheatre } from './theatre.js';
+import { startVoice } from './voice.js';
 import { startWatching } from './watch.js';
 
 startComfort();
@@ -23,6 +24,7 @@ startScenes();
 startShots();
 startTheatre();
 startHearing();
+startVoice();   // before the make-one box, so that its first words say who was chosen
 startMaker();
 startShared();   // after the box, so that it hears what it is handed
 startMine();
