@@ -4,7 +4,7 @@ import { describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { readReel } from '../scripts/reel-file.mjs';
 import { createKit } from '../src/kit.js';
-import { CAPTION_STYLES, clipLookup, defaultDraw, normalizeReel, REEL_NAME, ReelError } from '../src/reel.js';
+import { CAPTION_STYLES, clipLookup, defaultDraw, INTRO, normalizeReel, QUIET_INTRO, REEL_NAME, ReelError } from '../src/reel.js';
 import { coverage, fakeContext } from './fake-canvas.js';
 
 const scene = (extra = {}) => ({ title: 'A', caption: 'Read this.', ...extra });
@@ -14,6 +14,9 @@ describe('normalizeReel', () => {
     const reel = normalizeReel({ title: ' My reel ', scenes: [scene()] });
     assert.equal(reel.title, 'My reel');
     assert.match(reel.intro, /Sound will start/);
+    assert.equal(reel.intro, INTRO);
+    assert.match(QUIET_INTRO, /^The sound is off\. Press Sound to have it read aloud\./, 'what a page with no recordings says instead: it does not promise sound');
+    assert.equal(normalizeReel({ title: 'T', intro: 'Ready?', scenes: [scene()] }).intro, 'Ready?', "a reel's own words are kept");
     assert.equal(reel.note, '');
     assert.deepEqual(reel.images, {});
     assert.equal(reel.scenes[0].say, 'Read this.', 'with no say, the caption is read aloud');

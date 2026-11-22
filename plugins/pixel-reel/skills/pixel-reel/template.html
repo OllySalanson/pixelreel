@@ -2456,7 +2456,7 @@ function normalizeReel(raw, { base = '' } = {}) {
   if (problems.length) throw new ReelError(problems);
   return {
     title: raw.title.trim(),
-    intro: raw.intro ?? 'Sound will start. Use Next and Back any time.',
+    intro: raw.intro ?? INTRO,
     note: raw.note ?? '',
     transition,
     captions,
@@ -2466,6 +2466,12 @@ function normalizeReel(raw, { base = '' } = {}) {
     opens: raw.scenes[0].picture?.type ?? (typeof raw.scenes[0].draw === 'function' ? 'drawing' : 'card')
   };
 }
+
+/** What a reel says before Play is pressed, unless it says its own. */
+const INTRO = 'Sound will start. Use Next and Back any time.';
+
+/** What the player says instead while the sound is off, as on a page with no recordings: it must not promise sound. */
+const QUIET_INTRO = 'The sound is off. Press Sound to have it read aloud. Use Next and Back any time.';
 
 /** A plain title card, for scenes that do not draw their own picture. */
 function defaultDraw(t, px, scene) {
@@ -2487,7 +2493,7 @@ function clipLookup(manifest, base = '') {
   return (scene) => byText.get(scene.say) ?? null;
 }
 
-return { REEL_NAME, ReelError, CAPTION_STYLES, normalizeReel, defaultDraw, clipLookup };
+return { REEL_NAME, ReelError, CAPTION_STYLES, normalizeReel, INTRO, QUIET_INTRO, defaultDraw, clipLookup };
 })();
 
 __m['format.js'] = (() => {
@@ -3148,6 +3154,7 @@ const { inlineReel, loadReel } = __m['load.js'];
 const { createNarrator } = __m['narrator.js'];
 const { noSignal } = __m['pictures.js'];
 const { Player } = __m['player.js'];
+const { INTRO, QUIET_INTRO } = __m['reel.js'];
 const { clockTime, narrationMs, typedLength } = __m['timing.js'];
 const { transitionMs } = __m['transitions.js'];
 
@@ -3241,6 +3248,12 @@ async function start() {
 
   function leaveIntro() { intro = false; }
 
+  // What is said before Play is pressed. With the sound off (as a page with no recordings
+  // starts) the usual words would promise sound that does not come, so they say how to get it.
+  function introWords() {
+    return reel.intro === INTRO && player.muted ? QUIET_INTRO : reel.intro;
+  }
+
   // The picture's clock: the narration's while playing or paused part-way; a preview that
   // loops through the scene for one that has not started (before Play, or browsing paused).
   function sceneTime(now) {
@@ -3279,7 +3292,7 @@ async function start() {
   function paintCaption() {
     const s = scenes[player.index];
     const title = intro ? 'Press Play' : `${player.index + 1}. ${s.title}`;
-    const text = intro ? reel.intro : s.caption;
+    const text = intro ? introWords() : s.caption;
     if (text !== typedText) { typedText = text; typed = 0; }
     let n = text.length;
     if (!intro && s.captions === 'typewriter' && !calm.matches && player.playing) {
@@ -3305,7 +3318,7 @@ async function start() {
     const cap = $('cap'), main = document.querySelector('main'), page = document.documentElement;
     cap.style.minHeight = '';
     const least = parseFloat(getComputedStyle(cap).minHeight) || 0;
-    const all = [['Press Play', reel.intro], ...scenes.map((s, i) => [`${i + 1}. ${s.title}`, s.caption])];
+    const all = [['Press Play', reel.intro], ...(reel.intro === INTRO ? [['Press Play', QUIET_INTRO]] : []), ...scenes.map((s, i) => [`${i + 1}. ${s.title}`, s.caption])];
     cap.classList.remove('typing');
     $('cap-rest').textContent = '';
     // Sizes the caption for the player as wide as it can be with `more` pixels taken off the
