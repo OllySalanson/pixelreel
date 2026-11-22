@@ -436,7 +436,7 @@ describe('the service over HTTP', async () => {
       assert.match(html, /<meta name="robots" content="noindex, nofollow">/, `${path} asks not to be listed, while Pixel Reel is by invitation`);
     }
     const claude = await (await fetch(`${local}/claude`)).text();
-    assert.match(claude, /<code class="address" id="address">https:\/\/reels\.example\/mcp<\/code>/);
+    assert.match(claude, /<code class="address" id="address">https:\/\/reels\.example<wbr>\/mcp<\/code>/);
     assert.ok(claude.includes('href="https://claude.ai/customize/connectors?modal=add-custom-connector&amp;connectorName=Pixel%20Reel&amp;connectorUrl=https%3A%2F%2Freels.example%2Fmcp"'), 'the big button opens Claude with the name and address filled in');
   });
 

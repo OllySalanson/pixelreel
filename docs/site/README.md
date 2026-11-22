@@ -18,6 +18,8 @@ People who find reading hard work. Every choice follows from that:
   than about 60 characters. Never justified, never in italics, never all in capitals for a
   sentence.
 - **Words.** Short sentences in everyday words, a few to a section. No walls of text.
+- **Whole words.** No word is ever cut in two at the end of a line, whatever the screen and
+  the letters. When there is not room, things go under each other instead.
 - **Paper.** Dark ink on cream rather than black on white, which dazzles some readers.
   Words never sit on a pattern or a picture: even the stars keep clear of them.
 - **Buttons.** Every main thing to do is a big button that says what it does.
@@ -75,8 +77,14 @@ npm run site-art         # after changing Reelie or the landscape
 
 Look at every change at three sizes (1440 x 900, 1280 x 720 and 390 x 844), and with
 Make it comfy set to Dark, to Biggest, to OpenDyslexic (a third wider than Lexend, so it
-finds what does not fit) and to Still. On a phone, check by eye that the player's four
-buttons are on one row: they have slipped onto two before without any test failing.
+finds what does not fit) and to Still.
+
+No test can see how a page is laid out, so [`scripts/site-fit.js`](../../scripts/site-fit.js)
+does it in a browser: paste it into the console of a page, at a phone's width and at a
+laptop's, and it tries all 27 settings of Make it comfy and says where the bar across the
+top is on two rows, where a word is cut in two, and where the page is wider than the
+screen. Fix a layout it complains about by letting it reflow (a `flex-basis` or a column
+width in `ch`, which grows with the letters), not by a rule for one size of screen.
 
 ## The reels it plays
 
@@ -253,3 +261,20 @@ looked like the old site.
 | A page that is not there | Hello |
 | --- | --- |
 | ![Nothing on this channel, beside a television test card that says no signal.](log/v8-no-signal.jpg) | ![Reelie, standing in front of the hills at night, says hello.](log/v8-hello.jpg) |
+
+### Version 9
+
+- **Whole words.** With the biggest letters, the cards in "For anyone who would rather
+  watch" cut their words in two: "Readin g", "childre n". Their words now go under the
+  picture when there is not room beside it, and the cards go from three across to two when
+  three would be too narrow, both measured in the width of the letters themselves.
+- The player's buttons share out their rows, so they are tidy on one row or on three.
+- Shooting stars pass behind the words now, never across them, and keep clear of the film.
+- The connector's address breaks before "/mcp" on a narrow screen, not mid-word, and the
+  little arrow after "Show me how" stays with its last word.
+- `scripts/site-fit.js` checks all of this in a browser. It finds no fault on the home page at
+  18 widths of screen, nor on the other pages at a phone's width and a laptop's.
+
+| Biggest OpenDyslexic letters on a phone: the cards and the player, before and after |
+| --- |
+| ![Cards with words cut in two, then whole; the player's buttons ragged, then tidy.](log/v9-whole-words.jpg) |

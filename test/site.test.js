@@ -205,6 +205,28 @@ describe('the site\'s own pictures', () => {
     assert.ok(stars.every((r) => r.y > 9 && r.y < 100 - 10), 'no star in among the holes');
   });
 
+  it('sends its shooting stars behind the words and clear of the film, never across them', () => {
+    // a shooting star's trail is the only thing in these skies drawn two pixels wide and one deep
+    const trails = (name, quiet) => {
+      const found = [];
+      for (let t = 0; t < 60; t += 0.125) {
+        const g = fakeContext();
+        SCENES[name](createKit(g), 200, 120, t, { quiet });
+        found.push(...g.rects.filter((r) => r.w === 2 && r.h === 1));
+      }
+      return found;
+    };
+    for (const name of ['hero', 'cinema']) {
+      const free = trails(name, []);
+      assert.ok(free.length > 10, `${name} has shooting stars`);
+      assert.ok(free.every((r) => Number.isInteger(r.x) && Number.isInteger(r.y)), `${name}: on whole pixels, so they stay crisp`);
+      const words = [40, 0, 120, 60];
+      assert.ok(free.some((r) => r.x + 2 > 40 && r.x < 160 && r.y < 60), `${name}: some would cross the words`);
+      assert.ok(!trails(name, [words]).some((r) => r.x + 2 > 40 && r.x < 160 && r.y < 60), `${name}: none does`);
+    }
+    assert.ok(trails('cinema', []).every((r) => r.y > 9 && r.y < 120 - 10), 'none in among the holes of the film');
+  });
+
   it('has its icons and manifest drawn from the sprites as they are now (npm run site-art)', () => {
     for (const [name, text] of Object.entries(textArt())) {
       assert.equal(readFileSync(root(`site/art/${name}`), 'utf8'), text, `site/art/${name} is out of date: run npm run site-art`);

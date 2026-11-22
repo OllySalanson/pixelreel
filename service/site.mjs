@@ -169,7 +169,8 @@ export function sitePage(name, baseUrl, { listed = false, values = {}, title = n
   path ??= Object.keys(SITE_PAGES).find((p) => SITE_PAGES[p] === name) ?? '/';
   const markdown = !existsSync(siteFile(`pages/${name}.html`));
   const { facts, body } = pageFacts(readFileSync(siteFile(`pages/${name}.${markdown ? 'md' : 'html'}`), 'utf8'));
-  const links = { url: escapeHtml(baseUrl), mcp: escapeHtml(`${baseUrl}/mcp`), add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', ...values };
+  // the connector's address is long and has no spaces: <wbr> lets a narrow screen break it before "/mcp", not mid-word
+  const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', ...values };
   const heading = /^# (.+)$/m.exec(body)?.[1];
   title ??= facts.title ?? (heading && heading !== 'Pixel Reel' ? `${heading} - Pixel Reel` : 'Pixel Reel');
   // a plain page that has a reel of itself offers it straight under its heading
