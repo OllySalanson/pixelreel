@@ -7,6 +7,7 @@ import { CLAUDE_ADDRESSES, inRanges, LIMITS, limitProblems, RateLimit } from '..
 import { EXAMPLE_REEL, formatGuide, playerHtml } from '../service/mcp.mjs';
 import { BusyError, isId, KEEP_DAYS, newId, Reels } from '../service/reels.mjs';
 import { reelFromData } from '../src/format.js';
+import { ICON_NAMES } from '../src/pictures.js';
 import { markdownHtml, SITE_PAGES, SITE_POLICY } from '../service/site.mjs';
 import { staticFile } from '../service/static.mjs';
 import { checkKey, DiskStore, S3Store, signRequest } from '../service/store.mjs';
@@ -390,7 +391,9 @@ describe('the service over HTTP', async () => {
       assert.ok(t.name.length <= 64);
     }
     assert.equal(tools.find((t) => t.name === 'delete_reel').annotations.destructiveHint, true);
-    assert.match(words(await client.callTool({ name: 'reel_format', arguments: {} })), /Icons: letter, document, phone/);
+    const guide = words(await client.callTool({ name: 'reel_format', arguments: {} }));
+    assert.match(guide, /Icons, by what they are about:\n- Paperwork and money: letter, document, money, card, bank/);
+    for (const name of ICON_NAMES) assert.match(guide, new RegExp(`[ ,]${name}[,.]`), `the guide offers ${name}`);
     await client.close();
   });
 
