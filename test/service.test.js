@@ -533,7 +533,7 @@ describe('the site pages', () => {
   });
 
   it('has a page for each address', () => {
-    assert.deepEqual(Object.keys(SITE_PAGES), ['/', '/claude', '/press', '/privacy', '/terms', '/credits']);
+    assert.deepEqual(Object.keys(SITE_PAGES), ['/', '/claude', '/app', '/press', '/privacy', '/terms', '/credits', '/offline']);
   });
 });
 
@@ -1097,7 +1097,8 @@ describe('the service over HTTP', async () => {
       assert.match(await (await fetch(`${at}/`)).text(), /<meta name="robots" content="index, follow">/);
       assert.equal(await (await fetch(`${at}/robots.txt`)).text(), 'User-agent: *\nDisallow: /r/\nDisallow: /mcp\n\nSitemap: https://reels.example/sitemap.xml\n');
       const map = await (await fetch(`${at}/sitemap.xml`)).text();
-      for (const path of Object.keys(SITE_PAGES)) assert.ok(map.includes(`<loc>https://reels.example${path}</loc>`), path);
+      // every page but the one shown when there is no internet, which is no use to anyone searching
+      for (const path of Object.keys(SITE_PAGES)) assert.equal(map.includes(`<loc>https://reels.example${path}</loc>`), path !== '/offline', path);
     } finally {
       open.close();
     }

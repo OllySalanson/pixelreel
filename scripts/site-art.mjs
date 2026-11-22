@@ -25,17 +25,33 @@ function squared(size) {
   });
 }
 
-/** The site's icons and how it looks when added to a phone's home screen. */
+/**
+ * What a phone needs to know to keep Pixel Reel on its home screen as an app: its name and
+ * icons, that it opens on a screen of its own, and the things to offer when its icon is
+ * pressed and held. A "maskable" icon keeps Reelie well inside the middle, as a phone may
+ * cut its icons into a circle or a rounded square.
+ */
 export function manifest() {
+  const icon = (size, purpose) => ({ src: `/site/art/icon-${purpose === 'maskable' ? 'maskable-' : ''}${size}.png`, sizes: `${size}x${size}`, type: 'image/png', purpose });
   return {
     name: 'Pixel Reel',
     short_name: 'Pixel Reel',
-    description: "Watch it. Don't read it.",
+    description: "Short cartoons with a warm voice, each explaining one thing. Watch it. Don't read it.",
+    id: '/',
     start_url: '/',
-    display: 'browser',
+    scope: '/',
+    lang: 'en-GB',
+    dir: 'ltr',
+    display: 'standalone',
     background_color: NIGHT,
     theme_color: NIGHT,
-    icons: [192, 512].map((size) => ({ src: `/site/art/icon-${size}.png`, sizes: `${size}x${size}`, type: 'image/png' }))
+    categories: ['education', 'productivity'],
+    icons: [icon(192, 'any'), icon(512, 'any'), icon(192, 'maskable'), icon(512, 'maskable')],
+    shortcuts: [
+      { name: 'Make a pixel reel', short_name: 'Make a reel', url: '/#make' },
+      { name: 'Watch an example', short_name: 'Examples', url: '/#examples' },
+      { name: 'Add Pixel Reel to Claude', short_name: 'Add to Claude', url: '/claude' }
+    ]
   };
 }
 
@@ -97,6 +113,9 @@ async function main() {
   save('touch-icon.png', icon(180, 5));
   save('icon-192.png', icon(192, 5));
   save('icon-512.png', icon(512, 14));
+  // smaller in its square, so nothing of Reelie is lost when a phone cuts the icon into a circle
+  save('icon-maskable-192.png', icon(192, 4));
+  save('icon-maskable-512.png', icon(512, 10));
 
   const big = board(rows[0].length * 16, rows.length * 16);
   big.px.sprite(rows, 0, 0, 16, false, colours);

@@ -37,8 +37,12 @@ const RULES = [
   [/^\/reels\/[a-z0-9][a-z0-9-]{0,63}\/audio\/[A-Za-z0-9_-]{1,64}\.mp3$/, YEAR]
 ];
 
-/** A few files asked for at the top of the site, and where they really are. */
-const ALIASES = { '/favicon.ico': '/site/art/favicon.ico' };
+/**
+ * A few files asked for at the top of the site, and where they really are. The service worker
+ * is one: a browser lets it look after the pages beside and below its own address, so it
+ * has to be at the top.
+ */
+const ALIASES = { '/favicon.ico': '/site/art/favicon.ico', '/sw.js': '/site/js/sw.js' };
 
 const files = new Map();
 

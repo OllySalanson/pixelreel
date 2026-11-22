@@ -1,0 +1,23 @@
+<!--
+title: Not online - Pixel Reel
+description: There is no internet just now. Pages you have opened before still work.
+-->
+
+<!-- shown by the service worker (site/js/sw.js) in place of a page it has no copy of, when there is no internet -->
+<section class="section lost" aria-labelledby="lost-title">
+  <div class="wrap duo">
+    <div class="head">
+      <p class="eyebrow">No signal</p>
+      <h1 id="lost-title">You are not online</h1>
+      <p class="lead">This page needs the internet, and there is none just now. Pages you have opened before still work.</p>
+      <div class="row">
+        <!-- a link to nowhere new asks for this same page again -->
+        <a class="btn btn-gold btn-big" href="">Try again</a>
+        <a class="btn btn-paper btn-big" href="/">Back to the start</a>
+      </div>
+    </div>
+    <figure class="signal" aria-label="A television test card that says: no signal.">
+      <canvas data-signal width="960" height="540" aria-hidden="true"></canvas>
+    </figure>
+  </div>
+</section>
