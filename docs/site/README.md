@@ -154,7 +154,7 @@ connector (ready-made pictures only) and recorded by Peter with `npm run voices`
 | Reel | Where |
 | --- | --- |
 | `pixel-reel` | The player at the top of the home page. |
-| `site-what`, `site-how`, `site-who`, `site-peter`, `site-make`, `site-good`, `site-questions` | "Make a pixel reel about this", one for each part of the home page. With `site-open`, they are also "Watch this whole page". |
+| `site-what`, `site-how`, `site-who`, `site-peter`, `site-make`, `site-good`, `site-phone`, `site-questions` | "Make a pixel reel about this", one for each part of the home page. With `site-open`, they are also "Watch this whole page". |
 | `site-open` | The reel for "It is all open", and the code typing out beside it. |
 | `site-privacy`, `site-terms` | "Make a pixel reel about this" on the privacy and terms pages. A plain page gets the button by naming a reel in the comment at its top (`reel: site-privacy`). |
 | `gas-meter`, `pension-letter`, `volcano`, `cup-of-tea`, `offside-rule`, `blue-sky` | The examples under Now showing. `pension-letter` also plays beside the letter in "Same letter, two ways". |
@@ -618,3 +618,24 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | The list, with one reel renamed and another about to be deleted |
 | --- |
 | ![Your reels. Tea, for Mum: kept until 22 December, Rename, Delete. How to make a proper cup of tea: Delete it for good? Yes, delete it. No, keep it.](log/v26-your-reels.jpg) |
+
+### Version 27
+
+- **On your phone, on the home page.** A new part of the home page, after Good to know,
+  says Pixel Reel can be kept on a phone, beside the picture of a phone with Pixel Reel among
+  its apps. Its button, "Add Pixel Reel to your phone", adds it in one press where the
+  browser will, and leads to the steps where it will not. Someone who already has it there
+  is not shown this part.
+- **A reel of it, read by Peter:** "Make a pixel reel about this" plays `site-phone`, five
+  scenes, 34 seconds, and "Watch this whole page" now takes it in. "Is there an app?" joins
+  the questions.
+- **Two faults on the narrowest phones, found by `scripts/site-fit.js` and already on the
+  live site.** At 320 pixels wide with the biggest OpenDyslexic letters, "explaining" was
+  cut in two in its card, and the first question was 4 pixels wider than the screen, so the
+  whole page slid sideways. Headings in cards and the questions' panels are now a little
+  tighter on phones that narrow. The home page is all well at 320, 360, 375, 390 and 1280
+  pixels wide, at all 27 settings.
+
+| The new part of the home page, on a laptop and a phone, and its reel |
+| --- |
+| ![On your phone: Keep it a press away, with the buttons Add Pixel Reel to your phone and Make a pixel reel about this, beside a phone with Pixel Reel among its apps. And the reel of it playing.](log/v27-on-the-home-page.jpg) |
