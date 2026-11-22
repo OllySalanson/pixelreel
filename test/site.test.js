@@ -3,7 +3,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { textArt } from '../scripts/site-art.mjs';
-import { addToClaudeLink, EXAMPLES, NARRATORS, narratorsHtml, pageFacts, VOICE_SOURCES, playerHtml, robotsTxt, SITE_PAGES, siteModules, sitemapXml, sitePage, spriteSvg, WATCH, watchPage } from '../service/site.mjs';
+import { addressMeant, addToClaudeLink, EXAMPLES, NARRATORS, narratorsHtml, pageFacts, VOICE_SOURCES, playerHtml, robotsTxt, SITE_PAGES, siteModules, sitemapXml, sitePage, spriteSvg, WATCH, watchPage } from '../service/site.mjs';
 import { staticFile } from '../service/static.mjs';
 import { hopHeight, lookAt, REELIE, SAYINGS, SCENES } from '../site/js/landscape.js';
 import { sentenceAt, sentencesOf } from '../site/js/follow.js';
@@ -165,6 +165,50 @@ describe('what the pages point at', () => {
         assert.match(html.home, new RegExp(`id="${id}"`), `${name} links to /#${id}`);
       }
     }
+  });
+});
+
+describe('an address that is nearly right', () => {
+  const isId = (id) => /^[A-Za-z0-9_-]{22}$/.test(id), id = 'aB3_efgh-jklmnopqrstuv';
+
+  it('gives the reel that was meant, whatever was picked up after its link', () => {
+    for (const tail of ['.', ',', ';', ':', '!', ')', ']', ').', '>', '"', "'", '*', '**', '_', '-', '…', ' ', '%20', '%22', '%E2%80%A6', '/', '//', './']) {
+      assert.equal(addressMeant(`/r/${id}${tail}`, isId), `/r/${id}`, JSON.stringify(tail));
+    }
+    assert.equal(addressMeant(`/R/${id}`, isId), `/r/${id}`);
+    assert.equal(addressMeant(`/r/${id}`, isId), null, 'a link that is right is left alone');
+  });
+
+  it('never changes a reel\'s id, in which capitals count, or guesses at one', () => {
+    assert.equal(addressMeant(`/r/${id.toLowerCase()}.`, isId), `/r/${id.toLowerCase()}`, 'the id as it was typed: that reel, or none');
+    for (const not of [`/r/${id}x`, `/r/${id}.x`, `/r/${id}_x`, `/r/${id.slice(1)}.`, `/r/.${id}`, '/r/short.', '/r/', '/r', `/r/${id}/play.json`, `/r/${id}/play.json.`, `/r/${id}/audio/x.mp3/`]) {
+      assert.equal(addressMeant(not, isId), null, not);
+    }
+    assert.equal(addressMeant(`/r/${id}.`, () => false), null, 'what an id looks like is for the service to say');
+  });
+
+  it('gives the page that was meant, typed with capitals, something on the end, or as a file', () => {
+    for (const [typed, meant] of [['/Claude', '/claude'], ['/CLAUDE', '/claude'], ['/claude/', '/claude'], ['/claude.', '/claude'], ['/claude).', '/claude'], ['/claude.html', '/claude'],
+      ['/Claude.HTML', '/claude'], ['/claude/index.html', '/claude'], ['/index.html', '/'], ['/index', '/'], ['/App/', '/app'], ['/Press,', '/press'], ['/credits%20', '/credits'],
+      ['/Add', '/add'], ['/add/', '/add'], ['/watch/Volcano', '/watch/volcano'], ['/watch/volcano/', '/watch/volcano'], ['/cla%75de/', '/claude']]) {
+      assert.equal(addressMeant(typed, isId), meant, typed);
+    }
+    for (const path of [...Object.keys(SITE_PAGES), '/add', ...WATCH.map((name) => `/watch/${name}`)]) {
+      assert.equal(addressMeant(path, isId), null, `${path} is right already`);
+      if (path !== '/') assert.equal(addressMeant(`${path.toUpperCase()}/`, isId), path, `${path}, in capitals with a slash`);
+    }
+  });
+
+  it('guesses at nothing, and only ever gives one of the site\'s own addresses', () => {
+    for (const not of ['/claud', '/claudes', '/claude/x', '/x/claude', '/added', '/watch/nope/', '/watch/', '/watch/volcano/card.png', '/site/css/site.css', '/Site/CSS/site.css', '/mcp/', '/try/', '/health/', '/%E0%A4%A', '/%']) {
+      assert.equal(addressMeant(not, isId), null, not);
+    }
+    // nothing that would send a browser somewhere else, or put a line of its own in the answer
+    for (const sly of ['//evil.example/claude/', '/%2F%2Fevil.example/Claude', '/\\evil.example/claude/', '/claude%0D%0Aset-cookie:x', '/https://evil.example/claude/', `//evil.example/r/${id}.`, `/r/${id}%0D%0Ax`]) {
+      assert.equal(addressMeant(sly, isId), null, sly);
+    }
+    assert.equal(addressMeant('/Claude%0D%0A', isId), '/claude', 'what is dropped from the end is dropped, never passed on');
+    assert.equal(addressMeant(`/r/${id}%0D%0A`, isId), `/r/${id}`);
   });
 });
 

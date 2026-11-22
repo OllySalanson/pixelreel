@@ -755,9 +755,11 @@ describe('the service over HTTP', async () => {
     assert.equal(card.status, 200);
     assert.equal(card.headers.get('content-type'), 'image/png');
     assert.equal(await card.text(), 'picture of How to read your gas meter');
-    for (const path of ['/watch/site-what', '/watch/nothing', '/watch/gas-meter/', '/watch/../reels']) {
+    for (const path of ['/watch/site-what', '/watch/nothing', '/watch/gas-meter/x', '/watch/gas-meter/card.png/', '/watch/../reels']) {
       assert.equal((await fetch(`${local}${path}`)).status, 404, `${path} is not a page`);
     }
+    const slashed = await fetch(`${local}/watch/gas-meter/`);
+    assert.deepEqual([slashed.status, new URL(slashed.url).pathname], [200, '/watch/gas-meter'], 'typed with a slash on the end, it is sent to the page that was meant');
   });
 
   it('shows the card every reel can share when a reel\'s own picture cannot be drawn', async () => {
@@ -1261,6 +1263,46 @@ describe('the service over HTTP', async () => {
     assert.equal(res.status, 404);
     assert.equal(res.headers.get('x-robots-tag'), 'noindex, nofollow');
     assert.match(await res.text(), /<h1 id="lost-title">No reel here<\/h1>/);
+    // a link that was meant for a reel but is not the shape of one is told the same, not "Nothing here"
+    for (const path of ['/r/abc', '/r/', '/r', `/r/${newId()}x`, `/R/${newId().slice(1)}`]) {
+      const lost = await fetch(`${local}${path}`);
+      assert.equal(lost.status, 404, path);
+      assert.equal(lost.headers.get('x-robots-tag'), 'noindex, nofollow', path);
+      assert.match(await lost.text(), /<h1 id="lost-title">No reel here<\/h1>\s*<p class="lead">This reel has been deleted\. Every reel is deleted after 30 days\. Or the link is not quite right\.<\/p>/, path);
+    }
+    assert.match(await (await fetch(`${local}/nothing-like-this`)).text(), /<title>Nothing here - Pixel Reel<\/title>/, 'anything else is still just not there');
+  });
+
+  it('sends an address that is nearly right to the one that was meant', async () => {
+    const { id } = await reels.create(tea);
+    await reels.idle();
+    const to = async (path) => {
+      const res = await fetch(`${local}${path}`, { redirect: 'manual' });
+      return [res.status, res.headers.get('location')];
+    };
+    // a reel's link copied with what came after it in a sentence, or typed with a slash on the end
+    for (const tail of ['.', ',', ')', ').', '!', '%20', '%22', '/', '_', '...']) assert.deepEqual(await to(`/r/${id}${tail}`), [302, `/r/${id}`], tail);
+    assert.deepEqual(await to(`/R/${id}`), [302, `/r/${id}`]);
+    assert.deepEqual(await to(`/r/${id}.?from=a-letter`), [302, `/r/${id}?from=a-letter`], 'what was asked with it goes too');
+    const played = await fetch(`${local}/r/${id}.`);
+    assert.deepEqual([played.status, new URL(played.url).pathname], [200, `/r/${id}`], 'and the reel is there to watch');
+    // a page typed with a capital, with a slash or a full stop on the end, or as a file
+    for (const [typed, meant] of [['/Claude', '/claude'], ['/claude/', '/claude'], ['/APP', '/app'], ['/press.', '/press'], ['/privacy.html', '/privacy'],
+      ['/index.html', '/'], ['/watch/Volcano/', '/watch/volcano'], ['/Add', '/add'], ['/add/', '/add']]) {
+      assert.deepEqual(await to(typed), [302, meant], typed);
+    }
+    const sent = await fetch(`${local}/Claude`, { redirect: 'manual' });
+    assert.deepEqual([sent.headers.get('cache-control'), sent.headers.get('x-robots-tag')], ['no-store', 'noindex, nofollow'], 'the answer is not kept, or listed');
+    // nothing is guessed at: these are still not there
+    for (const path of ['/claud', '/claude/x', '/added', '/watch/nope/', `/r/${id}x`, `/r/${id}/play.json.`]) assert.equal((await to(path))[0], 404, path);
+    // a link the right shape for a reel that is not there is tidied all the same, and then says so
+    const lost = await fetch(`${local}/r/${newId()}.`);
+    assert.equal(lost.status, 404);
+    assert.match(await lost.text(), /<h1 id="lost-title">No reel here<\/h1>/);
+    // and only someone reading is sent on
+    assert.notEqual((await fetch(`${local}/Claude`, { method: 'POST', redirect: 'manual' })).status, 302);
+    assert.notEqual((await fetch(`${local}/r/${id}.`, { method: 'DELETE', redirect: 'manual' })).status, 302);
+    assert.equal((await fetch(`${local}/r/${id}`)).status, 200, 'which deletes nothing');
   });
 
   it('answers odd requests plainly, and serves nothing it should not', async () => {
@@ -1298,7 +1340,7 @@ describe('the service over HTTP', async () => {
     assert.equal(res.headers.get('location'), 'https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Pixel%20Reel&connectorUrl=https%3A%2F%2Freels.example%2Fmcp');
     assert.equal(res.headers.get('cache-control'), 'no-store');
     assert.equal(res.headers.get('x-robots-tag'), 'noindex, nofollow');
-    assert.equal((await fetch(`${local}/add/`, { redirect: 'manual' })).status, 404, 'only that address');
+    assert.equal((await fetch(`${local}/added`, { redirect: 'manual' })).status, 404, 'only that address (one typed with a slash or a capital is sent to it)');
   });
 
   it('sends a page compressed, and not at all to a browser that has it', async () => {
