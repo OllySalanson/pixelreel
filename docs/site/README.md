@@ -37,7 +37,8 @@ People who find reading hard work. Every choice follows from that:
 - **Press words to hear them.** Make it comfy can have a press on any heading, paragraph
   or line of the site read it aloud, in the device's own voice. A press on a question reads
   the question and its answer. The reels summarise a page; this reads its actual words,
-  such as the steps for adding Pixel Reel to Claude.
+  such as the steps for adding Pixel Reel to Claude. The plain pages and the pages of steps
+  also have a button, "Read this page to me", that reads the whole of them, top to bottom.
 - **Nothing lost with the sound off.** A reel shows a few words and Peter says the rest.
   With the sound off, every word he says is written under the picture instead.
 - **A place kept in the words.** Where every word is written, the sentence being said is
@@ -1330,3 +1331,31 @@ to Claude, and a reel's page. Not printed on a real printer.
 | The privacy page and the page that adds Pixel Reel to Claude, as they print |
 | --- |
 | ![The privacy page as it prints: its heading and its words, black on white. Beside it, Add Pixel Reel to Claude as it prints: the steps, with their numbers and pictures.](log/v57-on-paper.jpg) |
+
+### Version 58
+
+- **Read this page to me.** A reel sums a page up. The privacy page, the terms, the credits,
+  the steps for adding Pixel Reel to Claude and the page about the phone now each have a
+  button under their heading that reads the whole page out, top to bottom, in the device's
+  own voice. What is being read has an edge round it and is kept in sight, so the page
+  scrolls with the voice. The button says "Stop reading" while it reads; a second press
+  stops it, and so does a reel that starts to play.
+- **Nobody has to switch anything on first.** "Press words to hear them" is a choice in
+  Make it comfy; this is a button, and the press is the asking.
+- **A question is read with its answer,** open or not, and nothing is read that a press
+  would not read: no buttons, no players, nothing out of sight.
+- **All of it is handed to the voice in the one press.** A browser may refuse a voice that
+  starts by itself later, so the whole page goes to it at once, and the page follows along
+  as the voice says it has come to each part.
+- Found on the way, at the biggest OpenDyslexic letters on a phone 320 pixels wide: the
+  credits page was 15 pixels wider than the screen (its lists were as wide as their longest
+  word), and "Questions" was cut in two on the privacy page. Both fit now.
+
+Like pressing words, this was tried with a stand-in for the voice, on four pages: the
+right words in the right order, the mark moving from part to part, and stopping. Nobody
+has heard it yet, and whether each browser says when it comes to each part (which is what
+moves the mark) is not known until it is tried on a real phone and a real computer.
+
+| The privacy page being read, and the button on a phone |
+| --- |
+| ![The privacy page with two buttons under its heading: Make a pixel reel about this, and Stop reading. The heading "What it keeps" has an edge round it. Beside it, the page that adds Pixel Reel to Claude on a phone, with the button Read this page to me.](log/v58-read-this-page.jpg) |
