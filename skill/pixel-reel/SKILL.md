@@ -10,10 +10,15 @@ plain caption on screen, the words a narrator would say, and an animated pixel-a
 You write the reel as JSON, and `make-page.mjs` (beside this file) checks it and turns it into
 one HTML file that plays in any browser, with Play, Back and Next buttons.
 
+**If you have the Pixel Reel connector (a `make_reel` tool), use that instead.** It makes the
+same reel with Peter, a warm recorded narrator, and a link to send to someone. This skill is
+for when the connector is not there: its page plays with captions and the device's own voice.
+
 ## Steps
 
-1. **Plan the scenes.** 4 to 10 scenes, one idea each, in the order a person needs them.
-   Only things that change what the person understands or does get their own scene.
+1. **Plan the scenes.** 5 to 7 scenes, about 40 seconds in all, one idea each, in the order
+   a person needs them. Only things that change what the person understands or does get
+   their own scene.
 2. **Write `reel.json`** in the format below.
 3. **Make the page:**
 
@@ -30,11 +35,27 @@ one HTML file that plays in any browser, with Play, Back and Next buttons.
 
 - Short, everyday words. One idea per sentence. No jargon unless the scene explains it.
 - `title`: one to three words. `caption`: one short sentence, about 12 words at most.
-- `say`: one or two short spoken sentences, 15 to 45 words, saying a little more than the
-  caption. Leave it out to have the caption read as it is.
-- Be honest: every claim must be true to what the person gave you.
+- `say`: one or two short spoken sentences, 12 to 25 words, written to be said aloud and
+  saying a little more than the caption. Leave it out to have the caption read as it is.
+- Open on a `title` picture, and end on what to do next, or the one thing to remember.
+- Be honest: every claim must be true to what the person gave you. For money, health or the
+  law, say to check with whoever sent the original.
+- Keep private things private: leave out names, addresses, and account or reference numbers
+  from someone's letter, bill or chat unless they ask for them.
 - Plain dashes only, never an em dash. No emoji. No real people's names or likenesses unless
   the person asks.
+
+What to put in, by what you are given:
+
+- **A letter, bill or form:** who it is from and what it is about; what the person has to
+  do, if anything; by when; what happens if they do not; and who to ring. Use its real
+  amounts and dates.
+- **A document or web page:** the few things that matter most to someone reading it for the
+  first time. Stick to what it says.
+- **A chat:** what was worked out, what was decided and what happens next, not the back and
+  forth.
+- **How to do something:** the steps in order, one a scene, and the mistake people usually
+  make.
 
 ## The format
 
@@ -96,9 +117,10 @@ matters, and `chat` for a conversation. `example.json` beside this file is a fin
 
 The page has no recorded voice. It starts with the sound off and moves on by itself, timed as
 if someone were reading the words aloud; the Sound button reads them with the device's own
-voice. For a warm recorded narrator, the open-source pixelreel project
-(github.com/OllySalanson/pixelreel) records the same `reel.json` with `npm run voices` and
-makes the page with `npm run page`.
+voice. For Peter, the warm recorded narrator, and a link to send, the person can add the
+Pixel Reel connector to Claude at pixelreel.pro/claude: say so in one line if they ask about
+the voice. The open-source pixelreel project (github.com/OllySalanson/pixelreel) can also
+record the same `reel.json` with `npm run voices` and make the page with `npm run page`.
 
 ## If node is not available
 

@@ -26,6 +26,8 @@ canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; image-
 .bigplay { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 14px;
   font: 44px 'Orange Kid', monospace; letter-spacing: 1px; line-height: 1; padding: 12px 28px 14px 24px; background: var(--go);
   box-shadow: 0 6px 0 rgba(0, 0, 0, 0.5); }
+/* a title's words, and a plain card's, are in the middle of the picture: the button sits under them */
+body[data-opens="title"] .bigplay, body[data-opens="card"] .bigplay { top: 72%; }
 .bigplay svg { width: 28px; height: 32px; fill: currentColor; shape-rendering: crispEdges; }
 .bigplay:hover { background: var(--go-hi); }
 .bigplay[hidden] { display: none; }
@@ -104,6 +106,15 @@ button:disabled { opacity: 0.6; cursor: progress; }
 body.app { overflow: hidden; }
 body.app main { max-width: none; }
 body.app .note.open-page { display: block; margin: 10px 0 0; font-size: 15px; }
+body.app .note.open-page a { display: inline-block; padding: 6px 12px; font-weight: bold; text-decoration: none; color: var(--cream-lit);
+  background: var(--btn); border: 3px solid var(--cream); border-radius: 4px; }
+body.app .note.open-page a:hover { background: var(--btn-hi); }
+body.app .note.open-page a:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+/* while the voice is recorded: a square for each line, lit as it is read */
+.lines { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.lines[hidden] { display: none; }
+.lines i { width: 16px; height: 16px; background: #33506e; border: 2px solid var(--cream); }
+.lines i.on { background: var(--gold); }
 </style>
 <script type="module">
 const __m = {};
@@ -1591,7 +1602,9 @@ function normalizeReel(raw, { base = '' } = {}) {
     transition,
     captions,
     images,
-    scenes
+    scenes,
+    // the kind of picture it opens on, so the big Play button can keep off a title's words
+    opens: raw.scenes[0].picture?.type ?? (typeof raw.scenes[0].draw === 'function' ? 'drawing' : 'card')
   };
 }
 
@@ -2327,6 +2340,7 @@ async function start() {
   const px = createKit(g, images);
   const dots = $('dots'), playBtn = $('play'), muteBtn = $('mute'), bigPlay = $('bigplay'), seek = $('seek');
   document.title = reel.title + ' - pixelreel';
+  document.body.dataset.opens = reel.opens;
   $('heading').textContent = reel.title;
   $('note').textContent = reel.note;
   canvas.setAttribute('aria-label', 'Pictures for: ' + reel.title);

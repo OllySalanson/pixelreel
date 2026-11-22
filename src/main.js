@@ -56,6 +56,7 @@ async function start() {
   const px = createKit(g, images);
   const dots = $('dots'), playBtn = $('play'), muteBtn = $('mute'), bigPlay = $('bigplay'), seek = $('seek');
   document.title = reel.title + ' - pixelreel';
+  document.body.dataset.opens = reel.opens;
   $('heading').textContent = reel.title;
   $('note').textContent = reel.note;
   canvas.setAttribute('aria-label', 'Pictures for: ' + reel.title);

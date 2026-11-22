@@ -31,10 +31,10 @@ export const newId = () => randomBytes(16).toString('base64url');
 /** True for something shaped like a reel id. */
 export const isId = (id) => typeof id === 'string' && ID.test(id);
 
-/** Records the voice for the reel in folder `dir`, with npm run voices (Pocket TTS, voice peter_yearsley). */
-async function recordVoices(dir, log) {
+/** Records the voice for the reel in folder `dir`, with npm run voices (Pocket TTS, voice peter_yearsley). `onLine(done, of)` is told as each line is recorded. */
+async function recordVoices(dir, log, onLine) {
   const { main } = await import('../scripts/voices.mjs');
-  await main([dir], { log });
+  await main([dir], { log, onClip: (_clip, { done, of }) => onLine(done, of) });
 }
 
 /** Draws a reel's own picture for link previews, from its reel.json, parsed. Resolves to a PNG. */
@@ -53,7 +53,7 @@ export class Reels {
   /**
    * @param {object} options
    * @param {import('./store.mjs').DiskStore} options.store   where reels are kept
-   * @param {(dir: string, log: Function) => Promise<void>} [options.record]   records a folder's voices
+   * @param {(dir: string, log: Function, onLine: (done: number, of: number) => void) => Promise<void>} [options.record]   records a folder's voices, saying as each line is done
    * @param {(dir: string, out: string) => Promise<void>} [options.video]   draws a folder's reel as an MP4
    * @param {(raw: object) => Promise<Uint8Array>} [options.picture]   draws a reel's picture for link previews, as a PNG
    */
@@ -86,7 +86,8 @@ export class Reels {
     await this.store.put(`reels/${id}/reel.json`, JSON.stringify(raw));
     await this.save(status);
     this.enqueue({ id, kind: 'voice' });
-    return status;
+    // with nothing else in hand its recording has begun already, and whoever asked is told so
+    return this.running?.id === id ? { ...status, state: 'recording' } : status;
   }
 
   /** Where a reel is up to, or null if there is no such reel (or it has expired). */
@@ -229,8 +230,15 @@ export class Reels {
     try {
       if (kind === 'voice') {
         await this.update(id, { state: 'recording' });
+        // how far the recording has got, for whoever is waiting to watch: kept one after another, so none lands after "ready"
+        let progress = Promise.resolve();
+        const onLine = (done, of) => { progress = progress.then(() => this.update(id, { recorded: done, lines: of })).catch(() => {}); };
         try {
-          await this.record(dir, (line) => this.log(`${id}: ${line}`));
+          try {
+            await this.record(dir, (line) => this.log(`${id}: ${line}`), onLine);
+          } finally {
+            await progress;
+          }
           if (!(await this.status(id))) return;   // deleted while it was recording
           for (const name of await readdir(join(dir, 'audio'))) {
             await this.store.put(`reels/${id}/audio/${name}`, await readFile(join(dir, 'audio', name)));
@@ -240,10 +248,10 @@ export class Reels {
           await this.store.put(`reels/${id}/reel.json`, JSON.stringify(raw));
           const reel = reelFromData(raw), clipFor = clipLookup(manifest);
           const seconds = Math.round(timeline(reel.scenes.map((s) => narrationMs(s, clipFor(s)))).total / 1000);
-          await this.update(id, { state: 'ready', seconds });
+          await this.update(id, { state: 'ready', seconds, recorded: undefined, lines: undefined });
         } catch (err) {
           this.log(`${id}: recording failed: ${err.stack ?? err}`);
-          await this.update(id, { state: 'failed', error: 'The voice could not be recorded. Try again in a while.' });
+          await this.update(id, { state: 'failed', error: 'The voice could not be recorded. Try again in a while.', recorded: undefined, lines: undefined });
         }
       } else {
         await this.update(id, { video: 'making' });

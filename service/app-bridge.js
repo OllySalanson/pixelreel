@@ -19,18 +19,26 @@
   });
   const notify = (method, params) => send({ method, params });
 
-  /** Shows words in the caption box, with the picture and buttons put away. */
-  function say(heading, words) {
+  // a square for each line of the reel, lit as Peter reads it: how far along it is, at a glance
+  const lines = Object.assign(document.createElement('span'), { className: 'lines', hidden: true });
+  lines.setAttribute('aria-hidden', 'true');
+  $('cap').appendChild(lines);
+
+  /** Shows words in the caption box, with the picture and buttons put away; and `done` of `of` squares lit, if there is a count. */
+  function say(heading, words, done = 0, of = 0) {
     document.querySelector('.stage').hidden = true;
     for (const el of [$('seek'), document.querySelector('.controls')]) el.hidden = true;
     $('heading').textContent = heading;
     $('cap-title').textContent = words[0];
     $('cap-typed').textContent = words[1] ?? '';
     $('cap-body').removeAttribute('aria-hidden');
+    lines.hidden = !of;
+    lines.replaceChildren(...Array.from({ length: of }, (_, i) => Object.assign(document.createElement('i'), { className: i < done ? 'on' : '' })));
   }
 
   /** Puts the reel in the page as the player expects it, and starts the player. */
   function play({ reel, clips, watch }) {
+    lines.hidden = true;
     document.querySelector('.stage').hidden = false;
     for (const el of [$('seek'), document.querySelector('.controls')]) el.hidden = false;
     $('cap-body').setAttribute('aria-hidden', 'true');
@@ -44,15 +52,22 @@
     startPixelreel();
     const link = document.createElement('p');
     link.className = 'note open-page';
-    const a = Object.assign(document.createElement('a'), { href: watch, textContent: 'Open the reel in its own page', target: '_blank', rel: 'noopener' });
+    const a = Object.assign(document.createElement('a'), { href: watch, textContent: 'Open it in its own page', target: '_blank', rel: 'noopener' });
     a.onclick = (e) => { e.preventDefault(); request('ui/open-link', { url: watch }).catch(() => window.open(watch, '_blank', 'noopener')); };
     link.appendChild(a);
     document.querySelector('main').appendChild(link);
   }
 
+  /** What to show while a reel is not ready yet: [heading, words]. */
+  function waiting(state) {
+    if (state.state === 'queued') return ['Waiting its turn', 'Peter is recording another reel first. Yours plays here as soon as it is ready.'];
+    if (state.lines) return ['Recording the voice', `Peter has read ${state.recorded} of ${state.lines} lines. The reel plays here as soon as he has finished.`];
+    return ['Recording the voice', 'The reel plays here as soon as it is ready.'];
+  }
+
   /** Asks the service how the reel is getting on until it is ready, or has failed. */
   async function follow(id) {
-    for (let wait = 2000; shown === id; wait = Math.min(wait * 1.3, 8000)) {
+    for (let wait = 2000; shown === id; wait = Math.min(wait * 1.2, 4000)) {
       let state;
       try {
         const res = await fetch(`${service}/r/${id}/play.json`, { cache: 'no-store' });
@@ -64,7 +79,7 @@
       if (state.state === 'ready') { play(state); return; }
       if (state.state === 'failed') { say(state.title, ['This reel could not be made', state.error]); return; }
       if (state.state === 'gone') { say('No reel here', ['It has been deleted, or kept past its 30 days.']); return; }
-      if (state.state !== 'trouble') say(state.title, ['Recording the voice', 'The reel plays here as soon as it is ready.']);
+      if (state.state !== 'trouble') say(state.title, waiting(state), state.recorded, state.lines);
       await new Promise((ok) => setTimeout(ok, wait));
     }
   }
@@ -77,7 +92,7 @@
     }
     if (shown === id) return;
     shown = id;
-    say(result.structuredContent.title ?? 'Pixel Reel', ['Recording the voice', 'The reel plays here as soon as it is ready.']);
+    say(result.structuredContent.title ?? 'Pixel Reel', waiting({ state: 'recording' }));
     follow(id);
   }
 

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import { CLAUDE_ADDRESSES, inRanges, LIMITS, limitProblems, RateLimit } from '../service/limits.mjs';
-import { EXAMPLE_REEL, formatGuide } from '../service/mcp.mjs';
+import { EXAMPLE_REEL, formatGuide, playerHtml } from '../service/mcp.mjs';
 import { BusyError, isId, KEEP_DAYS, newId, Reels } from '../service/reels.mjs';
 import { reelFromData } from '../src/format.js';
 import { markdownHtml, SITE_PAGES, SITE_POLICY } from '../service/site.mjs';
@@ -122,7 +122,7 @@ describe('the reels service', () => {
     const made = await reels.create(tea);
     assert.ok(isId(made.id));
     assert.deepEqual({ ...made, id: '' }, {
-      id: '', title: 'Tea', scenes: 2, state: 'queued', seconds: 10,
+      id: '', title: 'Tea', scenes: 2, state: 'recording', seconds: 10,
       created: '2026-11-22T10:00:00.000Z', expires: '2026-12-22T10:00:00.000Z', video: 'none'
     });
     await reels.idle();
@@ -138,6 +138,48 @@ describe('the reels service', () => {
     assert.equal(await reels.status(made.id), null, 'gone once it expires');
     assert.deepEqual(await reels.sweep(), [made.id]);
     assert.equal(await reels.reel(made.id), null);
+  });
+
+  it('says how far the recording has got, line by line, and that a reel behind another is waiting', async () => {
+    // the stand-in recorder stops before each line until it is let go, so nothing here depends on how fast the machine is
+    const held = [];
+    let arrived = () => {};
+    const hold = () => new Promise((ok) => { held.push(ok); arrived(); });
+    const letGo = async () => {
+      while (!held.length) await new Promise((ok) => { arrived = ok; });
+      held.shift()();
+    };
+    const record = async (dir, _log, onLine) => {
+      for (let done = 1; done <= 2; done++) {
+        await hold();
+        onLine(done, 2);
+      }
+      await hold();
+      await fakeRecord(dir);
+    };
+    const reels = new Reels({ store: freshStore(), record, video: fakeVideo });
+    const until = async (id, check) => {
+      for (;;) {
+        const status = await reels.status(id);
+        if (check(status)) return status;
+        await new Promise((ok) => setImmediate(ok));
+      }
+    };
+    const first = await reels.create(tea), second = await reels.create(tea);
+    assert.equal(first.state, 'recording', 'with nothing else in hand, it is being recorded already');
+    assert.equal(second.state, 'queued', 'the one behind it waits its turn');
+    assert.equal((await until(first.id, (s) => s.state === 'recording')).recorded, undefined, 'nothing is said until a line is done');
+    await letGo();
+    assert.deepEqual((({ recorded, lines }) => [recorded, lines])(await until(first.id, (s) => s.recorded === 1)), [1, 2]);
+    await letGo();
+    assert.equal((await until(first.id, (s) => s.recorded === 2)).state, 'recording');
+    assert.equal((await reels.status(second.id)).state, 'queued');
+    await letGo();
+    const ready = await until(first.id, (s) => s.state === 'ready');
+    assert.deepEqual([ready.recorded, ready.lines], [undefined, undefined], 'once it is ready there is nothing left to count');
+    for (let i = 0; i < 3; i++) await letGo();
+    await reels.idle();
+    assert.equal((await reels.status(second.id)).state, 'ready');
   });
 
   it('refuses a reel with problems, saying every one, and keeps nothing', async () => {
@@ -407,7 +449,7 @@ describe('the service over HTTP', async () => {
     assert.equal(made.isError, undefined);
     const { id, watch } = made.structuredContent;
     assert.equal(watch, `https://reels.example/r/${id}`, 'links use the address people reach the service at');
-    assert.match(words(made), /^"Tea" is made \(2 scenes, about 0:10\) and (waiting its turn to be recorded|Peter is recording the voice now)/);
+    assert.match(words(made), /^"Tea" is made \(2 scenes, about 0:10\) and (waiting its turn: Peter is recording another reel first|Peter is recording the voice now, which takes about as long as the reel lasts)\./);
     assert.match(words(made), /answer in one or two short sentences, with the link on a line of its own\. Do not list the scenes\. There is no need to check on it\./);
     assert.equal(made.structuredContent.message, words(made), 'the same words for a client that shows Claude only the data');
 
@@ -523,8 +565,78 @@ describe('the service over HTTP', async () => {
     assert.match(player.text, /function startPixelreel\(\) \{/);
     assert.match(player.text, /'ui\/initialize'/);
     assert.doesNotMatch(player.text, /id="reel-data"/, 'the reel arrives later, from the tool result');
+    assert.match(player.text, /body\[data-opens="title"\] \.bigplay, body\[data-opens="card"\] \.bigplay \{ top: 72%; \}/, "the big Play button sits under a title's words, not on them");
+    assert.match(player.text, /document\.body\.dataset\.opens = reel\.opens;/);
     await assert.rejects(client.readResource({ uri: 'ui://pixelreel/other.html' }));
     await client.close();
+  });
+
+  it('offers ready-made things to ask for, in the words a person would use', async () => {
+    const client = await connect();
+    const { prompts } = await client.listPrompts();
+    assert.deepEqual(prompts.map((p) => [p.name, p.title]), [
+      ['reel_about', 'A reel about...'], ['reel_of_a_letter', 'A reel of a letter or bill'],
+      ['reel_of_a_document', 'A reel of a document or web page'], ['reel_of_this_chat', 'A reel of this chat']
+    ]);
+    for (const p of prompts) assert.ok(p.description && !('words' in p), `${p.name} says what it is for`);
+    assert.deepEqual(prompts[0].arguments, [{ name: 'about', description: 'What you want explained, in a few words.', required: true }]);
+
+    const text = async (name, args) => {
+      const { messages } = await client.getPrompt({ name, arguments: args });
+      assert.deepEqual(messages.map((m) => [m.role, m.content.type]), [['user', 'text']]);
+      return messages[0].content.text;
+    };
+    assert.equal(await text('reel_about', { about: '  how a mortgage\n works ' }), 'Make me a pixel reel about this: how a mortgage works');
+    assert.equal((await text('reel_about', { about: 'x'.repeat(5000) })).length, 'Make me a pixel reel about this: '.length + 600, 'what is typed is kept to a sensible length');
+    await assert.rejects(client.getPrompt({ name: 'reel_about', arguments: {} }), /needs about/);
+    const letter = await text('reel_of_a_letter');
+    assert.match(letter, /what I have to do, if anything; by when; what happens if I do not/);
+    assert.match(letter, /Leave out names, addresses, and account or reference numbers/);
+    assert.match(letter, /If I have not given you one yet, ask me for it/);
+    assert.match(await text('reel_of_a_document', { link: 'https://example.com/a' }), /^Make me a pixel reel of the web page at https:\/\/example\.com\/a\. If you cannot read it/);
+    assert.match(await text('reel_of_a_document'), /^Make me a pixel reel of the document I have given you in this chat\./);
+    assert.match(await text('reel_of_this_chat'), /what we worked out, what was decided, and what happens next/);
+    await assert.rejects(client.getPrompt({ name: 'nothing' }), /There is no prompt called nothing/);
+
+    const guide = words(await client.callTool({ name: 'reel_format', arguments: {} }));
+    assert.match(guide, /What to put in, by what you are given:\n- A letter, bill or form: who it is from/, 'the same advice is in the guide, for someone who asks in their own words');
+    await client.close();
+  });
+
+  it('tells whoever is waiting how many lines are recorded so far', async () => {
+    let carryOn;
+    const slow = new Reels({
+      store: freshStore(), video: fakeVideo, picture: fakePicture,
+      record: async (dir, _log, onLine) => { onLine(1, 2); await new Promise((ok) => { carryOn = ok; }); await fakeRecord(dir); }
+    });
+    const other = createService({ reels: slow, baseUrl: 'https://reels.example' });
+    await new Promise((ok) => other.listen(0, '127.0.0.1', ok));
+    const at = `http://127.0.0.1:${other.address().port}`;
+    try {
+      const client = new Client({ name: 'test', version: '1' });
+      await client.connect(new StreamableHTTPClientTransport(new URL(`${at}/mcp`)));
+      const { id } = (await client.callTool({ name: 'make_reel', arguments: tea })).structuredContent;
+      let play;
+      do { play = await (await fetch(`${at}/r/${id}/play.json`)).json(); } while (!play.lines);
+      assert.deepEqual([play.state, play.recorded, play.lines], ['recording', 1, 2]);
+      assert.match(words(await client.callTool({ name: 'get_reel', arguments: { id } })), /Peter is recording the voice now \(1 of 2 lines done\)/);
+      carryOn();
+      await slow.idle();
+      const ready = await (await fetch(`${at}/r/${id}/play.json`)).json();
+      assert.deepEqual([ready.state, ready.recorded, ready.lines], ['ready', undefined, undefined]);
+      await client.close();
+    } finally {
+      other.close();
+      other.closeAllConnections();
+    }
+  });
+
+  it('shows the count in the player in the chat, and does not say a new reel is waiting when it is not', async () => {
+    const bridge = readFileSync(new URL('../service/app-bridge.js', import.meta.url), 'utf8');
+    assert.match(bridge, /Peter has read \$\{state\.recorded\} of \$\{state\.lines\} lines/);
+    assert.match(bridge, /waiting\(\{ state: 'recording' \}\)/, 'a reel just made is shown as being recorded until the service says otherwise');
+    assert.match(bridge, /className: 'lines'/, 'with a square for each line');
+    assert.match(playerHtml('https://reels.example'), /\.lines i\.on \{ background: var\(--gold\); \}/, 'which the page knows how to draw');
   });
 
   it('tells the player in the chat when a reel is ready, from any origin', async () => {
