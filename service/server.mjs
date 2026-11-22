@@ -8,7 +8,7 @@ import { ReelError } from '../src/reel.js';
 import { LANG_CODES } from '../src/words.js';
 import { createMcpServer } from './mcp.mjs';
 import { BusyError, isId, languageName } from './reels.mjs';
-import { addToClaudeLink, appManifest, robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
+import { addressMeant, addToClaudeLink, appManifest, robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
 import { sendBytes, sendSqueezed, sendStatic, squeezed, tagOf } from './static.mjs';
 import { languageOf, MAX_WORDS_BODY, narratorOf, OWN_NAMES, PDF_MAX, sourceOf, TryError } from './try.mjs';
 
@@ -399,9 +399,18 @@ export function createService({ reels, baseUrl, log = () => {}, limits = null, t
         return;
       }
       if (reading && sendStatic(req, res, path, SAFE, fresh)) return;
+      // An address that is nearly right goes to the one that was meant: a link is often copied
+      // with the full stop after it, or typed with a capital, or with a slash on the end.
+      const meant = reading ? addressMeant(path, isId) : null;
+      if (meant) {
+        res.writeHead(302, { ...SAFE, ...UNLISTED, location: meant + new URL(req.url, 'http://localhost').search, 'cache-control': 'no-store' }).end();
+        return;
+      }
       const reel = /^\/r\/([^/]+)(?:\/(.*))?$/.exec(path);
       if (reel && isId(reel[1]) && reading) { await handleReel(req, res, reel[1], reel[2] ?? '', context); return; }
       if (reel && isId(reel[1]) && !reel[2] && req.method === 'DELETE') { await handleForget(req, res, reel[1], context); return; }
+      // anything else that was meant for a reel is told so: its link is not quite right
+      if (reading && /^\/r(?:\/|$)/i.test(path)) { sendSitePage(req, res, 404, 'reel-gone', context, UNLISTED); return; }
       sendSitePage(req, res, 404, 'not-found', context);
     } catch (err) {
       log(`${req.method} ${req.url}: ${err.stack ?? err}`);

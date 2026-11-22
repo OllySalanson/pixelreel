@@ -29,6 +29,27 @@ const EXPLAINER = { name: 'pixel-reel', scene: 3, kind: 'Start here' };
 /** Every reel with a page of its own to send to someone (/watch/<name>): the one that explains Pixel Reel, and the examples. */
 export const WATCH = [EXPLAINER, ...EXAMPLES].map((reel) => reel.name);
 
+/**
+ * The address someone meant, for one that is nearly right: a link copied with the full stop
+ * or the bracket that came after it, typed with a capital letter, or with a slash on the
+ * end. Null for an address that is right already, or that is not near anything. It only
+ * ever gives one of the site's own addresses, so a browser can safely be sent there.
+ * `isId` says what a reel's id looks like (service/reels.mjs).
+ */
+export function addressMeant(path, isId) {
+  let text;
+  try { text = decodeURIComponent(path); } catch { return null; }   // not an address at all
+  // A reel. Capitals count in its id, so the id is left as it is: only what was picked up
+  // after it is dropped, and that may hold no letter or number, or it is some other id.
+  const reel = /^\/r\/([A-Za-z0-9_-]{22})[^A-Za-z0-9/]*\/*$/i.exec(text);
+  if (reel) return isId(reel[1]) && path !== `/r/${reel[1]}` ? `/r/${reel[1]}` : null;
+  // A page: small letters, nothing on the end, and no "index" or ".html".
+  const tidy = (words) => words.replace(/[^a-z0-9]+$/, '');
+  const plain = tidy(tidy(text.toLowerCase()).replace(/\.html?$/, '').replace(/\/index$/, '')) || '/';
+  const known = Boolean(SITE_PAGES[plain]) || plain === '/add' || (plain.startsWith('/watch/') && WATCH.includes(plain.slice('/watch/'.length)));
+  return known && plain !== path ? plain : null;
+}
+
 /** What a page of the site may load: its own files, and nothing from anywhere else. */
 export const SITE_POLICY = "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; media-src 'self'; " +
   "connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";

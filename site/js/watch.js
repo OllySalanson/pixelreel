@@ -131,7 +131,7 @@ export function startWatching() {
       root.classList.add('is-sorry');   // there is nothing to play, so the buttons that play it go
       requestAnimationFrame(draw);
       for (const send of sends) send.hidden = true;   // nothing to pass on
-      say(play.state === 'gone' ? 'This reel has gone. Reels are kept for 30 days.' : `Sorry, this reel could not be made. ${play.error ?? ''}`.trim());
+      say(play.state === 'gone' ? 'This reel has gone. Every reel is deleted after 30 days.' : `Sorry, this reel could not be made. ${play.error ?? ''}`.trim());
       if (play.state === 'failed') document.getElementById('watch-retry').hidden = false;
       return;
     }

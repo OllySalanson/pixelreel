@@ -86,6 +86,14 @@ A page loads nothing from anywhere else, sets no cookies, and its content securi
 (`SITE_POLICY` in `service/site.mjs`) allows only the site's own files. That rules out
 inline styles and scripts, so pages have none (`test/site.test.js` checks).
 
+An address that is nearly right still gets there. A link to a reel is often copied with
+the full stop or the bracket that came after it in a message, and an address is often typed
+with a capital letter or a slash on the end, so the service sends those on to the address
+that was meant (`addressMeant` in `service/site.mjs`: `/r/<id>.` to `/r/<id>`, `/Claude/` to
+`/claude`). It never changes a reel's id, in which capitals count, and it guesses at
+nothing: an address that is not near one of the site's own gets the usual "Nothing here",
+and anything else under `/r/` gets "No reel here", which says the link may not be right.
+
 Search engines are asked to keep out (`noindex`, and `/robots.txt`) for as long as Pixel
 Reel is by invitation. `PIXELREEL_LISTED=1` lets them list the website. Reels are never
 listed: every `/r/` answer says `noindex`.
@@ -919,3 +927,27 @@ licences from Kyutai's page for them, not from memory.
 | The make page, and what the home page keeps |
 | --- |
 | ![Make a pixel reel: a heading, then a form. What do you want explained, four things to try, Read it to me in, Read by. Beside it, the home page: Make a pixel reel now, and a big button, Make a pixel reel.](log/v42-make-page.jpg) |
+
+### Version 43
+
+Went looking for the ways a link to a reel goes wrong before anyone sees the reel.
+
+- **A link with a full stop after it said "Nothing here".** Someone ends a sentence with
+  the link, the full stop is copied with it, and the person it was sent to is told there
+  is nothing at that address. The same with a bracket, a comma, a quotation mark or a
+  space after it, with a slash on the end, and with `/R/` for `/r/`. All of those now
+  go to the reel. Its id is never changed (capitals count in it), and nothing is guessed:
+  if what follows the id has a letter or a number in it, it is some other id.
+- **Pages typed by hand** get there too: `/Claude`, `/claude/`, `/claude.` and
+  `/claude.html` all go to `/claude`, and so on for every page, each example reel's page
+  and the short address `/add`, which is made to be said aloud and typed on a phone.
+- **A link meant for a reel that is not the shape of one** (cut short, say) used to get
+  "Nothing here". It now gets "No reel here", which says the link may not be quite right.
+- **"No reel here" said the reel had been "kept past its 30 days"**, which takes two
+  readings to follow, and used "kept" for something other than a copy on a device
+  (Version 40). It now says: "This reel has been deleted. Every reel is deleted after 30
+  days. Or the link is not quite right." The player says the same when a reel goes while
+  its page is open.
+
+Tried in a real browser with the service worker in charge of the page, since it answers
+every page request first: each of eleven nearly-right addresses landed where it should.
