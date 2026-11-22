@@ -63,6 +63,7 @@ export class ReelPlayer {
     this.live = find('reel-live');
     this.playKey = find('reel-play');
     this.soundKey = find('reel-sound');
+    this.fullKey = find('reel-full');
     this.audio = new Audio();
     this.audio.preload = 'auto';
     this.clock = pacedClock();   // the reel's own clock, which Peter's pace (Make it comfy) slows or quickens
@@ -117,6 +118,11 @@ export class ReelPlayer {
     back.onclick = act(() => this.player.back());
     next.onclick = onward;
     this.soundKey.onclick = () => this.player?.toggleMuted();
+    if (this.fullKey) {
+      this.fullKey.hidden = false;   // it needs this script, so it is not seen without it
+      this.fullKey.onclick = () => this.toggleFull();
+      this.root.addEventListener('fullscreenchange', () => this.filled(document.fullscreenElement === this.root));
+    }
     this.root.addEventListener('keydown', (e) => {
       if (!this.player || e.altKey || e.ctrlKey || e.metaKey || e.target === this.seek) return;
       const onButton = e.target instanceof HTMLButtonElement;
@@ -124,6 +130,8 @@ export class ReelPlayer {
       else if (e.key === 'ArrowRight') { e.preventDefault(); onward(); }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); act(() => this.player.back())(); }
       else if (e.key.toLowerCase() === 'm') this.player.toggleMuted();
+      else if (e.key.toLowerCase() === 'f' && this.fullKey) this.toggleFull();
+      else if (e.key === 'Escape' && this.root.classList.contains('is-filling')) { e.preventDefault(); e.stopPropagation(); this.toggleFull(); }   // not the dialog it may be in
     });
 
     const toPointer = (e) => {
@@ -158,6 +166,31 @@ export class ReelPlayer {
       this.intro = false;
       this.player.seek(to);
     });
+  }
+
+  /**
+   * Fills the whole screen with the reel, or puts it back. The browser does it where it can
+   * (Escape, or its own button, puts it back); where it cannot, as on an iPhone, the reel is
+   * laid over the whole page instead, which looks the same.
+   */
+  toggleFull() {
+    if (document.fullscreenElement === this.root) { document.exitFullscreen(); return; }
+    if (this.root.classList.contains('is-filling')) { this.filled(false); return; }
+    const over = () => this.filled(true, true);
+    if (!this.root.requestFullscreen) { over(); return; }
+    // a reel is wider than it is tall: a phone that will turn its screen on its side for it, does
+    this.root.requestFullscreen().then(() => screen.orientation?.lock?.('landscape')?.catch(() => {}), over);
+  }
+
+  /** Marks the reel as filling the screen or not: `over` when it is laid over the page because the browser would not do it. */
+  filled(on, over = false) {
+    this.root.classList.toggle('is-full', on);
+    this.root.classList.toggle('is-filling', on && over);
+    document.documentElement.classList.toggle('reel-filling', on && over);   // the page under it holds still
+    this.fullKey.setAttribute('aria-pressed', String(on));
+    this.fullKey.setAttribute('aria-label', on ? 'Leave full screen' : 'Fill the screen');
+    for (const icon of this.fullKey.children) icon.classList.toggle('on', (icon === this.fullKey.firstElementChild) !== on);
+    this.wake();
   }
 
   /**

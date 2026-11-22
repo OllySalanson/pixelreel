@@ -161,11 +161,16 @@ export function spriteSvg(rows, { colours = {}, scale = 4 } = {}) {
   return `<svg class="px" width="${width * scale}" height="${rows.length * scale}" viewBox="0 0 ${width} ${rows.length}" shape-rendering="crispEdges" aria-hidden="true" focusable="false">${paths}</svg>`;
 }
 
+/** Four corners pointing outwards, and four pointing inwards: to fill the screen with a reel, and to put it back. */
+const FULL_ICONS = '<svg class="ico on" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><path d="M0 0h3v1h-2v2h-1zM6 0h3v3h-1v-2h-2zM0 6h1v2h2v1h-3zM8 6h1v3h-3v-1h2z"/></svg>' +
+  '<svg class="ico" viewBox="0 0 9 9" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><path d="M2 0h1v3h-3v-1h2zM6 0h1v2h2v1h-3zM0 6h3v3h-1v-2h-2zM6 6h3v1h-2v2h-1z"/></svg>';
+
 const PLAY_ICON = '<svg class="ico" viewBox="0 0 7 8" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><path d="M0 0h2v1h2v1h2v1h1v2h-1v1h-2v1h-2v1h-2z"/></svg>';
 
 /**
  * The player as it stands before its script wakes it (site/js/player.js): the screen, the
- * progress bar, the caption and the buttons. With `name`, it is for that reel in reels/, and
+ * progress bar, the caption and the buttons, and in the corner of the screen a button that
+ * fills the whole screen with the reel. With `name`, it is for that reel in reels/, and
  * says its title; without, it is empty, for the script to fill in.
  */
 export function playerHtml(name = null) {
@@ -175,6 +180,7 @@ export function playerHtml(name = null) {
   <div class="reel-screen">
     <canvas width="960" height="540" role="img" aria-label="Pictures for: ${title}"></canvas>
     <button class="reel-big" type="button">${PLAY_ICON}<span>Play</span></button>
+    <button class="reel-full" type="button" aria-label="Fill the screen" aria-pressed="false" hidden>${FULL_ICONS}</button>
   </div>
   <div class="reel-seek" role="slider" tabindex="0" aria-label="Where you are in the reel" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"><div class="reel-seek-fill"></div></div>
   <div class="reel-cap">
