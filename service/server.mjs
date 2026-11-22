@@ -3,13 +3,18 @@
 // needs a folder (or store) for the reels, and the address people reach it at.
 import { createServer } from 'node:http';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { ReelError } from '../src/reel.js';
 import { createMcpServer } from './mcp.mjs';
-import { isId } from './reels.mjs';
+import { BusyError, isId } from './reels.mjs';
 import { robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage } from './site.mjs';
 import { sendBytes, sendSqueezed, sendStatic, squeezed, tagOf } from './static.mjs';
+import { tidyAbout, TryError } from './try.mjs';
 
 /** The most a request to /mcp may carry. A long reel is a few kilobytes. */
 export const MAX_BODY = 256 * 1024;
+
+/** The most a request to /try may carry: a link, or a few words. */
+const MAX_TRY_BODY = 4 * 1024;
 
 const AUDIO_FILE = /^[A-Za-z0-9_-]{1,64}\.mp3$/;
 
@@ -47,13 +52,13 @@ p { margin: 0; }
 
 const sendPage = (res, status, html, extra = {}) => res.writeHead(status, { ...SAFE, 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', ...extra }).end(html);
 
-/** Reads a request body up to MAX_BODY bytes. Null if it is bigger. */
-async function readBody(req) {
+/** Reads a request body up to `max` bytes. Null if it is bigger. */
+async function readBody(req, max = MAX_BODY) {
   const chunks = [];
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > MAX_BODY) return null;
+    if (size > max) return null;
     chunks.push(chunk);
   }
   return Buffer.concat(chunks).toString('utf8');
@@ -122,15 +127,58 @@ async function handleReel(req, res, id, rest, context) {
   sendBytes(req, res, bytes, { ...SAFE, ...UNLISTED, 'content-type': key.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg', 'cache-control': 'private, max-age=3600' });
 }
 
+const sendJson = (res, status, value) => res.writeHead(status, { ...SAFE, 'content-type': 'application/json', 'cache-control': 'no-store' }).end(JSON.stringify(value));
+
+/**
+ * Make it right here: a visitor with no Claude of their own asks for a reel about a link or
+ * a few words, the service's writer has Claude write it, and the visitor is sent to watch
+ * it. Only there when the service was given a writer (service/writer.mjs), since every
+ * reel made this way costs money; and counted more strictly than the connector.
+ */
+async function handleTry(req, res, context) {
+  const { reels, writer, limits, trustProxy, baseUrl } = context;
+  if (!writer) { sendSitePage(req, res, 404, 'not-found', context); return; }
+  if (req.method !== 'POST') { res.setHeader('allow', 'POST'); sendJson(res, 405, { error: 'Ask with POST.' }); return; }
+  // Only the website's own page may ask, so no other site can spend this service's money. A
+  // browser says where a request comes from; anything that does not say is turned away too.
+  const elsewhere = req.headers.origin !== new URL(baseUrl).origin ||
+    (req.headers['sec-fetch-site'] && req.headers['sec-fetch-site'] !== 'same-origin');
+  if (elsewhere) { sendJson(res, 403, { error: 'Ask from the Pixel Reel website.' }); return; }
+  let about;
+  try {
+    about = tidyAbout(JSON.parse((await readBody(req, MAX_TRY_BODY)) ?? 'null')?.about);
+  } catch (err) {
+    sendJson(res, 400, { error: err instanceof TryError ? err.message : 'Say what you want explained.' });
+    return;
+  }
+  const refused = limits?.tries.hit(callerOf(req, trustProxy));
+  if (refused) { sendJson(res, 429, { error: `No more reels from here for now. ${refused}` }); return; }
+  try {
+    let reel = await writer(about), made;
+    try {
+      made = await reels.create(reel);
+    } catch (err) {
+      if (!(err instanceof ReelError)) throw err;
+      reel = await writer(about, { before: reel, problems: err.problems });   // one chance to put it right
+      made = await reels.create(reel);
+    }
+    sendJson(res, 200, { id: made.id, watch: `/r/${made.id}` });
+  } catch (err) {
+    if (err instanceof TryError || err instanceof BusyError) sendJson(res, 422, { error: err.message });
+    else if (err instanceof ReelError) sendJson(res, 502, { error: 'Claude could not write that reel. Try again, or try other words.' });
+    else throw err;
+  }
+}
+
 /**
  * One of the site's own pages, which loads only the site's own files. Each is put together
  * once and kept, compressed (unless `fresh`, when it is made again each time, for working on
  * the site), and a browser that already has it is told so.
  */
-function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages }, extra = {}) {
+function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages, writer }, extra = {}) {
   let page = fresh ? null : pages.get(name);
   if (!page) {
-    page = squeezed(sitePage(name, baseUrl, { listed }));
+    page = squeezed(sitePage(name, baseUrl, { listed, values: { here: writer ? 'on' : 'off' } }));
     page.tag = tagOf(page.bytes);
     if (!fresh) pages.set(name, page);
   }
@@ -145,14 +193,16 @@ function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages },
  * at; `limits` ({ reels, videos }, RateLimits) cap what each caller asks for; `trustProxy`
  * takes the caller's address from X-Forwarded-For, for a service behind a proxy that sets it;
  * `listed` lets search engines list the website (never the reels), for once it is open to all;
- * `fresh` has browsers check for a newer copy of the site's files every time, for working on it.
+ * `fresh` has browsers check for a newer copy of the site's files every time, for working on it;
+ * `writer` (see service/writer.mjs) switches on Make it right here, which costs money a reel.
  */
-export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false, listed = false, fresh = false }) {
-  const context = { reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, trustProxy, listed, fresh, pages: new Map() };
+export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false, listed = false, fresh = false, writer = null }) {
+  const context = { reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, trustProxy, listed, fresh, writer, pages: new Map() };
   return createServer(async (req, res) => {
     try {
       const path = new URL(req.url, 'http://localhost').pathname;
       if (path === '/mcp') { await handleMcp(req, res, context); return; }
+      if (path === '/try') { await handleTry(req, res, context); return; }
       if (path === '/health') { res.writeHead(200, { ...SAFE, 'content-type': 'text/plain' }).end('ok'); return; }
       const reading = req.method === 'GET' || req.method === 'HEAD';
       if (reading && SITE_PAGES[path]) { sendSitePage(req, res, 200, SITE_PAGES[path], context); return; }

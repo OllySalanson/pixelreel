@@ -161,14 +161,15 @@ export const addToClaudeLink = (baseUrl) =>
 /**
  * One of the site's pages, for a service at `baseUrl`. `listed` says whether search engines
  * may list it: until Pixel Reel is open to everyone, every page asks them not to. `values`
- * fills names of the page's own (already safe to put in HTML); `title` and `path` replace
+ * fills names of the page's own (already safe to put in HTML), such as `here` ("on" when the
+ * service can write a reel for a visitor itself); `title` and `path` replace
  * the page's own title and address, for a page that stands for many, such as a reel's.
  */
 export function sitePage(name, baseUrl, { listed = false, values = {}, title = null, path = null } = {}) {
   path ??= Object.keys(SITE_PAGES).find((p) => SITE_PAGES[p] === name) ?? '/';
   const markdown = !existsSync(siteFile(`pages/${name}.html`));
   const { facts, body } = pageFacts(readFileSync(siteFile(`pages/${name}.${markdown ? 'md' : 'html'}`), 'utf8'));
-  const links = { url: escapeHtml(baseUrl), mcp: escapeHtml(`${baseUrl}/mcp`), add: escapeHtml(addToClaudeLink(baseUrl)), ...values };
+  const links = { url: escapeHtml(baseUrl), mcp: escapeHtml(`${baseUrl}/mcp`), add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', ...values };
   const heading = /^# (.+)$/m.exec(body)?.[1];
   title ??= facts.title ?? (heading && heading !== 'Pixel Reel' ? `${heading} - Pixel Reel` : 'Pixel Reel');
   // a plain page that has a reel of itself offers it straight under its heading

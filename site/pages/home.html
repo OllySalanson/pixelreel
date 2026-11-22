@@ -257,7 +257,7 @@ fetch: /reels/pixel-reel/reel.json /reels/pixel-reel/audio/manifest.json
       <p class="lead">Say what you want explained. We will write the words to give to Claude.</p>
       <button class="btn btn-reel" type="button" data-reel="site-make">Make a pixel reel about this</button>
     </div>
-    <form class="maker" id="maker" action="/claude">
+    <form class="maker" id="maker" action="/claude" data-here="{{here}}">
       <label for="maker-what">What do you want explained?</label>
       <input id="maker-what" name="about" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="A link, or a few words" maxlength="2000">
       <ul class="tries" aria-label="Or try one of these">
@@ -273,6 +273,10 @@ fetch: /reels/pixel-reel/reel.json /reels/pixel-reel/audio/manifest.json
       <div class="row">
         <button class="btn btn-gold" type="button" data-copy="#ask-words" data-copied="Copied. Now paste it into Claude.">Copy the words</button>
         <a class="btn btn-paper" id="ask-open" href="https://claude.ai/new" target="_blank" rel="noopener" data-copy="#ask-words">Copy, and open Claude</a>
+      </div>
+      <div class="maker-here" id="maker-here" hidden>
+        <p>No Claude? We can make it for you, right here.</p>
+        <button class="btn btn-teal" type="button">Make it right here</button>
       </div>
       <p class="said" id="maker-said" role="status"></p>
       <p class="maker-first">First time? <a href="/claude">Add Pixel Reel to Claude</a> first. It takes a minute.</p>
