@@ -48,6 +48,9 @@ People who find reading hard work. Every choice follows from that:
   asks for less motion, or who chooses Still.
 - **One press away.** Pixel Reel can be added to a phone's home screen, so nobody has to
   type an address or find a tab again. It opens there with no internet, too.
+- **No address to type.** To get from a computer to a phone, point the phone's camera at
+  a square of pixels (a QR code). Typing an address letter by letter is its own kind of
+  reading.
 
 Pixel art is for pictures; words are always in plain letters. One pixel of the page's pixel
 art is `--u` (4px) wide everywhere, so buttons, borders, icons and scenery sit on one grid.
@@ -65,6 +68,7 @@ narrator ([Who reads](#who-reads)).
 | `site/css/site.css` | The whole look. |
 | `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` is Make it comfy; `boot.js` runs before the page is drawn, to put its settings back and to keep the bar across the top on one row; `signal.js` is the test card on a page that is not there; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `send.js` copies words and passes a reel on; `ruler.js` is the reading ruler; `pace.js` is the clock that lets Peter read slower or quicker; `sprites.js` is the site's own pixel art. |
 | `site/js/menu.js` | The menu a Menu button opens, where the bar across the top has no room for its links (`boot.js` decides): the same links as big rows, with Make it comfy and the way to add Pixel Reel to Claude. A link added to the bar goes in the menu too (a test says so). |
+| `site/js/qr.js` | Makes a QR code from an address, with nothing loaded from anywhere else. The service draws it into a page where the page says `{{scan}}`: the code that opens the page about the phone. |
 | `site/js/app.js`, `site/js/sw.js` | Pixel Reel as an app on a phone: [below](#on-a-phones-home-screen). |
 | `site/js/sheet.js` | The whole reel on one page, under the player on a reel's page: every scene's finished picture with its few words, to glance over and to print. The print rules at the foot of `site.css` leave nothing else on the paper. |
 | `site/js/follow.js` | Following the words: splits a line into its sentences and works out which is being said, for the player to mark where every word is written. |
@@ -77,7 +81,8 @@ narrator ([Who reads](#who-reads)).
 A page can say `{{url}}`, `{{mcp}}` (the connector's address) and `{{add}}` (the link that
 opens Claude with the connector filled in), `{{icon:letter:4}}` for an everyday icon and
 `{{sprite:reelie:2}}` for one of the site's own, drawn as crisp SVG four (or two) pixels to
-the pixel, and `{{player:pixel-reel}}` for a player of a reel in `reels/`.
+the pixel, `{{player:pixel-reel}}` for a player of a reel in `reels/`, and `{{scan}}` for the
+QR code that opens the page about the phone.
 
 The player is the real one underneath: `site/js/player.js` uses the same timing, narrator,
 kit and transitions as `src/main.js`, with the site's own buttons round it. The pages work
@@ -979,3 +984,28 @@ measured by hand at that size: neither is wider than the screen.
 | The bar on a phone, and the menu it opens |
 | --- |
 | ![The top of the home page on a phone: Reelie, Aa, Menu and Add to Claude in the bar. Beside it, the menu: Home, Make a pixel reel, How it works, Examples, Questions, Add to your phone and Make it comfy as big rows with a picture each, and a gold button, Add Pixel Reel to Claude.](log/v44-menu.jpg) |
+
+### Version 45
+
+- **From a computer to a phone with no address to type.** The page about the phone told
+  someone on a computer to "open this page on your phone", which means typing an address,
+  letter by letter, on a small keyboard: hard work for the very people the site is for.
+  There is now a QR code to point the phone's camera at, in the steps for a computer on
+  that page, and on the home page under "Keep it a press away". On the home page it has a
+  few words beside it, "On a computer now?", and shows only where there is a mouse: a
+  phone has no use for a code that opens what it is already showing.
+- **It is pixel art.** One square of the code is one pixel of the page's pixel art (`--u`),
+  and it has the same notched edge as everything else. It stays dark on light on every
+  colour of paper, Dark included, because a camera needs it that way round.
+- **Made here.** The site loads nothing from anywhere else, so the code is made by the
+  site's own `site/js/qr.js`, as the standard lays down, and drawn into the page as SVG by
+  the service. No script runs for it in the browser.
+
+How it was checked: the correcting codewords against the standard's own worked example,
+the fifteen format bits against its table, and then a real reader (zxing-cpp) read back
+codes of all six sizes and all eight masks, and the code itself from screenshots of both
+pages. Not yet pointed at with a real phone.
+
+| Under "Keep it a press away" on the home page, and in the steps for a computer |
+| --- |
+| ![The home page on a computer: under the buttons, a QR code with "On a computer now? Point your phone's camera at this square. Pixel Reel opens there." Beside it, the page about the phone: step 2, "Or use your phone", has the same code, and a button to copy the link instead.](log/v45-qr.jpg) |

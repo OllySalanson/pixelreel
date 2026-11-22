@@ -611,7 +611,7 @@ describe('adding Pixel Reel to a phone', () => {
   });
 
   it('lets someone on a computer copy its address, to send to their phone', () => {
-    assert.match(app, /<button class="btn btn-paper btn-small" type="button" data-send="Add Pixel Reel to your phone" data-says="#app-sent" hidden>Copy the link to send to it<\/button>\s*<p class="said" id="app-sent" role="status"><\/p>/);
+    assert.match(app, /<button class="btn btn-paper btn-small" type="button" data-send="Add Pixel Reel to your phone" data-says="#app-sent" hidden>Or copy the link to send to it<\/button>\s*<p class="said" id="app-sent" role="status"><\/p>/);
   });
 
   it('can be reached from the foot of every page', () => {

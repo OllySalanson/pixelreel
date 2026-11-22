@@ -3,6 +3,7 @@
 // page shares, and a page each in site/pages/, written as HTML or, for the plain ones, as
 // Markdown. This puts a page together; service/static.mjs serves the files a page loads.
 import { existsSync, readFileSync } from 'node:fs';
+import { qrSvg } from '../site/js/qr.js';
 import { SPRITES } from '../site/js/sprites.js';
 import { ICONS } from '../src/icons.js';
 import { PALETTE } from '../src/palette.js';
@@ -357,7 +358,7 @@ export function sitePage(name, baseUrl, { listed = false, values = {}, title = n
   const markdown = !existsSync(siteFile(`pages/${name}.html`));
   const { facts, body } = pageFacts(readFileSync(siteFile(`pages/${name}.${markdown ? 'md' : 'html'}`), 'utf8'));
   // the connector's address is long and has no spaces: <wbr> lets a narrow screen break it before "/mcp", not mid-word
-  const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', languages: '', posters: postersHtml(), voices: narratorsHtml(narrators), who: whoChoices(narrators), whoreads: whoReads(narrators), ...values };
+  const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', languages: '', posters: postersHtml(), voices: narratorsHtml(narrators), who: whoChoices(narrators), whoreads: whoReads(narrators), scan: qrSvg(`${baseUrl}/app`, { label: 'A QR code. It opens Pixel Reel on a phone.' }), ...values };
   const heading = /^# (.+)$/m.exec(body)?.[1];
   title ??= facts.title ?? (heading && heading !== 'Pixel Reel' ? `${heading} - Pixel Reel` : 'Pixel Reel');
   // a plain page that has a reel of itself offers it straight under its heading

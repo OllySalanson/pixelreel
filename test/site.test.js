@@ -11,6 +11,7 @@ import { askFor } from '../site/js/maker.js';
 import { startMenu } from '../site/js/menu.js';
 import { nowPlaying } from '../site/js/player.js';
 import { PACES, pacedClock, rateOf } from '../site/js/pace.js';
+import { qrSvg } from '../site/js/qr.js';
 import { lengthWords, showOf, waitingFor } from '../site/js/reels.js';
 import { rulerTop } from '../site/js/ruler.js';
 import { sendReel, sentWords } from '../site/js/send.js';
@@ -917,6 +918,23 @@ describe('before the page is drawn', () => {
     assert.ok(layout.indexOf('rel="stylesheet"') < layout.indexOf('/site/js/boot.js'), 'boot.js waits for the stylesheet only if it comes first');
     // one span round the words, so the button lays them out as one run of text with its usual spaces
     assert.match(layout, /class="[^"]*top-add"[^>]*><span>Add<span class="top-add-more"> to Claude<\/span><\/span><\/a>/);
+  });
+});
+
+describe('getting the site onto a phone with no address to type', () => {
+  const code = qrSvg('https://reels.example/app', { label: 'A QR code. It opens Pixel Reel on a phone.' });
+
+  it('shows a QR code for the page about the phone, on that page and on the home page', () => {
+    assert.ok(html.app.includes(code), 'in the steps for a computer');
+    assert.match(html.app, /<details data-device="computer">[\s\S]*?<svg class="qr"[\s\S]*?<\/details>/);
+    assert.ok(html.home.includes(`<div class="scan">\n        ${code}`), 'with a few words beside it');
+    assert.match(html.home, /<h3>On a computer now\?<\/h3>\s*<p>Point your phone's camera at this square\./);
+  });
+
+  it('keeps the code with its words from a phone, which has no use for it', () => {
+    const css = readFileSync(root('site/css/site.css'), 'utf8');
+    assert.match(css, /\n\.scan \{ display: none;/);
+    assert.match(css, /@media \(hover: hover\) and \(pointer: fine\) \{\n {2}\.scan \{ display: flex; \}\n\}/);
   });
 });
 
