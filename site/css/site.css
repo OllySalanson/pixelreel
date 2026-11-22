@@ -530,6 +530,20 @@ html[data-app] [data-not-app] { display: none; }
 .faq .presses p { margin-top: 0.25rem; padding: 0; font-size: 1.125rem; color: var(--ink-soft); }
 .faq .presses-more { padding-top: 0.25rem; font-weight: 500; }
 .presses .words .btn { margin-top: 0.75rem; }
+/* A QR code: a phone's camera reads it as this site's address, so nobody has to type one.
+   One of its squares is one pixel of the page's pixel art, and it is dark on light on every
+   colour of paper, dark included, since a camera needs it that way round. */
+.qr { display: block; flex: none; max-width: 100%; height: auto; image-rendering: pixelated; margin: var(--u);
+  box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line); }
+.presses .words .qr { margin-top: 1rem; }
+.presses li:has(.qr) { align-items: flex-start; }   /* its picture stays up beside its heading, not half way down beside the code */
+/* the code with a few words beside it, only where there is a mouse: a phone has no use for a code that opens what it is already showing */
+.scan { display: none; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.5rem; margin-top: 2.25rem; }
+.scan .words { flex: 1 1 14ch; min-width: 0; max-width: 20rem; }
+.scan p { margin-top: 0.35rem; font-size: 1.125rem; color: var(--ink-soft); }
+@media (hover: hover) and (pointer: fine) {
+  .scan { display: flex; }
+}
 .faq .presses .said { min-height: 0; margin-top: 0.4rem; font-weight: 700; color: var(--ink); }
 .faq .presses .said:empty { display: none; }
 

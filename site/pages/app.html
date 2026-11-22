@@ -84,9 +84,10 @@ description: Add Pixel Reel to your phone's home screen. It opens like any other
             <span class="tile tile-peach">{{icon:phone:3}}</span>
             <div class="words">
               <h3>Or use your phone</h3>
-              <p>Open this page on it, and press the big button there.</p>
+              <p>Point its camera at this square. This page opens there. Then press the big button.</p>
+              {{scan}}
               <!-- copies this page's address, to send to the phone: its script wakes it, so it is not seen without -->
-              <button class="btn btn-paper btn-small" type="button" data-send="Add Pixel Reel to your phone" data-says="#app-sent" hidden>Copy the link to send to it</button>
+              <button class="btn btn-paper btn-small" type="button" data-send="Add Pixel Reel to your phone" data-says="#app-sent" hidden>Or copy the link to send to it</button>
               <p class="said" id="app-sent" role="status"></p>
             </div>
           </li>
