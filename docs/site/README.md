@@ -218,3 +218,9 @@ looked like the old site.
 | The button, when it is switched on |
 | --- |
 | ![The make-one box with a second button: Make it right here.](log/v6-here.jpg) |
+
+### Version 7
+
+- **A film for the press kit.** The reel at the top of the home page, drawn frame by frame
+  into an MP4 with `npm run video pixel-reel -- --scale 3`, words on screen, to drop into a
+  post or a piece (`site/art/what-is-pixel-reel.mp4`; make it again if that reel changes).
