@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import { createKit } from '../src/kit.js';
-import { ICONS, ICON_SIZE } from '../src/icons.js';
+import { ICON_GROUPS, ICONS, ICON_SIZE } from '../src/icons.js';
 import { PALETTE } from '../src/palette.js';
 import { highlight, ICON_NAMES, noSignal, PICTURES, pictureProblems } from '../src/pictures.js';
 import { coverage, fakeContext } from './fake-canvas.js';
@@ -123,5 +124,44 @@ describe('the icons', () => {
       }
     }
     assert.deepEqual(ICON_NAMES, Object.keys(ICONS));
+  });
+
+  it('keep the first twenty where they were, with plenty more to choose from', () => {
+    assert.deepEqual(ICON_NAMES.slice(0, 20), ['letter', 'document', 'phone', 'money', 'house', 'calendar', 'clock', 'person', 'people', 'heart',
+      'tick', 'cross', 'warning', 'lock', 'computer', 'lightbulb', 'cup', 'car', 'question', 'star']);
+    assert.ok(ICON_NAMES.length >= 60, `${ICON_NAMES.length} icons`);
+    for (const name of ['water', 'fire', 'bolt', 'sun', 'book', 'key', 'bus', 'pill', 'card', 'baby']) assert.ok(name in ICONS, name);
+    for (const name of ICON_NAMES) assert.match(name, /^[a-z]+$/, `${name} is one plain word`);
+  });
+
+  it('are each in one group, and no group names an icon that is not there', () => {
+    const grouped = Object.values(ICON_GROUPS).flat();
+    assert.deepEqual([...grouped].sort(), [...ICON_NAMES].sort());
+    assert.equal(new Set(grouped).size, grouped.length, 'none is in two groups');
+  });
+
+  it('are not blank, and no two are the same picture', () => {
+    const seen = new Map();
+    for (const [name, rows] of Object.entries(ICONS)) {
+      const art = rows.join('\n');
+      assert.ok([...art].filter((ch) => ch !== '.' && ch !== '\n').length >= 20, `${name} has something in it`);
+      assert.equal(seen.get(art), undefined, `${name} is the same as ${seen.get(art)}`);
+      seen.set(art, name);
+    }
+  });
+
+  it('show on the dark blue of a picture: none is drawn only in black', () => {
+    for (const [name, rows] of Object.entries(ICONS)) {
+      assert.ok([...rows.join('')].some((ch) => ch !== '.' && ch !== 'k'), `${name} has a colour besides its outline`);
+    }
+  });
+
+  it('are all listed, by group, where people and agents read what there is', () => {
+    for (const file of ['../docs/scenes.md', '../skill/pixel-reel/SKILL.md']) {
+      const text = readFileSync(new URL(file, import.meta.url), 'utf8');
+      for (const [group, names] of Object.entries(ICON_GROUPS)) {
+        assert.ok(text.includes(`**${group}:** ${names.map((n) => `\`${n}\``).join(', ')}`), `${file} lists ${group}`);
+      }
+    }
   });
 });

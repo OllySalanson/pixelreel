@@ -170,9 +170,17 @@ choose (with a tick). Both need an `icon` and a `label`.
 picture: { type: 'compare', bad: { icon: 'document', label: 'A long letter' }, good: { icon: 'computer', label: 'A pixel reel' } }
 ```
 
-The icons are `letter`, `document`, `phone`, `money`, `house`, `calendar`, `clock`, `person`,
-`people`, `heart`, `tick`, `cross`, `warning`, `lock`, `computer`, `lightbulb`, `cup`, `car`,
-`question` and `star`. `every` and `start` set their timing, as for a list.
+The icons, by what they are about:
+
+- **Paperwork and money:** `letter`, `document`, `money`, `card`, `bank`, `calendar`, `clock`, `hourglass`, `bag`, `basket`, `gift`, `chart`
+- **People and home:** `person`, `people`, `baby`, `heart`, `house`, `bed`, `key`, `lock`, `bin`, `cup`, `apple`, `pill`, `thermometer`, `dog`, `cat`
+- **Out and about:** `car`, `bus`, `train`, `plane`, `pin`, `world`, `flag`, `ball`, `trophy`, `music`, `book`, `pencil`
+- **Technology:** `phone`, `computer`, `camera`, `wifi`, `battery`, `cog`, `search`, `speech`, `bell`, `eye`, `shield`, `rocket`
+- **Weather and nature:** `sun`, `cloud`, `rain`, `water`, `fire`, `bolt`, `tree`
+- **Signs:** `tick`, `cross`, `warning`, `question`, `star`, `lightbulb`
+
+Pick the one that means the thing; if none does, a list, a big word or a sprite says it
+better than an icon that does not fit. `every` and `start` set their timing, as for a list.
 
 **sprite**: pixel art of your own, from rows of [sprite letters](#sprite-letters), scaled up to
 fill the picture and dropped in, with an optional `label`. `colours` adds letters of your own.

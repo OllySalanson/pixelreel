@@ -97,9 +97,17 @@ Any other field is an error. There is no drawing code: every picture is a ready-
 | `compare` | `bad` and `good` (each `{ "icon": "...", "label": "..." }`), `heading?`, `every?`, `start?` | Two cards side by side: the one to avoid, with a cross, then the one to choose, with a tick. |
 | `sprite` | `rows` (list of text), `colours?`, `label?` | Your own pixel art, scaled up to fill the picture. See below. |
 
-The icons are `letter`, `document`, `phone`, `money`, `house`, `calendar`, `clock`, `person`,
-`people`, `heart`, `tick`, `cross`, `warning`, `lock`, `computer`, `lightbulb`, `cup`, `car`,
-`question` and `star`. Keep labels to two or three words.
+The icons, by what they are about:
+
+- **Paperwork and money:** `letter`, `document`, `money`, `card`, `bank`, `calendar`, `clock`, `hourglass`, `bag`, `basket`, `gift`, `chart`
+- **People and home:** `person`, `people`, `baby`, `heart`, `house`, `bed`, `key`, `lock`, `bin`, `cup`, `apple`, `pill`, `thermometer`, `dog`, `cat`
+- **Out and about:** `car`, `bus`, `train`, `plane`, `pin`, `world`, `flag`, `ball`, `trophy`, `music`, `book`, `pencil`
+- **Technology:** `phone`, `computer`, `camera`, `wifi`, `battery`, `cog`, `search`, `speech`, `bell`, `eye`, `shield`, `rocket`
+- **Weather and nature:** `sun`, `cloud`, `rain`, `water`, `fire`, `bolt`, `tree`
+- **Signs:** `tick`, `cross`, `warning`, `question`, `star`, `lightbulb`
+
+Pick the one that means the thing, and keep labels to two or three words. If no icon means
+it, do not make one stand for it: use a `list`, a `big` word or a `sprite` instead.
 
 A `sprite` is drawn from rows of letters, one letter a pixel, up to 40 rows of up to 64: `k`
 black, `w` white, `r` red, `g` green, `b` blue, `y` yellow, `o` orange, `p` purple, `t` teal,

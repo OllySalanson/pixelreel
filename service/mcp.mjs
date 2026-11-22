@@ -7,7 +7,8 @@ import { readFileSync } from 'node:fs';
 import { CallToolRequestSchema, GetPromptRequestSchema, ListPromptsRequestSchema, ListResourcesRequestSchema, ListToolsRequestSchema, ReadResourceRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { pageHtml } from '../scripts/page.mjs';
 import { PICTURE_NOTES, REEL_FORMAT, reelSchema } from '../src/format.js';
-import { ICON_NAMES, PICTURES } from '../src/pictures.js';
+import { ICON_GROUPS } from '../src/icons.js';
+import { PICTURES } from '../src/pictures.js';
 import { ReelError } from '../src/reel.js';
 import { clockTime } from '../src/timing.js';
 import { LIMITS } from './limits.mjs';
@@ -188,7 +189,9 @@ export function formatGuide() {
     '',
     'Pictures (give every scene one, and mix them so the reel moves):',
     ...pictures,
-    `Icons: ${ICON_NAMES.join(', ')}. Pick the one that means the thing, and keep labels to two or three words. If no icon means it, do not make one stand for it: use a list, a big word or a sprite instead.`,
+    'Icons, by what they are about:',
+    ...Object.entries(ICON_GROUPS).map(([group, names]) => `- ${group}: ${names.join(', ')}.`),
+    'Pick the icon that means the thing, and keep labels to two or three words. If no icon means it, do not make one stand for it: use a list, a big word or a sprite instead.',
     'The pictures are timed to the voice for you. Label the items of a list, icons, flow or compare with words the narrator says, in the order they are said, and each one arrives as it is spoken.',
     'In a title or big picture, keep "text" short: a word or two in capitals, or a number.',
     'A sprite is drawn from rows of letters, one a pixel: k black, w white, r red, g green, b blue, y yellow, o orange, p purple, t teal, s skin, n brown, e grey, c cream, B R N G darker blue, red, brown, green, and . see-through. ' +
