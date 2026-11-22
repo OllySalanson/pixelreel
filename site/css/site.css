@@ -175,7 +175,7 @@ h1 { font-size: clamp(2.6rem, 4.2vw + 1rem, 4.75rem); line-height: 1.06; letter-
 .head > p:not([class]) { margin-top: 1rem; color: var(--ink-soft); }
 .aside { margin-top: 2.5rem; font-size: 1.25rem; font-weight: 500; }
 .more { display: inline-block; margin-top: 0.75rem; font-weight: 700; }
-.more::after { content: ' >'; font-family: var(--pixel); font-size: 1.2em; line-height: 1; }
+.more::after { content: '\00a0>'; font-family: var(--pixel); font-size: 1.2em; line-height: 1; }   /* kept with the last word */
 
 /* a framed panel: an ink border with notched corners, and a hard shadow */
 .step, .person, .maker, .faq details, .specimen, .walk-step > .shot, .box, .downloads img, .open-shot {
@@ -237,7 +237,10 @@ h1 { font-size: clamp(2.6rem, 4.2vw + 1rem, 4.75rem); line-height: 1.06; letter-
 .tile-sky { background: #a8dcff; }
 .tile-lilac { background: #cdb9f7; }
 .tile-peach { background: #ffc08f; }
-.people { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(1.25rem, 2.5vw, 2rem); }
+/* As many across as --across says, while each has room for its longest word ("explaining",
+   in bold): with bigger letters or a wider typeface, fewer, so no word is ever cut in two. */
+.people { --across: 3; --gap: clamp(1.25rem, 2.5vw, 2rem); display: grid; gap: var(--gap);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, max(21ch, (100% - (var(--across) - 1) * var(--gap)) / var(--across))), 1fr)); }
 .person { padding: 1.5rem 1.5rem 1.6rem; }
 .person p { margin-top: 0.4rem; font-size: 1.125rem; color: var(--ink-soft); }
 
@@ -468,7 +471,8 @@ dialog { color: var(--ink); }
   .walk-step { grid-template-columns: auto minmax(0, 1fr); }
   .walk-step > .shot, .walk-step > .box { grid-column: 2; width: min(100% - var(--u) * 2, 26rem); }
   .steps { grid-template-columns: minmax(0, 1fr); max-width: 30rem; gap: 2.5rem; }
-  .people, .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .people { --across: 2; }
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .wireless { order: -1; }
   .wireless .px { width: min(70%, 16rem); }
   .foot-in { grid-template-columns: minmax(0, 1fr); }
@@ -488,15 +492,19 @@ dialog { color: var(--ink); }
   .btn-big { font-size: 1.25rem; min-height: 4rem; }
   .btn-small, .top-add { width: auto; }
   .hero-go { gap: 0.4rem; }
-  .people, .facts, .points, .posters, .sheet, .names, .downloads { grid-template-columns: minmax(0, 1fr); }
+  .people { --across: 1; }
+  .facts, .points, .posters, .sheet, .names, .downloads { grid-template-columns: minmax(0, 1fr); }
   .points, .facts { gap: 1.5rem; }
   .walk-step { grid-template-columns: minmax(0, 1fr); }
   .walk-step > .shot, .walk-step > .box { grid-column: 1; }
   .walk-n { width: 3rem; height: 3rem; font-size: 2.5rem; }
-  .person, .point, .facts li { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 1.1rem; align-items: start; }
+  /* a picture with its words beside it, while the words have room for their longest one:
+     with bigger letters or a wider typeface they go under it, so no word is ever cut in two */
+  .person, .point, .facts li { display: flex; flex-wrap: wrap; gap: 0.6rem 1.1rem; align-items: flex-start; }
+  .person .words, .point .words, .facts .words { flex: 1 1 15ch; min-width: 0; }
   .person { padding: 1.25rem; }
-  .point .px, .facts .px { grid-row: 1 / span 2; width: 3rem; height: auto; margin: 0.15rem 0 0; }
-  .tile { grid-row: 1 / span 2; width: 4rem; height: 4rem; margin: var(--u); }
+  .point .px, .facts .px { flex: none; width: 3rem; height: auto; margin: 0.15rem 0 0; }
+  .tile { flex: none; width: 4rem; height: 4rem; margin: var(--u); }
   .tile .px { width: 3rem; height: auto; }
   .hero-watch { margin-top: 0.75rem; }
   .reel-cap { padding: 0.7rem 0.9rem 0.8rem; }
@@ -506,11 +514,15 @@ dialog { color: var(--ink); }
   .reel { margin: calc(var(--u) * 2) calc(var(--u) * 3) calc(var(--u) * 3) calc(var(--u) * 2);
     box-shadow: 0 0 0 var(--u) var(--frame), 0 0 0 calc(var(--u) * 2) var(--deep), calc(var(--u) * 3) calc(var(--u) * 3) 0 0 rgba(3, 6, 12, 0.55); }
   .reel-keys { gap: calc(var(--u) * 3) calc(var(--u) * 2); padding: var(--u) calc(0.9rem + var(--u)) calc(0.9rem + var(--u)); }
-  .reel-keys button { padding: 0.3rem 0.35rem; font-size: 0.9375rem; min-height: 2.75rem; white-space: nowrap; }
+  /* the buttons share out each row between them, so they stay tidy on one row or on three */
+  .reel-keys button { flex: 1 0 auto; padding: 0.3rem 0.35rem; font-size: 0.9375rem; min-height: 2.75rem; white-space: nowrap; }
   .reel-keys .reel-play { min-width: 3.75rem; }
+  .reel-keys .reel-sound { margin-left: 0; }
   .reel-big { font-size: 1.375rem; min-height: 3.5rem; padding: 0.5rem 1.25rem 0.5rem 1.1rem; }
   .reel-big .ico { width: 1.05rem; height: 1.2rem; }
   .specimen-keys { gap: calc(var(--u) * 2.5); padding-inline: calc(0.9rem + var(--u)); }
+  .specimen-keys span { flex: 1 0 auto; text-align: center; }
+  .specimen-keys span:last-child { margin-left: 0; }
   .specimen-keys span { padding: 0.3rem 0.5rem; font-size: 0.9375rem; }
   .specimen-cap { padding-inline: 0.9rem; }
   .theatre-in { padding: 1rem; }

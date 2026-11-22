@@ -22,12 +22,15 @@ function sky(px, w, y0, y1, stops) {
  * Stars over w x h, thicker towards the top, each twinkling in its own time. None is drawn
  * inside `quiet` (a list of [x, y, w, h]): words are easier to read on a plain background.
  */
+/** Whether a run of pixels, `run` wide from x, y, lies where words sit. */
+const amongWords = (quiet, x, y, run = 1) => quiet.some(([qx, qy, qw, qh]) => x + run > qx && x < qx + qw && y >= qy && y < qy + qh);
+
 function stars(px, w, h, t, seed, quiet = [], y0 = 0) {
   const n = Math.round((w * h) / 520);
   for (let i = 0; i < n; i++) {
     const x = Math.floor(rand(seed + i * 1.37) * w), y = y0 + Math.floor(rand(seed + i * 2.71 + 5) ** 1.5 * h);
     const beat = Math.floor(t * 1.2 + rand(i + 0.5) * 9) % 9;
-    if (beat === 0 || quiet.some(([qx, qy, qw, qh]) => x >= qx && x < qx + qw && y >= qy && y < qy + qh)) continue;
+    if (beat === 0 || amongWords(quiet, x, y)) continue;
     px.rect(i % 4 ? STAR : FAINT, x, y, 1, 1);
     if (i % 19 === 0 && beat > 4) { px.rect(STAR, x - 1, y, 3, 1); px.rect(STAR, x, y - 1, 1, 3); }
   }
@@ -103,13 +106,19 @@ export function reelie(px, x, y, t, { asleep = false, still = false } = {}) {
   }
 }
 
-/** A shooting star, once in a while. */
-function shootingStar(px, w, h, t, still, every = 11) {
+/**
+ * A shooting star, once in a while, in the top of a sky h pixels deep that starts `top` down.
+ * It passes behind the words (`quiet`), never across them.
+ */
+function shootingStar(px, w, h, t, { still = false, every = 11, quiet = [], top = 0 } = {}) {
   if (still) return;
   const turn = Math.floor(t / every), age = (t % every) / 0.9;
   if (age > 1) return;
-  const x = rand(turn * 3.3) * w * 0.7 + w * 0.2 - age * 46, y = rand(turn * 7.7) * h * 0.35 + 6 + age * 20;
-  for (let k = 0; k < 7; k++) px.rect(k < 2 ? STAR : FAINT, x + k * 2, y - k, 2 - (k > 4 ? 1 : 0), 1);
+  const x = Math.round(rand(turn * 3.3) * w * 0.7 + w * 0.2 - age * 46), y = Math.round(rand(turn * 7.7) * h * 0.35 + top + 6 + age * 20);
+  for (let k = 0; k < 7; k++) {
+    const run = k > 4 ? 1 : 2;
+    if (!amongWords(quiet, x + k * 2, y - k, run)) px.rect(k < 2 ? STAR : FAINT, x + k * 2, y - k, run, 1);
+  }
 }
 
 /**
@@ -129,7 +138,7 @@ export const SCENES = {
     px.rect(NIGHT, 0, 0, w, horizon - glow);
     sky(px, w, horizon - glow, horizon + 2, [[0, NIGHT], [0.26, '#152748'], [0.46, '#2c4c84'], [0.62, '#544b8d'], [0.76, '#a2587e'], [0.9, '#ee8a5f'], [1, '#ffc46b']]);
     stars(px, w, horizon - 20, t, 3, quiet);
-    shootingStar(px, w, horizon - glow, t, still);
+    shootingStar(px, w, horizon - glow, t, { still, quiet });
     const far = ridge(w, horizon + 2, 20, 4), mid = ridge(w, horizon + 12, 16, 9), near = ridge(w, horizon + 22, 13, 2);
     ground(px, far, '#25385f', h);
     pines(px, far, '#25385f', 11, 31);
@@ -152,7 +161,7 @@ export const SCENES = {
   cinema(px, w, h, t, { quiet = [], still = false } = {}) {
     px.rect(NIGHT, 0, 0, w, h);
     stars(px, w, h - 2 * FILM, t, 7, quiet, FILM);   // between the strips of film, not in among their holes
-    shootingStar(px, w, h, t + 5, still, 14);
+    shootingStar(px, w, h - 2 * FILM, t + 5, { still, every: 14, quiet, top: FILM });
   },
 
   // the last word: day gives way to night
