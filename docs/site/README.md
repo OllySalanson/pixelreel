@@ -1486,3 +1486,19 @@ Nothing a visitor sees. Something for whoever changes the site next.
   over the page did not start to play.
 
 Run on the home page at a phone's size, a laptop's, and a phone on its side: all well.
+
+### Version 66
+
+- **"Want one of your own?" leads to the make page.** Someone who is sent a reel and wants
+  one was shown a gold button, "Add Pixel Reel to Claude": a connector to add, and a
+  Claude account to have. But where the site makes reels itself, they can make one there
+  and then, with neither. So under every made reel, on the pages of the site's own reels,
+  and in the player that opens over a page, the button now says "Make a pixel reel" and
+  goes to the make page. Where the site cannot make a reel itself, it is as it was, since
+  adding Pixel Reel to Claude is then the only way to one. The bar across the top still
+  has "Add to Claude" on every page.
+
+Looked at in a browser on a phone's screen: under a reel just made, on a watch page, and in
+the player over the home page, with making reels switched on and off. Found on the way,
+and not from this change: with the biggest OpenDyslexic letters at 320 pixels wide, the
+player that opens over a page is 6 pixels wider than its frame.

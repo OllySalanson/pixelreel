@@ -489,6 +489,13 @@ describe('make it right here, over HTTP', () => {
     assert.doesNotMatch(home, /id="maker"/);
     assert.match(home, /<section class="section section-tint" id="make" aria-labelledby="make-title" data-here="on">/);
     assert.match(home, /<a class="btn btn-gold btn-big" href="\/make">Make a pixel reel<\/a>/);
+    // and "Want one of your own?" leads to the form on the pages the service sends out: in the theatre, and under one of the site's own reels
+    const own = /<p id="theatre-own">Want one of your own\?<\/p>[\s\S]*?<a class="btn btn-gold" href="([^"]*)">([^<]*)<\/a>/;
+    assert.deepEqual(own.exec(home).slice(1), ['/make', 'Make a pixel reel']);
+    assert.deepEqual(own.exec(await (await fetch(`${localOff}/`)).text()).slice(1), ['/claude', 'Add Pixel Reel to Claude']);
+    const under = /<h2 id="own-title">Want one of your own\?<\/h2>[\s\S]*?<a class="btn btn-gold btn-big" href="([^"]*)">([^<]*)<\/a>/;
+    assert.deepEqual(under.exec(await (await fetch(`${local}/watch/offside-rule`)).text()).slice(1), ['/make', 'Make a pixel reel']);
+    assert.deepEqual(under.exec(await (await fetch(`${localOff}/watch/offside-rule`)).text()).slice(1), ['/claude', 'Add Pixel Reel to Claude']);
   });
 
   it('tells a phone that a file may be shared to Pixel Reel, only where it can make a reel of one', async () => {
@@ -533,6 +540,8 @@ describe('make it right here, over HTTP', () => {
     assert.deepEqual(calls.at(-1)[0], { ...words('my gas bill'), language: null, narrator: null });
     // Claude has not answered yet, and the reel already has a page to wait on
     assert.deepEqual(await reels.status(id).then((s) => [s.state, s.title]), ['writing', 'Your reel']);
+    // and that page shows whoever is sent the reel the form that made it, not how to add a connector
+    assert.match(await (await fetch(`${local}/r/${id}`)).text(), /<h2 id="own-title">Want one of your own\?<\/h2>[\s\S]*?<a class="btn btn-gold btn-big" href="\/make">Make a pixel reel<\/a>/);
     calls.at(-1)[1].onProgress({ title: 'Tea', scenes: 3 });
     assert.deepEqual(await playOf(id).then((p) => [p.state, p.title, p.written]), ['writing', 'Tea', 3], 'which is told its name and how many scenes are written, as Claude writes them');
     const page = await fetch(`${local}${watch}`);

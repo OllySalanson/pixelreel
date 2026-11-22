@@ -374,6 +374,9 @@ export function sitePage(name, baseUrl, { listed = false, values = {}, title = n
   const { facts, body } = pageFacts(readFileSync(siteFile(`pages/${name}.${markdown ? 'md' : 'html'}`), 'utf8'));
   // the connector's address is long and has no spaces: <wbr> lets a narrow screen break it before "/mcp", not mid-word
   const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', languages: '', posters: postersHtml(), voices: narratorsHtml(narrators), who: whoChoices(narrators), whoreads: whoReads(narrators), scan: scanCode(body, 'scan', `${baseUrl}/app`, 'A QR code. It opens Pixel Reel on a phone.'), scanthis: scanCode(body, 'scanthis', `${baseUrl}${path}`, 'A QR code. It opens this page on a phone.'), ...values };
+  // "Want one of your own?" (under a reel, and in the theatre) leads to the form where the service makes reels itself,
+  // which needs no Claude and no account. Where it does not, it leads to adding Pixel Reel to Claude, the only way to make one.
+  Object.assign(links, links.here === 'on' ? { ownhref: '/make', owndo: 'Make a pixel reel' } : { ownhref: '/claude', owndo: 'Add Pixel Reel to Claude' });
   const heading = /^# (.+)$/m.exec(body)?.[1];
   title ??= facts.title ?? (heading && heading !== 'Pixel Reel' ? `${heading} - Pixel Reel` : 'Pixel Reel');
   // a plain page that has a reel of itself offers it straight under its heading
@@ -417,7 +420,7 @@ export function sitemapXml(baseUrl) {
  * screen allows, a way to pass it on, and the other examples. A message that is sent its
  * address shows the reel's own picture (/watch/<name>/card.png).
  */
-export function watchPage(name, baseUrl, { listed = false } = {}) {
+export function watchPage(name, baseUrl, { listed = false, here = false } = {}) {
   const title = reelTitle(name), next = WATCH[(WATCH.indexOf(name) + 1) % WATCH.length];
   return sitePage('watch', baseUrl, {
     listed,
@@ -428,6 +431,7 @@ export function watchPage(name, baseUrl, { listed = false } = {}) {
     imagealt: `${title}: a pixel reel. Press Play.`,
     fetch: `/reels/${name}/reel.json /reels/${name}/audio/manifest.json`,
     values: {
+      here: here ? 'on' : 'off',   // whether the service makes reels itself, for where "Want one of your own?" leads
       reeltitle: escapeHtml(title), theplayer: playerHtml(name), others: postersHtml({ links: true, except: name }),
       // when it ends it offers the next one round: after the last example, the reel that explains Pixel Reel
       nextname: next, nexttitle: escapeHtml(reelTitle(next))
