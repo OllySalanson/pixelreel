@@ -20,6 +20,15 @@ description: How to add Pixel Reel to Claude. You do it once, it takes about a m
           <p>Claude opens in a new tab, with Pixel Reel already filled in.</p>
           <a class="btn btn-gold btn-big" href="{{add}}" target="_blank" rel="noopener">Open Claude and add it</a>
           <p class="walk-small">You may need to sign in to Claude first.</p>
+          <!-- said to someone on a phone or a tablet before they press, not at the foot of the page: app.js shows it there, and hides the same note at the foot -->
+          <div class="walk-note" data-on-phone hidden>
+            <div class="walk-note-words">
+              {{icon:phone:3}}
+              <p><strong>On a phone?</strong> It is easiest to add it on a computer. After that, it works in the Claude app on your phone too.</p>
+            </div>
+            <button class="btn btn-paper btn-small" type="button" data-send="Add Pixel Reel to Claude" data-words="How to add Pixel Reel to Claude. It takes about a minute." data-says="#claude-sent" hidden>Send it to my computer</button>
+            <p class="said" id="claude-sent" role="status"></p>
+          </div>
         </div>
         <canvas class="shot" data-reel="site-how" data-scene="2" width="960" height="540" aria-hidden="true"></canvas>
       </li>
@@ -88,7 +97,7 @@ description: How to add Pixel Reel to Claude. You do it once, it takes about a m
       <li>Press <strong>Continue</strong>, then <strong>Add</strong>.</li>
     </ol>
     <ul class="notes">
-      <li>{{icon:phone:3}}<p><strong>On a phone?</strong> It is easiest to add it on a computer. After that, it works in the Claude app on your phone too.</p></li>
+      <li data-not-phone>{{icon:phone:3}}<p><strong>On a phone?</strong> It is easiest to add it on a computer. After that, it works in the Claude app on your phone too.</p></li>
       <li>{{icon:star:3}}<p><strong>On the free Claude plan?</strong> You can have one custom connector at a time. Make it this one.</p></li>
     </ul>
   </div>

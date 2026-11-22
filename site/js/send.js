@@ -24,14 +24,15 @@ export async function copyText(text) {
 
 /**
  * Passes a reel on. With `share` (a phone's own way of sending things) it opens that, with
- * the reel's title and address; without, or if that fails, it copies the address with `copy`.
+ * the reel's title and address, and `words` to go with them where the page is not a reel;
+ * without, or if that fails, it copies the address with `copy`.
  * Resolves to how it went: 'shared' (the phone has taken over), 'stopped' (they changed
  * their mind), 'copied' or 'failed'.
  */
-export async function sendReel(title, url, { share = null, copy = copyText } = {}) {
+export async function sendReel(title, url, { share = null, copy = copyText, words = null } = {}) {
   if (share) {
     try {
-      await share({ title, text: `${title}, as a pixel reel. Press Play.`, url });
+      await share({ title, text: words ?? `${title}, as a pixel reel. Press Play.`, url });
       return 'shared';
     } catch (err) {
       if (err?.name === 'AbortError') return 'stopped';
@@ -48,7 +49,7 @@ export const phoneShare = () => (navigator.share && matchMedia('(pointer: coarse
 
 /**
  * Wakes every <button data-send="A reel's name" data-says="#where-to-say-so">: pressed, it
- * passes on the page it is on, or the page at data-path.
+ * passes on the page it is on, or the page at data-path, with the words in data-words if it has any.
  */
 export function startSending() {
   for (const button of document.querySelectorAll('button[data-send]')) {
@@ -56,7 +57,7 @@ export function startSending() {
     button.hidden = false;
     button.addEventListener('click', async () => {
       const url = location.origin + (button.dataset.path ?? location.pathname);
-      says.textContent = sentWords(await sendReel(button.dataset.send, url, { share: phoneShare() }), url);
+      says.textContent = sentWords(await sendReel(button.dataset.send, url, { share: phoneShare(), words: button.dataset.words ?? null }), url);
     });
   }
 }

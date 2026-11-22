@@ -1055,3 +1055,29 @@ things did not:
 | The letter and the phone on Dark paper |
 | --- |
 | ![On Dark paper: the pension letter as a dim grey sheet, and the picture of a phone with a light edge round it.](log/v47-dark.jpg) |
+
+### Version 48
+
+Read the page that adds Pixel Reel to Claude as someone on a phone would: a reel sent in
+a message is likely to be opened on one, and its page leads here.
+
+- **The advice for a phone came after the pressing.** "On a phone? It is easiest to add it
+  on a computer" was the second-to-last thing on the page, under Plan B, long after the big
+  button. Someone on a phone or a tablet now gets it at step 1, straight under the button.
+  The note at the foot is left for people on a computer, so nobody reads it twice.
+- **And a way to do something about it.** The note has a button, "Send it to my computer",
+  which opens the phone's own way of sending things with this page's link, to email or
+  message to themselves. What it sends says what the page is ("How to add Pixel Reel to
+  Claude"), not "as a pixel reel. Press Play.", which a page is not.
+- **A test that every page closes what it opens.** Making this, a stray closing tag put the
+  step's picture outside its step, and only looking at the page showed it. A test now counts
+  the tags of every page.
+- Found on the way, at the biggest, roomiest OpenDyslexic letters on a phone 320 pixels
+  wide: "connector" was cut in two in the pretend "Add a connector" box. It fits now.
+
+Tried in a headless browser that says it is an iPhone, with a stand-in for the phone's
+share sheet. Not tried on a real phone.
+
+| Step 1 on a phone |
+| --- |
+| ![Step 1 on a phone: Press the big button, Open Claude and add it, and under it a card: "On a phone? It is easiest to add it on a computer. After that, it works in the Claude app on your phone too." with a button, Send it to my computer.](log/v48-phone-note.jpg) |
