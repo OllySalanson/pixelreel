@@ -697,7 +697,7 @@ describe('the service over HTTP', async () => {
     assert.equal(made.isError, undefined);
     const { id, watch } = made.structuredContent;
     assert.equal(watch, `https://reels.example/r/${id}`, 'links use the address people reach the service at');
-    assert.match(words(made), /^"Tea" is made \(2 scenes, about 0:10\) and (waiting its turn: another reel is being recorded first|Peter is recording the voice now, which takes about as long as the reel lasts)\./);
+    assert.match(words(made), /^"Tea" is made \(2 scenes, about 0:10\) and (waiting its turn: another reel is being recorded first|Peter is recording the voice now)\. In the chat, where the player shows, it can be played within seconds, while the rest is recorded\. At https:\/\/reels\.example\/r\/[\w-]{22} it plays once the voice is finished, in about 0:10\./, 'it says truly how long the wait is, in the chat and at the link');
     assert.match(words(made), /answer in one or two short sentences, with the link on a line of its own\. Do not list the scenes\. There is no need to check on it\./);
     assert.equal(made.structuredContent.message, words(made), 'the same words for a client that shows Claude only the data');
 
@@ -1103,6 +1103,8 @@ describe('the service over HTTP', async () => {
     assert.match(bridge, /\$\{state\.narrator \?\? 'Peter'\} has read \$\{state\.recorded\} of \$\{state\.lines\} lines/, 'by whoever is reading it');
     assert.match(bridge, /waiting\(\{ state: 'recording' \}\)/, 'a reel just made is shown as being recorded until the service says otherwise');
     assert.match(bridge, /className: 'lines'/, 'with a square for each line');
+    assert.match(bridge, /if \(heading \+ words\[0\] !== announced\)/, 'and says each thing that happens once to a screen reader, not every line');
+    assert.match(playerHtml('https://reels.example'), /id="cap-live" aria-live="polite"/, 'through the part of the page that is read aloud');
     assert.match(playerHtml('https://reels.example'), /\.lines i\.on \{ background: var\(--gold\); \}/, 'which the page knows how to draw');
   });
 

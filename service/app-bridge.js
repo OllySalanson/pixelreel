@@ -24,6 +24,8 @@
   lines.setAttribute('aria-hidden', 'true');
   $('cap').appendChild(lines);
 
+  let announced = '';
+
   /** Shows words in the caption box, with the picture and buttons put away; and `done` of `of` squares lit, if there is a count. */
   function say(heading, words, done = 0, of = 0) {
     document.querySelector('.stage').hidden = true;
@@ -32,6 +34,11 @@
     $('cap-title').textContent = words[0];
     $('cap-typed').textContent = words[1] ?? '';
     $('cap-body').removeAttribute('aria-hidden');
+    // said aloud to someone using a screen reader, once for each thing that happens: not again for every line read
+    if (heading + words[0] !== announced) {
+      announced = heading + words[0];
+      $('cap-live').textContent = `${words[0]}. ${words[1] ?? ''}`.trim();
+    }
     lines.hidden = !of;
     lines.replaceChildren(...Array.from({ length: of }, (_, i) => Object.assign(document.createElement('i'), { className: i < done ? 'on' : '' })));
   }
