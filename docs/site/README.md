@@ -1097,3 +1097,48 @@ share sheet. Not tried on a real phone.
 | Step 1 on a phone |
 | --- |
 | ![Step 1 on a phone: Press the big button, Open Claude and add it, and under it a card: "On a phone? It is easiest to add it on a computer. After that, it works in the Claude app on your phone too." with a button, Send it to my computer.](log/v48-phone-note.jpg) |
+
+### Version 49
+
+Olly, of the make page: "it's just not an intuitive form, is it?" People should "just know
+how to use it by looking at it". So it was looked at as someone who has never seen it, on a
+phone and on a laptop, and counted.
+
+What was wrong. The box was one thin line under "What do you want explained?", which does
+not say a link goes there. Between it and the button that makes the reel stood 17 other
+things to press: four things to try, seven languages and six narrators. On a phone the
+button was 1,170 pixels down, past the first screen and half the second. A photo and a PDF,
+the way in for a letter or a bill, came after the button, in a box that read as a footnote.
+And a link had to be pasted by pressing and holding in the box, which is fiddly.
+
+- **One big box that says what goes in it: "Paste a link here."** A picture of a link sits
+  beside the words, and inside the box it says "Or type a question".
+- **A Paste button, in the box.** One press puts in whatever was last copied. The words
+  land in the box to be looked over, not sent, because a clipboard can hold anything; the
+  page then says "Pasted. Now press Make my reel." A copied picture (a screenshot of a
+  letter) is made into a reel at once, as a dropped one is. The button shows only where
+  the browser lets a page read what was copied, and if the browser or the person says no,
+  the page says to paste in the box instead.
+- **The big button is straight under the box**, and bigger. On a phone it now ends 640
+  pixels down, on the first screen; on a laptop, 697 of 800.
+- **Nothing to decide before it.** Who reads, and in which language, is one line: "Read by
+  Peter in English", the two names as chips with a little arrow. Press it and the choices
+  open under it, the same ones as before. It starts on the choice made last time, or the
+  browser's own language.
+- **A photo and a PDF have a button each**, under a line: "Take a photo" (on a phone;
+  "Choose a photo" with a mouse) and "Choose a PDF". Each opens the chooser showing only
+  that kind. Dropping anything anywhere on the page still works, and says so in a quiet line.
+- **Things to try moved under all that**, since they are for someone with nothing in hand.
+  Pressing one fills the box and brings it and the big button back onto the screen.
+- Kept as they were: the limits, the messages when something cannot be made, the wait and
+  the page a reel is watched being made on, Your reels, sharing from a phone, and "Use your
+  own Claude instead". With Make it right here off, the same box writes the words for Claude.
+
+Checked with `scripts/site-fit.js` at 320, 390 and 1280 pixels wide, as the page opens and
+with everything on it opened: nothing cut in two or too wide at any of the 27 settings.
+The Paste button was pressed in a headless browser with a stand-in for the clipboard; it
+has not yet been pressed on a real phone.
+
+| The first screen on a phone, before and after |
+| --- |
+| ![Before: What do you want explained, a thin box, four things to try and a row of languages, with no button in sight. After: Paste a link here, a big box with a Paste button in it, Read by Peter in English, and a big gold button, Make my reel.](log/v49-make-at-a-glance.jpg) |
