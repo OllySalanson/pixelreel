@@ -42,7 +42,8 @@ People who find reading hard work. Every choice follows from that:
 - **Nothing lost with the sound off.** A reel shows a few words and Peter says the rest.
   With the sound off, every word he says is written under the picture instead.
 - **A place kept in the words.** Where every word is written, the sentence being said is
-  gold as it is said, so nobody has to hunt for where the voice has got to.
+  gold as it is said, so nobody has to hunt for where the voice has got to. The same goes
+  for the site's own words when they are read aloud.
 - **As big as the screen.** Every player has a button in the corner of its picture that
   fills the whole screen with the reel, for anyone who needs it large. On a phone held on
   its side, pressing Play fills the screen without being asked.
@@ -1578,3 +1579,29 @@ two phone widths: twenty runs.
 | The menu on the make page, on cream and on Dark paper |
 | --- |
 | ![The menu opened on the make page: the row "Make a pixel reel" has a gold edge and the words You are here under it. Beside it, the same on Dark paper.](log/v71-you-are-here.jpg) |
+
+### Version 72
+
+- **Read aloud, the sentence being said is gold.** A reel marks the sentence being said in
+  its own words (Version 37). The site's words, read aloud, had only an edge round the
+  whole part being read: fine for a heading, little help in a paragraph of four sentences.
+  The sentence being said is now gold there too, in a paragraph, a card, or a question and
+  its answer, so the eye can follow the voice.
+- **The page is not changed to do it.** The browser is asked to mark a run of words where
+  they stand (the CSS Custom Highlight API), so links stay links and bold stays bold in
+  the middle of a marked sentence. Where a browser cannot do that, the edge round the
+  part is all there is, as before.
+- **It knows where every letter came from.** The words handed to the voice are tidied
+  (spaces run together, a full stop put after a heading), so each letter keeps a note of
+  where in the page it came from, and a sentence is found again from its first letter to
+  its last.
+
+Tried with a stand-in for the voice, which says when it begins each sentence: the words
+marked were the words handed over, sentence for sentence, on the privacy page and in a
+question on the home page, on cream and on Dark paper. Whether each real browser's voice
+says when it begins each sentence is still not known: where one does not, nothing is
+marked, and the page is read as before.
+
+| A paragraph of the privacy page, and a question on Dark paper, with the sentence being said in gold |
+| --- |
+| ![A list on the privacy page: one item has an edge round it, and its first sentence is gold. Beside it, a question open on Dark paper, with the second sentence of its answer gold.](log/v72-the-sentence.jpg) |
