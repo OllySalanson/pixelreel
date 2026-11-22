@@ -307,6 +307,27 @@ describe('a page for each example reel', () => {
   });
 });
 
+describe('when a reel ends', () => {
+  // the player takes what follows it on the page, if it is a .reel-end, and shows it over the last picture
+  const offer = (page) => /<\/noscript>\s*<\/div>\s*<div class="reel-end" hidden>([\s\S]*?)<\/div>/.exec(page)?.[1];
+
+  it('offers something to do next, straight after the player, out of sight until then', () => {
+    for (const [name, wants] of [['home', /<a class="btn btn-gold" href="\/claude">Add Pixel Reel to Claude<\/a>/], ['reel', /<button class="btn btn-gold" type="button" data-send="Tea" data-says="#watch-sent">Send it to someone<\/button>/]]) {
+      assert.match(offer(html[name]) ?? '', wants, name);
+      assert.match(offer(html[name]), /<button class="btn btn-paper" type="button" data-again>Watch it again<\/button>/, name);
+    }
+  });
+
+  it('offers the next reel round on an example\'s page, and never the same one', () => {
+    const title = (name) => JSON.parse(readFileSync(root(`reels/${name}/reel.json`), 'utf8')).title;
+    WATCH.forEach((name, i) => {
+      const next = WATCH[(i + 1) % WATCH.length];
+      assert.notEqual(next, name);
+      assert.ok((offer(watchPage(name, 'https://reels.example')) ?? '').includes(`<a class="btn btn-gold" href="/watch/${next}">${title(next)}</a>`), `${name} leads on to ${next}`);
+    });
+  });
+});
+
 describe('passing a reel on', () => {
   const link = 'https://reels.example/r/abc';
   const copies = (works) => { const copied = []; return { copied, copy: async (text) => { copied.push(text); return works; } }; };

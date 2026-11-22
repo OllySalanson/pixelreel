@@ -248,7 +248,7 @@ export function sitemapXml(baseUrl) {
  * address shows the reel's own picture (/watch/<name>/card.png).
  */
 export function watchPage(name, baseUrl, { listed = false } = {}) {
-  const title = reelTitle(name);
+  const title = reelTitle(name), next = WATCH[(WATCH.indexOf(name) + 1) % WATCH.length];
   return sitePage('watch', baseUrl, {
     listed,
     path: `/watch/${name}`,
@@ -257,6 +257,10 @@ export function watchPage(name, baseUrl, { listed = false } = {}) {
     image: `${baseUrl}/watch/${name}/card.png`,
     imagealt: `${title}: a pixel reel. Press Play.`,
     fetch: `/reels/${name}/reel.json /reels/${name}/audio/manifest.json`,
-    values: { reeltitle: escapeHtml(title), theplayer: playerHtml(name), others: postersHtml({ links: true, except: name }) }
+    values: {
+      reeltitle: escapeHtml(title), theplayer: playerHtml(name), others: postersHtml({ links: true, except: name }),
+      // when it ends it offers the next one round: after the last example, the reel that explains Pixel Reel
+      nextname: next, nexttitle: escapeHtml(reelTitle(next))
+    }
   });
 }

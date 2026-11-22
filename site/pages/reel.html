@@ -11,6 +11,11 @@ imagealt: A pixel reel for you. Press Play. Reelie the film reel stands under a 
     <!-- the player says the reel's name, large, under its picture: said twice it only pushed the reel down the screen -->
     <h1 class="sr-only" id="watch-title">{{reeltitle}}</h1>
     {{player:empty}}
+    <div class="reel-end" hidden>
+      <p>The end.</p>
+      <button class="btn btn-gold" type="button" data-send="{{reeltitle}}" data-says="#watch-sent">Send it to someone</button>
+      <button class="btn btn-paper" type="button" data-again>Watch it again</button>
+    </div>
     <p class="sr-only" id="watch-says" role="status"></p>
     <div class="watch-foot" data-quiet>
       <div class="row">

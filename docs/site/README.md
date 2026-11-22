@@ -357,3 +357,16 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | The new choice in Make it comfy |
 | --- |
 | ![How fast Peter reads: Slower, Usual, Quicker, with Slower chosen.](log/v14-pace.jpg) |
+
+### Version 15
+
+- **A reel that ends offers what to do next.** It used to stop on "Play again". Now its
+  last picture dims and the page makes its offer there, while the reel is still fresh:
+  the reel that explains Pixel Reel offers "Add Pixel Reel to Claude"; a shared reel
+  offers "Send it to someone"; an example offers the next example. Each also has "Watch
+  it again". A page writes its offer as a `.reel-end` straight after its player, and the
+  player moves it over the picture.
+
+| The end of a shared reel, and of the reel on the home page |
+| --- |
+| ![The end. Send it to someone. Watch it again. And: That is Pixel Reel. Add Pixel Reel to Claude. Watch it again.](log/v15-the-end.jpg) |

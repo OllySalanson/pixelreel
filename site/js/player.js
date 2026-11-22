@@ -72,6 +72,13 @@ export class ReelPlayer {
     this.visible = false;
     this.ticking = false;
     this.scrubbing = null;
+    // What the page offers when the reel ends: a .reel-end it writes straight after the
+    // player (a way to send the reel on, the next one, how to get one). It goes over the last picture.
+    this.end = root.nextElementSibling?.matches('.reel-end') ? root.nextElementSibling : null;
+    if (this.end) {
+      find('reel-screen').append(this.end);
+      this.end.querySelector('[data-again]')?.addEventListener('click', () => this.start());
+    }
     talkers.add(this);
     root.pixelreel = this;     // a small window into the player, for automated checks and the curious
     this.wire(find('reel-back'), find('reel-next'));
@@ -255,13 +262,17 @@ export class ReelPlayer {
     label(this.playKey, state.playing ? 'Pause' : state.ended ? 'Again' : 'Play');
     label(this.soundKey, state.muted ? 'Sound off' : 'Sound on');
     this.soundKey.setAttribute('aria-pressed', String(!state.muted));
-    this.big.hidden = !(this.intro || state.ended);
+    this.big.hidden = !(this.intro || (state.ended && !this.end));   // at the end, the page's own offer stands in for "Play again"
     this.big.lastElementChild.textContent = state.ended ? 'Play again' : 'Play';
+    if (this.end) this.end.hidden = !state.ended;
     this.root.classList.toggle('is-playing', state.playing);
     const scene = scenes[state.index];
     this.title.textContent = this.intro ? reel.title : `${state.index + 1}. ${scene.title}`;
     [...this.words.children].forEach((p, i) => p.classList.toggle('on', i === (this.intro ? 0 : state.index + 1)));
-    if (state.ended && !this.wasEnded) this.onEnd();
+    if (state.ended && !this.wasEnded) {
+      this.live.textContent = 'The end.';
+      this.onEnd();
+    }
     this.wasEnded = state.ended;
     this.paintProgress();
     this.wake();
