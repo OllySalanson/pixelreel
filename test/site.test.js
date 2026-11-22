@@ -489,6 +489,22 @@ describe('making a reel has a page of its own', () => {
     assert.match(script, /paste\.addEventListener\('click', async \(\) => \{\s*let given;\s*try \{\s*given = await givenFromClipboard\(navigator\.clipboard\);/, 'inside the press, where a browser allows it');
   });
 
+  it('is where "Want one of your own?" leads, under a reel and in the theatre, where the service makes reels itself', () => {
+    // what comes after the question, under a reel, and the gold button beside it in the theatre that every page carries
+    const under = (page) => /<h2 id="own-title">Want one of your own\?<\/h2>[\s\S]*?<a class="btn btn-gold btn-big" href="([^"]*)">([^<]*)<\/a>\s*<a class="btn btn-paper btn-big" href="\/">See what it is<\/a>/.exec(page)?.slice(1);
+    const theatre = (page) => /<p id="theatre-own">Want one of your own\?<\/p>[\s\S]*?<a class="btn btn-gold" href="([^"]*)">([^<]*)<\/a>/.exec(page)?.slice(1);
+    const make = ['/make', 'Make a pixel reel'], add = ['/claude', 'Add Pixel Reel to Claude'];
+    const reel = (here) => sitePage('reel', 'https://reels.example', { ...forReel, values: { ...forReel.values, here } });
+    // made here, a reel needs no Claude and no account: whoever is sent one is shown the form, not how to add a connector
+    assert.deepEqual([under(reel('on')), theatre(reel('on'))], [make, make]);
+    assert.deepEqual(under(watchPage('offside-rule', 'https://reels.example', { here: true })), make);
+    assert.deepEqual(theatre(sitePage('home', 'https://reels.example', { values: { here: 'on' } })), make);
+    // where the service does not make reels itself, adding Pixel Reel to Claude is still the only way to one
+    assert.deepEqual([under(reel('off')), theatre(reel('off'))], [add, add]);
+    assert.deepEqual([under(html.reel), under(html['watch/offside-rule']), theatre(html.home), theatre(html.make)], [add, add, add, add], 'and that is how it is unless the service says otherwise');
+    for (const page of [reel('on'), reel('off'), html.home]) assert.doesNotMatch(page, /\{\{own/, 'nothing left unfilled');
+  });
+
   it('leaves the home page its words about it, and a big button that goes there', () => {
     assert.doesNotMatch(html.home, /id="maker"|id="mine"|id="drop-over"/);
     assert.match(html.home, /<a class="btn btn-gold btn-big" href="\/make">Make a pixel reel<\/a>/);

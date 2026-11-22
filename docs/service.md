@@ -320,6 +320,11 @@ Who reads the reel, and in which language, is one line between the box and the b
 ("Read by Peter in English"). It opens when pressed, so there is nothing to decide before
 making a reel, and the choice made last time is kept.
 
+With this on, "Want one of your own?" under every reel, on the pages of the site's own
+reels and in the player that opens over a page, leads to the make page ("Make a pixel
+reel"). With it off it leads to adding Pixel Reel to Claude, which is then the only way to
+make one (`ownhref` and `owndo` in `service/site.mjs`).
+
 Many apps copy a link with its headline over it ("Share", then "Copy"). The page takes
 that as the link (`linkWithTitle` in `site/js/given.js`), so that Claude reads the page:
 sent as it came it would be a few lines of writing, and the reel would explain the headline.
