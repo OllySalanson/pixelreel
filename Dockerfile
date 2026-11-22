@@ -13,7 +13,7 @@ WORKDIR /app
 ENV HF_HOME=/opt/huggingface
 
 # the voice first: it changes least and takes longest (PyTorch for the CPU, Pocket TTS, the model)
-# VOICE_LANGUAGES names the other languages the narrator reads: each is a model of about 190 MB.
+# VOICE_LANGUAGES names the other languages the narrator reads: each is a model of about 220 MB.
 # VOICE_NAMES names the other narrators' voices (small files). Both are switched on further down,
 # with PIXELREEL_LANGUAGES and PIXELREEL_NARRATORS: keep the two in step (docs/deploy.md).
 ARG VOICE_LANGUAGES="french german spanish italian portuguese dutch"

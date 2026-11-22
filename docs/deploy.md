@@ -30,7 +30,7 @@ docker run -p 8787:8787 -e PIXELREEL_URL=https://reels.example -v pixelreel-data
 | Processor | 2 vCPUs. Pocket TTS records about 2.5 times faster than real time on 4; one job runs at a time. |
 | Memory | 2 GB. The voice model and PyTorch take about 1 GB, which the service keeps loaded so reels start at once; a video job about 300 MB more. |
 | Disk for `/data` | About 1 MB a reel (recordings), plus about 1.7 MB a minute for any video. 10 GB is thousands of reels. |
-| Image | About 3 GB: PyTorch, the English voice model, and six more languages' models at about 190 MB each. |
+| Image | 2.1 GB as stored: PyTorch, the English voice model, and six more languages' models at 219 MB each. |
 | HTTPS | Claude only connects to `https://` addresses. |
 
 ## Choosing a host
@@ -133,7 +133,7 @@ must be verified for the Google account that makes them:
 ### Other languages and narrators
 
 On in the image. It is built with the voice models for French, German, Spanish, Italian,
-Portuguese and Dutch (`ARG VOICE_LANGUAGES` in the `Dockerfile`, about 190 MB each) and
+Portuguese and Dutch (`ARG VOICE_LANGUAGES` in the `Dockerfile`, 219 MB each) and
 with five more narrators' voices beside Peter's: Anna, Vera, Stuart, Charles and Paul
 (`ARG VOICE_NAMES`, small files), and it switches them on itself (`ENV PIXELREEL_LANGUAGES`
 and `PIXELREEL_NARRATORS`, at the end of the `Dockerfile`). See
@@ -148,7 +148,25 @@ they sound.
   `gcloud run services update pixelreel --region europe-west1 --project pixelreel-515501 --update-env-vars PIXELREEL_LANGUAGES=,PIXELREEL_NARRATORS=`.
 - The voice kept loaded is the English one. A reel in another language loads that
   language's model for the reel, in a second process, so for its length the service holds
-  two models (about 2 GB of the copy's 4 GB).
+  two models.
+
+Measured on Cloud Run when they were switched on (22 November 2026, revision
+`pixelreel-00019-g9r`, against the revision before):
+
+| | Before | With six languages and five narrators |
+| --- | --- | --- |
+| Image, as stored | 1.14 GB | 2.14 GB |
+| Container start | 1.8 to 2.9 seconds | 1.8 seconds |
+| English voice loaded after start | 15.6 to 16.4 seconds | 14.5 seconds |
+| Memory at rest, of 4 GiB | 18% | 21% |
+| Memory while a French reel records | | 38% |
+| English reel, six scenes: first line, playable, ready | | 7, 11 and 33 seconds |
+| French reel, six scenes: first line, playable, ready | | 19, 38 and 51 seconds |
+
+The models are only read when a reel in that language is recorded, so the service starts
+no slower. A reel in another language waits about 12 seconds longer for its first line,
+while its model loads.
+
 
 ### Switching on Make it right here
 

@@ -3,7 +3,7 @@
 #   .venv/    a Python environment with Pocket TTS (and PyTorch for the CPU) and soundfile
 #   the Pocket TTS model and its default voice (about 220 MB, downloaded once into the
 #   Hugging Face cache, ~/.cache/huggingface)
-#   and, with VOICE_LANGUAGES="french spanish", its models for other languages (about 190 MB each)
+#   and, with VOICE_LANGUAGES="french spanish", its models for other languages (about 220 MB each)
 # With "kokoro" (scripts/setup-voices.sh kokoro) it also gets Kokoro, the engine the
 # example reels were recorded with: kokoro-onnx, and its model files (about 350 MB) in models/.
 # Needs Python 3.10 to 3.13 and curl. Set KOKORO_HOME to keep the Kokoro models somewhere else.
@@ -37,7 +37,7 @@ $PIP "pocket-tts>=4,<5" "soundfile>=0.12"
 echo "Getting the Pocket TTS model and the peter_yearsley voice"
 "$ROOT/.venv/bin/python" -c "from pocket_tts import TTSModel; TTSModel.load_model().get_state_for_audio_prompt('peter_yearsley')"
 # Other languages for the narrator to read, such as VOICE_LANGUAGES="french spanish": each is a
-# model of its own, about 190 MB (french, german, spanish, italian, portuguese, dutch).
+# model of its own, about 220 MB (french, german, spanish, italian, portuguese, dutch).
 for language in ${VOICE_LANGUAGES:-}; do
   echo "Getting the Pocket TTS $language model"
   "$ROOT/.venv/bin/python" -c "import sys; from pocket_tts import TTSModel; TTSModel.load_model(language=sys.argv[1]).get_state_for_audio_prompt('peter_yearsley')" "$language"
