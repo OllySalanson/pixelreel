@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import { LIMITS, limitProblems, RateLimit } from '../service/limits.mjs';
+import { EXAMPLE_REEL, formatGuide } from '../service/mcp.mjs';
 import { BusyError, isId, KEEP_DAYS, newId, Reels } from '../service/reels.mjs';
 import { reelFromData } from '../src/format.js';
 import { markdownHtml, SITE_PAGES, SITE_POLICY } from '../service/site.mjs';
@@ -129,7 +130,9 @@ describe('the reels service', () => {
     assert.equal(ready.state, 'ready');
     assert.equal(ready.seconds, 14, 'the length from the recordings, with a 1.2 second pause after each');
     assert.deepEqual((await reels.manifest(made.id)).clips.map((c) => c.text), ['Boil the kettle.', 'Pour it.']);
-    assert.deepEqual(await reels.reel(made.id), tea);
+    const timed = await reels.reel(made.id);
+    assert.deepEqual(timed.scenes[1].picture, { type: 'icons', items: [{ icon: 'cup', label: 'Tea' }], start: 0.6, every: 1.4 }, 'its pictures are timed to the recording');
+    assert.deepEqual({ ...timed, scenes: [timed.scenes[0], tea.scenes[1]] }, tea, 'and nothing else about it is changed');
 
     clock += KEEP_DAYS * 86400000;
     assert.equal(await reels.status(made.id), null, 'gone once it expires');
@@ -311,9 +314,57 @@ describe('the service over HTTP', async () => {
       assert.ok(t.name.length <= 64);
     }
     assert.equal(tools.find((t) => t.name === 'delete_reel').annotations.destructiveHint, true);
-    assert.equal(tools.find((t) => t.name === 'make_reel').inputSchema.properties.format.const, 'pixelreel/1');
     assert.match(words(await client.callTool({ name: 'reel_format', arguments: {} })), /Icons: letter, document, phone/);
     await client.close();
+  });
+
+  it('says who it is, with its picture, and when to use it', async () => {
+    const client = await connect();
+    assert.deepEqual(client.getServerVersion(), {
+      name: 'pixelreel', title: 'Pixel Reel', version: '0.1.0', websiteUrl: 'https://reels.example',
+      icons: [{ src: 'https://reels.example/site/art/icon-192.png', mimeType: 'image/png', sizes: ['192x192'] },
+        { src: 'https://reels.example/site/art/icon-512.png', mimeType: 'image/png', sizes: ['512x512'] }]
+    });
+    for (const size of [192, 512]) assert.ok(staticFile(`/site/art/icon-${size}.png`), 'the picture is there to be shown');
+    assert.match(client.getInstructions(), /^Pixel Reel makes short pixel-art explainers/);
+    assert.match(client.getInstructions(), /answer in one or two short sentences/);
+    await client.close();
+  });
+
+  it('tells Claude how to write a good reel where it will read it: in make_reel itself', async () => {
+    const client = await connect();
+    const make = (await client.listTools()).tools.find((t) => t.name === 'make_reel');
+    assert.match(make.description, /5 to 7 scenes, about 40 seconds/);
+    assert.match(make.description, /a letter, a bill, a document, a web page, how something works, or the chat so far/);
+    assert.ok(make.description.length < 2000, 'short enough for clients that cut a long description off');
+    const { properties, $defs } = make.inputSchema;
+    assert.equal(properties.format.const, 'pixelreel/1');
+    assert.equal(properties.images, undefined, 'no pictures from elsewhere, so none are offered');
+    assert.match($defs.scene.properties.say.description, /12 to 25 words/);
+    const pictures = $defs.picture.oneOf;
+    assert.deepEqual(pictures.map((p) => p.title), ['title', 'list', 'terminal', 'code', 'chat', 'big', 'icons', 'flow', 'compare', 'sprite']);
+    for (const picture of pictures) {
+      assert.equal(picture.properties.every ?? picture.properties.start, undefined, `${picture.title}: the service does the timing, so Claude is not asked to guess it`);
+    }
+    await client.close();
+  });
+
+  it('gives a guide with a finished reel in it, which is itself a good reel', async () => {
+    const guide = formatGuide();
+    const example = JSON.parse(guide.slice(guide.indexOf('{"format"')));
+    assert.deepEqual(example, EXAMPLE_REEL);
+    assert.deepEqual(limitProblems(reelFromData(example), example), []);
+    assert.ok(example.scenes.length >= 5 && example.scenes.length <= 7);
+    for (const scene of example.scenes) {
+      const said = scene.say.split(/\s+/).length;
+      assert.ok(said >= 12 && said <= 25, `"${scene.say}" is ${said} words`);
+      assert.ok(scene.caption.split(/\s+/).length <= 12, scene.caption);
+      assert.notEqual(scene.say, scene.caption);
+      assert.equal(scene.picture.every ?? scene.picture.start, undefined);
+    }
+    assert.equal(new Set(example.scenes.map((s) => s.picture.type)).size, example.scenes.length, 'every scene has a different picture');
+    assert.equal(new Set(example.scenes.at(-1).picture.rows.map((r) => r.length)).size, 1, "the sprite's rows are all one length");
+    assert.doesNotMatch(guide, /\bevery\b.*\bstart\b/, 'the guide does not offer timing fields');
   });
 
   it('makes a reel, shows it, makes its video and deletes it', async () => {
@@ -322,7 +373,9 @@ describe('the service over HTTP', async () => {
     assert.equal(made.isError, undefined);
     const { id, watch } = made.structuredContent;
     assert.equal(watch, `https://reels.example/r/${id}`, 'links use the address people reach the service at');
-    assert.match(words(made), /being recorded|waiting its turn/);
+    assert.match(words(made), /^"Tea" is made \(2 scenes, about 0:10\) and (waiting its turn to be recorded|Peter is recording the voice now)/);
+    assert.match(words(made), /answer in one or two short sentences, with the link on a line of its own\. Do not list the scenes\. There is no need to check on it\./);
+    assert.equal(made.structuredContent.message, words(made), 'the same words for a client that shows Claude only the data');
 
     const waiting = await fetch(`${local}/r/${id}`);
     await reels.idle();
@@ -410,6 +463,19 @@ describe('the service over HTTP', async () => {
     await client.close();
   });
 
+  it('takes a reel that does not say its format, as there is only the one here', async () => {
+    const client = await connect();
+    const { format, ...bare } = tea;
+    assert.deepEqual((await client.listTools()).tools.find((t) => t.name === 'make_reel').inputSchema.required, ['title', 'scenes']);
+    const made = await client.callTool({ name: 'make_reel', arguments: bare });
+    assert.equal(made.isError, undefined);
+    assert.equal((await reels.reel(made.structuredContent.id)).format, format);
+    const wrong = await client.callTool({ name: 'make_reel', arguments: { ...tea, format: 'pixelreel/9' } });
+    assert.match(words(wrong), /format: this player reads "pixelreel\/1", not "pixelreel\/9"/, 'but one that names another format is told so');
+    await reels.idle();
+    await client.close();
+  });
+
   it('offers a player to show inside the chat, allowed to reach only the service', async () => {
     const client = await connect();
     const { tools } = await client.listTools();
@@ -436,7 +502,8 @@ describe('the service over HTTP', async () => {
     const ready = await (await fetch(`${local}/r/${id}/play.json`)).json();
     assert.equal(ready.state, 'ready');
     assert.equal(ready.watch, `https://reels.example/r/${id}`);
-    assert.deepEqual(ready.reel, tea);
+    assert.deepEqual(ready.reel, await reels.reel(id), 'the reel as it is kept, its pictures timed to the voice');
+    assert.equal(ready.reel.scenes[1].picture.start, 0.6);
     assert.deepEqual(ready.clips.map((c) => c.file), [`https://reels.example/r/${id}/audio/clip0.mp3`, `https://reels.example/r/${id}/audio/clip1.mp3`]);
     assert.ok(Date.parse(ready.expires) > Date.now(), 'it says how long the reel is kept');
     assert.equal(ready.video, undefined, 'no video has been asked for');
