@@ -74,7 +74,8 @@ export class WarmVoice {
    * the usual way.
    */
   async speak(lines, settings, threads, onDone) {
-    if (settings.engine !== 'pocket') { await this.once(lines, settings, threads, onDone); return; }
+    // the voice kept loaded is Pocket TTS's English one: any other engine or language is spoken the usual way
+    if (settings.engine !== 'pocket' || settings.lang) { await this.once(lines, settings, threads, onDone); return; }
     const left = new Map(lines.map((line) => [line.wav, line]));
     if (await this.start()) {
       try {

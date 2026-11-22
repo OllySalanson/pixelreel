@@ -7,7 +7,7 @@ import { after, describe, it } from 'node:test';
 import { checkReel } from '../scripts/check-reel.mjs';
 import { parseScript, plainWords, reelSource } from '../scripts/from-script.mjs';
 import { createReel, titleFromName } from '../scripts/new-reel.mjs';
-import { clipFile, ENGINES, findFfmpeg, main as recordVoices, narrator, planClips } from '../scripts/voices.mjs';
+import { clipFile, ENGINES, findFfmpeg, main as recordVoices, narrator, planClips, POCKET_LANGUAGES } from '../scripts/voices.mjs';
 import { normalizeReel } from '../src/reel.js';
 
 describe('npm run new', () => {
@@ -231,6 +231,22 @@ describe('npm run voices narrator', () => {
     assert.deepEqual(narrator({}, { voice: 'command: say -o {out}', speed: 1, lang: 'any', clips: [] }), narrator({}), 'a command is never run from a manifest');
   });
 
+  it('has Pocket TTS read another language when asked, and keeps a reel in its language', () => {
+    assert.deepEqual(narrator({ lang: 'french' }), { engine: 'pocket', voice: 'peter_yearsley', lang: 'french' });
+    assert.deepEqual(narrator({ lang: 'english' }), { engine: 'pocket', voice: 'peter_yearsley' }, 'English is not named: its recordings are what they always were');
+    const french = { engine: 'pocket', voice: 'peter_yearsley', lang: 'french', clips: [] };
+    assert.deepEqual(narrator({}, french), { engine: 'pocket', voice: 'peter_yearsley', lang: 'french' });
+    assert.deepEqual(narrator({ lang: 'english' }, french), { engine: 'pocket', voice: 'peter_yearsley' }, 'unless told otherwise');
+    assert.deepEqual(narrator({ lang: 'dutch', voice: 'anna' }), { engine: 'pocket', voice: 'anna', lang: 'dutch' });
+    assert.deepEqual(narrator({}, { engine: 'pocket', voice: 'peter_yearsley', lang: 'klingon', clips: [] }), { engine: 'pocket', voice: 'peter_yearsley' }, 'a language it does not speak is not kept');
+    assert.throws(() => narrator({ lang: 'klingon' }), /--lang must be one of english, french, german, spanish, italian, portuguese, dutch for Pocket TTS/);
+    assert.deepEqual(POCKET_LANGUAGES, ['english', 'french', 'german', 'spanish', 'italian', 'portuguese', 'dutch']);
+    const english = clipFile('Bonjour.', { engine: 'pocket', voice: 'peter_yearsley' });
+    assert.equal(english, clipFile('Bonjour.', narrator({})));
+    assert.notEqual(clipFile('Bonjour.', narrator({ lang: 'french' })), english, 'the same words in another language are another recording');
+    assert.notEqual(clipFile('Bonjour.', narrator({ lang: 'french' })), clipFile('Bonjour.', narrator({ lang: 'dutch' })));
+  });
+
   it('says what is wrong with a mixed-up choice', () => {
     assert.throws(() => narrator({ speed: '1' }), /Pocket TTS has no --speed/);
     assert.throws(() => narrator({ engine: 'piper' }), /--engine must be pocket or kokoro/);
@@ -349,6 +365,7 @@ describe('npm run voices with Pocket TTS and Kokoro', { skip: (!ffmpeg && 'needs
     assert.deepEqual([m.engine, m.voice, m.clips[0].seconds], ['pocket', 'peter_yearsley', 0.6]);
     await recordVoices([reel], quiet);
     assert.equal(jobs().length, 1, 'nothing to record again');
+    assert.equal(job.language, undefined, 'English is not named to the voice');
   });
 
   it('switches to Kokoro when asked, recording again, and stays with it', async () => {
@@ -370,6 +387,21 @@ describe('npm run voices with Pocket TTS and Kokoro', { skip: (!ffmpeg && 'needs
     assert.deepEqual(manifest(), before);
     await recordVoices([reel], quiet);
     assert.equal(jobs().length, 3, 'only the failed attempt ran');
+  });
+
+  it('records in another language when asked, again from the top, and stays in it', async () => {
+    process.env.PIXELREEL_PYTHON = python;
+    const before = jobs().length;
+    await recordVoices([reel, '--engine', 'pocket', '--lang', 'french'], quiet);   // the reel was last recorded with Kokoro
+    const job = jobs().at(-1);
+    assert.equal(jobs().length, before + 1);
+    assert.deepEqual([job.script, job.voice, job.language], ['pocket_speak.py', 'peter_yearsley', 'french']);
+    assert.deepEqual([manifest().engine, manifest().lang], ['pocket', 'french']);
+    await recordVoices([reel], quiet);
+    assert.equal(jobs().length, before + 1, 'recorded in French already: nothing to do');
+    await recordVoices([reel, '--lang', 'english'], quiet);
+    assert.equal(jobs().at(-1).language, undefined);
+    assert.equal(manifest().lang, undefined, 'back to English, as it was');
   });
 });
 

@@ -26,6 +26,7 @@ pages are drafts, still to be approved, and the privacy page still needs a conta
   - [Ready-made things to ask for](#ready-made-things-to-ask-for)
   - [Pictures timed to the voice](#pictures-timed-to-the-voice)
 - [The player in the chat](#the-player-in-the-chat)
+- [Other languages](#other-languages)
 - [Playing while it records](#playing-while-it-records)
 - [Make it right here](#make-it-right-here)
 - [Limits](#limits)
@@ -49,6 +50,7 @@ npm run service
 | `PIXELREEL_S3_BUCKET` | none | A bucket to keep reels in instead, with the settings in [deploy.md](deploy.md#keeping-reels-in-a-bucket). |
 | `PIXELREEL_PYTHON` | `.venv/bin/python` | The Python with Pocket TTS installed, as for `npm run voices`. |
 | `PIXELREEL_LISTED` | off | `1` lets search engines list the website. Off, every page asks them not to. Reels are never listed. |
+| `PIXELREEL_LANGUAGES` | none | Other languages Peter may read, such as `french,spanish`. Off, every reel is in English. See [Other languages](#other-languages). |
 | `PIXELREEL_WARM_VOICE` | on | `0` loads the voice afresh for each reel, instead of once when the service starts. Saves about 1 GB of memory, and makes every reel wait longer. |
 
 It records one reel at a time, and carries on with any waiting after a restart. Stopping it
@@ -191,6 +193,34 @@ video and the picture for link previews all play the same thing.
   `src/main.js` or `service/app-bridge.js`.
 - Its content security policy lets it reach the service's own address and nothing else.
 - Where a host does not show apps, nothing changes: Claude passes on the link.
+
+## Other languages
+
+**Off unless you switch it on, and worth a listen by someone who speaks the language first.**
+
+Peter's voice comes from Pocket TTS, which also has models for French, German, Spanish,
+Italian, Portuguese and Dutch. With `PIXELREEL_LANGUAGES=french,spanish` (say), `make_reel`
+gains a `language` field, the guide tells Claude to write every word of such a reel in that
+language, and the service records it with that language's model and the same voice. With
+it off, Claude is told Peter reads English only, and to say so to someone who asked in
+another language.
+
+- Each language is a model of its own, about 190 MB, and it must be to hand: on your
+  machine it downloads itself the first time; in the image it has to be built in
+  ([deploy.md](deploy.md#other-languages)).
+- The voice kept loaded is the English one, so a reel in another language loads its model
+  each time and takes ten seconds or so longer to start.
+- **What has been checked, and what has not.** A line in each of the six languages was
+  recorded with Peter's voice and written down again by a speech-to-text model: each was
+  heard in the right language, word for word. A whole French reel that a real Claude
+  wrote was recorded too: six of its seven lines came back word for word, and one had
+  two words misheard. That shows the words can be made out. It does not show how natural
+  it sounds, or whether a British voice reading Spanish is one a Spanish speaker would
+  want to listen to. Nobody who speaks these languages has listened.
+- Words in the pictures use the pixel lettering, which has the accented letters of all six.
+- The pictures are timed to the voice by looking for each label's words in the line, which
+  works in any of these languages; numbers written in digits are only matched to English
+  number words.
 
 ## Playing while it records
 

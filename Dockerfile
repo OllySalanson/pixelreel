@@ -13,8 +13,11 @@ WORKDIR /app
 ENV HF_HOME=/opt/huggingface
 
 # the voice first: it changes least and takes longest (PyTorch for the CPU, Pocket TTS, the model)
+# VOICE_LANGUAGES names other languages for the narrator to read ("french spanish"): each adds about
+# 190 MB, and is switched on when the service runs with PIXELREEL_LANGUAGES (docs/deploy.md)
+ARG VOICE_LANGUAGES=""
 COPY scripts/setup-voices.sh scripts/setup-voices.sh
-RUN sh scripts/setup-voices.sh && chmod -R a+rX /opt/huggingface
+RUN VOICE_LANGUAGES="$VOICE_LANGUAGES" sh scripts/setup-voices.sh && chmod -R a+rX /opt/huggingface
 
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund

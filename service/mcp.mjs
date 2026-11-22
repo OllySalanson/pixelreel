@@ -13,7 +13,7 @@ import { ReelError } from '../src/reel.js';
 import { clockTime } from '../src/timing.js';
 import { LIMITS } from './limits.mjs';
 import { promptList, promptMessages, WHAT_TO_PUT_IN } from './prompts.mjs';
-import { BusyError, KEEP_DAYS } from './reels.mjs';
+import { BusyError, KEEP_DAYS, languageName } from './reels.mjs';
 
 /** The player shown inside the chat (an MCP App), and how hosts are told to show it. */
 export const PLAYER_URI = 'ui://pixelreel/player.html';
@@ -50,7 +50,7 @@ const TIMING = ['every', 'start'];
  * The reel.json format as make_reel's input: the format's own schema, without the fields the
  * service sets itself, and saying what makes a reel good where Claude will read it as it writes.
  */
-function reelInput() {
+function reelInput(languages = []) {
   const reel = reelSchema();
   delete reel.$schema;   // a tool's input is a plain object schema
   delete reel.properties.images;   // no pictures from elsewhere (limits.mjs)
@@ -74,6 +74,12 @@ function reelInput() {
       }
     }
   }
+  if (languages.length) {
+    reel.properties.language = {
+      enum: ['english', ...languages],
+      description: 'The language every word of the reel is written in, for Peter to read it in. Leave it out for English.'
+    };
+  }
   reel.properties.improves = {
     type: 'string',
     description: 'To change a reel you made: the id of that reel. Send the whole reel again with the changes; the lines you leave word for word as they were keep their recordings, so it is ready sooner.'
@@ -81,8 +87,16 @@ function reelInput() {
   return reel;
 }
 
-/** The tools, as tools/list shows them. */
-export function toolList() {
+/** What the guide says about languages: `languages` are the ones besides English that Peter can read here. */
+function languageAdvice(languages) {
+  const elsewhere = 'write the reel in English, and tell the person so in their own language';
+  if (!languages.length) return `Peter reads English only. If the person asked in another language, ${elsewhere}.`;
+  return `Peter can also read ${languages.map(languageName).join(', ')}. For a reel in one of those, write every word of it in that language ` +
+    `(titles, captions, what he says, the pictures' words) and set "language". In any other language, ${elsewhere}.`;
+}
+
+/** The tools, as tools/list shows them. `languages` are the ones besides English that Peter can read here. */
+export function toolList(languages = []) {
   return [
     {
       name: 'reel_format',
@@ -101,7 +115,7 @@ export function toolList() {
         'To change a reel you made, send the whole reel again with "improves" set to its id: only the lines you changed are recorded again.\n' +
         'It answers at once with a link. The voice takes about as long to record as the reel lasts; the reel then plays by itself, in the chat where the player shows, and at the link. ' +
         `Do not wait or check on it. ${HAND_OVER}`,
-      inputSchema: reelInput(),
+      inputSchema: reelInput(languages),
       annotations: { title: 'Make a pixel reel', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
       _meta: SHOWS_PLAYER
     },
@@ -181,8 +195,8 @@ function exampleJson() {
   return `${JSON.stringify(rest).slice(0, -1)},"scenes":[\n  ${scenes.map(line).join(',\n  ')}\n]}`;
 }
 
-/** The guide reel_format returns: built from the pictures themselves, so it never drifts. */
-export function formatGuide() {
+/** The guide reel_format returns: built from the pictures themselves, so it never drifts. `languages` are the ones besides English that Peter can read here. */
+export function formatGuide(languages = []) {
   const pictures = Object.entries(PICTURES).filter(([type]) => type !== 'image').map(([type, { fields }]) => {
     const list = Object.entries(fields).filter(([key]) => !TIMING.includes(key)).map(([key, kind]) => `${key}${kind.endsWith('?') ? ' (optional)' : ''}`).join(', ');
     return `- ${type}: ${PICTURE_NOTES[type]} Fields: ${list}.`;
@@ -198,6 +212,7 @@ export function formatGuide() {
     '- It is honest: every claim is true to what the person gave you. For money, health or the law, say to check with whoever sent the original.',
     '- It keeps private things private. Anyone with the link can watch, so when you explain someone\'s letter, bill or chat, leave out names, addresses and account or reference numbers unless they ask for them.',
     '- Plain dashes, no emoji.',
+    `- ${languageAdvice(languages)}`,
     '',
     'What to put in, by what you are given:',
     ...Object.values(WHAT_TO_PUT_IN).map((line) => `- ${line}`),
@@ -234,7 +249,7 @@ const told = (words, data) => ({ ...text(words), structuredContent: { ...data, m
 /** A reel's status in plain words, with its links, as a tool result. */
 function describe(status, baseUrl) {
   const { watch, video } = links(baseUrl, status.id);
-  const about = `${status.scenes} scenes, about ${clockTime(status.seconds * 1000)}`;
+  const about = `${status.scenes} scenes, about ${clockTime(status.seconds * 1000)}${status.language ? `, in ${languageName(status.language)}` : ''}`;
   const plays = `It plays by itself as soon as the voice is ready, in the chat where the player shows, and at ${watch}`;
   const said = {
     writing: `"${status.title}" is still being written. It plays by itself, once it is written and recorded, at ${watch}`,
@@ -268,7 +283,8 @@ export function createMcpServer({ reels, baseUrl, client = 'local', limits = nul
         `Write the reel with make_reel; reel_format has the full guide. ${HAND_OVER}`
     }
   );
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: toolList() }));
+  const languages = reels.languages ?? [];
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: toolList(languages) }));
   server.setRequestHandler(ListPromptsRequestSchema, async () => ({ prompts: promptList() }));
   server.setRequestHandler(GetPromptRequestSchema, async ({ params }) => {
     const prompt = promptMessages(params.name, params.arguments);
@@ -295,14 +311,15 @@ export function createMcpServer({ reels, baseUrl, client = 'local', limits = nul
     const args = params.arguments ?? {};
     switch (params.name) {
       case 'reel_format':
-        return text(formatGuide());
+        return text(formatGuide(languages));
       case 'make_reel': {
         const refused = limits?.reels.check(client);
         if (refused) return failure(`No more reels for now. ${refused}`);
         try {
           // every reel made here is in the one format, so one that does not say is not sent back for it
-          const { improves, ...reel } = args;   // not part of the reel: which earlier reel this one is a change to
-          const made = await reels.create(reel.format === undefined ? { format: REEL_FORMAT, ...reel } : reel, { improves: typeof improves === 'string' ? improves : null });
+          const { improves, language, ...reel } = args;   // not part of the reel: which earlier reel this one is a change to, and the language it is in
+          const made = await reels.create(reel.format === undefined ? { format: REEL_FORMAT, ...reel } : reel,
+            { improves: typeof improves === 'string' ? improves : null, language: typeof language === 'string' ? language : null });
           limits?.reels.count(client);   // only a reel that is made counts: one sent back to be fixed does not
           return describe(made, baseUrl);
         } catch (err) {

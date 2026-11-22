@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import { CLAUDE_ADDRESSES, inRanges, LIMITS, limitProblems, peterMs, RateLimit, reelMs } from '../service/limits.mjs';
 import { EXAMPLE_REEL, formatGuide, playerHtml } from '../service/mcp.mjs';
-import { BusyError, isId, KEEP_DAYS, newId, Reels } from '../service/reels.mjs';
+import { BusyError, isId, KEEP_DAYS, languageName, newId, Reels } from '../service/reels.mjs';
 import { reelFromData } from '../src/format.js';
 import { ICON_NAMES } from '../src/pictures.js';
 import { markdownHtml, SITE_PAGES, SITE_POLICY } from '../service/site.mjs';
@@ -336,6 +336,25 @@ describe('the reels service', () => {
     for (let i = 0; i < 2; i++) await letGo();
     await reels.idle();
     assert.deepEqual(await store.list(`reels/${id}`), [], 'the lines recorded after it was deleted are not kept');
+  });
+
+  it('records a reel in another language when that language is switched on, and only then', async () => {
+    const asked = [];
+    const record = async (dir, log, onLine, options) => { asked.push(options); await fakeRecord(dir); };
+    const french = { ...tea, title: 'Le thé', scenes: [{ title: 'La bouilloire', caption: "Faites bouillir l'eau.", picture: { type: 'big', text: 'CHAUFFEZ' } }] };
+    const reels = new Reels({ store: freshStore(), record, video: fakeVideo, languages: ['french', 'spanish'] });
+    const made = await reels.create(french, { language: 'french' });
+    assert.equal(made.language, 'french');
+    const plain = await reels.create(tea, { language: 'english' });
+    assert.equal(plain.language, undefined, 'English is what a reel is in unless it says otherwise');
+    await reels.idle();
+    assert.deepEqual(asked, [{ language: 'french' }, { language: null }], 'the recorder is told which language to read in');
+    assert.equal((await reels.status(made.id)).language, 'french');
+    await assert.rejects(reels.create(french, { language: 'german' }),
+      (err) => err instanceof ReelError && err.problems[0] === 'language: Peter reads English, French, Spanish here, not "german". Write the reel in English, and tell the person so.');
+    const english = new Reels({ store: freshStore(), record, video: fakeVideo });
+    await assert.rejects(english.create(french, { language: 'french' }), /Peter reads English here, not "french"/, 'with none switched on, English it is');
+    assert.equal(languageName('portuguese'), 'Portuguese');
   });
 
   it('refuses a reel with problems, saying every one, and keeps nothing', async () => {
@@ -766,6 +785,42 @@ describe('the service over HTTP', async () => {
       assert.equal(lost.structuredContent.kept, undefined);
       await mine.idle();
       await client.close();
+    } finally {
+      other.close();
+      other.closeAllConnections();
+    }
+  });
+
+  it('offers other languages to Claude only where Peter can read them', async () => {
+    const client = await connect();
+    const make = (await client.listTools()).tools.find((t) => t.name === 'make_reel');
+    assert.equal(make.inputSchema.properties.language, undefined, 'none is switched on here, so none is offered');
+    assert.match(words(await client.callTool({ name: 'reel_format', arguments: {} })), /- Peter reads English only\. If the person asked in another language, write the reel in English, and tell the person so in their own language\./);
+    const refused = await client.callTool({ name: 'make_reel', arguments: { ...tea, language: 'french' } });
+    assert.equal(refused.isError, true);
+    assert.match(words(refused), /language: Peter reads English here, not "french"/);
+    await client.close();
+
+    const asked = [];
+    const mine = new Reels({ store: freshStore(), video: fakeVideo, picture: fakePicture, languages: ['french', 'german'], record: async (dir, log, onLine, options) => { asked.push(options.language); await fakeRecord(dir); } });
+    const other = createService({ reels: mine, baseUrl: 'https://reels.example' });
+    await new Promise((ok) => other.listen(0, '127.0.0.1', ok));
+    const speaking = new Client({ name: 'test', version: '1' });
+    await speaking.connect(new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${other.address().port}/mcp`)));
+    try {
+      const tool = (await speaking.listTools()).tools.find((t) => t.name === 'make_reel');
+      assert.deepEqual(tool.inputSchema.properties.language.enum, ['english', 'french', 'german']);
+      assert.match(words(await speaking.callTool({ name: 'reel_format', arguments: {} })), /- Peter can also read French, German\. For a reel in one of those, write every word of it in that language/);
+      const made = await speaking.callTool({ name: 'make_reel', arguments: { ...tea, title: 'Le thé', language: 'french' } });
+      assert.equal(made.isError, undefined);
+      assert.match(words(made), /^"Le thé" is made \(2 scenes, about 0:10, in French\)/);
+      assert.equal(made.structuredContent.language, 'french');
+      await mine.idle();
+      assert.deepEqual(asked, ['french']);
+      assert.equal((await mine.reel(made.structuredContent.id)).language, undefined, 'the language is the service\'s to know, not part of the reel');
+      assert.equal((await speaking.callTool({ name: 'make_reel', arguments: { ...tea, language: 'english' } })).structuredContent.language, undefined);
+      await mine.idle();
+      await speaking.close();
     } finally {
       other.close();
       other.closeAllConnections();

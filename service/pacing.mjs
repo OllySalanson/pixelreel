@@ -42,7 +42,7 @@ function numberWord(digits) {
 
 /** A word as it is compared: lower case, and without the endings that differ between a label and speech. */
 function plain(word) {
-  const w = word.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const w = word.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
   return w.length > 4 ? w.replace(/(ing|ed|es|s)$/, '') : w;
 }
 
@@ -65,7 +65,8 @@ function tellingWords(label) {
 export function spokenWords(say) {
   const words = [];
   let beats = 0;
-  for (const [, word, after] of String(say ?? '').matchAll(/([A-Za-z0-9'’]+)([^A-Za-z0-9'’]*)/g)) {
+  // letters of any alphabet: a word with an accent in it is one word
+  for (const [, word, after] of String(say ?? '').matchAll(/([\p{L}\p{N}'’]+)([^\p{L}\p{N}'’]*)/gu)) {
     words.push({ word: plain(word), at: beats });
     beats += word.length + 0.6;
     if (/[.!?]/.test(after)) beats += 7;
