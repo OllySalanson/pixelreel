@@ -218,9 +218,9 @@ over the page (the menu, Make it comfy, a reel over the page) and checks those t
 width in `ch`, which grows with the letters), not by a rule for one size of screen.
 
 It only looks. [`scripts/site-press.js`](../../scripts/site-press.js) presses: run the same
-way on the home page, it works the menu, each button that tries Make it comfy, pressing
-words to hear them, a reel over the page and the big Play button, and says what did not do
-what it should. It makes no sound, and puts back what it changed. Run it after changing
+way on any page, it works whatever that page has (the menu, each button that tries Make it
+comfy, pressing words to hear them, "Read this page to me", a reel over the page, the big
+Play button) and says what did not do what it should. It makes no sound, and puts back what it changed. Run it after changing
 any of the site's scripts, since no test runs a page.
 
 Two things `site-fit.js` cannot see, so look at them by hand:
@@ -1550,3 +1550,14 @@ two phone widths: twenty runs.
 - **One left for its owner.** On the make page at the same setting "Paste" is cut in two
   in "Paste a link here". That page is another worker's, so it is passed on, not changed.
 - At 390 pixels wide every page was already all well.
+
+### Version 70
+
+- **The script that presses a page works on any page.** `scripts/site-press.js` was
+  written for the home page. It now presses whatever a page has, and says at the end what
+  that was. Run on ten pages at a phone's size and three at a computer's: all well.
+- **The press kit can be read out.** The other pages of plain words and of steps have
+  "Read this page to me" (Version 58); the press kit did not. The button, and the room it
+  takes, are out of sight where the browser has no voice.
+- Looked at the page that adds Pixel Reel to Claude and the page about the phone on Dark
+  paper, top to foot, with every list of steps open: nothing amiss.

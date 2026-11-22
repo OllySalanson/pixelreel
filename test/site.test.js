@@ -1373,6 +1373,7 @@ describe('press words to hear them', () => {
     assert.ok(html.credits.includes(`<p class="doc-reel">${read}</p>`), 'credits: on its own, since it has no reel');
     for (const name of ['claude', 'app']) assert.match(html[name], new RegExp(`<div class="row">\\s*<button class="btn btn-reel"[^>]*>Make a pixel reel about this</button>\\s*${read.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*</div>`), name);
     assert.ok(!html.home.includes('data-read-page'), 'the home page has Watch this whole page');
+    assert.match(html.press, /<div class="row" data-needs-speech hidden>\s*<button class="btn btn-paper" type="button" data-read-page>Read this page to me<\/button>\s*<\/div>/, 'the press kit: the button and the room it takes, out of sight together');
     const css = readFileSync(root('site/css/site.css'), 'utf8');
     assert.match(css, /\n\.doc \.doc-reel:not\(:has\(> :not\(\[hidden\]\)\)\) \{ display: none; \}/, 'and leaves no gap where it is not shown');
   });
