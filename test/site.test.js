@@ -1090,6 +1090,22 @@ describe('the foot of every page', () => {
   });
 });
 
+describe('a reel over the page', () => {
+  it('has Close beside its name while the name has room, and above it when it has not', () => {
+    for (const name of pages) assert.match(html[name], /<div class="theatre-head">\s*<div class="theatre-words">\s*<p class="theatre-kicker" id="theatre-kicker">[^<]+<\/p>\s*<h2 id="theatre-title">[^<]+<\/h2>\s*<\/div>\s*<button class="btn btn-paper btn-small theatre-close" type="button" data-close>Close<\/button>\s*<\/div>/, name);
+    const css = readFileSync(root('site/css/site.css'), 'utf8');
+    assert.match(css, /\n\.theatre-head \{ display: flex; flex-wrap: wrap-reverse;/, 'wrapping upwards, so that Close is the one on top');
+    assert.match(css, /\n\.theatre-words \{ flex: 1 1 12ch;/);
+  });
+
+  it('is measured by the layout checker, with the menu and Make it comfy', () => {
+    const fit = readFileSync(root('scripts/site-fit.js'), 'utf8');
+    assert.match(fit, /for \(const panel of document\.querySelectorAll\('dialog\[id\]'\)\) \{/);
+    assert.match(fit, /panel\.showModal\(\);\s*if \(panel\.scrollWidth > panel\.clientWidth\)/);
+    for (const id of ['menu', 'comfort', 'theatre']) assert.match(html.home, new RegExp(`<dialog class="[a-z]+" id="${id}"`), `${id} is one of them`);
+  });
+});
+
 describe('the design log', () => {
   const log = readFileSync(root('docs/site/README.md'), 'utf8');
 
