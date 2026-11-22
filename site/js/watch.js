@@ -40,7 +40,7 @@ export function startWatching() {
   const say = (text) => { says.textContent = text; words.textContent = text; };
 
   // send.js works the button that passes the reel on: its link is good from the start, even while Peter is still recording
-  const send = holder.querySelector('button[data-send]');
+  const sends = holder.querySelectorAll('button[data-send]');
 
   async function look() {
     let play;
@@ -64,7 +64,7 @@ export function startWatching() {
     }
     if (play.state === 'failed' || play.state === 'gone') {
       waiting = false;
-      send.hidden = true;   // nothing to pass on
+      for (const send of sends) send.hidden = true;   // nothing to pass on
       say(play.state === 'gone' ? 'This reel has gone. Reels are kept for 30 days.' : `Sorry, this reel could not be made. ${play.error ?? ''}`.trim());
       return;
     }

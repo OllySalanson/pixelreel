@@ -9,6 +9,11 @@ description: A pixel reel: a short cartoon with a warm voice. Press Play, and Pe
     <!-- the player says the reel's name, large, under its picture -->
     <h1 class="sr-only" id="watch-title">{{reeltitle}}</h1>
     {{theplayer}}
+    <div class="reel-end" hidden>
+      <p>The end. Another?</p>
+      <a class="btn btn-gold" href="/watch/{{nextname}}">{{nexttitle}}</a>
+      <button class="btn btn-paper" type="button" data-again>Watch it again</button>
+    </div>
     <div class="watch-foot" data-quiet>
       <div class="row">
         <button class="btn btn-gold" type="button" data-send="{{reeltitle}}" data-says="#watch-sent" hidden>Send it to someone</button>
