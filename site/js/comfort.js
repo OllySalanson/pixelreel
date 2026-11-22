@@ -1,9 +1,10 @@
 // Make it comfy: lets a reader change the letters, their size and spacing, the colour of the
-// paper, whether pictures move, how fast Peter reads, and whether every word he says is
-// written under the pictures. Each choice is an attribute on <html> that site.css answers
-// to (or, for Peter's pace and his words, the players: see pace.js and player.js). Choices are kept on this device only (boot.js puts them back before the page
+// paper, whether pictures move, how fast Peter reads, whether every word he says is written
+// under the pictures, and whether a ruler keeps their place. Each choice is an attribute on
+// <html> that site.css answers to (or the players, for Peter's pace and his words: see
+// pace.js and player.js; or ruler.js). Choices are kept on this device only (boot.js puts them back before the page
 // is drawn), and nothing is ever sent anywhere.
-const DEFAULTS = { font: 'lexend', size: '1', space: '1', paper: 'cream', motion: 'on', pace: 'usual', words: 'few' };
+const DEFAULTS = { font: 'lexend', size: '1', space: '1', paper: 'cream', motion: 'on', pace: 'usual', words: 'few', ruler: 'off' };
 const KEYS = Object.keys(DEFAULTS);
 const root = document.documentElement;
 
