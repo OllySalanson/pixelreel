@@ -4,13 +4,14 @@
 // calls except the reels themselves.
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { readFileSync } from 'node:fs';
-import { CallToolRequestSchema, ListResourcesRequestSchema, ListToolsRequestSchema, ReadResourceRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, GetPromptRequestSchema, ListPromptsRequestSchema, ListResourcesRequestSchema, ListToolsRequestSchema, ReadResourceRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { pageHtml } from '../scripts/page.mjs';
 import { PICTURE_NOTES, REEL_FORMAT, reelSchema } from '../src/format.js';
 import { ICON_NAMES, PICTURES } from '../src/pictures.js';
 import { ReelError } from '../src/reel.js';
 import { clockTime } from '../src/timing.js';
 import { LIMITS } from './limits.mjs';
+import { promptList, promptMessages, WHAT_TO_PUT_IN } from './prompts.mjs';
 import { BusyError, KEEP_DAYS } from './reels.mjs';
 
 /** The player shown inside the chat (an MCP App), and how hosts are told to show it. */
@@ -182,9 +183,12 @@ export function formatGuide() {
     '- It keeps private things private. Anyone with the link can watch, so when you explain someone\'s letter, bill or chat, leave out names, addresses and account or reference numbers unless they ask for them.',
     '- Plain dashes, no emoji.',
     '',
+    'What to put in, by what you are given:',
+    ...Object.values(WHAT_TO_PUT_IN).map((line) => `- ${line}`),
+    '',
     'Pictures (give every scene one, and mix them so the reel moves):',
     ...pictures,
-    `Icons: ${ICON_NAMES.join(', ')}. Pick the one that means the thing, and keep labels to two or three words.`,
+    `Icons: ${ICON_NAMES.join(', ')}. Pick the one that means the thing, and keep labels to two or three words. If no icon means it, do not make one stand for it: use a list, a big word or a sprite instead.`,
     'The pictures are timed to the voice for you. Label the items of a list, icons, flow or compare with words the narrator says, in the order they are said, and each one arrives as it is spoken.',
     'In a title or big picture, keep "text" short: a word or two in capitals, or a number.',
     'A sprite is drawn from rows of letters, one a pixel: k black, w white, r red, g green, b blue, y yellow, o orange, p purple, t teal, s skin, n brown, e grey, c cream, B R N G darker blue, red, brown, green, and . see-through. ' +
@@ -214,8 +218,8 @@ function describe(status, baseUrl) {
   const about = `${status.scenes} scenes, about ${clockTime(status.seconds * 1000)}`;
   const plays = `It plays by itself as soon as the voice is ready, in the chat where the player shows, and at ${watch}`;
   const said = {
-    queued: `"${status.title}" is made (${about}) and waiting its turn to be recorded. ${plays}\n${HAND_OVER} There is no need to check on it.`,
-    recording: `"${status.title}" is made (${about}) and Peter is recording the voice now, which takes about as long as the reel lasts. ${plays}\n${HAND_OVER} There is no need to check on it.`,
+    queued: `"${status.title}" is made (${about}) and waiting its turn: Peter is recording another reel first. ${plays}\n${HAND_OVER} There is no need to check on it.`,
+    recording: `"${status.title}" is made (${about}) and Peter is recording the voice now${status.lines ? ` (${status.recorded} of ${status.lines} lines done)` : ''}, which takes about as long as the reel lasts. ${plays}\n${HAND_OVER} There is no need to check on it.`,
     ready: `"${status.title}" is ready: ${status.scenes} scenes, ${clockTime(status.seconds * 1000)}. Watch it at ${watch}`,
     failed: `"${status.title}" could not be made. ${status.error ?? ''}`.trim()
   }[status.state];
@@ -236,12 +240,18 @@ export function createMcpServer({ reels, baseUrl, client = 'local', limits = nul
       icons: [{ src: `${art}/icon-192.png`, mimeType: 'image/png', sizes: ['192x192'] }, { src: `${art}/icon-512.png`, mimeType: 'image/png', sizes: ['512x512'] }]
     },
     {
-      capabilities: { tools: {}, resources: {} },
+      capabilities: { tools: {}, resources: {}, prompts: {} },
       instructions: `Pixel Reel makes short pixel-art explainers, read aloud by a warm recorded British narrator. ${WHEN} ` +
         `Write the reel with make_reel; reel_format has the full guide. ${HAND_OVER}`
     }
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: toolList() }));
+  server.setRequestHandler(ListPromptsRequestSchema, async () => ({ prompts: promptList() }));
+  server.setRequestHandler(GetPromptRequestSchema, async ({ params }) => {
+    const prompt = promptMessages(params.name, params.arguments);
+    if (!prompt) throw new Error(`There is no prompt called ${params.name}`);
+    return prompt;
+  });
   server.setRequestHandler(ListResourcesRequestSchema, async () => ({
     resources: [{ uri: PLAYER_URI, name: 'player', title: 'Pixel Reel player', description: 'Plays a reel inside the chat.', mimeType: APP_MIME }]
   }));

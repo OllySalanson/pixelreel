@@ -22,6 +22,7 @@ pages are drafts, still to be approved, and the privacy page still needs a conta
 - [Add it to Claude](#add-it-to-claude)
 - [The tools](#the-tools)
   - [What Claude is told](#what-claude-is-told)
+  - [Ready-made things to ask for](#ready-made-things-to-ask-for)
   - [Pictures timed to the voice](#pictures-timed-to-the-voice)
 - [The player in the chat](#the-player-in-the-chat)
 - [Make it right here](#make-it-right-here)
@@ -105,6 +106,22 @@ Read what it wrote, how many tries it took, and what it said to the person after
   account numbers unless they ask, since anyone with the link can watch.
 - **No timing to guess.** `make_reel` does not offer the pictures' `start` and `every`: see below.
 
+### Ready-made things to ask for
+
+The connector also offers four prompts (`service/prompts.mjs`), which Claude lists in its own
+menu under Pixel Reel, so someone who finds writing hard work can pick one instead of
+working out what to type:
+
+| Prompt | Asks for |
+| --- | --- |
+| A reel about... | A reel explaining whatever they name. |
+| A reel of a letter or bill | What a letter, bill or form says, what to do, and by when, with names and account numbers left out. If no letter has been given yet, Claude asks for it. |
+| A reel of a document or web page | The few things that matter most in something long: an attached document, or a web page by its address. |
+| A reel of this chat | What the conversation worked out, what was decided, and what happens next. |
+
+Each is the words a person would say, with what makes a good reel of that kind of thing.
+The same advice is in the guide, for someone who asks in their own words.
+
 ### Pictures timed to the voice
 
 A list, a row of icons, a flow, a compare or a chat brings its items in one at a time.
@@ -134,6 +151,12 @@ video and the picture for link previews all play the same thing.
   protocol to Claude over `postMessage`: it takes `make_reel`'s result, asks the service at
   `/r/<id>/play.json` until the voice is recorded, then starts the player, and tells Claude
   how tall it is.
+- While it waits it says how far Peter has got ("Peter has read 3 of 7 lines"), with a
+  square for each line, lit as it is read. `play.json` carries the count (`recorded`,
+  `lines`) while a reel is being recorded, for any page that wants to show it.
+- To see it without Claude, frame the player (`resources/read` of
+  `ui://pixelreel/player.html`) in a page that answers `ui/initialize` and then sends
+  `ui/notifications/tool-result` with `make_reel`'s result.
 - Its content security policy lets it reach the service's own address and nothing else.
 - Where a host does not show apps, nothing changes: Claude passes on the link.
 
@@ -228,6 +251,7 @@ The local tools (`npm run voices`, `page`, `video`) have no such limits.
 | `service/main.mjs` | Starts it: settings, restart, the hourly sweep of expired reels. |
 | `service/server.mjs` | HTTP: `/mcp`, the reel pages, their recordings and videos. |
 | `service/mcp.mjs` | The connector's tools, and the player shown in the chat. |
+| `service/prompts.mjs` | The ready-made things to ask for, and what to put in a reel of each kind. |
 | `service/app-bridge.js` | The in-chat player's side of the MCP Apps protocol. |
 | `service/reels.mjs` | Making, recording, videos, expiry and deleting: one job at a time. |
 | `service/pacing.mjs` | Times a recorded reel's pictures to its voice. |

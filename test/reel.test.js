@@ -52,6 +52,13 @@ describe('normalizeReel', () => {
     assert.match(err.message, /^This reel has problems:\n- title/);
   });
 
+  it('says what kind of picture it opens on, so the big Play button can keep off its words', () => {
+    assert.equal(normalizeReel({ title: 'T', scenes: [scene({ picture: { type: 'title', text: 'TEA' } }), scene()] }).opens, 'title');
+    assert.equal(normalizeReel({ title: 'T', scenes: [scene({ picture: { type: 'big', text: '6' } })] }).opens, 'big');
+    assert.equal(normalizeReel({ title: 'T', scenes: [scene()] }).opens, 'card', 'a scene with no picture shows its title on a plain card');
+    assert.equal(normalizeReel({ title: 'T', scenes: [scene({ draw() {} })] }).opens, 'drawing');
+  });
+
   it('cuts between scenes with plain captions unless asked otherwise', () => {
     const reel = normalizeReel({ title: 'T', scenes: [scene()] });
     assert.equal(reel.transition, 'cut');

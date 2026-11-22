@@ -132,6 +132,8 @@ async function handleReel(req, res, id, rest, context) {
     // chat, from another origin (the chat's frame)
     const play = { state: status.state, title: status.title, watch: `${baseUrl}/r/${id}`, expires: status.expires };
     if (status.state === 'failed') play.error = status.error;
+    // while the voice is being recorded: how many lines are done, of how many
+    if (status.state === 'recording' && status.lines) Object.assign(play, { recorded: status.recorded, lines: status.lines });
     if (status.state === 'ready') {
       play.reel = await reels.reel(id);
       play.clips = ((await reels.manifest(id))?.clips ?? []).map((c) => ({ text: c.text, file: `${baseUrl}/r/${id}/audio/${c.file}`, seconds: c.seconds }));

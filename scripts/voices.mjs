@@ -177,8 +177,12 @@ function speak(lines, settings, threads, onDone) {
   });
 }
 
-/** Records the clips a reel needs. `args` are the command line arguments after npm run voices. */
-export async function main(args = process.argv.slice(2), { log = console.log } = {}) {
+/**
+ * Records the clips a reel needs. `args` are the command line arguments after npm run voices.
+ * `onClip(clip, { done, of })` is told as each clip is recorded: the clip ({ text, file,
+ * seconds }), and how many are done of how many there are to record.
+ */
+export async function main(args = process.argv.slice(2), { log = console.log, onClip = () => {} } = {}) {
   const { values, positionals } = parseArgs({
     args,
     allowPositionals: true,
@@ -213,12 +217,14 @@ export async function main(args = process.argv.slice(2), { log = console.log } =
     const tmp = mkdtempSync(join(tmpdir(), 'pixelreel-'));
     const byWav = new Map(todo.map((c, i) => [join(tmp, `${i}.wav`), c]));
     const lines = [...byWav].map(([wav, c]) => ({ text: c.text, wav }));
+    let done = 0;
     const encode = (wav, seconds) => {
       const clip = byWav.get(wav);
       const enc = spawnSync(ffmpeg, ['-loglevel', 'error', '-y', '-i', wav, '-ac', '1', '-b:a', values.bitrate, join(audioDir, clip.file)], { stdio: 'inherit' });
       if (enc.status !== 0) throw new Error(`ffmpeg could not encode ${clip.file}`);
       clip.seconds = seconds ?? audioSeconds(ffmpeg, wav);
       log(`  ${clip.file}  ${clip.seconds.toFixed(1)}s  "${clip.text.slice(0, 60)}${clip.text.length > 60 ? '...' : ''}"`);
+      onClip(clip, { done: ++done, of: todo.length });
     };
     log(`Recording ${todo.length} of ${clips.length} clips with ${command ? 'your speech command' : `${ENGINES[settings.engine].name}, voice ${settings.voice}`}...`);
     try {

@@ -1093,7 +1093,9 @@ function normalizeReel(raw, { base = '' } = {}) {
     transition,
     captions,
     images,
-    scenes
+    scenes,
+    // the kind of picture it opens on, so the big Play button can keep off a title's words
+    opens: raw.scenes[0].picture?.type ?? (typeof raw.scenes[0].draw === 'function' ? 'drawing' : 'card')
   };
 }
 
