@@ -784,8 +784,8 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 ### Version 35
 
 - **The choice of language is there for everyone.** "Read it to me in" was only shown where
-  Make it right here is on, which it is not on the live site, so nobody could see it. It
-  now shows wherever more than English can be read: English, Français, Deutsch, Español,
+  Make it right here is on, so someone using their own Claude never saw it. It now shows
+  wherever more than English can be read: English, Français, Deutsch, Español,
   Italiano, Português, Nederlands, each called what its speakers call it.
 - **The words for Claude say it.** With Français and Anna chosen, the box writes "Make me a
   pixel reel in French, read by Anna, about this: my gas bill". The language is named in
@@ -797,3 +797,16 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | The choice in the make-one box, with Make it right here off, on a laptop and a phone |
 | --- |
 | ![What do you want explained, the ready-made things to ask for, then Read it to me in: English, Français chosen, Deutsch, Español, Italiano, Português, Nederlands, above the words to say to Claude.](log/v35-every-language.jpg) |
+
+### Version 36
+
+Looked at the live home page from top to bottom, on a laptop and on a phone, after an
+afternoon of three people changing it. One thing was off:
+
+- **The button that fills the screen sat on the moon.** A reel that opens on a title has a
+  moon in the top corner of its picture, which is where the button was. It is in the bottom
+  corner now, where pictures are plain, and where the same button is on most players.
+
+| Before, and after |
+| --- |
+| ![The player at the top of the home page: the button over the moon at the top right; then at the bottom right, clear of it.](log/v36-off-the-moon.jpg) |
