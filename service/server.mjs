@@ -68,14 +68,30 @@ async function readBody(req, max = MAX_BODY) {
 const rpcError = (res, status, code, message) => res.writeHead(status, { ...SAFE, 'content-type': 'application/json' })
   .end(JSON.stringify({ jsonrpc: '2.0', error: { code, message }, id: null }));
 
-/** Who is asking: the connecting address, or behind a trusted proxy, the first it forwarded for. */
-function callerOf(req, trustProxy) {
-  const forwarded = trustProxy ? String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() : '';
-  return forwarded || req.socket.remoteAddress || 'unknown';
+/**
+ * Who is asking: the connecting address, or behind `hops` trusted proxies, the address the
+ * outermost of them saw. Each proxy adds the address it was called from to the end of
+ * X-Forwarded-For, so that is the `hops`th from the end; anything before it came from the
+ * caller, who can write whatever they like there.
+ */
+export function callerOf(req, hops) {
+  const chain = hops > 0 ? String(req.headers['x-forwarded-for'] ?? '').split(',').map((a) => a.trim()).filter(Boolean) : [];
+  return chain.at(-hops) ?? chain[0] ?? req.socket.remoteAddress ?? 'unknown';
 }
 
-async function handleMcp(req, res, { reels, baseUrl, log, limits, trustProxy }) {
+async function handleMcp(req, res, context) {
+  const { reels, baseUrl, log, limits, trustProxy } = context;
   if (req.method !== 'POST') { res.setHeader('allow', 'POST'); rpcError(res, 405, -32000, 'Send MCP requests with POST.'); return; }
+  if (trustProxy) {
+    // How many addresses arrive says whether PIXELREEL_TRUST_PROXY is right, without logging any of them. A
+    // caller can only add to the list, so the fewest ever seen is how many the proxies in front add themselves.
+    const seen = String(req.headers['x-forwarded-for'] ?? '').split(',').filter((a) => a.trim()).length;
+    if (seen < context.fewestForwarded) {
+      context.fewestForwarded = seen;
+      log(seen === trustProxy ? `callers: X-Forwarded-For came with ${seen} address${seen === 1 ? '' : 'es'}, as PIXELREEL_TRUST_PROXY=${trustProxy} expects`
+        : `callers: X-Forwarded-For came with ${seen} address${seen === 1 ? '' : 'es'}, but PIXELREEL_TRUST_PROXY is ${trustProxy}. If ${seen || 'no'} prox${seen === 1 ? 'y is' : 'ies are'} in front, set it to ${seen}, or callers are told apart wrongly`);
+    }
+  }
   const raw = await readBody(req);
   if (raw === null) { rpcError(res, 413, -32600, `A request may carry at most ${MAX_BODY / 1024} KB.`); return; }
   let body;
@@ -223,13 +239,17 @@ async function sendWatchCard(req, res, name, { reels, cards, fresh, log }) {
 /**
  * The service as an HTTP server (not yet listening). `baseUrl` is the address people reach it
  * at; `limits` ({ reels, videos }, RateLimits) cap what each caller asks for; `trustProxy`
- * takes the caller's address from X-Forwarded-For, for a service behind a proxy that sets it;
+ * (how many proxies are in front, or true for one) takes the caller's address from the
+ * X-Forwarded-For they set;
  * `listed` lets search engines list the website (never the reels), for once it is open to all;
  * `fresh` has browsers check for a newer copy of the site's files every time, for working on it;
  * `writer` (see service/writer.mjs) switches on Make it right here, which costs money a reel.
  */
 export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false, listed = false, fresh = false, writer = null }) {
-  const context = { reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, trustProxy, listed, fresh, writer, pages: new Map(), cards: new Map() };
+  const context = {
+    reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, listed, fresh, writer, pages: new Map(), cards: new Map(),
+    trustProxy: trustProxy === true ? 1 : Math.max(0, Math.floor(Number(trustProxy)) || 0), fewestForwarded: Infinity
+  };
   return createServer(async (req, res) => {
     try {
       const path = new URL(req.url, 'http://localhost').pathname;

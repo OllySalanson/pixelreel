@@ -190,8 +190,20 @@ So a reel stays short enough to watch, and nobody (or no runaway agent) can use 
   `reel_format` tells Claude these up front, and `make_reel` says exactly what is over.
 - Each caller (by address) can make 10 reels and 10 videos an hour, and the service 300 reels
   a day in all. Set them with `PIXELREEL_REELS_PER_HOUR`, `PIXELREEL_VIDEOS_PER_HOUR` and
-  `PIXELREEL_REELS_PER_DAY`. Behind a proxy that sets `X-Forwarded-For` (most hosts), set
-  `PIXELREEL_TRUST_PROXY=1` so callers are told apart.
+  `PIXELREEL_REELS_PER_DAY`. Only a reel that is made counts: one sent back to Claude to be
+  fixed does not.
+- **Everyone using Claude shares one, bigger, allowance.** Claude calls a connector from
+  Anthropic's own addresses, not the person's, so the service cannot tell one person on
+  Claude from another: counted singly, a few people would use up each other's ten. Callers
+  from [Anthropic's published addresses](https://platform.claude.com/docs/en/api/ip-addresses)
+  are counted together instead, and may make 60 reels and 60 videos an hour between them
+  (`PIXELREEL_CLAUDE_PER_HOUR`; the addresses are `PIXELREEL_CLAUDE_ADDRESSES`, a list like
+  `160.79.104.0/21,153.61.208.0/20`). The day's limit still caps what it can all cost.
+- Behind a proxy that sets `X-Forwarded-For` (most hosts), set `PIXELREEL_TRUST_PROXY=1` so
+  callers are told apart, or to how many proxies there are if more than one. The caller is
+  taken to be the address the outermost proxy saw, never one the caller wrote in the header
+  themselves. The service logs once how many addresses arrive (never the addresses), and
+  says if that is not what the setting expects.
 - With 20 jobs waiting, it asks people to try again in a few minutes.
 
 The local tools (`npm run voices`, `page`, `video`) have no such limits.
