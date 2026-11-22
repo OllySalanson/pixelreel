@@ -97,8 +97,10 @@ export function givenFrom(transfer, { words: wordsFirst = false } = {}) {
 /**
  * What is on the clipboard, for a button that pastes: { words }, { file } for a copied
  * picture, or null when there is nothing there to use. `clipboard` is the browser's
- * navigator.clipboard, read on a press. Words win over a picture, as they do for a paste
- * from the keyboard. Throws when the browser, or the person, will not let the page read it.
+ * navigator.clipboard, read on a press. A link wins over words, as it does for a drop (a
+ * browser may hand over a copied link as a link alone, with no words at all), and words win
+ * over a picture, as they do for a paste from the keyboard. Throws when the browser, or the
+ * person, will not let the page read it.
  */
 export async function givenFromClipboard(clipboard) {
   if (clipboard.read) {
@@ -110,14 +112,20 @@ export async function givenFromClipboard(clipboard) {
       if (err?.name === 'NotAllowedError' || !clipboard.readText) throw err;
     }
     if (items) {
+      // one kind that cannot be read is passed over, so that it does not cost the kinds that can
+      const held = async (item, kind) => (item.types.includes(kind) ? item.getType(kind).catch(() => null) : null);
+      const said = async (item, kind) => (await (await held(item, kind))?.text().catch(() => '') ?? '').trim();
       for (const item of items) {
-        if (!item.types.includes('text/plain')) continue;
-        const words = (await (await item.getType('text/plain')).text()).trim();
+        const link = (await said(item, 'text/uri-list')).split(/\r?\n/).find((line) => line && !line.startsWith('#'));
+        if (link) return { words: link.trim() };
+      }
+      for (const item of items) {
+        const words = await said(item, 'text/plain');
         if (words) return { words };
       }
       for (const item of items) {
-        const type = item.types.find((kind) => /^image\//.test(kind));
-        if (type) return { file: new File([await item.getType(type)], 'A copied picture', { type }) };
+        const type = item.types.find((kind) => /^image\//.test(kind)), picture = type ? await held(item, type) : null;
+        if (picture) return { file: new File([picture], 'A copied picture', { type }) };
       }
       return null;
     }
