@@ -102,6 +102,12 @@ function makeHere(form, box, update) {
   const lead = id('make-lead');
   id('maker-here').hidden = false;
   lead.textContent = lead.dataset.here;
+  // the reel about this part of the page is the one that explains the box as it now is, wherever this part is played
+  const about = id('make-reel');
+  for (const button of document.querySelectorAll('button[data-reels]')) {
+    button.dataset.reels = button.dataset.reels.split(/\s+/).map((name) => (name === about.dataset.reel ? about.dataset.reelHere : name)).join(' ');
+  }
+  about.dataset.reel = about.dataset.reelHere;
   // giving the words to their own Claude is still there, behind a button
   own.hidden = true;
   ownOpen.addEventListener('click', () => {

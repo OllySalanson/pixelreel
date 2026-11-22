@@ -190,6 +190,7 @@ connector (ready-made pictures only) and recorded by Peter with `npm run voices`
 | --- | --- |
 | `pixel-reel` | The player at the top of the home page. |
 | `site-what`, `site-how`, `site-who`, `site-peter`, `site-make`, `site-good`, `site-phone`, `site-questions` | "Make a pixel reel about this", one for each part of the home page. With `site-open`, they are also "Watch this whole page". |
+| `site-make-here` | "Make a pixel reel about this" beside the make-one box where the box makes the reel itself (Make it right here): it takes `site-make`'s place there, and in "Watch this whole page". |
 | `site-open` | The reel for "It is all open", and the code typing out beside it. |
 | `voice-anna`, `voice-vera`, `voice-stuart`, `voice-charles`, `voice-paul` | Each narrator's hello, one line in their own voice, for "Hear Anna" and the rest ([Who reads](#who-reads)). |
 | `site-privacy`, `site-terms` | "Make a pixel reel about this" on the privacy and terms pages. A plain page gets the button by naming a reel in the comment at its top (`reel: site-privacy`). |
@@ -767,3 +768,12 @@ The page a shared reel is watched on is where a reel does its work, so it got th
   Claude but not of a reel made in the box, which Peter read whoever was chosen. Now the
   box sends the choice with what it is given, and the reel's page says "Anna is recording
   scene 3 of 6" while it waits. A reel made simpler or shorter keeps whoever read it.
+
+### Version 34
+
+- **The reel beside the box says what the box now does.** "Make a pixel reel about this",
+  next to the make-one box, played a reel about copying words across to Claude, which is no
+  longer what the box does where it makes the reel itself. There it now plays a new one
+  (`site-make-here`): give it anything wordy; type it, drop it or take a photo; press Make
+  my reel; ask for it simpler or shorter; and find your reels listed. "Watch this whole
+  page" plays it too. Where the box still writes words for Claude, the old reel stays.
