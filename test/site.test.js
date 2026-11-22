@@ -456,9 +456,10 @@ describe('making a reel has a page of its own', () => {
     const form = html.make.slice(html.make.indexOf('<form class="maker"'), html.make.indexOf('</form>'));
     // the box is named for the commonest thing put in it, with a picture of a link beside the words
     assert.match(form, /<label class="maker-label" for="maker-what"><span class="tile tile-gold"><svg class="px"[^>]*>.*?<\/svg><\/span><span>Paste a link here<\/span><\/label>/);
-    assert.match(form, /<textarea id="maker-what" name="about" [^>]*enterkeyhint="go" placeholder="Or type a question"><\/textarea>\s*<button class="btn btn-paper maker-paste" id="maker-paste" type="button" hidden><svg class="px"[^>]*>.*?<\/svg><span>Paste<\/span><\/button>/);
+    assert.match(form, /<textarea id="maker-what" name="about" [^>]*enterkeyhint="go" placeholder="Or type a question"><\/textarea>\s*<div class="maker-box-keys">\s*<button class="btn btn-paper maker-paste" id="maker-paste" type="button" hidden><svg class="px"[^>]*>.*?<\/svg><span>Paste<\/span><\/button>/);
+    assert.match(form, /<button class="btn btn-paper maker-clear" id="maker-clear" type="button" hidden>Clear<\/button>\s*<\/div>\s*<\/div>/, 'and a way to empty the box, hidden while it is empty');
     // in the order someone meets them: the box, who reads it (one line, folded shut), the big button, then every other way in
-    const order = ['id="maker-what"', 'id="maker-paste"', '<details class="maker-read" id="maker-read" hidden>', 'id="maker-who"', 'id="maker-language"', 'id="maker-go"', 'id="maker-photo"', 'id="maker-choose"', 'class="tries"', 'id="maker-own-open"', 'id="ask-words"'];
+    const order = ['id="maker-what"', 'id="maker-paste"', 'id="maker-clear"', '<details class="maker-read" id="maker-read" hidden>', 'id="maker-who"', 'id="maker-language"', 'id="maker-go"', 'id="maker-photo"', 'id="maker-choose"', 'class="tries"', 'id="maker-own-open"', 'id="ask-words"'];
     const places = order.map((part) => form.indexOf(part));
     assert.ok(places.every((at) => at >= 0), `all there: ${places}`);
     assert.deepEqual(places, [...places].sort((a, b) => a - b), 'and in that order');

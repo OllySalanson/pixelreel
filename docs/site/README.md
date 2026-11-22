@@ -1224,3 +1224,17 @@ listened to it yet, and it was not checked by speech-to-text.
 | The new part of the home page, and on a phone with the ruler switched on |
 | --- |
 | ![Hard on the eyes? Change it. Six big buttons: Bigger letters, Letters made for dyslexia, Dark paper, A ruler to keep your place, Hear any words you press, A slower voice. Beside it, the same on a phone: the ruler's button is gold and says On, and a clear band lies across the page with the rest dimmed.](log/v52-comfy-section.jpg) |
+
+### Version 53
+
+- **Clear, in the box.** Once there is something in the box, a Clear button sits beside
+  Paste. One press empties it and leaves the keyboard in it. Before, changing your mind
+  after a paste meant selecting a long link, or rubbing it out letter by letter, which on
+  a phone is fiddly for anyone and worse for some. Paste still puts the new thing in place
+  of the old, so Clear is for typing a question instead. It is hidden while the box is
+  empty, so the first screen is as it was.
+- The two buttons share a row under the words on a phone, with Paste the wider, and go
+  one under the other where the letters are too big for that.
+
+Checked with `scripts/site-fit.js` at 320, 390 and 1280 pixels wide with words in the box
+and the choices open: nothing cut in two or too wide at any of the 27 settings.

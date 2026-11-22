@@ -90,7 +90,7 @@ export function startMaker() {
   const narrator = () => { const chosen = readers.find((reader) => reader.checked)?.value; return chosen && chosen !== 'peter' ? chosen : null; };
   // Both choices are folded away under one line that says what is chosen ("Read by Peter in
   // English"), so that nobody has to decide anything before the big button: it opens to change them.
-  const reads = id('maker-read-says');
+  const reads = id('maker-read-says'), clear = id('maker-clear');
   const named = (group) => {
     const name = group.find((one) => one.checked)?.nextElementSibling;
     if (!name) return null;
@@ -108,8 +108,16 @@ export function startMaker() {
     words.textContent = ask;
     open.href = `https://claude.ai/new?q=${encodeURIComponent(ask)}`;
     for (const said of form.querySelectorAll('.said')) { said.textContent = ''; said.classList.remove('sorry'); }
+    clear.hidden = !box.value;   // something to clear only while there is something in the box
     grow();
   };
+  // One press empties the box, and the keyboard is in it, ready for something else: on a
+  // phone, taking a long link out letter by letter, or selecting it all, is fiddly.
+  clear.addEventListener('click', () => {
+    box.value = '';
+    update();
+    box.focus({ preventScroll: true });
+  });
   box.addEventListener('input', update);
   addEventListener('resize', grow);
   // Words that arrive on a press (pasted, or one of the things to try) go into the box to be

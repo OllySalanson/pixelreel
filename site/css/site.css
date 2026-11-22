@@ -378,10 +378,13 @@ html[data-paper="night"] .letter-title { color: #25272c; }
 /* the box is the frame: the words go in on the left, and the button that pastes sits in it on the right (under them, where there is no room beside) */
 .maker-box { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; margin: 0.9rem var(--u) 0; padding: 0.4rem; background: var(--paper);
   box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line); }
-.maker-box textarea { flex: 1 1 14rem; width: 0; min-width: 0; min-height: 5.4rem; max-height: 14rem; margin: 0; padding: 0.6rem 0.7rem; resize: none; overflow-y: auto; font: 500 1.375rem/1.4 var(--font); letter-spacing: var(--tracking); word-spacing: var(--wording); color: var(--ink); background: none; border: 0; border-radius: 0; }
+.maker-box textarea { flex: 1000 1 14rem; width: 0; min-width: 0; min-height: 5.4rem; max-height: 14rem; margin: 0; padding: 0.6rem 0.7rem; resize: none; overflow-y: auto; font: 500 1.375rem/1.4 var(--font); letter-spacing: var(--tracking); word-spacing: var(--wording); color: var(--ink); background: none; border: 0; border-radius: 0; }
 .maker-box textarea::placeholder { color: var(--ink-soft); opacity: 1; }
 .maker-box textarea:disabled { opacity: 0.6; }
-.maker-paste { flex: none; }
+/* its buttons sit beside the words, or under them across the whole box where there is no room beside: the words take the room to spare, until the buttons have a row of their own */
+.maker-box-keys { display: flex; flex-wrap: wrap; flex: 1 0 auto; align-items: center; gap: 0 calc(var(--u) * 2); max-width: 100%; }
+.maker-box-keys .btn { flex: none; width: auto; }
+.maker-box-keys .maker-paste { flex: 1 0 auto; }
 .maker-paste .px { width: 2rem; height: auto; }
 /* the frame shows where the keyboard is, rather than a second line just inside it */
 @supports selector(:has(*)) {
