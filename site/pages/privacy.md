@@ -44,6 +44,9 @@ seen by whoever might get the link.
   never sent to Pixel Reel.
 - The box that writes what to say to Claude does its work on your device. What you type in
   it is not sent to Pixel Reel.
+- Where the box says Make my reel, it makes the reel for you. Then what you give it (your
+  words, a link, a file or a photo) is sent to Pixel Reel, and on to Claude, to write the
+  reel. Pixel Reel does not keep what you gave it: only the reel.
 
 ## Questions
 

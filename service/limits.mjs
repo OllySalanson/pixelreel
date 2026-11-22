@@ -58,9 +58,9 @@ export function inRanges(address, ranges) {
 
 /**
  * Counts what each caller does in a sliding hour, and what everyone does in a day. check()
- * says why not, or null; count() counts one; hit() does both. Callers in `shared.ranges`
- * (many people behind a few addresses, as with Claude) are counted together, against
- * `shared.perHour`. Kept in memory: a restart forgets, which is fine.
+ * says why not, or null; count() counts one; hit() does both; undo() takes the last one
+ * back. Callers in `shared.ranges` (many people behind a few addresses, as with Claude) are
+ * counted together, against `shared.perHour`. Kept in memory: a restart forgets, which is fine.
  */
 export class RateLimit {
   constructor({ perHour, perDay, shared = null, now = () => Date.now() }) {
@@ -98,5 +98,13 @@ export class RateLimit {
     const refused = this.check(caller);
     if (!refused) this.count(caller);
     return refused;
+  }
+
+  /** Takes back the caller's latest count, for something that was counted and then cost nothing. */
+  undo(caller) {
+    const at = this.callers.get(this.bucket(caller).key)?.pop();
+    if (at === undefined) return;
+    const i = this.day.lastIndexOf(at);
+    if (i >= 0) this.day.splice(i, 1);
   }
 }
