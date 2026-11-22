@@ -637,6 +637,27 @@ dialog { color: var(--ink); }
   border-block: 3px solid var(--gold); box-shadow: 0 0 0 200vmax rgba(11, 18, 32, 0.45); }
 @media print { .ruler { display: none; } }
 
+/* ---------------------------------------------------------------- the whole reel on one page */
+/* (a class of its own: .sheet is the press kit's page of facts) */
+.steps.storyboard { max-width: none; }
+.sheet-part .head .btn { margin-top: 1.5rem; }
+.sheet-made { display: none; }
+.storyboard .step p:not(.step-n) { font-size: 1.1875rem; color: var(--ink); }
+/* On paper it is the only thing: black on white, three scenes across, none cut in two by the end of a sheet. */
+@media print {
+  .top, .foot, .skip, dialog, .scene, main > :not(.sheet-part), #sheet-print { display: none !important; }
+  html { font-size: 75%; }
+  body { background: #fff; color: #000; }
+  .sheet-part { padding: 0; }
+  .sheet-part .head { margin-bottom: 1.5rem; }
+  .sheet-part .eyebrow, .sheet-part .lead { display: none; }
+  .steps.storyboard { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+  .storyboard .step { break-inside: avoid; background: #fff; box-shadow: 0 0 0 1px #000; }
+  .storyboard .step-n { box-shadow: 0 0 0 1px #000; }
+  .storyboard .step h3, .storyboard .step p { color: #000; }
+  .sheet-made { display: block; margin-top: 1.5rem; font-size: 1.125rem; color: #000; }
+}
+
 /* ---------------------------------------------------------------- smaller screens */
 @media (max-width: 68rem) {
   .top-nav { display: none; }

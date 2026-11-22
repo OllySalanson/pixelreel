@@ -12,6 +12,7 @@ import { PACES, pacedClock, rateOf } from '../site/js/pace.js';
 import { lengthWords, showOf, waitingFor } from '../site/js/reels.js';
 import { rulerTop } from '../site/js/ruler.js';
 import { sendReel, sentWords } from '../site/js/send.js';
+import { sheetOf } from '../site/js/sheet.js';
 import { SPRITES } from '../site/js/sprites.js';
 import { keepNarrator, narratorName, readNarrator, VOICE } from '../site/js/voice.js';
 import { parseReelJson } from '../src/format.js';
@@ -569,6 +570,37 @@ describe('what a phone is told while a reel plays', () => {
     for (const name of ['play', 'pause', 'previoustrack', 'nexttrack']) assert.ok(code.includes(`button('${name}',`), name);
     assert.match(code, /if \(!phone \|\| !window\.MediaMetadata\) return;/, 'and leaves alone a browser that has no such thing');
     assert.match(code, /this\.tellPhone\(state\);/, 'told again whenever the scene, or playing, changes');
+  });
+});
+
+describe('the whole reel on one page', () => {
+  const css = readFileSync(root('site/css/site.css'), 'utf8');
+
+  it('has, for every scene, its number, its title, its few words and the moment its picture is finished', () => {
+    const source = readFileSync(root('reels/gas-meter/reel.json'), 'utf8'), manifest = JSON.parse(readFileSync(root('reels/gas-meter/audio/manifest.json'), 'utf8'));
+    const show = showOf('gas-meter', source, manifest, '/reels/gas-meter/audio/'), page = sheetOf(show);
+    assert.equal(page.length, show.reel.scenes.length);
+    assert.deepEqual(page.map(({ n }) => n), [1, 2, 3, 4, 5, 6]);
+    assert.deepEqual([page[2].title, page[2].words], ['Read left to right', 'Write down the numbers, left to right.']);
+    for (const [i, { at }] of page.entries()) assert.equal(at, show.durations[i] / 1000, 'the end of the scene, when everything in its picture has arrived');
+  });
+
+  it('is on the page a reel is watched on, out of sight until the reel is ready, with a button to print it', () => {
+    for (const name of ['reel', 'watch/offside-rule']) {
+      assert.match(html[name], /<section class="section sheet-part" id="sheet" aria-labelledby="sheet-title" hidden>/, name);
+      assert.match(html[name], /<button class="btn btn-gold" type="button" id="sheet-print">Print it<\/button>/, name);
+      assert.match(html[name], /<ol class="steps storyboard" id="sheet-list"><\/ol>/, name);
+    }
+    assert.ok(!html.home.includes('id="sheet"'), 'and nowhere else');
+  });
+
+  it('is the only thing on paper, black on white, with no scene cut in two by the end of a sheet', () => {
+    const print = css.slice(css.indexOf('@media print {\n  .top'));
+    assert.match(print, /main > :not\(\.sheet-part\), #sheet-print \{ display: none !important; \}/);
+    assert.match(print, /body \{ background: #fff; color: #000; \}/);
+    assert.match(print, /\.storyboard \.step \{ break-inside: avoid;/);
+    assert.match(print, /\.sheet-made \{ display: block;/, 'and it says where it came from');
+    assert.match(css, /\n\.sheet-made \{ display: none; \}/, 'which the screen does not');
   });
 });
 

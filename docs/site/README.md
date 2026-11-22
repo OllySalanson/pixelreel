@@ -37,6 +37,8 @@ People who find reading hard work. Every choice follows from that:
 - **As big as the screen.** Every player has a button in the corner of its picture that
   fills the whole screen with the reel, for anyone who needs it large, or is watching on a
   phone held on its side.
+- **On paper, too.** Under a reel, every scene is laid out on one page: its picture and its
+  few words. Print it, and how to read the gas meter is on the fridge.
 - **Watch instead.** Every part of the home page has a "Make a pixel reel about this" button
   that plays a reel of that part, made earlier. "Watch this whole page" plays them all.
 - **Calm.** Sound only ever starts on a press. Pictures hold still for anyone whose device
@@ -60,6 +62,7 @@ narrator ([Who reads](#who-reads)).
 | `site/css/site.css` | The whole look. |
 | `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` is Make it comfy; `boot.js` runs before the page is drawn, to put its settings back and to keep the bar across the top on one row; `signal.js` is the test card on a page that is not there; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `send.js` copies words and passes a reel on; `ruler.js` is the reading ruler; `pace.js` is the clock that lets Peter read slower or quicker; `sprites.js` is the site's own pixel art. |
 | `site/js/app.js`, `site/js/sw.js` | Pixel Reel as an app on a phone: [below](#on-a-phones-home-screen). |
+| `site/js/sheet.js` | The whole reel on one page, under the player on a reel's page: every scene's finished picture with its few words, to glance over and to print. The print rules at the foot of `site.css` leave nothing else on the paper. |
 | `site/fonts/`, `site/art/` | The fonts (with their licences), and the icons, logos and share picture. |
 | `service/site.mjs` | Puts a page together: the layout, the page, and the `{{names}}` in them. |
 | `service/static.mjs` | Serves the files a page loads, and only those. |
@@ -740,3 +743,19 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | The choice, where three more languages are switched on |
 | --- |
 | ![The make-one box, with a new row: Read it to me in. English is chosen; Français, Español and Deutsch are beside it.](log/v31-your-language.jpg) |
+
+### Version 32
+
+- **The whole reel on one page.** Under the player, on a made reel's page and on each
+  example's, every scene is now laid out at once: its finished picture, its number, its
+  title and its few words. It is there to glance back over without playing the reel again.
+- **Print it.** One button, and the paper holds only that: the reel's name, then its scenes
+  three across, black on white, none cut in two by the end of a sheet, and a line saying
+  where it came from. Six scenes fill half a sheet of A4. How to read the gas meter can go
+  on the fridge; what the pension letter said can go in the folder with the letter.
+- It fills itself in once the reel is ready to play, and is not there for a reel still
+  being made.
+
+| Under the player | On paper |
+| --- | --- |
+| ![On one page: How to read your gas meter. Every scene, at a glance. Print it. Then the scenes, numbered, three across, each a picture with its title.](log/v32-on-one-page.jpg) | ![The printed sheet: How to read your gas meter, and six numbered scenes with pictures and a few words each.](log/v32-on-paper.jpg) |

@@ -11,6 +11,7 @@ import { startRuler } from './ruler.js';
 import { startScenes } from './scenery.js';
 import { startSending } from './send.js';
 import { startShared } from './shared.js';
+import { startSheet } from './sheet.js';
 import { startShots } from './shots.js';
 import { startSignal } from './signal.js';
 import { startHearing, startTheatre } from './theatre.js';
@@ -30,6 +31,7 @@ startShared();   // after the box, so that it hears what it is handed
 startMine();
 startCopying();
 startSending();
+startSheet();   // before the players load their reels, so it hears when one is ready
 startKept();   // before the page a reel is watched on asks for its reel, so it hears when that is ready
 startWatching();
 startSignal();

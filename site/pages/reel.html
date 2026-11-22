@@ -39,7 +39,22 @@ imagealt: A pixel reel for you. Press Play. Reelie the film reel stands under a 
   </div>
 </section>
 
-<section class="section" aria-labelledby="own-title">
+<!-- the whole reel on one page, to glance over and to print: sheet.js fills it in, and shows it, once the reel is ready to play -->
+<section class="section sheet-part" id="sheet" aria-labelledby="sheet-title" hidden>
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">On one page</p>
+      <h2 id="sheet-title">Every scene</h2>
+      <p class="lead">Every scene, at a glance. Print it, and stick it on the fridge.</p>
+      <button class="btn btn-gold" type="button" id="sheet-print">Print it</button>
+    </div>
+    <ol class="steps storyboard" id="sheet-list"></ol>
+    <!-- on paper only: where it came from -->
+    <p class="sheet-made">A pixel reel, from pixelreel.pro</p>
+  </div>
+</section>
+
+<section class="section section-tint" aria-labelledby="own-title">
   <div class="wrap">
     <div class="head">
       <p class="eyebrow">Made with Pixel Reel</p>
