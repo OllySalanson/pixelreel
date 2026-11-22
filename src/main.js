@@ -44,6 +44,9 @@ function showError(message) {
   (document.fonts ? document.fonts.load("12px 'Orange Kid'").catch(() => {}) : Promise.resolve()).then(() => requestAnimationFrame(card));
 }
 
+/** What the caption says at a scene whose recording has not come yet, in a reel that plays while it is being recorded. */
+const STILL_RECORDING = 'Peter is still recording this line. It plays in a moment.';
+
 async function start() {
   if (params.has('embed')) document.body.classList.add('embed');
   // A one-file reel carries its reel (and any recordings) in the page; any other loads by name.
@@ -51,7 +54,16 @@ async function start() {
   const { reel, clipFor, images } = inline ? inlineReel(inline.textContent, $('reel-audio')?.textContent)
     : await loadReel(params.get('reel') || document.body.dataset.reel);
   const scenes = reel.scenes;
-  const durations = scenes.map((s) => narrationMs(s, clipFor(s)));
+  // Recordings that arrive after the player has started: a reel that plays while its voice
+  // is still being recorded (the player in a chat) leaves them in window.pixelreelClips,
+  // { clips: [{ text, file, seconds }], more, guesses }, and says so with a "pixelreel:clips"
+  // event. `more` is true while others are still on their way, and `guesses` ([{ text,
+  // seconds }]) say about how long those will last, for the reel's clock until they come.
+  const late = new Map(), guessed = new Map();
+  let coming = false;   // true while recordings are still on their way
+  const clipNow = (scene) => late.get(scene.say) ?? clipFor(scene);
+  const lengths = () => scenes.map((s) => narrationMs(s, clipNow(s) ?? guessed.get(s.say) ?? null));
+  let durations = lengths();
 
   const canvas = $('stage'), g = canvas.getContext('2d');
   const px = createKit(g, images);
@@ -64,20 +76,48 @@ async function start() {
 
   const narrator = createNarrator({
     scenes,
-    clipFor,
+    clipFor: clipNow,
     audio: new Audio(),
     speech: window.speechSynthesis,
-    Utterance: window.SpeechSynthesisUtterance
+    Utterance: window.SpeechSynthesisUtterance,
+    expecting: (scene) => coming && !clipNow(scene),
+    onArrive: () => player.resync()
   });
   const player = new Player({ count: scenes.length, narrator, onChange: render, durations });
-  const total = player.timeline.total;
-  seek.setAttribute('aria-valuemax', String(Math.round(total / 1000)));
-  for (const at of player.timeline.starts.slice(1)) {
-    const tick = document.createElement('div');
-    tick.className = 'tick';
-    tick.style.left = `${(100 * at) / total}%`;
-    seek.appendChild(tick);
+  let total = player.timeline.total;
+
+  // The progress bar's ticks, one where each scene after the first starts, and how long the reel is.
+  function markScenes() {
+    total = player.timeline.total;
+    seek.setAttribute('aria-valuemax', String(Math.round(total / 1000)));
+    for (const old of seek.querySelectorAll('.tick')) old.remove();
+    for (const at of player.timeline.starts.slice(1)) {
+      const tick = document.createElement('div');
+      tick.className = 'tick';
+      tick.style.left = `${(100 * at) / total}%`;
+      seek.appendChild(tick);
+    }
   }
+  markScenes();
+
+  // Takes the recordings left in window.pixelreelClips: scenes they are for now last as long as their recordings.
+  function takeClips() {
+    const box = window.pixelreelClips;
+    if (!box) return;
+    coming = Boolean(box.more);
+    for (const clip of box.clips ?? []) {
+      if (typeof clip?.text === 'string' && typeof clip.file === 'string') late.set(clip.text.trim(), { url: clip.file, seconds: Number(clip.seconds) || 0 });
+    }
+    guessed.clear();
+    for (const guess of box.guesses ?? []) {
+      if (typeof guess?.text === 'string' && guess.seconds > 0) guessed.set(guess.text.trim(), { seconds: Number(guess.seconds) });
+    }
+    durations = lengths();
+    player.retime(durations);
+    markScenes();
+    shownSecond = -1;   // the time shown is out of date
+  }
+  document.addEventListener('pixelreel:clips', takeClips);
 
   dots.classList.toggle('many', scenes.length > 10);
   scenes.forEach((s, i) => {
@@ -89,6 +129,7 @@ async function start() {
     dots.appendChild(d);
   });
 
+  let shownSecond = -1;                     // the second the time under the picture shows
   let intro = !params.has('scene');        // the "Press Play" card, until anyone does anything
   let shownIndex = -1, previewStart = performance.now(), lastT = 0;
   let fade = null;                          // a transition in progress: { from, kind, start, ms, t }
@@ -122,7 +163,7 @@ async function start() {
       typedText = null;
       const s = scenes[state.index];
       $('cap-live').textContent = `Scene ${state.index + 1} of ${scenes.length}: ${s.title}. ${s.caption}`;
-      const next = scenes[state.index + 1], nextClip = next && clipFor(next);
+      const next = scenes[state.index + 1], nextClip = next && clipNow(next);
       if (nextClip && !warmed.has(nextClip.url)) { warmed.add(nextClip.url); new Audio().src = nextClip.url; }   // so it starts at once
     }
     if (state.started) intro = false;
@@ -143,7 +184,8 @@ async function start() {
   function paintCaption() {
     const s = scenes[player.index];
     const title = intro ? 'Press Play' : `${player.index + 1}. ${s.title}`;
-    const text = intro ? introWords() : s.caption;
+    // a scene skipped to before its recording has come: say why it is quiet, until the voice begins
+    const text = intro ? introWords() : player.playing && narrator.lastSource === 'waiting' ? STILL_RECORDING : s.caption;
     if (text !== typedText) { typedText = text; typed = 0; }
     let n = text.length;
     if (!intro && s.captions === 'typewriter' && !calm.matches && player.playing) {
@@ -169,7 +211,7 @@ async function start() {
     const cap = $('cap'), main = document.querySelector('main'), page = document.documentElement;
     cap.style.minHeight = '';
     const least = parseFloat(getComputedStyle(cap).minHeight) || 0;
-    const all = [['Press Play', reel.intro], ...(reel.intro === INTRO ? [['Press Play', QUIET_INTRO]] : []), ...scenes.map((s, i) => [`${i + 1}. ${s.title}`, s.caption])];
+    const all = [['Press Play', reel.intro], ...(reel.intro === INTRO ? [['Press Play', QUIET_INTRO]] : []), ...(coming ? [['Press Play', STILL_RECORDING]] : []), ...scenes.map((s, i) => [`${i + 1}. ${s.title}`, s.caption])];
     cap.classList.remove('typing');
     $('cap-rest').textContent = '';
     // Sizes the caption for the player as wide as it can be with `more` pixels taken off the
@@ -210,7 +252,6 @@ async function start() {
     requestAnimationFrame(() => { fitting = false; fitCaption(); });
   });
 
-  let shownSecond = -1;
   function paintProgress() {
     const at = player.positionMs;
     $('seek-fill').style.width = `${(100 * at) / total}%`;
@@ -304,6 +345,7 @@ async function start() {
     lastT = t;
   }
   await (document.fonts ? document.fonts.load("12px 'Orange Kid'").catch(() => {}) : null);
+  takeClips();   // any that were left before the player was ready to take them
   fitCaption();
   requestAnimationFrame(frame);
 
@@ -311,7 +353,7 @@ async function start() {
   window.pixelreel = {
     reel, player,
     get source() { return narrator.lastSource; },
-    clipFor: (i) => clipFor(scenes[i])
+    clipFor: (i) => clipNow(scenes[i])
   };
   document.body.dataset.ready = 'true';
 }

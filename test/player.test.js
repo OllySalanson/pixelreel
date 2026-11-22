@@ -261,4 +261,37 @@ describe('Player timing', () => {
   it('needs at least one scene', () => {
     assert.throws(() => new Player({ count: 0, narrator: fakeNarrator() }), /at least one scene/);
   });
+  it('takes new lengths for its scenes without disturbing what is playing', () => {
+    const n = fakeNarrator(5000);
+    const changes = [];
+    const p = new Player({ count: 3, narrator: n, durations: [5000, 8000, 5000], onChange: (s) => changes.push(s), now: clock });
+    assert.equal(p.timeline.total, 18000 + 3 * GAP_MS);
+    p.play();
+    mock.timers.tick(2000);
+    const before = changes.length;
+    p.retime([5000, 4000, 5000]);   // the second scene's recording came, shorter than was guessed
+    assert.equal(changes.length, before + 1, 'whoever draws it is told');
+    assert.equal(p.timeline.total, 14000 + 3 * GAP_MS);
+    assert.deepEqual(p.timeline.starts, [0, 5000 + GAP_MS, 9000 + 2 * GAP_MS]);
+    assert.equal(p.elapsedMs, 2000, 'the scene in hand carries on from where it was');
+    assert.equal(n.calls.length, 1, 'and is not said again');
+    p.seek(5000 + GAP_MS + 1000);
+    assert.deepEqual([p.index, p.elapsedMs], [1, 1000], 'seeking goes by the new lengths');
+  });
+
+  it('starts a scene\'s clock again for a narrator that had to wait', () => {
+    const n = fakeNarrator(5000);
+    const p = new Player({ count: 2, narrator: n, now: clock });
+    p.resync();
+    assert.equal(p.elapsedMs, 0, 'nothing to do while it is not playing');
+    p.play();
+    mock.timers.tick(3000);
+    assert.equal(p.elapsedMs, 3000);
+    p.resync();
+    assert.equal(p.elapsedMs, 0, 'the picture starts again with the voice');
+    mock.timers.tick(2000);   // the narrator, who began 5 seconds ago, finishes
+    mock.timers.tick(100);
+    p.resync();
+    assert.ok(p.elapsedMs >= 2000, 'not in the pause after the words');
+  });
 });

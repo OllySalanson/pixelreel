@@ -3,6 +3,9 @@
 // about as long as the words would.
 import { estimateSpeechMs, narrationMs, speechWatchdogMs } from './timing.js';
 
+/** How often a narrator waiting for a recording looks for it, in ms. */
+const WAIT_MS = 250;
+
 /**
  * @param {object} o
  * @param {Array<{ say: string }>} o.scenes
@@ -13,9 +16,12 @@ import { estimateSpeechMs, narrationMs, speechWatchdogMs } from './timing.js';
  * @param {string} [o.lang]                   preferred voice language for the browser voice
  * @param {{ set: Function, clear: Function }} [o.timer]
  * @param {() => number} [o.now]              a clock in milliseconds
+ * @param {(scene: object) => boolean} [o.expecting]  true while a scene's recording is still on its way (a reel
+ *   that plays while it is being recorded): the narrator waits for it rather than read the line in another voice
+ * @param {() => void} [o.onArrive]           called when a recording that was waited for begins
  * @returns {import('./player.js').Narrator & { lastSource: string }}
  */
-export function createNarrator({ scenes, clipFor, audio, speech, Utterance, lang = 'en-GB', timer, now = () => Date.now() }) {
+export function createNarrator({ scenes, clipFor, audio, speech, Utterance, lang = 'en-GB', timer, now = () => Date.now(), expecting = () => false, onArrive = () => {} }) {
   timer ??= { set: (fn, ms) => setTimeout(fn, ms), clear: (id) => clearTimeout(id) };
   const narrator = { lastSource: 'none', speak };
   let loaded = null;   // the clip the audio element has loaded, so resuming it does not fetch it again
@@ -65,10 +71,26 @@ export function createNarrator({ scenes, clipFor, audio, speech, Utterance, lang
     return { stop: quietly(narrationMs(scene, null) - from, done), from };
   }
 
+  /** Waits for a scene's recording, looking for it a few times a second, then says the scene from the top. */
+  function awaited(index, done) {
+    narrator.lastSource = 'waiting';
+    let stopped = false, id = null, saying = null;
+    const look = () => {
+      if (stopped) return;
+      const scene = scenes[index];
+      if (!clipFor(scene) && expecting(scene)) { id = timer.set(look, WAIT_MS); return; }
+      onArrive();
+      saying = speak(index, { muted: false, from: 0 }, done);   // its recording, or if it is no longer coming, the usual stand-in
+    };
+    id = timer.set(look, WAIT_MS);
+    return { from: 0, stop() { stopped = true; timer.clear(id); saying?.stop(); } };
+  }
+
   function speak(index, { muted, from = 0 }, done) {
     const scene = scenes[index];
     const clip = clipFor(scene);
     if (muted) { narrator.lastSource = 'muted'; return { stop: quietly(narrationMs(scene, clip) - from, done), from }; }
+    if (!clip && audio && expecting(scene)) return awaited(index, done);
     if (!clip || !audio) return unrecorded(scene, from, done);
 
     narrator.lastSource = 'clip';

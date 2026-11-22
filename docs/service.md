@@ -25,6 +25,7 @@ pages are drafts, still to be approved, and the privacy page still needs a conta
   - [Ready-made things to ask for](#ready-made-things-to-ask-for)
   - [Pictures timed to the voice](#pictures-timed-to-the-voice)
 - [The player in the chat](#the-player-in-the-chat)
+- [Playing while it records](#playing-while-it-records)
 - [Make it right here](#make-it-right-here)
 - [Limits](#limits)
 - [What it keeps, and for how long](#what-it-keeps-and-for-how-long)
@@ -170,11 +171,42 @@ video and the picture for link previews all play the same thing.
 - While it waits it says how far Peter has got ("Peter has read 3 of 7 lines"), with a
   square for each line, lit as it is read. `play.json` carries the count (`recorded`,
   `lines`) while a reel is being recorded, for any page that wants to show it.
-- To see it without Claude, frame the player (`resources/read` of
-  `ui://pixelreel/player.html`) in a page that answers `ui/initialize` and then sends
-  `ui/notifications/tool-result` with `make_reel`'s result.
+- **It does not wait for the last line.** The first line is recorded in a few seconds, and
+  Peter records about as fast as the player plays, so the reel starts as soon as he is
+  safely ahead and the later lines are handed to the player as they come. Measured with
+  the real voice, the reel could be played 4 to 10 seconds after it was made, rather than
+  25 to 28. See [Playing while it records](#playing-while-it-records).
+- To see it without Claude, run the service and `node scripts/chat-stand-in.mjs`: it makes
+  a reel and writes a page that frames the player and speaks the chat's side of the
+  protocol. No test can see the player in a page, so look at this after any change to
+  `src/main.js` or `service/app-bridge.js`.
 - Its content security policy lets it reach the service's own address and nothing else.
 - Where a host does not show apps, nothing changes: Claude passes on the link.
+
+## Playing while it records
+
+A reel used to wait for its last line before anything played. Now:
+
+- **Each line is saved as it is recorded** (`service/reels.mjs`), with a list of the lines
+  so far, and how fast they are coming.
+- **`play.json` hands out what there is** while the state is `recording`: `reel` (its
+  pictures timed to each line's recording, or to a guess at it for a line still to come),
+  `clips` (the lines so far), `guesses` (about how long each line still to come will
+  last) and `playable`.
+- **`playable` is the service's word that a player starting now will not catch Peter up**
+  (`service/ahead.mjs`). It walks the scenes: the player reaches each one after the scenes
+  before it; Peter has its line ready after the unrecorded lines up to it, at the pace he
+  has kept so far and a quarter slower, to be safe. If he is overdue with the line in
+  hand, nothing is promised.
+- **The player takes late lines** (`src/main.js`): whoever frames it leaves them in
+  `window.pixelreelClips` (`{ clips, more, guesses }`) and sends a `pixelreel:clips` event.
+  The reel's clock and the marks on its progress bar are set again as each arrives.
+- **If the player does get to a line that has not come** (someone presses Next, or Peter
+  slows down), it waits for it, saying "Peter is still recording this line", rather than
+  read it in the browser's own voice; the scene then starts from the top with his.
+
+The player in the chat does this now. The reel's own page (`/r/<id>`) still waits for the
+last line: it can use the same `play.json` fields.
 
 ## Make it right here
 
@@ -324,6 +356,7 @@ The local tools (`npm run voices`, `page`, `video`) have no such limits.
 | `service/app-bridge.js` | The in-chat player's side of the MCP Apps protocol. |
 | `service/reels.mjs` | Making, recording, videos, expiry and deleting: one job at a time. |
 | `service/pacing.mjs` | Times a recorded reel's pictures to its voice. |
+| `service/ahead.mjs` | Says when a reel still being recorded can start playing without catching the recorder up. |
 | `service/voice.mjs` | Keeps the voice model loaded between reels, so a reel starts being spoken at once. |
 | `service/limits.mjs` | How big a reel may be, and how many each caller may make. |
 | `service/try.mjs`, `service/writer.mjs` | Make it right here: what a visitor gives (words, a link, writing, a PDF or a picture), and Claude asked to write it. Off by default. |

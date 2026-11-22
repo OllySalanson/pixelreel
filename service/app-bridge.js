@@ -37,7 +37,18 @@
   }
 
   /** Puts the reel in the page as the player expects it, and starts the player. */
-  function play({ reel, clips, watch }) {
+  /**
+   * Hands the player the recordings there are so far. `more` is true while Peter is still
+   * recording the rest: the player then waits for a line it has not got yet, rather than
+   * read it in the browser's own voice. `guesses` say about how long each line still to
+   * come will last, so the reel's length on screen is nearly right from the start.
+   */
+  function hand(clips, more, guesses = []) {
+    window.pixelreelClips = { clips, more, guesses };
+    document.dispatchEvent(new CustomEvent('pixelreel:clips'));
+  }
+
+  function play({ reel, clips, watch, guesses }, more = false) {
     lines.hidden = true;
     document.querySelector('.stage').hidden = false;
     for (const el of [$('seek'), document.querySelector('.controls')]) el.hidden = false;
@@ -49,6 +60,7 @@
       data.textContent = JSON.stringify(value);
       document.body.appendChild(data);
     }
+    hand(clips, more, guesses);   // left for the player to find when it starts
     startPixelreel();
     const link = document.createElement('p');
     link.className = 'note open-page';
@@ -61,13 +73,19 @@
   /** What to show while a reel is not ready yet: [heading, words]. */
   function waiting(state) {
     if (state.state === 'queued') return ['Waiting its turn', 'Peter is recording another reel first. Yours plays here as soon as it is ready.'];
-    if (state.lines) return ['Recording the voice', `Peter has read ${state.recorded} of ${state.lines} lines. The reel plays here as soon as he has finished.`];
+    if (state.lines) return ['Recording the voice', `Peter has read ${state.recorded} of ${state.lines} lines. The reel plays here in a moment.`];
     return ['Recording the voice', 'The reel plays here as soon as it is ready.'];
   }
 
-  /** Asks the service how the reel is getting on until it is ready, or has failed. */
+  /**
+   * Asks the service how the reel is getting on until it is ready, or has failed. The reel
+   * starts as soon as the service says a player would stay behind the recorder (`playable`),
+   * which is long before the last line is recorded; the lines recorded after that are handed
+   * to the player as they come.
+   */
   async function follow(id) {
-    for (let wait = 2000; shown === id; wait = Math.min(wait * 1.2, 4000)) {
+    let started = false;
+    for (let wait = 2000; shown === id; wait = started ? 1500 : Math.min(wait * 1.2, 4000)) {
       let state;
       try {
         const res = await fetch(`${service}/r/${id}/play.json`, { cache: 'no-store' });
@@ -76,10 +94,20 @@
         state = { state: 'trouble' };
       }
       if (shown !== id) return;
-      if (state.state === 'ready') { play(state); return; }
+      if (state.state === 'ready') {
+        if (started) hand(state.clips, false); else play(state);
+        return;
+      }
       if (state.state === 'failed') { say(state.title, ['This reel could not be made', state.error]); return; }
       if (state.state === 'gone') { say('No reel here', ['It has been deleted, or kept past its 30 days.']); return; }
-      if (state.state !== 'trouble') say(state.title, waiting(state), state.recorded, state.lines);
+      if (started) {
+        if (state.clips) hand(state.clips, true, state.guesses);
+      } else if (state.playable && state.reel && state.clips) {
+        started = true;
+        play(state, true);
+      } else if (state.state !== 'trouble') {
+        say(state.title, waiting(state), state.recorded, state.lines);
+      }
       await new Promise((ok) => setTimeout(ok, wait));
     }
   }

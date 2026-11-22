@@ -58,6 +58,36 @@ const thriftyRecord = (recorded = []) => async (dir) => {
   writeFileSync(path, JSON.stringify({ engine: 'pocket', voice: 'peter_yearsley', clips }));
 };
 
+/**
+ * A stand-in recorder that records a line each time it is let go, the way the real one hands
+ * them over: the recording is in the folder, then onLine is told of it. `hold()` in the
+ * returned pair resolves when it is waiting; `letGo()` lets it record the next line (or finish).
+ */
+function steppedRecord(seconds = 6) {
+  const held = [];
+  let arrived = () => {};
+  const hold = () => new Promise((ok) => { held.push(ok); arrived(); });
+  const letGo = async () => {
+    while (!held.length) await new Promise((ok) => { arrived = ok; });
+    held.shift()();
+  };
+  const record = async (dir, _log, onLine) => {
+    const reel = JSON.parse(readFileSync(join(dir, 'reel.json'), 'utf8'));
+    mkdirSync(join(dir, 'audio'), { recursive: true });
+    const clips = [];
+    for (const [i, scene] of reel.scenes.entries()) {
+      await hold();
+      const clip = { text: scene.say ?? scene.caption, file: `${createHash('sha256').update(scene.say ?? scene.caption).digest('hex').slice(0, 16)}.mp3`, seconds };
+      writeFileSync(join(dir, 'audio', clip.file), `said: ${clip.text}`);
+      clips.push(clip);
+      onLine(i + 1, reel.scenes.length, clip);
+    }
+    await hold();
+    writeFileSync(join(dir, 'audio', 'manifest.json'), JSON.stringify({ engine: 'pocket', voice: 'peter_yearsley', clips }));
+  };
+  return { record, letGo };
+}
+
 const fakeVideo = async (dir, out) => writeFileSync(out, `video of ${JSON.parse(readFileSync(join(dir, 'reel.json'), 'utf8')).title}`);
 
 /** Stands in for the card drawer (service/card.mjs, which test/card.test.js tries for real). */
@@ -251,6 +281,61 @@ describe('the reels service', () => {
     const lost = await failing.create(tea), after = await failing.create(tea, { improves: lost.id });
     await failing.idle();
     assert.equal((await failing.status(after.id)).kept, undefined, 'an earlier reel that could not be recorded has nothing to give');
+  });
+
+  it('has each line ready to play as soon as it is recorded, and says when a player may start', async () => {
+    let clock = Date.parse('2026-11-22T10:00:00Z');
+    const { record, letGo } = steppedRecord(6), store = freshStore();
+    const reels = new Reels({ store, record, video: fakeVideo, now: () => clock });
+    const until = async (id, check) => {
+      for (;;) {
+        const status = await reels.status(id);
+        if (!status || check(status)) return status;
+        await new Promise((ok) => setImmediate(ok));
+      }
+    };
+    const { id } = await reels.create(tea);
+    await until(id, (s) => s.state === 'recording');
+    assert.equal(await reels.early(id), null, 'nothing to play until a line is recorded');
+
+    clock += 3000;   // the first line took three seconds to record, and lasts six
+    await letGo();
+    const one = await until(id, (s) => s.recorded === 1);
+    assert.deepEqual([one.spoken, one.spokenAt - one.since], [6, 3000], 'it keeps how fast the lines are coming');
+    const early = await reels.early(id);
+    assert.deepEqual(early.clips.map((c) => [c.text, c.seconds]), [['Boil the kettle.', 6]]);
+    assert.equal(String(await store.get(`reels/${id}/audio/${early.clips[0].file}`)), 'said: Boil the kettle.', 'the recording is there to be played');
+    assert.deepEqual(early.guesses, [{ text: 'Pour it.', seconds: 1.34 }], 'with a guess at the line still to come');
+    assert.deepEqual(early.reel.scenes[1].picture, { type: 'icons', items: [{ icon: 'cup', label: 'Tea' }], start: 0.4, every: 1.4 }, 'and its pictures timed to that guess for now');
+    assert.equal(early.playable, true, 'half a second a second of speech: the recorder will stay well ahead');
+    clock += 2000;
+    assert.equal((await reels.early(id)).playable, false, 'two seconds on, that short line is overdue: its pace cannot be trusted');
+    assert.deepEqual(await reels.reel(id), tea, 'the kept reel is not changed until the voice is done');
+
+    await letGo();
+    await until(id, (s) => s.recorded === 2);
+    assert.equal((await reels.early(id)).clips.length, 2);
+    assert.equal((await reels.early(id)).playable, true, 'every line is recorded');
+    await letGo();
+    await reels.idle();
+    const ready = await reels.status(id);
+    assert.deepEqual([ready.state, ready.since, ready.spoken, ready.spokenAt], ['ready', undefined, undefined, undefined]);
+    assert.equal(await reels.early(id), null, 'once it is ready there is nothing early about it');
+    assert.equal((await reels.manifest(id)).voice, 'peter_yearsley', "the recorder's own list of its recordings is the one kept");
+    assert.equal(await reels.early(newId()), null);
+  });
+
+  it('puts nothing back for a reel deleted while a line was being recorded', async () => {
+    const { record, letGo } = steppedRecord(), store = freshStore();
+    const reels = new Reels({ store, record, video: fakeVideo });
+    const { id } = await reels.create(tea);
+    await letGo();
+    while (!(await reels.status(id))?.recorded) await new Promise((ok) => setImmediate(ok));
+    assert.equal((await store.list(`reels/${id}/audio`)).length, 2, 'a recording and the list of them');
+    await reels.remove(id);
+    for (let i = 0; i < 2; i++) await letGo();
+    await reels.idle();
+    assert.deepEqual(await store.list(`reels/${id}`), [], 'the lines recorded after it was deleted are not kept');
   });
 
   it('refuses a reel with problems, saying every one, and keeps nothing', async () => {
@@ -764,6 +849,46 @@ describe('the service over HTTP', async () => {
       other.close();
       other.closeAllConnections();
     }
+  });
+
+  it('lets a player start before the last line is recorded, with what there is so far', async () => {
+    const { record, letGo } = steppedRecord(6);
+    const slow = new Reels({ store: freshStore(), record, video: fakeVideo, picture: fakePicture });
+    const other = createService({ reels: slow, baseUrl: 'https://reels.example' });
+    await new Promise((ok) => other.listen(0, '127.0.0.1', ok));
+    const at = `http://127.0.0.1:${other.address().port}`;
+    const play = async (id) => (await fetch(`${at}/r/${id}/play.json`)).json();
+    try {
+      const { id } = await slow.create(tea);
+      assert.deepEqual(Object.keys(await play(id)).filter((k) => ['reel', 'clips', 'guesses', 'playable'].includes(k)), [], 'nothing to play before the first line');
+      await letGo();
+      let early;
+      do { early = await play(id); } while (!early.clips || !early.recorded);
+      assert.deepEqual([early.state, early.recorded, early.lines, early.clips.length], ['recording', 1, 2, 1]);
+      assert.equal(typeof early.playable, 'boolean');
+      assert.equal(early.reel.title, 'Tea');
+      assert.deepEqual(early.guesses.map((g) => g.text), ['Pour it.']);
+      assert.match(early.clips[0].file, new RegExp(`^https://reels\\.example/r/${id}/audio/[0-9a-f]{16}\\.mp3$`));
+      const heard = await fetch(early.clips[0].file.replace('https://reels.example', at));
+      assert.equal(await heard.text(), 'said: Boil the kettle.', 'the first line can be played while the second is recorded');
+      for (let i = 0; i < 2; i++) await letGo();
+      await slow.idle();
+      const ready = await play(id);
+      assert.deepEqual([ready.state, ready.clips.length, ready.playable, ready.guesses], ['ready', 2, undefined, undefined]);
+    } finally {
+      other.close();
+      other.closeAllConnections();
+    }
+  });
+
+  it('starts the player in the chat as soon as it may, and hands it the later lines as they come', async () => {
+    const bridge = readFileSync(new URL('../service/app-bridge.js', import.meta.url), 'utf8');
+    assert.match(bridge, /state\.playable && state\.reel && state\.clips/, 'it starts when the service says a player would stay behind the recorder');
+    assert.match(bridge, /if \(started\) hand\(state\.clips, false\); else play\(state\);/, 'and when the last line is in, says there are no more to wait for');
+    assert.match(bridge, /window\.pixelreelClips = \{ clips, more, guesses \};/);
+    const page = playerHtml('https://reels.example');
+    assert.match(page, /document\.addEventListener\('pixelreel:clips', takeClips\);/, 'which the player takes');
+    assert.match(page, /expecting: \(scene\) => coming && !clipNow\(scene\)/, 'waiting for a line that is on its way, rather than reading it in another voice');
   });
 
   it('shows the count in the player in the chat, and does not say a new reel is waiting when it is not', async () => {

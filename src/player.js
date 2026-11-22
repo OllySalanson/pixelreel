@@ -115,6 +115,24 @@ export class Player {
     this.goTo(index, offset);
   }
 
+  /**
+   * Takes new lengths for the scenes' narration (a recording that has just arrived is not the
+   * length that was guessed for it). What is playing carries on; only where things are on the
+   * reel's clock changes.
+   */
+  retime(durations) {
+    this.durations = durations;
+    this.timeline = timeline(durations ?? Array(this.count).fill(0), this.gapMs);
+    this._changed();
+  }
+
+  /** Starts the current scene's clock again from the top, for a narrator that had to wait before it could begin. */
+  resync() {
+    if (!this.playing || this._gap !== null) return;
+    this._base = this.now();
+    this._changed();
+  }
+
   setMuted(muted) {
     this.muted = Boolean(muted);
     // carry on from the same moment, so the change is heard (or silenced) at once
