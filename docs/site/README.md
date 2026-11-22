@@ -1235,6 +1235,14 @@ listened to it yet, and it was not checked by speech-to-text.
   empty, so the first screen is as it was.
 - The two buttons share a row under the words on a phone, with Paste the wider, and go
   one under the other where the letters are too big for that.
+- **"Paste a link here" can be heard.** With "Press words to hear them" on (Version 50),
+  a press reads any words on the site aloud, but not a form's labels, since a press on
+  one does something else. So the one line that says how to use the make page was the one
+  line that could not be heard. It is now a line of words that names the box, and a press
+  reads it. A press on "Read by Peter in English" reads that, and no longer runs on into
+  the names of the choices it opens.
 
 Checked with `scripts/site-fit.js` at 320, 390 and 1280 pixels wide with words in the box
-and the choices open: nothing cut in two or too wide at any of the 27 settings.
+and the choices open: nothing cut in two or too wide at any of the 27 settings. The
+reading aloud was checked with a stand-in for the device's voice, which heard "Paste a link
+here." and "Read by Peter in English."; nobody has listened to it on a real device.
