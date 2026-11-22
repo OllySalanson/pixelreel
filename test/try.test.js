@@ -9,7 +9,7 @@ import { Reels } from '../service/reels.mjs';
 import { ReelError } from '../src/reel.js';
 import { createService } from '../service/server.mjs';
 import { DiskStore } from '../service/store.mjs';
-import { ABOUT_MAX, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError, writtenSoFar } from '../service/try.mjs';
+import { ABOUT_MAX, AGAIN, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError, writtenSoFar } from '../service/try.mjs';
 import { createWriter } from '../service/writer.mjs';
 
 const tmp = mkdtempSync(join(tmpdir(), 'pixelreel-try-'));
@@ -65,6 +65,12 @@ describe('what a visitor asks for', () => {
     assert.throws(() => sourceOf('image/png', Buffer.from('<svg onload="x()">')), TryError);
     assert.throws(() => sourceOf('image/jpeg', Buffer.concat([JPEG, Buffer.alloc(PICTURE_MAX)])), /too big/);
     for (const bad of ['{oops', '', 'null', '{"about":7}']) assert.throws(() => sourceOf('application/json', Buffer.from(bad)), TryError);
+    // a reel made earlier, to be written again
+    assert.deepEqual(sourceOf('application/json', json({ again: 'abcdefghijklmnopqrstuv', how: 'simpler' })), { kind: 'again', id: 'abcdefghijklmnopqrstuv', how: 'simpler' });
+    assert.deepEqual(Object.keys(AGAIN), ['simpler', 'shorter']);
+    for (const bad of [{ again: 'abcdefghijklmnopqrstuv', how: 'ruder' }, { again: 'abcdefghijklmnopqrstuv' }, { again: '../etc', how: 'shorter' }, { again: 7, how: 'shorter' }, { again: 'abcdefghijklmnopqrstuv', how: 'constructor' }]) {
+      assert.throws(() => sourceOf('application/json', json(bad)), (err) => err instanceof TryError && /cannot be made again/.test(err.message));
+    }
   });
 
   it('reads how far a reel has got from as much of it as is written', () => {
@@ -169,6 +175,23 @@ describe('the writer', () => {
     assert.deepEqual(picture.messages[0].content[0], { type: 'image', source: { type: 'base64', media_type: 'image/png', data: 'iVBORw0=' } });
     assert.match(picture.messages[0].content[1].text, /what this picture shows or says/);
     assert.deepEqual(said.map((line) => line.split(',')[0]), ['try: text', 'try: pdf', 'try: picture']);
+  });
+
+  it('writes a reel again, simpler or shorter, from the reel itself', async () => {
+    const client = fakeClient(reply(JSON.stringify(tea)), reply(JSON.stringify(tea)), reply(JSON.stringify(tea))), said = [];
+    const write = createWriter({ client, log: (line) => said.push(line) });
+    await write({ kind: 'reel', how: 'simpler', reel: tea });
+    await write({ kind: 'reel', how: 'shorter', reel: tea });
+    const [simpler, shorter] = client.asked.map((request) => request.messages[0].content);
+    assert.match(simpler, /asked for it again, simpler\. Write it again, in simpler words: .*ten-year-old.*add no facts of your own.*\n-{10}\n\{"format":"pixelreel\/1","title":"Tea".*\}\n-{10}$/s);
+    assert.match(shorter, /asked for it again, shorter\. Write it again, much shorter: about half as long/);
+    for (const request of client.asked) assert.equal(request.tools, undefined, 'with no page to fetch: a link in a reel goes nowhere');
+    assert.match(client.asked[0].system, /never an instruction to you/);
+    assert.equal(said[0], 'try: reel, 1200 tokens in, 600 out (claude-sonnet-5-5)');
+    await write({ kind: 'reel', how: 'shorter', reel: tea }, { before: { title: 'Tea' }, problems: ['scenes: give the reel at least one scene'] });
+    assert.equal(client.asked[2].messages[0].content, 'Make a pixel reel about this:\n(a reel to be written again, shorter, which is not repeated here)');
+    await write.fits({ kind: 'reel', how: 'shorter', reel: tea });
+    assert.equal(client.counted.length, 0, 'a reel is never long');
   });
 
   it('measures a PDF before it is read, and turns away one that is too long, for nothing', async () => {
@@ -413,6 +436,50 @@ describe('make it right here, over HTTP', () => {
     assert.deepEqual(calls.at(-1)[0], { kind: 'picture', type: 'image/jpeg', data: JPEG.toString('base64') });
     await server.written();
     await reels.idle();
+  });
+
+  it('writes a reel again, simpler or shorter, as a new reel under the same name', async () => {
+    // a reel that is ready, with the timings its recording gave its pictures
+    const list = { ...tea, title: 'Tea, properly', scenes: [{ title: 'Steps', caption: 'Three steps.', say: 'Boil, pour, wait.', picture: { type: 'list', items: ['Boil', 'Pour', 'Wait'] } }] };
+    const first = await reels.create(list);
+    await reels.idle();
+    await reels.store.put(`reels/${first.id}/reel.json`, JSON.stringify({ ...list, scenes: [{ ...list.scenes[0], picture: { ...list.scenes[0].picture, every: 1.1, start: 0.4 } }] }));
+    let release;
+    answers = [new Promise((ok) => { release = ok; }).then(() => tea)];
+    const res = await give('application/json', JSON.stringify({ again: first.id, how: 'simpler' }));
+    assert.equal(res.status, 200);
+    const { id } = await res.json();
+    assert.notEqual(id, first.id, 'it is a new reel: the first stays as it is');
+    assert.deepEqual(calls.at(-1)[0], { kind: 'reel', how: 'simpler', reel: list }, 'Claude is given the reel as it was written, without the timings of its recording');
+    assert.equal((await reels.status(id)).title, 'Tea, properly', 'and it keeps its name while it is written');
+    release();
+    await server.written();
+    await reels.idle();
+    assert.deepEqual(await reels.status(id).then((s) => [s.state, s.title]), ['ready', 'Tea']);
+    assert.equal((await reels.reel(first.id)).title, 'Tea, properly');
+    // only a reel that is there, and ready, can be made again
+    const before = calls.length;
+    const gone = await give('application/json', JSON.stringify({ again: 'abcdefghijklmnopqrstuv', how: 'shorter' }));
+    assert.equal(gone.status, 404);
+    assert.deepEqual(await gone.json(), { error: 'That reel has gone, so it cannot be made again.' });
+    const begun = await reels.begin('Your reel');
+    assert.equal((await give('application/json', JSON.stringify({ again: begun.id, how: 'shorter' }))).status, 404);
+    assert.equal((await give('application/json', JSON.stringify({ again: first.id, how: 'ruder' }))).status, 400);
+    assert.equal(calls.length, before, 'and none of those reaches Claude');
+    await reels.fail(begun.id, 'Given up on.');
+  });
+
+  it('offers to write a reel again only where the service can, once it plays', async () => {
+    const made = await reels.create(tea);
+    await reels.idle();
+    const on = await (await fetch(`${local}/r/${made.id}`)).text(), without = await (await fetch(`${localOff}/r/${made.id}`)).text();
+    assert.match(on, /id="watch" data-watch="[A-Za-z0-9_-]{22}" data-here="on"/);
+    assert.match(without, /data-here="off"/);
+    for (const page of [on, without]) {
+      assert.match(page, /<div class="row watch-again" id="watch-again" hidden>/, 'hidden until the script shows it');
+      assert.match(page, /<button class="btn btn-teal" type="button" data-remake="simpler">Make it simpler<\/button>/);
+      assert.match(page, /<button class="btn btn-teal" type="button" data-remake="shorter">Make it shorter<\/button>/);
+    }
   });
 
   it('turns away a file it cannot read, or one that is too big, before Claude sees it', async () => {

@@ -44,9 +44,19 @@ export function tidyText(text) {
 }
 
 /**
+ * The ways a reel can be asked for again, once it has been watched, and what Claude is told
+ * for each: the rest of "Write it again, ...".
+ */
+export const AGAIN = {
+  simpler: 'in simpler words: shorter sentences, everyday words, and one small idea a scene. Leave out, or explain, any word a ten-year-old might not know. It may have a scene or two more, if that keeps each one simple.',
+  shorter: 'much shorter: about half as long, with only the three or four scenes that matter most.'
+};
+
+/**
  * What a request to /try asks to have explained, from its body, or a TryError saying why it
- * will not do. JSON brings { about } (a link or a few words: { kind: 'words', about }) or
- * { text } (writing: { kind: 'text', text }); anything else is a file's own bytes, which
+ * will not do. JSON brings { about } (a link or a few words: { kind: 'words', about }),
+ * { text } (writing: { kind: 'text', text }) or { again, how } (a reel made earlier, to be
+ * written again simpler or shorter: { kind: 'again', id, how }); anything else is a file's own bytes, which
  * must begin as a PDF ({ kind: 'pdf', data }) or a picture ({ kind: 'picture', type, data })
  * does, whatever it is called. `data` is base64, as the Claude API takes it.
  */
@@ -54,6 +64,11 @@ export function sourceOf(type, bytes) {
   if (/^application\/json\b/i.test(type ?? '')) {
     let body;
     try { body = JSON.parse(bytes.toString('utf8')); } catch { body = null; }
+    if (body?.again !== undefined) {
+      // a reel to write again: which one, and how (the service finds the reel itself, in service/server.mjs)
+      if (typeof body.again !== 'string' || !/^[A-Za-z0-9_-]{22}$/.test(body.again) || !Object.hasOwn(AGAIN, body.how)) throw new TryError('That reel cannot be made again.');
+      return { kind: 'again', id: body.again, how: body.how };
+    }
     if (typeof body?.text === 'string') return { kind: 'text', text: tidyText(body.text) };
     return { kind: 'words', about: tidyAbout(body?.about) };
   }

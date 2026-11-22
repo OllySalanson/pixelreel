@@ -124,7 +124,7 @@ async function handleReel(req, res, id, rest, context) {
     // watcher while the voice is still being recorded. It names the reel and points at
     // its own picture, so a link sent in a message shows what it is, but holds none of its words.
     const page = sitePage('reel', baseUrl, {
-      values: { reelid: id, reeltitle: escapeHtml(status.title) }, title: `${status.title} - Pixel Reel`, path: `/r/${id}`,
+      values: { reelid: id, reeltitle: escapeHtml(status.title), here: context.writer ? 'on' : 'off' }, title: `${status.title} - Pixel Reel`, path: `/r/${id}`,
       image: `${baseUrl}/r/${id}/card.png`, imagealt: `${status.title}: a pixel reel. Press Play.`
     });
     sendSqueezed(req, res, 200, squeezed(page), { ...SAFE, ...UNLISTED, 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': SITE_POLICY });
@@ -203,13 +203,20 @@ async function handleTry(req, res, context) {
     sendJson(res, 400, { error: err.message });
     return;
   }
+  if (source.kind === 'again') {
+    // A reel to write again, simpler or shorter: Claude is given the reel itself, as it was
+    // written (what it was made from was never kept), without the timings its recording gave it.
+    const reel = (await reels.status(source.id))?.state === 'ready' ? await reels.reel(source.id) : null;
+    if (!reel) { sendJson(res, 404, { error: 'That reel has gone, so it cannot be made again.' }); return; }
+    source = { kind: 'reel', how: source.how, reel: unpaced(reel) };
+  }
   const caller = callerOf(req, trustProxy);
   const refused = limits?.tries.hit(caller);
   if (refused) { sendJson(res, 429, { error: `No more reels just now. ${refused}` }); return; }
   let begun;
   try {
     await writer.fits?.(source);   // too long to read is said here and now, while what was given is still in front of them
-    begun = await reels.begin(WRITING_TITLE);
+    begun = await reels.begin(source.kind === 'reel' ? String(source.reel.title) : WRITING_TITLE);   // one made again keeps its name while it waits
   } catch (err) {
     limits?.tries.undo(caller);   // nothing has reached Claude yet
     if (!(err instanceof TryError || err instanceof BusyError)) throw err;
@@ -222,6 +229,12 @@ async function handleTry(req, res, context) {
   const job = writeReel(context, begun.id, source, caller).finally(() => context.writing.delete(job));
   context.writing.add(job);
 }
+
+/** A reel as it was before its recording timed its pictures (paceReel in service/pacing.mjs): the timings are the recording's, not the reel's. */
+const unpaced = (reel) => ({
+  ...reel,
+  scenes: reel.scenes.map((scene) => (scene.picture ? { ...scene, picture: Object.fromEntries(Object.entries(scene.picture).filter(([key]) => key !== 'every' && key !== 'start')) } : scene))
+});
 
 /** What a reel is called on its page until Claude has given it a title. */
 export const WRITING_TITLE = 'Your reel';

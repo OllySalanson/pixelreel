@@ -524,3 +524,16 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | The page that shows how, on a laptop, and the steps an iPhone is shown | With no internet |
 | --- | --- |
 | ![Keep Pixel Reel a press away, beside a phone with Pixel Reel among its apps. And: 1. Press Share. 2. Press Add to Home Screen.](log/v22-on-your-phone.jpg) | ![You are not online, beside a television test card that says no signal.](log/v22-not-online.jpg) |
+
+### Version 23
+
+- **Make it simpler. Make it shorter.** A reel can still be too much: too many scenes, or a
+  word in every sentence that needs explaining. Once a reel plays, its page now asks "Too
+  much to take in?" and offers two buttons. Either writes the same reel again, in simpler
+  words and smaller ideas, or about half as long, and goes to the new reel's page to watch
+  it being made. The first reel stays as it was, so nothing is lost by trying. The buttons
+  are there only where Make it right here is switched on.
+
+| Under a reel that is ready to play |
+| --- |
+| ![Under the player: Send it to someone. Then, Too much to take in? Make it simpler. Make it shorter.](log/v23-simpler-shorter.jpg) |

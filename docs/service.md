@@ -234,6 +234,14 @@ why in plain words, and "Try something else" leads back to the box, with the wor
 asked about still in it. Giving the words to their own Claude is still there, behind "Use
 your own Claude instead".
 
+Once a reel plays, its page offers it again: **Make it simpler** and **Make it shorter**
+(wherever the service can write a reel itself, for anyone who has the reel's link). Claude is
+given the reel as it was written, since what it was made from was never kept, and writes a
+new one: simpler words and smaller ideas, or about half as long. It is a new reel with a
+page of its own, under the same name while it is written, and the first stays as it is. It
+counts as one of the visitor's reels for the hour, and costs about as much as a reel from a
+few words.
+
 What can be known before Claude is asked is said in the box, before the visitor leaves it:
 nothing typed, a file Pixel Reel cannot read, too much of it, a PDF too long to read, too
 many reels in the last hour.

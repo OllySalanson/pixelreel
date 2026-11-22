@@ -74,6 +74,27 @@ export function startWatching() {
     words.textContent = text;
   };
 
+  // The same reel written again, simpler or shorter, where the service can write one itself:
+  // it is a new reel with a page of its own, and this one stays as it is.
+  const remakes = holder.querySelectorAll('button[data-remake]'), remakeSays = document.getElementById('watch-again-says');
+  for (const button of remakes) {
+    button.addEventListener('click', async () => {
+      for (const each of remakes) each.disabled = true;
+      remakeSays.textContent = 'One moment.';
+      try {
+        const res = await fetch('/try', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ again: id, how: button.dataset.remake }) });
+        const answer = await res.json().catch(() => ({}));
+        if (!res.ok || !answer.watch) throw new Error(answer.error || 'That did not work. Try again in a minute.');
+        location.assign(answer.watch);
+      } catch (err) {
+        remakeSays.textContent = err instanceof TypeError ? (navigator.onLine === false ? 'You are not online. Check your internet, then try again.' : 'That did not work. Try again in a minute.') : err.message;
+        for (const each of remakes) each.disabled = false;
+      }
+    });
+  }
+  // coming back to this page with Back finds its buttons ready again
+  addEventListener('pageshow', (e) => { if (e.persisted) { for (const each of remakes) each.disabled = false; remakeSays.textContent = ''; } });
+
   async function look() {
     let play;
     try {
@@ -95,6 +116,7 @@ export function startWatching() {
         document.getElementById('watch-kept').hidden = false;
       }
       if (play.video) document.getElementById('watch-video').hidden = false;
+      if (holder.dataset.here === 'on') document.getElementById('watch-again').hidden = false;
       return;
     }
     if (play.state === 'failed' || play.state === 'gone') {
