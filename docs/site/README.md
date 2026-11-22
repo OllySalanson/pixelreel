@@ -41,7 +41,8 @@ People who find reading hard work. Every choice follows from that:
   fills the whole screen with the reel, for anyone who needs it large, or is watching on a
   phone held on its side.
 - **On paper, too.** Under a reel, every scene is laid out on one page: its picture and its
-  few words. Print it, and how to read the gas meter is on the fridge.
+  few words. Print it, and how to read the gas meter is on the fridge. The paper carries the
+  reel's own QR code, so pointing a phone at the fridge has it read out.
 - **Watch instead.** Every part of the home page has a "Make a pixel reel about this" button
   that plays a reel of that part, made earlier. "Watch this whole page" plays them all.
 - **Calm.** Sound only ever starts on a press. Pictures hold still for anyone whose device
@@ -82,7 +83,8 @@ A page can say `{{url}}`, `{{mcp}}` (the connector's address) and `{{add}}` (the
 opens Claude with the connector filled in), `{{icon:letter:4}}` for an everyday icon and
 `{{sprite:reelie:2}}` for one of the site's own, drawn as crisp SVG four (or two) pixels to
 the pixel, `{{player:pixel-reel}}` for a player of a reel in `reels/`, and `{{scan}}` for the
-QR code that opens the page about the phone.
+QR code that opens the page about the phone (`{{scanthis}}` for one that opens the page it
+is on, as a reel's page has).
 
 The player is the real one underneath: `site/js/player.js` uses the same timing, narrator,
 kit and transitions as `src/main.js`, with the site's own buttons round it. The pages work
@@ -1009,3 +1011,29 @@ pages. Not yet pointed at with a real phone.
 | Under "Keep it a press away" on the home page, and in the steps for a computer |
 | --- |
 | ![The home page on a computer: under the buttons, a QR code with "On a computer now? Point your phone's camera at this square. Pixel Reel opens there." Beside it, the page about the phone: step 2, "Or use your phone", has the same code, and a button to copy the link instead.](log/v45-qr.jpg) |
+
+### Version 46
+
+- **Paper that can talk.** A reel printed for the fridge was only its pictures and their few
+  words: everything Peter says was left behind on the screen. The printed page now carries
+  the reel's own QR code under its title, with "To hear it read out, point a phone's camera
+  at this square." Point a phone at the fridge, and the reel plays, voice and all.
+- **It says until when.** A made reel is deleted after 30 days, and the paper outlives it.
+  So for a made reel the paper says "It works until 22 December", the same day the page
+  gives. A reel of the site's own (the examples) has no such line: it stays.
+- **On a screen, the same code is for watching on a phone.** Beside "Print it", where there
+  is a mouse: "Watch it on your phone. Point its camera at this square." Someone who made a
+  reel on a computer can take it to the sofa without sending themselves a link.
+- A page whose address is too long to make a code of (a service at a very long address) goes
+  without the code and its words, and is still made.
+
+The code holds the reel's link and nothing else: the same link the page already shows in
+its address bar, and the one "Send it to someone" passes on.
+
+Tried with a made reel on a stand-in service (a stand-in recorder, no voice): the page as
+it would print, at the size of a sheet of A4, was read back by a real reader (zxing-cpp) to
+the reel's own address. Not yet printed on real paper, nor pointed at with a real phone.
+
+| On a screen, beside Print it, and on paper |
+| --- |
+| ![Under a reel on a computer: the heading, Print it, and a QR code with "Watch it on your phone. Point its camera at this square." Beside it, the printed page: the code under the title, with "To hear it read out, point a phone's camera at this square. It works until 22 December.", then the six scenes.](log/v46-reel-code.jpg) |

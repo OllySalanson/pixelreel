@@ -345,6 +345,21 @@ export function postersHtml({ links = false, except = null } = {}) {
 }
 
 /**
+ * The QR code a page shows where it says {{name}}: made only for a page that asks for it,
+ * and nothing at all for an address too long to make one of (site/js/qr.js says how long),
+ * where the page goes without (site.css hides the words that went with it).
+ */
+function scanCode(body, name, address, label) {
+  if (!body.includes(`{{${name}}}`)) return '';
+  try {
+    return qrSvg(address, { label });
+  } catch (err) {
+    if (err instanceof RangeError) return '';
+    throw err;
+  }
+}
+
+/**
  * One of the site's pages, for a service at `baseUrl`. `listed` says whether search engines
  * may list it: until Pixel Reel is open to everyone, every page asks them not to. `values`
  * fills names of the page's own (already safe to put in HTML), such as `here` ("on" when the
@@ -358,7 +373,7 @@ export function sitePage(name, baseUrl, { listed = false, values = {}, title = n
   const markdown = !existsSync(siteFile(`pages/${name}.html`));
   const { facts, body } = pageFacts(readFileSync(siteFile(`pages/${name}.${markdown ? 'md' : 'html'}`), 'utf8'));
   // the connector's address is long and has no spaces: <wbr> lets a narrow screen break it before "/mcp", not mid-word
-  const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', languages: '', posters: postersHtml(), voices: narratorsHtml(narrators), who: whoChoices(narrators), whoreads: whoReads(narrators), scan: qrSvg(`${baseUrl}/app`, { label: 'A QR code. It opens Pixel Reel on a phone.' }), ...values };
+  const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', languages: '', posters: postersHtml(), voices: narratorsHtml(narrators), who: whoChoices(narrators), whoreads: whoReads(narrators), scan: scanCode(body, 'scan', `${baseUrl}/app`, 'A QR code. It opens Pixel Reel on a phone.'), scanthis: scanCode(body, 'scanthis', `${baseUrl}${path}`, 'A QR code. It opens this page on a phone.'), ...values };
   const heading = /^# (.+)$/m.exec(body)?.[1];
   title ??= facts.title ?? (heading && heading !== 'Pixel Reel' ? `${heading} - Pixel Reel` : 'Pixel Reel');
   // a plain page that has a reel of itself offers it straight under its heading

@@ -938,6 +938,47 @@ describe('getting the site onto a phone with no address to type', () => {
   });
 });
 
+describe("a reel's own QR code", () => {
+  const css = readFileSync(root('site/css/site.css'), 'utf8');
+  const label = 'A QR code. It opens this page on a phone.';
+
+  it("is on the page a reel is watched on, and opens that reel's own address", () => {
+    assert.ok(html.reel.includes(`<div class="scan sheet-scan">\n        ${qrSvg('https://reels.example/r/abcdefghijklmnopqrstuv', { label })}`), 'a made reel');
+    assert.ok(html['watch/offside-rule'].includes(`<div class="scan sheet-scan">\n        ${qrSvg('https://reels.example/watch/offside-rule', { label })}`), "one of the site's own");
+    for (const name of ['reel', 'watch/offside-rule']) {
+      assert.match(html[name], /<h3 class="on-screen">Watch it on your phone<\/h3>\s*<p class="on-screen">Point its camera at this square\.<\/p>/, name);
+      assert.match(html[name], /<p class="on-paper">To hear it read out, point a phone's camera at this square\.<\/p>/, name);
+    }
+  });
+
+  it('says on paper until when a made reel can be heard, and nothing of the kind for a reel of the site\'s own', () => {
+    assert.match(html.reel, /<p class="on-paper" id="sheet-until" hidden>It works until <span><\/span>\.<\/p>/);
+    assert.doesNotMatch(html['watch/offside-rule'], /sheet-until/);
+    assert.match(readFileSync(root('site/js/watch.js'), 'utf8'), /getElementById\('sheet-until'\)/, 'the page a reel is watched on fills in the day');
+  });
+
+  it('always shows on the printed page, with the words for paper and not the words for a screen', () => {
+    const print = css.slice(css.indexOf('@media print {\n  .top'));
+    assert.match(print, /\.sheet-scan:has\(\.qr\) \{ display: flex;/);
+    assert.match(print, /\.on-screen \{ display: none; \}/);
+    assert.match(print, /\.on-paper:not\(\[hidden\]\) \{ display: block; \}/, 'but not a line that has nothing to say yet');
+    assert.match(css.slice(0, css.indexOf('@media print {\n  .top')), /\n\.on-paper \{ display: none; \}/);
+  });
+
+  it('is made only for a page that shows one', () => {
+    for (const name of ['claude', 'make', 'privacy', 'press']) assert.doesNotMatch(html[name], /class="qr"/, name);
+  });
+
+  it('is left out, words and all, where the address is too long to make a code of', () => {
+    const long = `https://${'a-very-long-name-for-a-service.'.repeat(4)}example`;
+    const page = sitePage('reel', long, forReel);
+    assert.doesNotMatch(page, /class="qr"/);
+    assert.match(page, /<div class="scan sheet-scan">\s*<div class="words">/, 'the page is still made');
+    assert.match(css, /\n\.scan:not\(:has\(\.qr\)\) \{ display: none; \}/);
+    assert.match(sitePage('home', long), /<div class="scan">\s*<div class="words">/, 'and so is the home page');
+  });
+});
+
 describe('the menu, where the bar has no room for its links', () => {
   const css = readFileSync(root('site/css/site.css'), 'utf8');
   const SVG = '<svg class="px"[^>]*>[\\s\\S]*?</svg>';

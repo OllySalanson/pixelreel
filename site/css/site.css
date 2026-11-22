@@ -544,6 +544,8 @@ html[data-app] [data-not-app] { display: none; }
 @media (hover: hover) and (pointer: fine) {
   .scan { display: flex; }
 }
+.scan:not(:has(.qr)) { display: none; }   /* an address too long to make a code of: its words go too */
+.on-paper { display: none; }   /* words for the printed page only */
 .faq .presses .said { min-height: 0; margin-top: 0.4rem; font-weight: 700; color: var(--ink); }
 .faq .presses .said:empty { display: none; }
 
@@ -695,6 +697,7 @@ dialog { color: var(--ink); }
 /* (a class of its own: .sheet is the press kit's page of facts) */
 .steps.storyboard { max-width: none; }
 .sheet-part .head .btn { margin-top: 1.5rem; }
+.sheet-scan h3 { font-size: 1.375rem; }
 .sheet-made { display: none; }
 .storyboard .step p:not(.step-n) { font-size: 1.1875rem; color: var(--ink); }
 /* On paper it is the only thing: black on white, three scenes across, none cut in two by the end of a sheet. */
@@ -710,6 +713,13 @@ dialog { color: var(--ink); }
   .storyboard .step-n { box-shadow: 0 0 0 1px #000; }
   .storyboard .step h3, .storyboard .step p { color: #000; }
   .sheet-made { display: block; margin-top: 1.5rem; font-size: 1.125rem; color: #000; }
+  /* the reel's own code, always there on paper: point a phone at the fridge, and it is read out */
+  .sheet-scan:has(.qr) { display: flex; flex-wrap: nowrap; margin-top: 1rem; break-inside: avoid; }
+  .sheet-scan .qr { width: 9.5rem; box-shadow: 0 0 0 1px #000; }   /* about three centimetres across: a phone reads it from arm's length */
+  .sheet-scan .words { max-width: none; }
+  .sheet-scan p { margin-top: 0.25rem; font-size: 1.25rem; font-weight: 500; color: #000; }
+  .on-screen { display: none; }
+  .on-paper:not([hidden]) { display: block; }
 }
 
 /* ---------------------------------------------------------------- smaller screens */

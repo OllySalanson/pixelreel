@@ -120,6 +120,12 @@ export function startWatching() {
       if (play.expires) {
         document.getElementById('watch-until').textContent = DAY.format(new Date(play.expires));
         document.getElementById('watch-kept').hidden = false;
+        // and on the printed page, beside the code that leads back here
+        const until = document.getElementById('sheet-until');
+        if (until) {
+          until.querySelector('span').textContent = DAY.format(new Date(play.expires));
+          until.hidden = false;
+        }
       }
       if (play.video) document.getElementById('watch-video').hidden = false;
       if (holder.dataset.here === 'on') document.getElementById('watch-again').hidden = false;
