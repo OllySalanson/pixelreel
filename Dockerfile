@@ -13,11 +13,11 @@ WORKDIR /app
 ENV HF_HOME=/opt/huggingface
 
 # the voice first: it changes least and takes longest (PyTorch for the CPU, Pocket TTS, the model)
-# VOICE_LANGUAGES names other languages for the narrator to read ("french spanish"): each adds about
-# 190 MB, and is switched on when the service runs with PIXELREEL_LANGUAGES (docs/deploy.md)
-ARG VOICE_LANGUAGES=""
-# VOICE_NAMES names other narrators' voices ("anna stuart_bell"), switched on with PIXELREEL_NARRATORS
-ARG VOICE_NAMES=""
+# VOICE_LANGUAGES names the other languages the narrator reads: each is a model of about 190 MB.
+# VOICE_NAMES names the other narrators' voices (small files). Both are switched on further down,
+# with PIXELREEL_LANGUAGES and PIXELREEL_NARRATORS: keep the two in step (docs/deploy.md).
+ARG VOICE_LANGUAGES="french german spanish italian portuguese dutch"
+ARG VOICE_NAMES="anna vera stuart_bell charles paul"
 COPY scripts/setup-voices.sh scripts/setup-voices.sh
 RUN VOICE_LANGUAGES="$VOICE_LANGUAGES" VOICE_NAMES="$VOICE_NAMES" sh scripts/setup-voices.sh && chmod -R a+rX /opt/huggingface
 
@@ -28,6 +28,8 @@ COPY . .
 RUN mkdir -p /data && chown node:node /data
 
 ENV NODE_ENV=production PORT=8787 PIXELREEL_DATA=/data PIXELREEL_TRUST_PROXY=1 THREADS=2
+# what the image can read, and in whose voice, is what it offers: the models and voices built in above
+ENV PIXELREEL_LANGUAGES=french,german,spanish,italian,portuguese,dutch PIXELREEL_NARRATORS=anna,vera,stuart,charles,paul
 USER node
 EXPOSE 8787
 VOLUME /data
