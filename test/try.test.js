@@ -367,6 +367,15 @@ describe('make it right here, over HTTP', () => {
     assert.match(await (await fetch(`${local}/`)).text(), /data-here="on"/);
   });
 
+  it('tells a phone that a file may be shared to Pixel Reel, only where it can make a reel of one', async () => {
+    const on = await fetch(`${local}/site/art/site.webmanifest`), told = await on.json();
+    assert.equal(on.headers.get('content-type'), 'application/manifest+json');
+    assert.deepEqual(told.share_target.params.files.map((taken) => taken.name), ['file']);
+    const plain = await (await fetch(`${localOff}/site/art/site.webmanifest`)).json();
+    assert.equal(plain.share_target.params.files, undefined, 'or a phone would offer Pixel Reel for a photo it cannot take');
+    assert.deepEqual({ ...told, share_target: plain.share_target }, plain, 'and it is the same in every other way');
+  });
+
   it('keeps its part of the page hidden until the page is told it may, with everything the script looks for', async () => {
     const page = await (await fetch(`${local}/`)).text();
     assert.match(page, /<div class="maker-here" id="maker-here" hidden>/);

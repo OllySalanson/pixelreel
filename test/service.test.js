@@ -122,6 +122,22 @@ describe('the store', () => {
     });
   }
 
+  it('removes a folder that is still being written to (on disk)', async () => {
+    // a reel deleted while it is being recorded: a file that lands while its folder is being
+    // emptied used to stop the folder being removed ("directory not empty"), now and then
+    for (let round = 0; round < 40; round++) {
+      const store = freshStore();
+      await store.put('reels/a/reel.json', '{}');
+      // a write that loses its footing to the removal fails, as it should: it is the removal that must not
+      const writing = (async () => { for (let n = 0; n < 4; n++) await store.put('reels/a/status.json', `{"n":${n}}`).catch(() => {}); })();
+      await new Promise((soon) => setImmediate(soon));
+      await store.remove('reels/a');
+      await writing;
+      await store.remove('reels/a');
+      assert.deepEqual(await store.list('reels/a'), []);
+    }
+  });
+
   it('tries again when the bucket fails for a moment, and says so when it keeps failing', async () => {
     s3.objects.clear();
     const store = new S3Store(s3.options);
@@ -1195,6 +1211,16 @@ describe('the service over HTTP', async () => {
       '/src/../package.json', '/site/js/..%2F..%2Fpackage.json', '/site/css/', '/src/pixelreel.css', '/reels/pixel-reel/', '/.gitignore', '/site/art/.hidden.png']) {
       assert.equal((await fetch(`${local}${bad}`)).status, 404, bad);
     }
+  });
+
+  it('sends something shared from a phone on to the make-one box, without reading it', async () => {
+    // the page's own service worker takes what is shared, on the phone: this is for when it was not there to
+    const form = new FormData();
+    form.set('text', 'my gas bill');
+    form.set('file', new File(['x'.repeat(300_000)], 'bill.pdf', { type: 'application/pdf' }));
+    const res = await fetch(`${local}/share`, { method: 'POST', body: form, redirect: 'manual' });
+    assert.deepEqual([res.status, res.headers.get('location'), res.headers.get('cache-control')], [303, '/#make', 'no-store']);
+    assert.equal((await fetch(`${local}/share`, { redirect: 'manual' })).status, 303, 'and the same for anyone who simply goes there');
   });
 
   it('keeps search engines out, and never lets them near a reel', async () => {

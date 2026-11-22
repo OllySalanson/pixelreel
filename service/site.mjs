@@ -173,6 +173,50 @@ export function siteModules(entry = '/site/js/main.js') {
   return [...found].sort();
 }
 
+/**
+ * What a phone needs to know to keep Pixel Reel on its home screen as an app: its name and
+ * icons, that it opens on a screen of its own, the things to offer when its icon is pressed
+ * and held, and that things can be shared to it from the phone's Share menu, which sends
+ * them to /share (site/js/sw.js takes them there). A "maskable" icon keeps Reelie well
+ * inside the middle, as a phone may cut its icons into a circle. With `files`, a PDF, a
+ * picture or some writing can be shared to it as well as a link or words: only where the
+ * service can make a reel of one itself (Make it right here), or the phone would offer
+ * Pixel Reel for things it cannot take.
+ */
+export function appManifest({ files = false } = {}) {
+  const night = '#0b1220';
+  const icon = (size, purpose) => ({ src: `/site/art/icon-${purpose === 'maskable' ? 'maskable-' : ''}${size}.png`, sizes: `${size}x${size}`, type: 'image/png', purpose });
+  return {
+    name: 'Pixel Reel',
+    short_name: 'Pixel Reel',
+    description: "Short cartoons with a warm voice, each explaining one thing. Watch it. Don't read it.",
+    id: '/',
+    start_url: '/',
+    scope: '/',
+    lang: 'en-GB',
+    dir: 'ltr',
+    display: 'standalone',
+    background_color: night,
+    theme_color: night,
+    categories: ['education', 'productivity'],
+    icons: [icon(192, 'any'), icon(512, 'any'), icon(192, 'maskable'), icon(512, 'maskable')],
+    shortcuts: [
+      { name: 'Make a pixel reel', short_name: 'Make a reel', url: '/#make' },
+      { name: 'Watch an example', short_name: 'Examples', url: '/#examples' },
+      { name: 'Add Pixel Reel to Claude', short_name: 'Add to Claude', url: '/claude' }
+    ],
+    share_target: {
+      action: '/share',
+      method: 'POST',
+      enctype: 'multipart/form-data',
+      params: {
+        title: 'title', text: 'text', url: 'url',
+        ...(files ? { files: [{ name: 'file', accept: ['application/pdf', 'image/*', 'text/plain', '.pdf', '.txt', '.md'] }] } : {})
+      }
+    }
+  };
+}
+
 /** The link that opens Claude's own "add a connector" box with Pixel Reel's name and address filled in. */
 export const addToClaudeLink = (baseUrl) =>
   `https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=${encodeURIComponent('Pixel Reel')}&connectorUrl=${encodeURIComponent(`${baseUrl}/mcp`)}`;
