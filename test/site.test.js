@@ -455,7 +455,7 @@ describe('making a reel has a page of its own', () => {
     const form = html.make.slice(html.make.indexOf('<form class="maker"'), html.make.indexOf('</form>'));
     // the box is named for the commonest thing put in it, with a picture of a link beside the words
     assert.match(form, /<label class="maker-label" for="maker-what"><span class="tile tile-gold"><svg class="px"[^>]*>.*?<\/svg><\/span><span>Paste a link here<\/span><\/label>/);
-    assert.match(form, /<textarea id="maker-what" name="about" [^>]*placeholder="Or type a question"><\/textarea>\s*<button class="btn btn-paper maker-paste" id="maker-paste" type="button" hidden><svg class="px"[^>]*>.*?<\/svg><span>Paste<\/span><\/button>/);
+    assert.match(form, /<textarea id="maker-what" name="about" [^>]*enterkeyhint="go" placeholder="Or type a question"><\/textarea>\s*<button class="btn btn-paper maker-paste" id="maker-paste" type="button" hidden><svg class="px"[^>]*>.*?<\/svg><span>Paste<\/span><\/button>/);
     // in the order someone meets them: the box, who reads it (one line, folded shut), the big button, then every other way in
     const order = ['id="maker-what"', 'id="maker-paste"', '<details class="maker-read" id="maker-read" hidden>', 'id="maker-who"', 'id="maker-language"', 'id="maker-go"', 'id="maker-photo"', 'id="maker-choose"', 'class="tries"', 'id="maker-own-open"', 'id="ask-words"'];
     const places = order.map((part) => form.indexOf(part));
@@ -522,6 +522,9 @@ describe('waiting for a reel that is being made', () => {
 
   it('offers a way back from a reel that could not be made', () => {
     assert.match(html.reel, /<a class="btn btn-gold" id="watch-retry" href="\/make" hidden>Try something else<\/a>/);
+    // and a way back to the form from a reel that did work, shown only to whoever made it there
+    assert.match(html.reel, /<a class="btn btn-paper" id="watch-another" href="\/make" hidden>Make another reel<\/a>/);
+    assert.match(readFileSync(root('site/js/watch.js'), 'utf8'), /if \(holder\.dataset\.here === 'on'\) \{[^}]*if \(readMine\(mine\)\.some\(\(reel\) => reel\.id === id\)\) \{\s*document\.getElementById\('watch-another'\)\.hidden = false;[^}]*sessionStorage\.removeItem\(ASKED\)/, 'and the box it leads back to starts empty');
   });
 });
 
@@ -880,6 +883,7 @@ describe('who reads', () => {
     assert.equal(askFor('my gas bill', 'Anna'), 'Make me a pixel reel, read by Anna, about this: my gas bill');
     assert.equal(askFor('https://example.com/a', 'Stuart'), 'Make me a pixel reel, read by Stuart, about this page: https://example.com/a');
     assert.equal(askFor('my gas bill'), 'Make me a pixel reel about this: my gas bill', 'and say nothing of it for Peter');
+    assert.equal(askFor('Council Tax: how it works\nhttps://www.gov.uk/council-tax'), 'Make me a pixel reel about this page: https://www.gov.uk/council-tax', 'a link copied with its headline is asked about as the link');
     assert.equal(askFor('my gas bill', null, 'french'), 'Make me a pixel reel in French about this: my gas bill', 'and for the language that was chosen');
     assert.equal(askFor('https://example.com/a', 'Anna', 'spanish'), 'Make me a pixel reel in Spanish, read by Anna, about this page: https://example.com/a');
     assert.equal(askFor('my gas bill', 'Anna', null), 'Make me a pixel reel, read by Anna, about this: my gas bill');

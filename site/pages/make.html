@@ -15,7 +15,7 @@ description: Give Pixel Reel a link, a letter, a photo or a question, and it com
       <!-- the one thing to do first: a big box that says what goes in it, and a button that pastes it in -->
       <label class="maker-label" for="maker-what"><span class="tile tile-gold">{{sprite:link:3}}</span><span>Paste a link here</span></label>
       <div class="maker-box">
-        <textarea id="maker-what" name="about" rows="2" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Or type a question"></textarea>
+        <textarea id="maker-what" name="about" rows="2" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Or type a question"></textarea>
         <!-- shown by maker.js, where the browser lets a page read what was copied on a press -->
         <button class="btn btn-paper maker-paste" id="maker-paste" type="button" hidden>{{sprite:paste:2}}<span>Paste</span></button>
       </div>

@@ -1148,7 +1148,7 @@ has not yet been pressed on a real phone.
 | --- |
 | ![Before: What do you want explained, a thin box, four things to try and a row of languages, with no button in sight. After: Paste a link here, a big box with a Paste button in it, Read by Peter in English, and a big gold button, Make my reel.](log/v49-make-at-a-glance.jpg) |
 
-### Version 49
+### Version 50
 
 - **Press words to hear them.** Every part of the home page has a reel of itself, but a
   reel sums a part up: it does not read out the answer to a question, or the four steps
@@ -1178,4 +1178,23 @@ device, and that needs listening to on a real phone and a real computer.
 
 | The choice in Make it comfy, and a card being read |
 | --- |
-| ![Make it comfy: Press words to hear them, Off and On, with "Press any words on the site, and they are read to you. In your device's own voice, not Peter's." Beside it, the cards under "For anyone who would rather watch": the one being read, "Your mind wanders", has a gold edge round it.](log/v49-aloud.jpg) |
+| ![Make it comfy: Press words to hear them, Off and On, with "Press any words on the site, and they are read to you. In your device's own voice, not Peter's." Beside it, the cards under "For anyone who would rather watch": the one being read, "Your mind wanders", has a gold edge round it.](log/v50-aloud.jpg) |
+
+### Version 51
+
+The make page again, for what happens just before the big button and just after the reel.
+
+- **A link copied with its headline is the link.** Pressing Share, then Copy, in many apps
+  copies two lines: the headline, and the address under it. The box took that for a few
+  lines of writing, so Claude never opened the page and the reel explained the headline.
+  It is now asked about as the link. A letter that has a link in it is still a letter.
+- **Go, on a phone's keyboard.** With the box in hand the keyboard covers the big button.
+  Its return key already made the reel; it now says "Go", so that is plain to see.
+- **Make another reel.** Whoever makes a reel on the make page sees one more button on the
+  reel's own page once it plays, beside "Send it to someone". The only way back used to be
+  the menu. It shows only on the device the reel was made on, so someone sent the link is
+  not offered "another". And the box it leads back to is empty: it used to come back
+  holding the last thing asked, which is there for a reel that could not be made.
+
+Checked in a browser at 320 and 390 pixels wide with `scripts/site-fit.js`, on the reel's
+page with the new button showing: nothing cut in two or too wide at any of the 27 settings.

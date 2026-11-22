@@ -45,6 +45,23 @@ export const VIDEO_SAYS = SAYS.video;
 /** True for words that are a web address and nothing else. */
 export const isLink = (words) => /^(https?:\/\/|www\.)\S+$/i.test(words.trim());
 
+/** The most a headline may run to, for a link copied with its headline to be taken as the link alone. */
+export const TITLE_MAX = 200;
+
+/**
+ * The link in words that are a link with its headline: what many apps copy when someone
+ * presses Share, then Copy ("Council Tax: how it works" on one line, the address on the
+ * next). The page is what was meant, so the link alone is asked about: sent as it came, it
+ * would be taken for a few lines of writing, and the reel would explain the headline.
+ * Null for anything else: one line, more than one link, or more than a headline round it.
+ */
+export function linkWithTitle(words) {
+  const lines = words.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const links = lines.filter(isLink), rest = lines.filter((line) => !isLink(line));
+  if (lines.length < 2 || links.length !== 1 || rest.length > 3 || rest.join(' ').length > TITLE_MAX) return null;
+  return /(https?:\/\/|\bwww\.)\S/i.test(rest.join(' ')) ? null : links[0];   // a second address in among the words makes it writing, not a headline
+}
+
 const starts = (bytes, ...codes) => codes.every((code, i) => bytes[i] === code);
 
 /**
@@ -123,8 +140,9 @@ const json = (value) => ({ headers: { 'content-type': 'application/json' }, body
 
 /** What to send for words: a short line is a request (a link, or a few words); anything longer is writing to explain. */
 function wordsRequest(words, language, narrator) {
-  const tidy = words.replace(/\r\n?/g, '\n').trim();
-  if (!tidy) throw new GivenError(SAYS.nothing);
+  const whole = words.replace(/\r\n?/g, '\n').trim();
+  if (!whole) throw new GivenError(SAYS.nothing);
+  const tidy = linkWithTitle(whole) ?? whole;   // a link copied with its headline is asked about as the link
   if (tidy.length > TEXT_MAX) throw new GivenError(SAYS.long);
   if (isVideoLink(tidy)) throw new GivenError(SAYS.video);
   const more = { ...(language ? { language } : {}), ...(narrator ? { narrator } : {}) };

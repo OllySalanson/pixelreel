@@ -7,15 +7,15 @@
 // anywhere on the page (given.js works out what was given, and what to send for it). The
 // service answers at once with the reel's own page, which shows it being made (watch.js).
 import { calm } from './calm.js';
-import { canTake, GivenError, givenFrom, givenFromClipboard, isLink, languageFor, nameOf, PICTURE_SIDE, requestFor } from './given.js';
+import { canTake, GivenError, givenFrom, givenFromClipboard, isLink, languageFor, linkWithTitle, nameOf, PICTURE_SIDE, requestFor } from './given.js';
 import { mineStorage, rememberMine } from './mine.js';
 import { copyText } from './send.js';
 import { keepNarrator, narratorName, readNarrator } from './voice.js';
 
 const EXAMPLE = 'my gas bill';
 
-/** Where the words last asked about are kept, in this tab only, for the way back from a reel that could not be made. */
-const ASKED = 'pixelreel-asked';
+/** Where the words last asked about are kept, in this tab only, for the way back from a reel that could not be made (watch.js lets them go once the reel plays). */
+export const ASKED = 'pixelreel-asked';
 
 /** Where the language last chosen for a reel is kept, on this device. */
 const LANGUAGE = 'pixelreel-language';
@@ -29,7 +29,7 @@ const ASK_MAX = 2000;
  * 'french') for the reel to be in that language.
  */
 export function askFor(what, narrator = null, language = null) {
-  const about = what.trim().replace(/\s+/g, ' ') || EXAMPLE;
+  const about = (linkWithTitle(what) ?? what).trim().replace(/\s+/g, ' ') || EXAMPLE;   // a link copied with its headline is asked about as the link
   const reel = `a pixel reel${language ? ` in ${language[0].toUpperCase()}${language.slice(1)}` : ''}${narrator ? `, read by ${narrator},` : ''}`;
   return isLink(about) ? `Make me ${reel} about this page: ${about}` : `Make me ${reel} about this: ${about}`;
 }
