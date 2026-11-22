@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
@@ -36,6 +37,26 @@ async function fakeRecord(dir) {
   clips.forEach((c) => writeFileSync(join(dir, 'audio', c.file), 'ID3'));
   writeFileSync(join(dir, 'audio', 'manifest.json'), JSON.stringify({ engine: 'pocket', voice: 'peter_yearsley', clips }));
 }
+
+/**
+ * A stand-in recorder that, like npm run voices, names each recording after its words and
+ * leaves alone the lines the folder already has recordings of. `recorded` is told each line it does record.
+ */
+const thriftyRecord = (recorded = []) => async (dir) => {
+  const reel = JSON.parse(readFileSync(join(dir, 'reel.json'), 'utf8'));
+  mkdirSync(join(dir, 'audio'), { recursive: true });
+  const path = join(dir, 'audio', 'manifest.json');
+  const had = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')).clips.filter((c) => existsSync(join(dir, 'audio', c.file))) : [];
+  const clips = reel.scenes.map((s) => {
+    const text = s.say ?? s.caption, kept = had.find((c) => c.text === text);
+    if (kept) return kept;
+    recorded.push(text);
+    const file = `${createHash('sha256').update(text).digest('hex').slice(0, 16)}.mp3`;
+    writeFileSync(join(dir, 'audio', file), `said: ${text}`);
+    return { text, file, seconds: 6 };
+  });
+  writeFileSync(path, JSON.stringify({ engine: 'pocket', voice: 'peter_yearsley', clips }));
+};
 
 const fakeVideo = async (dir, out) => writeFileSync(out, `video of ${JSON.parse(readFileSync(join(dir, 'reel.json'), 'utf8')).title}`);
 
@@ -181,6 +202,55 @@ describe('the reels service', () => {
     for (let i = 0; i < 3; i++) await letGo();
     await reels.idle();
     assert.equal((await reels.status(second.id)).state, 'ready');
+  });
+
+  it('records only the lines that changed when a reel improves on an earlier one', async () => {
+    const recorded = [], record = thriftyRecord(recorded);
+    const store = freshStore();
+    const reels = new Reels({ store, record, video: fakeVideo });
+    const first = await reels.create(tea);
+    await reels.idle();
+    assert.deepEqual(recorded, ['Boil the kettle.', 'Pour it.']);
+
+    const changed = { ...tea, scenes: [tea.scenes[0], { ...tea.scenes[1], caption: 'Pour it out.' }, { title: 'Drink', caption: 'Drink it.' }] };
+    const second = await reels.create(changed, { improves: first.id });
+    assert.equal(second.kept, 1, 'it says how many lines kept their recordings');
+    assert.notEqual(second.id, first.id, 'it is a new reel, with a link of its own');
+    await reels.idle();
+    assert.deepEqual(recorded.slice(2), ['Pour it out.', 'Drink it.'], 'the line that did not change is not recorded again');
+    assert.equal((await reels.status(second.id)).state, 'ready');
+    const clips = (await reels.manifest(second.id)).clips;
+    assert.deepEqual(clips.map((c) => c.text), ['Boil the kettle.', 'Pour it out.', 'Drink it.']);
+    assert.equal(String(await store.get(`reels/${second.id}/audio/${clips[0].file}`)), 'said: Boil the kettle.', 'the recording it kept is its own copy');
+    assert.equal((await store.list(`reels/${second.id}/audio`)).length, 4, 'three recordings and the list of them: none it has no use for');
+    await reels.remove(first.id);
+    assert.ok(await store.get(`reels/${second.id}/audio/${clips[0].file}`), 'so deleting the earlier reel takes nothing from it');
+
+    for (const from of [newId(), 'nonsense', second.id.slice(1)]) {
+      const alone = await reels.create(tea, { improves: from });
+      assert.equal(alone.kept, undefined, `improving on ${from}, which is not a reel, is just making a reel`);
+    }
+    await reels.idle();
+  });
+
+  it('keeps the lines of an earlier reel that is still being recorded when the change is asked for', async () => {
+    // someone asks for a change before the first reel has finished: by the change's turn, the first is recorded
+    let letGo;
+    const held = new Promise((ok) => { letGo = ok; }), recorded = [], thrifty = thriftyRecord(recorded);
+    const reels = new Reels({ store: freshStore(), record: async (dir) => { await held; await thrifty(dir); }, video: fakeVideo });
+    const first = await reels.create(tea);
+    const second = await reels.create({ ...tea, scenes: [...tea.scenes, { title: 'Drink', caption: 'Drink it.' }] }, { improves: first.id });
+    assert.deepEqual([first.state, second.state, second.kept], ['recording', 'queued', 2], 'two of its three lines are the first reel\'s');
+    letGo();
+    await reels.idle();
+    assert.deepEqual(recorded, ['Boil the kettle.', 'Pour it.', 'Drink it.'], 'each line was recorded once');
+    const done = await reels.status(second.id);
+    assert.deepEqual([done.state, done.kept, done.improves], ['ready', 2, undefined]);
+
+    const failing = new Reels({ store: freshStore(), record: async () => { throw new Error('no voice'); }, video: fakeVideo });
+    const lost = await failing.create(tea), after = await failing.create(tea, { improves: lost.id });
+    await failing.idle();
+    assert.equal((await failing.status(after.id)).kept, undefined, 'an earlier reel that could not be recorded has nothing to give');
   });
 
   it('refuses a reel with problems, saying every one, and keeps nothing', async () => {
@@ -553,6 +623,37 @@ describe('the service over HTTP', async () => {
     assert.match(words(wrong), /format: this player reads "pixelreel\/1", not "pixelreel\/9"/, 'but one that names another format is told so');
     await reels.idle();
     await client.close();
+  });
+
+  it('lets Claude change a reel it made, keeping the lines it leaves alone', async () => {
+    const mine = new Reels({ store: freshStore(), record: thriftyRecord(), video: fakeVideo, picture: fakePicture });
+    const other = createService({ reels: mine, baseUrl: 'https://reels.example' });
+    await new Promise((ok) => other.listen(0, '127.0.0.1', ok));
+    const client = new Client({ name: 'test', version: '1' });
+    await client.connect(new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${other.address().port}/mcp`)));
+    try {
+      const make = (await client.listTools()).tools.find((t) => t.name === 'make_reel');
+      assert.match(make.inputSchema.properties.improves.description, /^To change a reel you made: the id of that reel\./);
+      assert.match(make.description, /send the whole reel again with "improves" set to its id/);
+      assert.ok(make.description.length < 2000);
+      const first = await client.callTool({ name: 'make_reel', arguments: tea });
+      await mine.idle();
+      const second = await client.callTool({ name: 'make_reel', arguments: { ...tea, title: 'Tea, again', improves: first.structuredContent.id } });
+      assert.equal(second.isError, undefined, 'improves is not taken for part of the reel');
+      assert.equal(second.structuredContent.kept, 2);
+      assert.match(words(second), /\n2 of its lines keep their recordings from the earlier reel, so it will be ready sooner\. The earlier reel is still at its own link: delete_reel removes it/);
+      await mine.idle();
+      assert.equal((await mine.reel(second.structuredContent.id)).improves, undefined, 'and is not kept in it');
+      assert.doesNotMatch(words(await client.callTool({ name: 'get_reel', arguments: { id: second.structuredContent.id } })), /keep their recordings/, 'once it is ready there is no more to say about it');
+      const lost = await client.callTool({ name: 'make_reel', arguments: { ...tea, improves: 'no-such-reel' } });
+      assert.equal(lost.isError, undefined, 'an earlier reel that has gone does not stop the new one');
+      assert.equal(lost.structuredContent.kept, undefined);
+      await mine.idle();
+      await client.close();
+    } finally {
+      other.close();
+      other.closeAllConnections();
+    }
   });
 
   it('offers a player to show inside the chat, allowed to reach only the service', async () => {

@@ -64,6 +64,10 @@ function reelInput() {
   reel.$defs.picture.description = 'A ready-made picture. Give every scene one, and mix them so the reel moves.';
   reel.$defs.picture.oneOf = reel.$defs.picture.oneOf.filter((picture) => picture.title !== 'image');
   for (const picture of reel.$defs.picture.oneOf) for (const key of TIMING) delete picture.properties[key];
+  reel.properties.improves = {
+    type: 'string',
+    description: 'To change a reel you made: the id of that reel. Send the whole reel again with the changes; the lines you leave word for word as they were keep their recordings, so it is ready sooner.'
+  };
   return reel;
 }
 
@@ -84,6 +88,7 @@ export function toolList() {
         `${WHEN}\n` +
         'The reel is this tool\'s input: 5 to 7 scenes, about 40 seconds in all. Each scene has a title, one short caption, what Peter says (12 to 25 plain words) and a picture. ' +
         'Open on a title picture, mix the pictures, and label a picture\'s items with words Peter says, so each arrives as he says it. reel_format has the full guide and a finished reel.\n' +
+        'To change a reel you made, send the whole reel again with "improves" set to its id: only the lines you changed are recorded again.\n' +
         'It answers at once with a link. The voice takes about as long to record as the reel lasts; the reel then plays by itself, in the chat where the player shows, and at the link. ' +
         `Do not wait or check on it. ${HAND_OVER}`,
       inputSchema: reelInput(),
@@ -198,6 +203,7 @@ export function formatGuide() {
       'Draw one only to show the thing itself (the numbers on a meter, a volcano), 12 to 24 pixels across, outlined in k, with every row the same length. If nobody would know what it is, use icons instead.',
     '',
     'Transitions: cut (default), fade, dissolve, wipe, slide, blinds, iris, flash, star. One for the whole reel is plenty.',
+    'To change a reel you made, call make_reel again with the whole reel and "improves" set to the earlier reel\'s id. Lines left word for word as they were keep their recordings, so change only what was asked for.',
     `Limits here: at most ${LIMITS.scenes} scenes, ${LIMITS.sayWords} spoken words and ${LIMITS.captionChars} caption characters a scene, ${LIMITS.listItems} items in a picture, under ${LIMITS.minutes} minutes in all, and no images from elsewhere.`,
     `Reels are kept for ${KEEP_DAYS} days, unlisted: only people with the link can watch.`,
     '',
@@ -227,8 +233,10 @@ function describe(status, baseUrl) {
     ready: `"${status.title}" is ready: ${status.scenes} scenes, ${clockTime(status.seconds * 1000)}. Watch it at ${watch}`,
     failed: `"${status.title}" could not be made. ${status.error ?? ''}`.trim()
   }[status.state];
+  const kept = status.kept && status.state !== 'ready' && status.state !== 'failed'
+    ? `\n${status.kept} of its lines keep their recordings from the earlier reel, so it will be ready sooner. The earlier reel is still at its own link: delete_reel removes it, if the person no longer wants it.` : '';
   const extra = status.state === 'ready' && status.video === 'ready' ? ` The video is at ${video}` : '';
-  return told(said + extra + `\n(reel id ${status.id}; kept until ${status.expires.slice(0, 10)}, and only people with the link can watch.)`,
+  return told(said + kept + extra + `\n(reel id ${status.id}; kept until ${status.expires.slice(0, 10)}, and only people with the link can watch.)`,
     { ...status, watch, ...(status.video === 'ready' ? { video } : {}) });
 }
 
@@ -282,7 +290,8 @@ export function createMcpServer({ reels, baseUrl, client = 'local', limits = nul
         if (refused) return failure(`No more reels for now. ${refused}`);
         try {
           // every reel made here is in the one format, so one that does not say is not sent back for it
-          const made = await reels.create(args.format === undefined ? { format: REEL_FORMAT, ...args } : args);
+          const { improves, ...reel } = args;   // not part of the reel: which earlier reel this one is a change to
+          const made = await reels.create(reel.format === undefined ? { format: REEL_FORMAT, ...reel } : reel, { improves: typeof improves === 'string' ? improves : null });
           limits?.reels.count(client);   // only a reel that is made counts: one sent back to be fixed does not
           return describe(made, baseUrl);
         } catch (err) {

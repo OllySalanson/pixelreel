@@ -17,6 +17,9 @@ export const KEEP_DAYS = 30;
 
 const ID = /^[A-Za-z0-9_-]{22}$/;
 
+/** A recording the recorder made and named itself (scripts/voices.mjs), which it will know again by its name. */
+const MADE_CLIP = /^[0-9a-f]{16}\.mp3$/;
+
 /** Too many jobs are waiting: the reel is not made, and the person should try again soon. */
 export class BusyError extends Error {
   constructor() {
@@ -98,16 +101,49 @@ export class Reels {
   /**
    * Checks a reel (parsed reel.json) and starts recording it. Throws a ReelError if it has
    * problems or is past the service's limits, or a BusyError if too many jobs are waiting.
+   * `improves` is the id of an earlier reel this one is a change to: the lines the two share
+   * keep their recordings, so only what changed is recorded (`kept` in its status says how
+   * many). The earlier reel need not be recorded yet: it will be by the time this one's turn comes.
    */
-  async create(raw) {
+  async create(raw, { improves = null } = {}) {
     const reel = this.check(raw);
     if (this.queue.length >= this.maxQueue) throw new BusyError();
     const status = { ...this.blank(reel.title, 'queued'), ...this.measure(reel) };
     await this.store.put(`reels/${status.id}/reel.json`, JSON.stringify(raw));
+    const kept = await this.shared(improves, reel);
+    if (kept) Object.assign(status, { improves, kept });   // its recordings are fetched when this one's turn comes (run)
     await this.save(status);
     this.enqueue({ id: status.id, kind: 'voice' });
     // with nothing else in hand its recording has begun already, and whoever asked is told so
     return this.running?.id === status.id ? { ...status, state: 'recording' } : status;
+  }
+
+  /** How many of a checked reel's lines the earlier reel `from` also says, word for word. None if `from` is not a reel. */
+  async shared(from, reel) {
+    if (!(await this.status(from))) return 0;
+    let earlier;
+    try { earlier = reelFromData(await this.reel(from)); } catch { return 0; }   // not written yet
+    const said = new Set(earlier.scenes.map((scene) => scene.say));
+    return new Set(reel.scenes.map((scene) => scene.say).filter((line) => said.has(line))).size;
+  }
+
+  /**
+   * Gives reel `to` the recordings reel `from` has of `lines` (the words `to` says), so the
+   * recorder finds them done and records only the rest. How many it gave; none if `from`
+   * has gone, or could not be recorded.
+   */
+  async borrow(from, to, lines) {
+    const manifest = (await this.status(from))?.state === 'ready' ? await this.manifest(from) : null;
+    const wanted = new Set(lines), kept = [];
+    for (const clip of manifest?.clips ?? []) {
+      if (!wanted.has(clip?.text) || !MADE_CLIP.test(clip.file)) continue;
+      const bytes = await this.store.get(`reels/${from}/audio/${clip.file}`);
+      if (!bytes) continue;
+      await this.store.put(`reels/${to}/audio/${clip.file}`, bytes);
+      kept.push(clip);
+    }
+    if (kept.length) await this.store.put(`reels/${to}/audio/manifest.json`, JSON.stringify({ ...manifest, clips: kept }));
+    return kept.length;
   }
 
   /**
@@ -295,7 +331,14 @@ export class Reels {
   }
 
   async run({ id, kind }) {
-    if (!(await this.status(id))) return;
+    const status = await this.status(id);
+    if (!status) return;
+    if (kind === 'voice' && status.improves) {
+      // a change to an earlier reel: that one is recorded by now, so the lines the two share need not be said again
+      const lines = reelFromData(await this.reel(id)).scenes.map((scene) => scene.say);
+      const kept = await this.borrow(status.improves, id, lines);
+      await this.update(id, { improves: undefined, kept: kept || undefined });
+    }
     const dir = await this.checkOut(id);
     try {
       if (kind === 'voice') {

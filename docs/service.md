@@ -115,6 +115,12 @@ Read what it wrote, how many tries it took, and what it said to the person after
 - **Private things stay private.** A reel of someone's letter leaves out names, addresses and
   account numbers unless they ask, since anyone with the link can watch.
 - **No timing to guess.** `make_reel` does not offer the pictures' `start` and `every`: see below.
+- **A change records only what changed.** Asked to change a reel ("make the last scene
+  funnier"), Claude sends the whole reel again with `improves` set to the earlier reel's
+  id. The lines the two share, word for word, keep their recordings, so only the changed
+  lines are read again. It is a new reel with a link of its own; the earlier one stays
+  until it is deleted, as someone may have been sent its link. It works even when the
+  change is asked for before the first reel has finished recording.
 
 ### Ready-made things to ask for
 
