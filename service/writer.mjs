@@ -8,7 +8,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { isLink } from '../site/js/given.js';
 import { formatGuide } from './mcp.mjs';
 import { languageName } from './reels.mjs';
-import { AGAIN, replyJson, TryError, writtenSoFar } from './try.mjs';
+import { AGAIN, bracedIn, replyJson, TryError, writtenSoFar } from './try.mjs';
 
 /** What Claude is told, for a reel in `language` (one of the languages besides English that are read here, or null for English) read by `narrator` (a first name, or null for Peter). */
 const instructions = (language = null, narrator = null) => `You write pixel reels for the Pixel Reel website: short pixel-art explainers, one idea a scene, read aloud by a warm British narrator called Peter. A visitor has given one thing to explain: a few words, a web address, some writing, a document or a picture. Write the reel.
@@ -51,6 +51,9 @@ function took(usage) {
   return `${usage.input_tokens} tokens in, ${usage.output_tokens} out${cached}${pages}`;
 }
 
+/** What Claude is told of a reply that could not be read as a reel. */
+const UNREADABLE = 'Your reply could not be read as one JSON object. Reply with the reel as one JSON object and nothing else: no words before or after it, and only once';
+
 /** True for a request that names a web address, which Claude may then read. */
 const hasLink = (source) => source.kind === 'words' && /(https?:\/\/|\bwww\.)\S/i.test(source.about);
 
@@ -80,8 +83,9 @@ const askAgain = (source) => (source.kind === 'words' ? ask(source)
 /**
  * A writer: write(source, { before, problems }) asks Claude for a reel about what the visitor
  * gave (`source`, from sourceOf in service/try.mjs) and gives back the reel as data, not yet
- * checked. With `before` (its last answer) and `problems` (what the checks said was wrong
- * with it), it asks for a corrected one. `onProgress({ title, scenes })` is told how far
+ * checked. With `before` (its last answer: a reel, or the words of a reply that could not
+ * be read) and `problems` (what was wrong with it), it asks for a corrected one. A reply
+ * that cannot be read as a reel is sent back once, by itself, to be put right. `onProgress({ title, scenes })` is told how far
  * Claude has got as it writes: the reel's name, and how many scenes so far (writtenSoFar in
  * service/try.mjs). write.fits(source) is asked first: it measures a
  * PDF, for nothing, and turns it away if reading it would take more than `maxInputTokens`,
@@ -113,7 +117,7 @@ export function createWriter({ client = new Anthropic({ timeout: 120_000, maxRet
     const system = instructions(source.language ?? null, source.narrator ?? null);
     const messages = [{ role: 'user', content: before ? askAgain(source) : ask(source) }];
     if (before && problems) {
-      messages.push({ role: 'assistant', content: JSON.stringify(before) });
+      messages.push({ role: 'assistant', content: typeof before === 'string' ? before : JSON.stringify(before) });
       messages.push({ role: 'user', content: `That reel has problems. Fix every one, and reply with the whole corrected reel as JSON:\n- ${problems.join('\n- ')}` });
     }
     let response, told = '0 null';   // what whoever is waiting was last told: no scenes, and no name
@@ -143,7 +147,18 @@ export function createWriter({ client = new Anthropic({ timeout: 120_000, maxRet
     }
     if (response.stop_reason === 'refusal') throw new TryError('Claude would not write a reel about that. Try something else.');
     if (response.stop_reason !== 'end_turn') throw new TryError('Claude did not finish that reel. Try again, or give it less.');
-    const reply = replyJson(response.content.filter((block) => block.type === 'text').map((block) => block.text).join(''));
+    const texts = response.content.filter((block) => block.type === 'text').map((block) => block.text), text = texts.join('');
+    let reply;
+    try {
+      reply = replyJson(text);
+    } catch (err) {
+      if (!(err instanceof TryError)) throw err;
+      // what it looked like, never what it said, so that the next one can be understood
+      log(`try: a reply that could not be read: ${texts.length} pieces of text, ${text.length} characters, ${bracedIn(text).length} of them in braces`);
+      if (before || !text.trim()) throw err;
+      // one chance to put it right, from what it wrote: the page is not read again
+      return write(source, { before: text, problems: [UNREADABLE], onProgress });
+    }
     if (typeof reply.cannot === 'string') throw new TryError(reply.cannot.replace(/\s+/g, ' ').trim().slice(0, 200) || 'Claude could not make a reel about that. Try something else.');
     // not part of the reel: the language it is in is the one that was asked for, which the service knows
     const reel = { ...reply };
