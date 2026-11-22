@@ -149,6 +149,11 @@ they sound.
 - The voice kept loaded is the English one. A reel in another language loads that
   language's model for the reel, in a second process, so for its length the service holds
   two models.
+- A narrator's voice is a file for each language, so the build fetches every narrator for
+  every language, then loads each again with nothing allowed to be fetched
+  (`scripts/setup-voices.sh`). A build with one missing stops there. The first image with
+  the languages held only Peter's voice for them, so a French reel read by Anna could not
+  be recorded; this check is what stops that happening again.
 
 Measured on Cloud Run when they were switched on (22 November 2026, revision
 `pixelreel-00019-g9r`, against the revision before):

@@ -36,18 +36,40 @@ echo "Installing Pocket TTS and soundfile"
 $PIP "pocket-tts>=4,<5" "soundfile>=0.12"
 echo "Getting the Pocket TTS model and the peter_yearsley voice"
 "$ROOT/.venv/bin/python" -c "from pocket_tts import TTSModel; TTSModel.load_model().get_state_for_audio_prompt('peter_yearsley')"
-# Other languages for the narrator to read, such as VOICE_LANGUAGES="french spanish": each is a
+# Other narrators, such as VOICE_NAMES="anna stuart_bell": each voice is a small file, fetched once.
+# Other languages for a narrator to read, such as VOICE_LANGUAGES="french spanish": each is a
 # model of its own, about 220 MB (french, german, spanish, italian, portuguese, dutch).
-for language in ${VOICE_LANGUAGES:-}; do
-  echo "Getting the Pocket TTS $language model"
-  "$ROOT/.venv/bin/python" -c "import sys; from pocket_tts import TTSModel; TTSModel.load_model(language=sys.argv[1]).get_state_for_audio_prompt('peter_yearsley')" "$language"
+# A voice is a file for each language, so every narrator is fetched for every language: a
+# reel can be in any of the languages and read by any of the narrators.
+for language in english ${VOICE_LANGUAGES:-}; do
+  [ "$language" = english ] && [ -z "${VOICE_NAMES:-}" ] && continue   # Peter's English voice is there already
+  echo "Getting the Pocket TTS $language model and voices: peter_yearsley ${VOICE_NAMES:-}"
+  "$ROOT/.venv/bin/python" -c "
+import sys
+from pocket_tts import TTSModel
+language, voices = sys.argv[1], sys.argv[2:]
+model = TTSModel.load_model() if language == 'english' else TTSModel.load_model(language=language)
+for voice in voices:
+    model.get_state_for_audio_prompt(voice)
+" "$language" peter_yearsley ${VOICE_NAMES:-}
 done
 
-# Other narrators, such as VOICE_NAMES="anna stuart_bell": each voice is a small file, fetched once.
-for voice in ${VOICE_NAMES:-}; do
-  echo "Getting the Pocket TTS voice $voice"
-  "$ROOT/.venv/bin/python" -c "import sys; from pocket_tts import TTSModel; TTSModel.load_model().get_state_for_audio_prompt(sys.argv[1])" "$voice"
-done
+# Then, with nothing allowed to be fetched, each is loaded again: a build with a model or a
+# voice missing stops here, rather than making an image that cannot record what it offers.
+if [ -n "${VOICE_LANGUAGES:-}${VOICE_NAMES:-}" ]; then
+  echo "Checking every language and voice is to hand"
+  for language in english ${VOICE_LANGUAGES:-}; do
+    HF_HUB_OFFLINE=1 "$ROOT/.venv/bin/python" -c "
+import sys
+from pocket_tts import TTSModel
+language, voices = sys.argv[1], sys.argv[2:]
+model = TTSModel.load_model() if language == 'english' else TTSModel.load_model(language=language)
+for voice in voices:
+    model.get_state_for_audio_prompt(voice)
+print(language + ': ' + ', '.join(voices))
+" "$language" peter_yearsley ${VOICE_NAMES:-}
+  done
+fi
 
 if [ "$KOKORO" = yes ]; then
   echo "Installing kokoro-onnx"
