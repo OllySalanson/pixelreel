@@ -64,6 +64,16 @@ function reelInput() {
   reel.$defs.picture.description = 'A ready-made picture. Give every scene one, and mix them so the reel moves.';
   reel.$defs.picture.oneOf = reel.$defs.picture.oneOf.filter((picture) => picture.title !== 'image');
   for (const picture of reel.$defs.picture.oneOf) for (const key of TIMING) delete picture.properties[key];
+  // where Claude picks an icon, what an icon is for: left to itself it made an apple stand for cracking an egg
+  for (const picture of reel.$defs.picture.oneOf) {
+    if (picture.title === 'icons' || picture.title === 'flow') picture.description += ' Only for things that each have an icon of their own: for anything else (ingredients, steps in words) a list is the better picture.';
+    for (const key of ['items', 'bad', 'good']) {
+      const slot = picture.properties[key];
+      if (slot?.items?.properties?.icon || slot?.properties?.icon) {
+        picture.properties[key] = { ...slot, description: 'An icon must show the very thing its label names: a sun for the sun, not for "gentle heat". If no icon shows it, use a list or a big word instead.' };
+      }
+    }
+  }
   reel.properties.improves = {
     type: 'string',
     description: 'To change a reel you made: the id of that reel. Send the whole reel again with the changes; the lines you leave word for word as they were keep their recordings, so it is ready sooner.'

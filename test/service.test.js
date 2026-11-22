@@ -518,6 +518,13 @@ describe('the service over HTTP', async () => {
     for (const picture of pictures) {
       assert.equal(picture.properties.every ?? picture.properties.start, undefined, `${picture.title}: the service does the timing, so Claude is not asked to guess it`);
     }
+    // where an icon is picked, it says what an icon is for
+    const icons = pictures.find((p) => p.title === 'icons'), compare = pictures.find((p) => p.title === 'compare');
+    assert.match(icons.description, /Only for things that each have an icon of their own/);
+    for (const slot of [icons.properties.items, pictures.find((p) => p.title === 'flow').properties.items, compare.properties.bad, compare.properties.good]) {
+      assert.match(slot.description, /^An icon must show the very thing its label names/);
+    }
+    assert.equal(icons.properties.items.items.properties.icon.enum.length, ICON_NAMES.length, 'and every icon is still offered');
     await client.close();
   });
 
