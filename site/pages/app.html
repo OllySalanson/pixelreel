@@ -15,6 +15,7 @@ description: Add Pixel Reel to your phone's home screen. It opens like any other
       </div>
       <p class="said" role="status" data-install-says></p>
       <p class="pocket-have" data-in-app>You have it. This is Pixel Reel, on your home screen.</p>
+      <button class="btn btn-reel" type="button" data-reel="site-phone">Make a pixel reel about this</button>
     </div>
     <figure class="handset" aria-label="A phone's home screen. Pixel Reel sits among the apps, with a gold edge.">
       {{sprite:handset:6}}
@@ -84,6 +85,9 @@ description: Add Pixel Reel to your phone's home screen. It opens like any other
             <div class="words">
               <h3>Or use your phone</h3>
               <p>Open this page on it, and press the big button there.</p>
+              <!-- copies this page's address, to send to the phone: its script wakes it, so it is not seen without -->
+              <button class="btn btn-paper btn-small" type="button" data-send="Add Pixel Reel to your phone" data-says="#app-sent" hidden>Copy the link to send to it</button>
+              <p class="said" id="app-sent" role="status"></p>
             </div>
           </li>
         </ol>
