@@ -79,26 +79,44 @@ export function nameOf(given) {
 const json = (value) => ({ headers: { 'content-type': 'application/json' }, body: JSON.stringify(value) });
 
 /** What to send for words: a short line is a request (a link, or a few words); anything longer is writing to explain. */
-function wordsRequest(words) {
+function wordsRequest(words, language) {
   const tidy = words.replace(/\r\n?/g, '\n').trim();
   if (!tidy) throw new GivenError(SAYS.nothing);
   if (tidy.length > TEXT_MAX) throw new GivenError(SAYS.long);
-  return tidy.length <= ABOUT_MAX && !tidy.includes('\n') ? json({ about: tidy }) : json({ text: tidy });
+  const more = language ? { language } : {};
+  return tidy.length <= ABOUT_MAX && !tidy.includes('\n') ? json({ about: tidy, ...more }) : json({ text: tidy, ...more });
+}
+
+/**
+ * Which of the languages on offer suits a browser: the first of the languages it says its
+ * reader prefers (`preferred`, such as ['fr-FR', 'en']) that is among `offered` (such as
+ * ['english', 'french']), or English.
+ */
+export function languageFor(preferred = [], offered = []) {
+  const codes = { en: 'english', fr: 'french', de: 'german', es: 'spanish', it: 'italian', pt: 'portuguese', nl: 'dutch' };
+  for (const tag of preferred) {
+    const language = codes[String(tag).toLowerCase().split('-')[0]];
+    if (language && offered.includes(language)) return language;
+  }
+  return 'english';
 }
 
 /**
  * What to send the service (the headers and body of a POST to /try) for what was given:
  * { words } or { file }. A PDF or a picture goes as it is, the picture made smaller first by
  * `shrink` (a browser's job: see maker.js) when it is a big one; a file of plain writing
- * goes as its words. Throws a GivenError, to show the person, for anything else.
+ * goes as its words. `language` is the language the reel is asked for in, if not English.
+ * Throws a GivenError, to show the person, for anything else.
  */
-export async function requestFor(given, { shrink = null } = {}) {
-  if (!given.file) return wordsRequest(given.words ?? '');
+export async function requestFor(given, { shrink = null, language = null } = {}) {
+  if (!given.file) return wordsRequest(given.words ?? '', language);
+  // a file goes as its own bytes, so the language asked for goes beside it
+  const beside = language ? { 'x-reel-language': language } : {};
   let file = given.file;
   const kind = fileKind(new Uint8Array(await file.slice(0, 12).arrayBuffer()));
   if (kind === 'application/pdf') {
     if (file.size > PDF_MAX) throw new GivenError(SAYS.bigPdf);
-    return { headers: { 'content-type': kind }, body: file };
+    return { headers: { 'content-type': kind, ...beside }, body: file };
   }
   if (kind || /^image\//.test(file.type)) {
     // a phone's photo is several megabytes: a smaller copy uploads faster and reads just as well
@@ -106,9 +124,9 @@ export async function requestFor(given, { shrink = null } = {}) {
     const now = file === given.file ? kind : 'image/jpeg';
     if (!now) throw new GivenError(SAYS.other);   // a kind of picture this browser cannot open, and Claude cannot either
     if (file.size > PICTURE_MAX) throw new GivenError(SAYS.bigPicture);
-    return { headers: { 'content-type': now }, body: file };
+    return { headers: { 'content-type': now, ...beside }, body: file };
   }
   if (!isWriting(file)) throw new GivenError(SAYS.other);
   if (file.size > TEXT_MAX * 4) throw new GivenError(SAYS.long);
-  return wordsRequest(await file.text());
+  return wordsRequest(await file.text(), language);
 }

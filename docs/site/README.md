@@ -724,3 +724,19 @@ The page a shared reel is watched on is where a reel does its work, so it got th
   is left as it was.
 - There is no picture of this one: a lock screen cannot be photographed from a browser.
   Checked there by reading back what the browser was told while a reel played.
+
+### Version 31
+
+- **Read it to me in my own language.** Where Peter can read more than English, the
+  make-one box has one more choice, "Read it to me in", with each language called what the
+  people who speak it call it: English, Français, Español. It starts on the language the
+  browser says its reader prefers, so someone whose phone is in French finds Français
+  already chosen, and it remembers what was chosen last. It is the same kind of choice as
+  the ones in Make it comfy, so there is nothing new to learn.
+- The reel is written in that language whatever language the thing itself is in: a letter
+  in English can be explained in Spanish. Where only English is on offer, the choice is not
+  there at all.
+
+| The choice, where three more languages are switched on |
+| --- |
+| ![The make-one box, with a new row: Read it to me in. English is chosen; Français, Español and Deutsch are beside it.](log/v31-your-language.jpg) |

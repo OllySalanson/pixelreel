@@ -9,7 +9,7 @@ import { createMcpServer } from './mcp.mjs';
 import { BusyError, isId, languageName } from './reels.mjs';
 import { addToClaudeLink, appManifest, robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
 import { sendBytes, sendSqueezed, sendStatic, squeezed, tagOf } from './static.mjs';
-import { MAX_WORDS_BODY, PDF_MAX, sourceOf, TryError } from './try.mjs';
+import { languageOf, MAX_WORDS_BODY, OWN_NAMES, PDF_MAX, sourceOf, TryError } from './try.mjs';
 
 /** The most a request to /mcp may carry. A long reel is a few kilobytes. */
 export const MAX_BODY = 256 * 1024;
@@ -204,12 +204,20 @@ async function handleTry(req, res, context) {
     sendJson(res, 400, { error: err.message });
     return;
   }
+  try {
+    // the language asked for comes in the JSON, or beside a file; a reel written again stays in the language it is in
+    source.language = languageOf(source.language ?? req.headers['x-reel-language'], reels.languages);
+  } catch (err) {
+    if (!(err instanceof TryError)) throw err;
+    sendJson(res, 400, { error: err.message });
+    return;
+  }
   if (source.kind === 'again') {
     // A reel to write again, simpler or shorter: Claude is given the reel itself, as it was
     // written (what it was made from was never kept), without the timings its recording gave it.
-    const reel = (await reels.status(source.id))?.state === 'ready' ? await reels.reel(source.id) : null;
+    const first = await reels.status(source.id), reel = first?.state === 'ready' ? await reels.reel(source.id) : null;
     if (!reel) { sendJson(res, 404, { error: 'That reel has gone, so it cannot be made again.' }); return; }
-    source = { kind: 'reel', how: source.how, reel: unpaced(reel) };
+    source = { kind: 'reel', how: source.how, reel: unpaced(reel), language: reels.languages.includes(first.language) ? first.language : null };
   }
   const caller = callerOf(req, trustProxy);
   const refused = limits?.tries.hit(caller);
@@ -266,11 +274,11 @@ async function writeReel({ reels, writer, limits, log }, id, source, caller) {
   try {
     let reel = await writer(source, { onProgress });
     try {
-      await reels.write(id, reel);
+      await reels.write(id, reel, { language: source.language });
     } catch (err) {
       if (!(err instanceof ReelError)) throw err;
       reel = await writer(source, { before: reel, problems: err.problems, onProgress });   // one chance to put it right
-      await reels.write(id, reel);
+      await reels.write(id, reel, { language: source.language });
     }
   } catch (err) {
     if (err instanceof TryError && err.free) limits?.tries.undo(caller);   // what never reached Claude is not one of the visitor's goes
@@ -286,11 +294,21 @@ async function writeReel({ reels, writer, limits, log }, id, source, caller) {
  * once and kept, compressed (unless `fresh`, when it is made again each time, for working on
  * the site), and a browser that already has it is told so.
  */
+/**
+ * The languages a reel can be asked for in, as the choices of the make-one box: English and
+ * each of `languages` (those besides English that Peter can read here), each called what the
+ * people who speak it call it. Nothing at all where English is the only one.
+ */
+export const languageChoices = (languages = []) => (languages.length ? ['english', ...languages].map((language) =>
+  `<label><input type="radio" name="language" value="${language}"${language === 'english' ? ' checked' : ''}><span lang="${LANG_CODES[language] ?? 'en'}">${escapeHtml(OWN_NAMES[language] ?? languageName(language))}</span></label>`).join('\n          ') : '');
+
+const LANG_CODES = { english: 'en', french: 'fr', german: 'de', spanish: 'es', italian: 'it', portuguese: 'pt', dutch: 'nl' };
+
 function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages, writer, reels }, extra = {}) {
   let page = fresh ? null : pages.get(name);
   if (!page) {
     // "watch/<reel>" is the page of one of the site's own reels
-    const html = name.startsWith('watch/') ? watchPage(name.slice(6), baseUrl, { listed }) : sitePage(name, baseUrl, { listed, narrators: reels.narrators ?? [], values: { here: writer ? 'on' : 'off' } });
+    const html = name.startsWith('watch/') ? watchPage(name.slice(6), baseUrl, { listed }) : sitePage(name, baseUrl, { listed, narrators: reels.narrators ?? [], values: { here: writer ? 'on' : 'off', languages: writer ? languageChoices(reels.languages) : '' } });
     page = squeezed(html);
     page.tag = tagOf(page.bytes);
     if (!fresh) pages.set(name, page);

@@ -7,15 +7,19 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { isLink } from '../site/js/given.js';
 import { formatGuide } from './mcp.mjs';
+import { languageName } from './reels.mjs';
 import { AGAIN, replyJson, TryError, writtenSoFar } from './try.mjs';
 
-const instructions = () => `You write pixel reels for the Pixel Reel website: short pixel-art explainers, one idea a scene, read aloud by a warm British narrator called Peter. A visitor has given one thing to explain: a few words, a web address, some writing, a document or a picture. Write the reel.
+/** What Claude is told, for a reel in `language`: one of the languages besides English that Peter can read here, or null for English. */
+const instructions = (language = null) => `You write pixel reels for the Pixel Reel website: short pixel-art explainers, one idea a scene, read aloud by a warm British narrator called Peter. A visitor has given one thing to explain: a few words, a web address, some writing, a document or a picture. Write the reel.
 
-${formatGuide()}
+${formatGuide(language ? [language] : [])}
 
 How to answer:
 - Reply with one JSON object and nothing else: the reel. No words before or after it, and no code fence.
-- Use British spelling.
+${language
+    ? `- The visitor has asked for this reel in ${languageName(language)}, whatever language what they gave is in. Write every word of it in ${languageName(language)}: the titles, the captions, what Peter says and the words in the pictures. Write it as someone who speaks ${languageName(language)} would say it, not as a translation, and set "language" to "${language}".`
+    : '- Write the reel in English, whatever language what the visitor gave is in. Use British spelling.'}
 - If the visitor gave a web address, read that page with web_fetch and explain what it says.
 - When there is something to read (a page, some writing, a document or a picture), the reel is a summary of it: what it is, what matters most in it, and what the reader is asked to do, if anything, and by when. Explain only what is there: do not add facts of your own to it.
 - The visitor cannot be asked anything, so always leave out what points at one person: full names, home addresses, phone numbers, and account or reference numbers.
@@ -81,7 +85,7 @@ export function createWriter({ client = new Anthropic({ timeout: 120_000, maxRet
   };
 
   async function write(source, { before = null, problems = null, onProgress = () => {} } = {}) {
-    const system = instructions();
+    const system = instructions(source.language ?? null);
     const messages = [{ role: 'user', content: before ? askAgain(source) : ask(source) }];
     if (before && problems) {
       messages.push({ role: 'assistant', content: JSON.stringify(before) });
@@ -107,7 +111,7 @@ export function createWriter({ client = new Anthropic({ timeout: 120_000, maxRet
         const so = writtenSoFar(text), now = `${so.scenes} ${so.title}`;
         if (now !== told) { told = now; onProgress(so); }   // only when there is news
       }).finalMessage());
-      log(`try: ${source.kind}, ${response.usage.input_tokens} tokens in, ${response.usage.output_tokens} out (${response.model})`);
+      log(`try: ${source.kind}${source.language ? ` in ${source.language}` : ''}, ${response.usage.input_tokens} tokens in, ${response.usage.output_tokens} out (${response.model})`);
       // the page fetch can pause a turn part of the way through: send it back and it carries on
       if (response.stop_reason !== 'pause_turn' || turn >= 3) break;
       messages.push({ role: 'assistant', content: response.content });
@@ -116,7 +120,11 @@ export function createWriter({ client = new Anthropic({ timeout: 120_000, maxRet
     if (response.stop_reason !== 'end_turn') throw new TryError('Claude did not finish that reel. Try again, or give it less.');
     const reply = replyJson(response.content.filter((block) => block.type === 'text').map((block) => block.text).join(''));
     if (typeof reply.cannot === 'string') throw new TryError(reply.cannot.replace(/\s+/g, ' ').trim().slice(0, 200) || 'Claude could not make a reel about that. Try something else.');
-    return reply;
+    // not part of the reel: the language it is in is the one that was asked for, which the service knows
+    const reel = { ...reply };
+    delete reel.language;
+    delete reel.narrator;
+    return reel;
   }
 
   /**
@@ -126,7 +134,7 @@ export function createWriter({ client = new Anthropic({ timeout: 120_000, maxRet
    */
   write.fits = async (source) => {
     if (source.kind !== 'pdf') return;
-    const { input_tokens: size } = await call(() => client.messages.countTokens({ model, system: instructions(), messages: [{ role: 'user', content: ask(source) }] }));
+    const { input_tokens: size } = await call(() => client.messages.countTokens({ model, system: instructions(source.language ?? null), messages: [{ role: 'user', content: ask(source) }] }));
     if (size <= maxInputTokens) return;
     log(`try: a pdf of ${size} tokens was turned away (the most is ${maxInputTokens})`);
     throw new TryError('That is too long for one reel. Give it a shorter one, or only the pages that matter.', { free: true });

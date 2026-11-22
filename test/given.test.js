@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { ABOUT_MAX, canTake, fileKind, GivenError, givenFrom, isLink, nameOf, PDF_MAX, PICTURE_MAX, requestFor, SHRINK_OVER, TEXT_MAX } from '../site/js/given.js';
+import { ABOUT_MAX, canTake, fileKind, GivenError, givenFrom, isLink, languageFor, nameOf, PDF_MAX, PICTURE_MAX, requestFor, SHRINK_OVER, TEXT_MAX } from '../site/js/given.js';
 
 const PDF = Buffer.from('%PDF-1.7\n1 0 obj\n');
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 16, 0x4a, 0x46, 0x49, 0x46, 0, 1]);
@@ -71,6 +71,26 @@ describe('what the page sends for it', () => {
     assert.deepEqual((await sent({ words: 'x'.repeat(ABOUT_MAX + 1) })).body, { text: 'x'.repeat(ABOUT_MAX + 1) });
     await assert.rejects(requestFor({ words: '  \n ' }), (err) => err instanceof GivenError && /Say what you want explained/.test(err.message));
     await assert.rejects(requestFor({ words: 'x'.repeat(TEXT_MAX + 1) }), (err) => err instanceof GivenError && /too much for one reel/.test(err.message));
+  });
+
+  it('says which language the reel is asked for in, with words and with a file', async () => {
+    assert.deepEqual(await sent({ words: 'le thé' }, { language: 'french' }), { type: 'application/json', body: { about: 'le thé', language: 'french' } });
+    assert.deepEqual(await sent({ words: 'Cher Sam,\n\nPayez.' }, { language: 'french' }), { type: 'application/json', body: { text: 'Cher Sam,\n\nPayez.', language: 'french' } });
+    assert.deepEqual((await requestFor({ file: file('lettre.pdf', 'application/pdf', PDF) }, { language: 'french' })).headers, { 'content-type': 'application/pdf', 'x-reel-language': 'french' });
+    assert.deepEqual((await requestFor({ file: file('shot.png', 'image/png', PNG) }, { language: 'spanish' })).headers, { 'content-type': 'image/png', 'x-reel-language': 'spanish' });
+    assert.deepEqual((await requestFor({ file: new File(['Cher Sam'], 'lettre.txt', { type: 'text/plain' }) }, { language: 'french' })).body, JSON.stringify({ about: 'Cher Sam', language: 'french' }));
+    assert.deepEqual((await requestFor({ file: file('letter.pdf', 'application/pdf', PDF) })).headers, { 'content-type': 'application/pdf' }, 'English is said by saying nothing');
+  });
+
+  it('starts on the language the browser says its reader prefers, if Peter reads it here', () => {
+    const offered = ['english', 'french', 'spanish'];
+    assert.equal(languageFor(['fr-FR', 'fr', 'en'], offered), 'french');
+    assert.equal(languageFor(['de-DE', 'es-MX', 'en'], offered), 'spanish', 'the first of theirs that is on offer');
+    assert.equal(languageFor(['en-GB', 'fr'], offered), 'english');
+    assert.equal(languageFor(['ja-JP'], offered), 'english');
+    assert.equal(languageFor([], offered), 'english');
+    assert.equal(languageFor(undefined, undefined), 'english');
+    assert.equal(languageFor(['FR'], offered), 'french');
   });
 
   it('sends a PDF as it is, whatever it is called', async () => {

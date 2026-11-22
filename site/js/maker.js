@@ -5,7 +5,7 @@
 // anywhere on the page (given.js works out what was given, and what to send for it). The
 // service answers at once with the reel's own page, which shows it being made (watch.js).
 import { calm } from './calm.js';
-import { canTake, GivenError, givenFrom, isLink, nameOf, PICTURE_SIDE, requestFor } from './given.js';
+import { canTake, GivenError, givenFrom, isLink, languageFor, nameOf, PICTURE_SIDE, requestFor } from './given.js';
 import { mineStorage, rememberMine } from './mine.js';
 import { copyText } from './send.js';
 import { chosenNarrator } from './voice.js';
@@ -14,6 +14,9 @@ const EXAMPLE = 'my gas bill';
 
 /** Where the words last asked about are kept, in this tab only, for the way back from a reel that could not be made. */
 const ASKED = 'pixelreel-asked';
+
+/** Where the language last chosen for a reel is kept, on this device. */
+const LANGUAGE = 'pixelreel-language';
 
 /** The most the box takes when its words are for copying across to Claude. */
 const ASK_MAX = 2000;
@@ -127,6 +130,21 @@ function makeHere(form, box, update) {
   } catch {
     // as above
   }
+  // The language Peter reads the reel in, where he can read more than English: the one chosen
+  // last time on this device, or else the one the browser says its reader prefers.
+  const choices = [...form.querySelectorAll('input[name="language"]')];
+  const language = () => { const chosen = choices.find((choice) => choice.checked)?.value; return chosen && chosen !== 'english' ? chosen : null; };
+  if (choices.length) {
+    const offered = choices.map((choice) => choice.value);
+    let last = null;
+    try { last = localStorage.getItem(LANGUAGE); } catch { /* nowhere to keep it */ }
+    const start = offered.includes(last) ? last : languageFor(navigator.languages ?? [navigator.language], offered);
+    for (const choice of choices) {
+      choice.checked = choice.value === start;
+      choice.addEventListener('change', () => { try { localStorage.setItem(LANGUAGE, choice.value); } catch { /* as above */ } });
+    }
+    id('maker-language').hidden = false;
+  }
   let busy = false;
   const setBusy = (on) => {
     busy = on;
@@ -154,7 +172,7 @@ function makeHere(form, box, update) {
     wait.focus({ preventScroll: true });
     show(wait);
     try {
-      const request = await requestFor(given, { shrink: shrinkPicture });
+      const request = await requestFor(given, { shrink: shrinkPicture, language: language() });
       const res = await fetch('/try', { method: 'POST', ...request });
       const answer = await res.json().catch(() => ({}));
       if (!res.ok || !answer.watch) throw new GivenError(answer.error || 'That did not work. Try again in a minute.');
