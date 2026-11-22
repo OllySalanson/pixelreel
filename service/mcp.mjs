@@ -259,6 +259,7 @@ export function createMcpServer({ reels, baseUrl, client = 'local', limits = nul
   const server = new Server(
     {
       name: 'pixelreel', title: 'Pixel Reel', version, websiteUrl: baseUrl,
+      description: 'Turns anything wordy into a short pixel-art cartoon, read aloud by a warm recorded narrator: for anyone who would rather watch than read.',
       icons: [{ src: `${art}/icon-192.png`, mimeType: 'image/png', sizes: ['192x192'] }, { src: `${art}/icon-512.png`, mimeType: 'image/png', sizes: ['512x512'] }]
     },
     {
