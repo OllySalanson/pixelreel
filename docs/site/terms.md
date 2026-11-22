@@ -1,6 +1,8 @@
 <!-- Draft: for Olly to approve before Pixel Reel is public. -->
 # Terms
 
+*Draft: not final yet.*
+
 Pixel Reel is free, and offered as it is.
 
 - **Use it for good.** Do not make reels that break the law, deceive people, harass anyone,

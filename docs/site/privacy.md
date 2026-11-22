@@ -1,6 +1,8 @@
 <!-- Draft: for Olly to approve before Pixel Reel is public. The contact address is still to choose. -->
 # Privacy
 
+*Draft: not final yet.*
+
 Pixel Reel keeps as little as it can, for as short a time as it can.
 
 ## What it keeps

@@ -35,16 +35,97 @@ Choosing a host is a decision to make once, with the costs in front of you. Whic
 - **A platform with volumes** (Fly.io, Railway, Render): point it at the `Dockerfile`, attach
   a volume at `/data`, set `PIXELREEL_URL`.
 - **A platform without disks** (Cloud Run): it scales to nothing when idle, but its disk does
-  not last. Reels need to go in an object store instead. `service/store.mjs` is the one place
-  to change: an S3-style store with the same `put`, `get`, `size`, `list`, `folders` and
-  `remove`.
+  not last, so reels go in a bucket instead (below). This is where Pixel Reel runs.
 
 The service keeps its queue in memory, so run one copy of it. One copy records one reel at a
 time; for more at once, run more copies behind a shared object store and a shared queue (a
 change for later, when there is the traffic for it).
 
-## Not done yet
+## Keeping reels in a bucket
 
-- The image has not been built and run here: building it fetches about 1 GB (PyTorch and the
-  voice model). Build it on the host, or anywhere with room, before relying on it.
-- Nothing is deployed. Where it runs, and its address, are for Olly to choose.
+Set `PIXELREEL_S3_BUCKET` and the service keeps reels in an S3-style bucket
+(`S3Store` in `service/store.mjs`) instead of `/data`:
+
+| Setting | |
+| --- | --- |
+| `PIXELREEL_S3_ENDPOINT` | `https://storage.googleapis.com` for Google Cloud Storage, `https://<account id>.r2.cloudflarestorage.com` for Cloudflare R2. |
+| `PIXELREEL_S3_BUCKET` | The bucket's name. |
+| `PIXELREEL_S3_REGION` | `auto` (the default) suits both. |
+| `PIXELREEL_S3_KEY_ID`, `PIXELREEL_S3_SECRET` | An HMAC key for a Cloud Storage service account, or an R2 API token's key pair. |
+
+Give the bucket a rule that deletes objects 30 days old. The service deletes expired reels
+itself every hour, but only while it is awake; the rule makes sure of it when nobody calls.
+Moving to R2 is a change of these settings (and copying any reels still wanted across).
+
+## On Google Cloud Run
+
+Pixel Reel runs as the Cloud Run service `pixelreel` in project `pixelreel-515501`, region
+`europe-west1` (the nearest that maps custom domains). Reels are in the bucket
+`pixelreel-515501-reels` (30-day delete rule, no public access), reached with an HMAC key of
+the service account `pixelreel-run`, whose secret is the Secret Manager secret
+`pixelreel-s3-secret`. To deploy a new version, from a checkout:
+
+```sh
+gcloud run deploy pixelreel --source . --region europe-west1 --project pixelreel-515501
+```
+
+That builds the `Dockerfile` with Cloud Build and keeps every other setting. The settings it
+was first made with:
+
+```sh
+gcloud run deploy pixelreel --source . --region europe-west1 --project pixelreel-515501 \
+  --service-account pixelreel-run@pixelreel-515501.iam.gserviceaccount.com \
+  --allow-unauthenticated --cpu 2 --memory 4Gi --no-cpu-throttling \
+  --min-instances 0 --max-instances 1 --concurrency 40 --timeout 300 \
+  --execution-environment gen2 --cpu-boost \
+  --set-env-vars PIXELREEL_URL=https://pixelreel.pro,PIXELREEL_S3_ENDPOINT=https://storage.googleapis.com,PIXELREEL_S3_BUCKET=pixelreel-515501-reels,PIXELREEL_S3_KEY_ID=<hmac access id> \
+  --set-secrets PIXELREEL_S3_SECRET=pixelreel-s3-secret:latest
+```
+
+Why these:
+
+- `--no-cpu-throttling`: the voice and video are made in the background after the request
+  that asked for them has been answered. Without it Cloud Run stops the processor between
+  requests and jobs stall. It also means an awake copy is paid for until Cloud Run puts it to
+  sleep, about 15 minutes after the last request.
+- `--max-instances 1`: the queue is in memory, so one copy (see above).
+- `--memory 4Gi`: the voice model needs about 1.3 GB, and a Cloud Run copy's `/tmp`, where
+  jobs work, is in memory too.
+- `PIXELREEL_URL` starts as the service's own `run.app` address, and changes to
+  `https://pixelreel.pro` once that answers (`gcloud run services update pixelreel --region
+  europe-west1 --update-env-vars PIXELREEL_URL=https://pixelreel.pro`).
+
+Callers' addresses are kept out of the logs: the project's `_Default` log sink excludes Cloud
+Run's request logs (`pixelreel-request-logs`), as the privacy page says. The image repository
+keeps the latest two images.
+
+### The address
+
+`pixelreel.pro` and `www.pixelreel.pro` are Cloud Run domain mappings, which need the domain
+verified for the Google account that makes them:
+
+1. In [Search Console](https://search.google.com/search-console), add a **Domain** property for
+   `pixelreel.pro`. It gives a TXT record (`google-site-verification=...`); add it at the
+   domain's DNS host, then press Verify.
+2. Make the mappings: `gcloud beta run domain-mappings create --service pixelreel --domain
+   pixelreel.pro --region europe-west1` (and again for `www.pixelreel.pro`).
+3. At the DNS host, point the names at Google, replacing any records already there for them:
+
+   | Name | Type | Value |
+   | --- | --- | --- |
+   | `@` | A | `216.239.32.21`, `216.239.34.21`, `216.239.36.21`, `216.239.38.21` (four records) |
+   | `@` | AAAA | `2001:4860:4802:32::15`, `2001:4860:4802:34::15`, `2001:4860:4802:36::15`, `2001:4860:4802:38::15` (four records) |
+   | `www` | CNAME | `ghs.googlehosted.com.` |
+
+   `gcloud beta run domain-mappings describe --domain pixelreel.pro --region europe-west1`
+   lists the records Google wants, if they ever differ.
+4. Google issues the certificate once the records are seen, usually within an hour.
+
+### What it costs
+
+Cloud Run bills an awake copy by the second, from the first request until it sleeps about
+15 minutes after the last: about 2,000 vCPU-seconds a visit. The free allowance (240,000
+vCPU-seconds and 450,000 GiB-seconds a month) covers about a hundred visits; each one after
+that is about 4 US cents. The bucket, the image repository (about 25p) and the rest come to
+well under a pound. A copy kept awake all month by steady traffic would cost about $110,
+so watch the budget alert if it ever becomes popular: `--max-instances 1` caps it there.

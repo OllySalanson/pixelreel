@@ -104,7 +104,8 @@ function soundtrack(ffmpeg, clips, starts, totalMs, tmp) {
   const said = ffmpegSync(ffmpeg, ['-i', mix, '-af', `loudnorm=${LOUDNESS}:print_format=json`, '-f', 'null', '-']);
   const m = JSON.parse(said.slice(said.lastIndexOf('{'), said.lastIndexOf('}') + 1));
   const level = `loudnorm=${LOUDNESS}:measured_I=${m.input_i}:measured_TP=${m.input_tp}:measured_LRA=${m.input_lra}:measured_thresh=${m.input_thresh}:offset=${m.target_offset}:linear=true`;
-  ffmpegSync(ffmpeg, ['-loglevel', 'error', '-y', '-i', mix, '-af', `${level},aresample=48000`, '-t', String(totalMs / 1000), out]);
+  // the mono at the end: older ffmpeg (Debian's 5.1) leaves linear loudnorm's layout unset, and fails
+  ffmpegSync(ffmpeg, ['-loglevel', 'error', '-y', '-i', mix, '-af', `${level},aresample=48000,aformat=channel_layouts=mono`, '-t', String(totalMs / 1000), out]);
   return out;
 }
 

@@ -35,6 +35,7 @@ npm run service
 | `PORT` | `8787` | Where it listens. |
 | `PIXELREEL_URL` | `http://localhost:8787` | The address people reach it at, used in the links it gives. |
 | `PIXELREEL_DATA` | `.service-data` | The folder it keeps reels in. |
+| `PIXELREEL_S3_BUCKET` | none | A bucket to keep reels in instead, with the settings in [deploy.md](deploy.md#keeping-reels-in-a-bucket). |
 | `PIXELREEL_PYTHON` | `.venv/bin/python` | The Python with Pocket TTS installed, as for `npm run voices`. |
 
 It records one reel at a time, and carries on with any waiting after a restart. Stopping it
