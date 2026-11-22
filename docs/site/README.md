@@ -41,7 +41,7 @@ The voice is Peter's: warm, plain, British, a little cheeky. Plain dashes only.
 | File | Does |
 | --- | --- |
 | `site/layout.html` | The shell every page shares: the bar across the top, the foot, Make it comfy and the theatre. |
-| `site/pages/*.html`, `*.md` | A page each. The comment at the top holds its `title` and `description`. Plain pages are Markdown. `reel.html` is the page every shared reel is watched on (`/r/<id>`). |
+| `site/pages/*.html`, `*.md` | A page each. The comment at the top holds its `title` and `description`. Plain pages are Markdown. `reel.html` is the page every shared reel is watched on (`/r/<id>`), and `watch.html` the page each of the site's own reels has to be sent by (`/watch/<name>`: the examples in `EXAMPLES`, in `service/site.mjs`, which also writes their posters). |
 | `site/css/site.css` | The whole look. |
 | `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` is Make it comfy; `boot.js` runs before the page is drawn, to put its settings back and to keep the bar across the top on one row; `signal.js` is the test card on a page that is not there; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `send.js` copies words and passes a reel on; `sprites.js` is the site's own pixel art. |
 | `site/fonts/`, `site/art/` | The fonts (with their licences), and the icons, logos and share picture. |
@@ -309,3 +309,19 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | What a message showed for every reel | What it shows now, for two of them |
 | --- | --- |
 | ![A pixel reel for you. Press Play, and Peter will read it to you.](../../site/art/reel-card.png) | ![Two cards: GAS METER, and a pension letter, each with a play button and its reel's name.](log/v11-cards.jpg) |
+
+### Version 12
+
+- **A page for each example, to send.** The reel that explains Pixel Reel, and each of the
+  six examples, now has a page of its own: `/watch/pixel-reel`, `/watch/offside-rule` and so
+  on. The reel is as large as the screen allows, with Send it to someone under it, then the
+  way to get one of your own, then the others to watch. Sent in a message, its link shows
+  that reel's own picture. `/watch/pixel-reel` is the one link that explains the whole
+  thing to someone in a minute.
+- The player that opens over the home page has Send it to someone for those reels too,
+  which sends the reel's own page.
+- A reel's length now reads the same on its poster as on the player's clock.
+
+| An example's page, on a laptop and a phone | What a message shows for it |
+| --- | --- |
+| ![The offside rule's page: a large player and Send it to someone; and the page that explains Pixel Reel, on a phone.](log/v12-watch-page.jpg) | ![OFFSIDE, explained at last, with a play button and the reel's name.](log/v12-watch-card.jpg) |

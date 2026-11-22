@@ -120,7 +120,7 @@
   </form>
 </dialog>
 
-<dialog class="theatre" id="theatre" aria-labelledby="theatre-title">
+<dialog class="theatre" id="theatre" aria-labelledby="theatre-title" data-pages="{{watchable}}">
   <div class="theatre-in">
     <div class="theatre-head">
       <p class="theatre-kicker" id="theatre-kicker">Here's one we made earlier</p>
@@ -129,8 +129,10 @@
     </div>
     {{player:empty}}
     <div class="theatre-foot">
-      <p>Want one of your own?</p>
+      <p id="theatre-own">Want one of your own?</p>
+      <button class="btn btn-paper" type="button" id="theatre-send" hidden>Send it to someone</button>
       <a class="btn btn-gold" href="/claude">Add Pixel Reel to Claude</a>
+      <p class="sr-only" id="theatre-sent" role="status"></p>
     </div>
   </div>
 </dialog>

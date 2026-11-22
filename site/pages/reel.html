@@ -14,7 +14,7 @@ imagealt: A pixel reel for you. Press Play. Reelie the film reel stands under a 
     <p class="sr-only" id="watch-says" role="status"></p>
     <div class="watch-foot" data-quiet>
       <div class="row">
-        <button class="btn btn-gold" type="button" id="watch-send" hidden>Send it to someone</button>
+        <button class="btn btn-gold" type="button" data-send="{{reeltitle}}" data-says="#watch-sent" hidden>Send it to someone</button>
         <a class="btn btn-paper" id="watch-video" href="/r/{{reelid}}/video.mp4" download hidden>Save the video</a>
         <p class="watch-sent" id="watch-sent" role="status"></p>
       </div>

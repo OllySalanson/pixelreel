@@ -46,7 +46,7 @@ export function loadReel(name) {
 
 /** How long something lasts, for people: "39 seconds", "1 minute 16". */
 export function lengthWords(ms) {
-  const s = Math.round(ms / 1000);
+  const s = Math.floor(ms / 1000);   // whole seconds, as the player's clock counts them, so a reel has one length everywhere
   if (s < 60) return `${s} seconds`;
   return `${Math.floor(s / 60)} minute${s >= 120 ? 's' : ''}${s % 60 ? ` ${s % 60}` : ''}`;
 }

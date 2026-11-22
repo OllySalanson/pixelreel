@@ -1,0 +1,47 @@
+<!--
+title: A pixel reel - Pixel Reel
+description: A pixel reel: a short cartoon with a warm voice. Press Play, and Peter will read it to you.
+-->
+
+<section class="watch night" aria-labelledby="watch-title">
+  <canvas class="scene" data-scene="cinema" aria-hidden="true"></canvas>
+  <div class="wrap watch-in">
+    <!-- the player says the reel's name, large, under its picture -->
+    <h1 class="sr-only" id="watch-title">{{reeltitle}}</h1>
+    {{theplayer}}
+    <div class="watch-foot" data-quiet>
+      <div class="row">
+        <button class="btn btn-gold" type="button" data-send="{{reeltitle}}" data-says="#watch-sent" hidden>Send it to someone</button>
+        <p class="watch-sent" id="watch-sent" role="status"></p>
+      </div>
+      <p>One we made earlier, the way yours will be. Claude wrote the scenes. Peter read them out.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="own-title">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">Made with Pixel Reel</p>
+      <h2 id="own-title">Want one of your own?</h2>
+      <p class="lead">Pixel Reel turns anything wordy into a short cartoon like this one. It is free.</p>
+      <div class="row">
+        <a class="btn btn-gold btn-big" href="/claude">Add Pixel Reel to Claude</a>
+        <a class="btn btn-paper btn-big" href="/">See what it is</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section night cinema" aria-labelledby="more-title">
+  <canvas class="scene" data-scene="cinema" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div class="head" data-quiet>
+      <p class="eyebrow">Now showing</p>
+      <h2 id="more-title">More to watch</h2>
+    </div>
+    <ul class="posters">
+{{others}}
+    </ul>
+  </div>
+</section>

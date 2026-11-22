@@ -365,6 +365,23 @@ describe('the service over HTTP', async () => {
     await client.close();
   });
 
+  it('gives each of the site\'s own reels a page to send, with its own picture for a message', async () => {
+    const page = await fetch(`${local}/watch/gas-meter`);
+    const html = await page.text();
+    assert.equal(page.status, 200);
+    assert.equal(page.headers.get('content-security-policy'), SITE_POLICY);
+    assert.match(html, /<title>How to read your gas meter - Pixel Reel<\/title>/);
+    assert.match(html, /<meta property="og:image" content="https:\/\/reels\.example\/watch\/gas-meter\/card\.png">/);
+    assert.equal((await fetch(`${local}/watch/gas-meter`, { headers: { 'if-none-match': page.headers.get('etag') } })).status, 304);
+    const card = await fetch(`${local}/watch/gas-meter/card.png`);
+    assert.equal(card.status, 200);
+    assert.equal(card.headers.get('content-type'), 'image/png');
+    assert.equal(await card.text(), 'picture of How to read your gas meter');
+    for (const path of ['/watch/site-what', '/watch/nothing', '/watch/gas-meter/', '/watch/../reels']) {
+      assert.equal((await fetch(`${local}${path}`)).status, 404, `${path} is not a page`);
+    }
+  });
+
   it('shows the card every reel can share when a reel\'s own picture cannot be drawn', async () => {
     const plain = new Reels({ store: freshStore(), record: () => new Promise(() => {}), video: fakeVideo, picture: async () => { throw new Error('no canvas'); } });
     const other = createService({ reels: plain, baseUrl: 'https://reels.example' });
@@ -375,6 +392,10 @@ describe('the service over HTTP', async () => {
       assert.equal(card.status, 302);
       assert.equal(card.headers.get('location'), '/site/art/reel-card.png');
       assert.ok(staticFile('/site/art/reel-card.png'), 'which is there to be shown');
+      const ours = await fetch(`http://127.0.0.1:${other.address().port}/watch/volcano/card.png`, { redirect: 'manual' });
+      assert.equal(ours.status, 302);
+      assert.equal(ours.headers.get('location'), '/site/art/share.png', 'and the site\'s own card for one of its own reels');
+      assert.ok(staticFile('/site/art/share.png'));
     } finally {
       other.close();
       other.closeAllConnections();

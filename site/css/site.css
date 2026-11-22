@@ -253,7 +253,7 @@ h1 { font-size: clamp(2.6rem, 4.2vw + 1rem, 4.75rem); line-height: 1.06; letter-
 .cinema::after { bottom: calc(var(--u) * 4); }
 .posters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(1.5rem, 3vw, 2.5rem); }
 .posters li { display: grid; }   /* so the posters in a row are all as tall as the tallest */
-.poster { display: block; width: calc(100% - var(--u) * 4); margin: calc(var(--u) * 2); padding: 0 0 1.1rem; text-align: left; color: var(--cream); background: var(--navy); border: 0; cursor: pointer;
+.poster { display: block; text-decoration: none; width: calc(100% - var(--u) * 4); margin: calc(var(--u) * 2); padding: 0 0 1.1rem; text-align: left; color: var(--cream); background: var(--navy); border: 0; cursor: pointer;
   box-shadow: 0 0 0 var(--u) var(--frame), 0 0 0 calc(var(--u) * 2) var(--deep), calc(var(--u) * 4) calc(var(--u) * 4) 0 0 rgba(3, 6, 12, 0.55); transition: transform 0.12s; }
 .poster:hover, .poster:focus-visible { transform: translateY(calc(var(--u) * -2)); box-shadow: 0 0 0 var(--u) var(--gold), 0 0 0 calc(var(--u) * 2) var(--deep), calc(var(--u) * 4) calc(var(--u) * 6) 0 0 rgba(3, 6, 12, 0.55); }
 .poster .shot { border-bottom: var(--u) solid var(--frame); }
@@ -357,6 +357,8 @@ h1 { font-size: clamp(2.6rem, 4.2vw + 1rem, 4.75rem); line-height: 1.06; letter-
 /* what to do with the reel, then the small print; room is kept for both, so nothing below jumps when they arrive */
 .watch-foot { display: grid; align-content: start; gap: 0.6rem; min-height: 6.25rem; margin-top: 1rem; font-size: 1.0625rem; color: var(--mist); }
 .watch-foot p { max-width: none; }
+/* until its script wakes it the send button is not seen, but keeps its place, so nothing moves when it is */
+.watch-foot button[data-send][hidden] { display: inline-flex !important; visibility: hidden; }
 .watch-sent { font-weight: 700; color: var(--gold); }
 .watch-sent:empty { display: none; }
 
@@ -403,6 +405,7 @@ code.address { display: inline-block; max-width: 100%; padding: 0.55rem 0.9rem; 
 .film video { display: block; width: calc(100% - var(--u) * 2); height: auto; margin: var(--u); background: var(--night);
   box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line), calc(var(--u) * 3) calc(var(--u) * 3) 0 0 rgba(20, 27, 45, 0.16); }
 .film-words .btn { margin-top: 1.25rem; }
+.film-words .btn + p { margin-top: 1rem; }
 .downloads { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem clamp(1.5rem, 3vw, 2.5rem); }
 .downloads img { display: block; width: calc(100% - var(--u) * 2); height: auto; background: var(--night); }
 .downloads .on-night { aspect-ratio: 3 / 1; object-fit: contain; padding: 1.25rem; image-rendering: pixelated; }

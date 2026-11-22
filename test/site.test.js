@@ -3,12 +3,12 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { textArt } from '../scripts/site-art.mjs';
-import { addToClaudeLink, pageFacts, playerHtml, robotsTxt, SITE_PAGES, siteModules, sitePage, spriteSvg } from '../service/site.mjs';
+import { addToClaudeLink, EXAMPLES, pageFacts, playerHtml, robotsTxt, SITE_PAGES, siteModules, sitemapXml, sitePage, spriteSvg, WATCH, watchPage } from '../service/site.mjs';
 import { staticFile } from '../service/static.mjs';
 import { SCENES } from '../site/js/landscape.js';
 import { askFor } from '../site/js/maker.js';
 import { lengthWords, showOf } from '../site/js/reels.js';
-import { sendReel } from '../site/js/send.js';
+import { sendReel, sentWords } from '../site/js/send.js';
 import { SPRITES } from '../site/js/sprites.js';
 import { parseReelJson } from '../src/format.js';
 import { createKit } from '../src/kit.js';
@@ -19,6 +19,9 @@ const root = (path) => new URL(`../${path}`, import.meta.url);
 const pages = [...Object.values(SITE_PAGES), 'not-found', 'reel-gone', 'reel'];
 const forReel = { values: { reelid: 'abcdefghijklmnopqrstuv', reeltitle: 'Tea' }, title: 'Tea - Pixel Reel', path: '/r/abcdefghijklmnopqrstuv' };
 const html = Object.fromEntries(pages.map((name) => [name, sitePage(name, 'https://reels.example', name === 'reel' ? forReel : {})]));
+// the page of one of the site's own reels stands in for all of them where every page is looked over
+html['watch/offside-rule'] = watchPage('offside-rule', 'https://reels.example');
+pages.push('watch/offside-rule');
 
 describe('putting a page together', () => {
   it('reads the facts in the comment at the top of a page', () => {
@@ -40,7 +43,7 @@ describe('putting a page together', () => {
       assert.ok(!titles.has(title), `${name} shares its title, "${title}"`);
       titles.add(title);
       assert.match(html[name], /<meta name="description" content="[^"]{20,}">/, name);
-      assert.match(html[name], new RegExp(`<body class="page-${name}">`), name);
+      assert.match(html[name], new RegExp(`<body class="page-${name.split('/')[0]}">`), name);   // "watch/<reel>" is the watch page
       assert.match(html[name], /<a class="skip" href="#main">/, `${name} lets a keyboard skip the bar across the top`);
       assert.match(html[name], /<dialog class="comfort" id="comfort"/, `${name} has Make it comfy`);
       assert.doesNotMatch(html[name], /\sstyle="/, `${name} has no inline styles: the site's policy would block them`);
@@ -235,32 +238,74 @@ describe('the site\'s own pictures', () => {
   });
 });
 
+describe('a page for each example reel', () => {
+  const title = (name) => JSON.parse(readFileSync(root(`reels/${name}/reel.json`), 'utf8')).title;
+
+  it('shows the six examples on the home page, each named by its reel and opening it over the page', () => {
+    assert.equal(EXAMPLES.length, 6);
+    for (const { name, scene, kind } of EXAMPLES) {
+      const poster = new RegExp(`<button class="poster" type="button" data-reel="${name}" data-kicker="Now showing">\\s*<canvas class="shot" data-reel="${name}" data-scene="${scene}" data-hover [^>]*></canvas>\\s*<span class="poster-title">([^<]*)</span>\\s*<span class="poster-meta"><span class="poster-kind">${kind}</span>`);
+      assert.equal(poster.exec(html.home)?.[1], title(name).replace(/&/g, '&amp;'), name);
+      assert.ok(scene <= JSON.parse(readFileSync(root(`reels/${name}/reel.json`), 'utf8')).scenes.length, `${name} has a scene ${scene}`);
+    }
+  });
+
+  it('gives the reel that explains Pixel Reel, and every example, a page of its own', () => {
+    assert.deepEqual(WATCH, ['pixel-reel', ...EXAMPLES.map((example) => example.name)]);
+    for (const name of WATCH) {
+      const page = watchPage(name, 'https://reels.example');
+      assert.ok(page.includes(`<title>${title(name)} - Pixel Reel</title>`), name);
+      assert.ok(page.includes(`<h1 class="sr-only" id="watch-title">${title(name)}</h1>`), name);
+      assert.ok(page.includes(`<div class="reel" data-reel="${name}">`), `${name}: its player is on the page`);
+      assert.ok(page.includes(`<link rel="canonical" href="https://reels.example/watch/${name}">`), name);
+      assert.ok(page.includes(`<meta property="og:image" content="https://reels.example/watch/${name}/card.png">`), `${name}: a message shows its own picture`);
+      assert.ok(page.includes(`<link rel="preload" as="fetch" crossorigin href="/reels/${name}/reel.json">`), `${name}: its reel is asked for early`);
+      assert.ok(page.includes(`data-send="${title(name)}" data-says="#watch-sent"`), `${name}: it can be sent on`);
+      assert.doesNotMatch(page, /\{\{/, `${name}: every name is filled in`);
+      // the others, as links to their own pages, and never itself: six, so they fill two rows of three
+      const links = [...page.matchAll(/<a class="poster" href="\/watch\/([a-z-]+)">/g)].map((found) => found[1]);
+      assert.deepEqual(links, WATCH.filter((other) => other !== name), name);
+      assert.equal(links.length, 6);
+    }
+  });
+
+  it('tells the player over the page which reels have a page to send, and search engines where they are', () => {
+    assert.ok(html.home.includes(`<dialog class="theatre" id="theatre" aria-labelledby="theatre-title" data-pages="${WATCH.join(' ')}">`));
+    assert.match(html.home, /<button class="btn btn-paper" type="button" id="theatre-send" hidden>Send it to someone<\/button>/);
+    for (const name of WATCH) assert.ok(sitemapXml('https://reels.example').includes(`<loc>https://reels.example/watch/${name}</loc>`), name);
+  });
+});
+
 describe('passing a reel on', () => {
   const link = 'https://reels.example/r/abc';
   const copies = (works) => { const copied = []; return { copied, copy: async (text) => { copied.push(text); return works; } }; };
 
   it('opens the phone\'s own way of sending, with the title and the link, and says nothing more', async () => {
     const shared = [], { copied, copy } = copies(true);
-    assert.equal(await sendReel('Your gas bill', link, { share: async (what) => { shared.push(what); }, copy }), '');
+    assert.equal(await sendReel('Your gas bill', link, { share: async (what) => { shared.push(what); }, copy }), 'shared');
     assert.deepEqual(shared, [{ title: 'Your gas bill', text: 'Your gas bill, as a pixel reel. Press Play.', url: link }]);
     assert.deepEqual(copied, []);
+    assert.equal(sentWords('shared', link), '');
   });
 
   it('says nothing when they change their mind, and copies the link if sending fails', async () => {
     const stopped = Object.assign(new Error('no'), { name: 'AbortError' }), { copied, copy } = copies(true);
-    assert.equal(await sendReel('A reel', link, { share: async () => { throw stopped; }, copy }), '');
+    assert.equal(await sendReel('A reel', link, { share: async () => { throw stopped; }, copy }), 'stopped');
     assert.deepEqual(copied, []);
-    assert.equal(await sendReel('A reel', link, { share: async () => { throw new Error('not allowed'); }, copy }), 'Link copied. Paste it into a message.');
+    assert.equal(sentWords('stopped', link), '');
+    assert.equal(await sendReel('A reel', link, { share: async () => { throw new Error('not allowed'); }, copy }), 'copied');
     assert.deepEqual(copied, [link]);
   });
 
   it('copies the link on a computer, and gives it in words if that cannot be done', async () => {
-    assert.equal(await sendReel('A reel', link, copies(true)), 'Link copied. Paste it into a message.');
-    assert.equal(await sendReel('A reel', link, copies(false)), `That did not copy. The link is ${link}`);
+    assert.equal(await sendReel('A reel', link, copies(true)), 'copied');
+    assert.equal(await sendReel('A reel', link, copies(false)), 'failed');
+    assert.equal(sentWords('copied', link), 'Link copied. Paste it into a message.');
+    assert.equal(sentWords('failed', link), `That did not copy. The link is ${link}`);
   });
 
   it('has its button on a reel\'s page, out of sight until the script that works it has woken', () => {
-    assert.match(html.reel, /<button class="btn btn-gold" type="button" id="watch-send" hidden>Send it to someone<\/button>/);
+    assert.match(html.reel, /<button class="btn btn-gold" type="button" data-send="Tea" data-says="#watch-sent" hidden>Send it to someone<\/button>/);
     assert.match(html.reel, /<p class="watch-sent" id="watch-sent" role="status"><\/p>/);
   });
 });
@@ -346,6 +391,7 @@ describe('the words for Claude', () => {
     assert.equal(lengthWords(39400), '39 seconds');
     assert.equal(lengthWords(60000), '1 minute');
     assert.equal(lengthWords(76000), '1 minute 16');
+    assert.equal(lengthWords(75900), '1 minute 15', 'whole seconds, as the clock in the player counts them');
     assert.equal(lengthWords(125000), '2 minutes 5');
   });
 });
