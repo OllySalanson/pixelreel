@@ -145,6 +145,17 @@ A language switched on without its model in the image cannot be recorded: the im
 folder is not writable, so nothing is downloaded when the service runs, and such a reel
 fails with "The voice could not be recorded".
 
+### Other narrators
+
+Off. To let people ask for a narrator other than Peter (see
+[service.md](service.md#other-narrators) for why that is a decision and not just a setting):
+
+1. In the `Dockerfile`, set `ARG VOICE_NAMES="anna stuart_bell"`: the Pocket TTS voices to
+   build in (`anna`, `vera`, `stuart_bell`, `charles`, `paul`).
+2. Deploy, and add `--update-env-vars PIXELREEL_NARRATORS=anna,stuart` (first names).
+
+A narrator switched on without the voice in the image cannot record.
+
 ### Switching on Make it right here
 
 It is off. To let visitors without Claude have the service write a reel for them from what

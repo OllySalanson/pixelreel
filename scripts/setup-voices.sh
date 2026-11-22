@@ -43,6 +43,12 @@ for language in ${VOICE_LANGUAGES:-}; do
   "$ROOT/.venv/bin/python" -c "import sys; from pocket_tts import TTSModel; TTSModel.load_model(language=sys.argv[1]).get_state_for_audio_prompt('peter_yearsley')" "$language"
 done
 
+# Other narrators, such as VOICE_NAMES="anna stuart_bell": each voice is a small file, fetched once.
+for voice in ${VOICE_NAMES:-}; do
+  echo "Getting the Pocket TTS voice $voice"
+  "$ROOT/.venv/bin/python" -c "import sys; from pocket_tts import TTSModel; TTSModel.load_model().get_state_for_audio_prompt(sys.argv[1])" "$voice"
+done
+
 if [ "$KOKORO" = yes ]; then
   echo "Installing kokoro-onnx"
   $PIP "kokoro-onnx>=0.4,<1"

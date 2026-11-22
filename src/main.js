@@ -45,7 +45,7 @@ function showError(message) {
 }
 
 /** What the caption says at a scene whose recording has not come yet, in a reel that plays while it is being recorded. */
-const STILL_RECORDING = 'Peter is still recording this line. It plays in a moment.';
+const STILL_RECORDING = 'This line is still being recorded. It plays in a moment.';
 
 async function start() {
   if (params.has('embed')) document.body.classList.add('embed');

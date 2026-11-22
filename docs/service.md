@@ -27,6 +27,7 @@ pages are drafts, still to be approved, and the privacy page still needs a conta
   - [Pictures timed to the voice](#pictures-timed-to-the-voice)
 - [The player in the chat](#the-player-in-the-chat)
 - [Other languages](#other-languages)
+- [Other narrators](#other-narrators)
 - [Playing while it records](#playing-while-it-records)
 - [Make it right here](#make-it-right-here)
 - [Limits](#limits)
@@ -51,6 +52,7 @@ npm run service
 | `PIXELREEL_PYTHON` | `.venv/bin/python` | The Python with Pocket TTS installed, as for `npm run voices`. |
 | `PIXELREEL_LISTED` | off | `1` lets search engines list the website. Off, every page asks them not to. Reels are never listed. |
 | `PIXELREEL_LANGUAGES` | none | Other languages Peter may read, such as `french,spanish`. Off, every reel is in English. See [Other languages](#other-languages). |
+| `PIXELREEL_NARRATORS` | none | Narrators besides Peter that may be asked for, such as `anna,stuart`. Off, Peter reads every reel. See [Other narrators](#other-narrators). |
 | `PIXELREEL_WARM_VOICE` | on | `0` loads the voice afresh for each reel, instead of once when the service starts. Saves about 1 GB of memory, and makes every reel wait longer. |
 
 It records one reel at a time, and carries on with any waiting after a restart. Stopping it
@@ -222,6 +224,28 @@ another language.
   works in any of these languages; numbers written in digits are only matched to English
   number words.
 
+## Other narrators
+
+**Off unless you switch it on. The site says, in Peter's own words, "there's only me".**
+
+Pocket TTS has other British voices. With `PIXELREEL_NARRATORS=anna,stuart` (any of `anna`,
+`vera`, `stuart`, `charles`, `paul`), `make_reel` gains a `narrator` field, and Claude is
+told the person can have one of those if they ask for a different voice. Claude is told not
+to offer the choice unprompted: Peter stays the narrator unless someone asks.
+
+- Why it might be wanted: some people follow one voice more easily than another, and some
+  would simply rather hear a woman's voice.
+- Why it is off: the website promises one narrator, and the reel that says so would need
+  changing first. That is a decision about what Pixel Reel is, not a setting to flip.
+- Each voice is a small file that must be to hand, like a language's model
+  ([deploy.md](deploy.md#other-narrators)).
+- A line was recorded in each of the six voices and written down again by a speech-to-text
+  model: every one came back word for word. Nobody has listened to judge how they sound.
+- A change to a reel (`improves`) keeps its recordings only when the narrator and the
+  language are the same.
+- The player in the chat names whoever is reading ("Anna has read 3 of 7 lines"). The reel's
+  own page on the website still says Peter.
+
 ## Playing while it records
 
 A reel used to wait for its last line before anything played. Now:
@@ -241,7 +265,7 @@ A reel used to wait for its last line before anything played. Now:
   `window.pixelreelClips` (`{ clips, more, guesses }`) and sends a `pixelreel:clips` event.
   The reel's clock and the marks on its progress bar are set again as each arrives.
 - **If the player does get to a line that has not come** (someone presses Next, or Peter
-  slows down), it waits for it, saying "Peter is still recording this line", rather than
+  slows down), it waits for it, saying "This line is still being recorded", rather than
   read it in the browser's own voice; the scene then starts from the top with his.
 
 The player in the chat does this now. The reel's own page (`/r/<id>`) still waits for the

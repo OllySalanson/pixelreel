@@ -39,14 +39,22 @@ export const isId = (id) => typeof id === 'string' && ID.test(id);
  * A recorder: records the voice for the reel in folder `dir`, with npm run voices (Pocket TTS,
  * voice peter_yearsley), telling `onLine(done, of, clip)` as each line is recorded: how many
  * are done of how many, and the recording ({ text, file, seconds }), by then in the folder's
- * audio/. Its last argument may name the `language` the words are in, if not English. With a `speaker` (a WarmVoice's, service/voice.mjs) the lines are spoken by a voice kept loaded.
+ * audio/. Its last argument may name the `language` the words are in, if not English, and the
+ * `voice` to read them in, if not the usual one. With a `speaker` (a WarmVoice's, service/voice.mjs) the lines are spoken by a voice kept loaded.
  */
-export const recordWith = (speaker = null) => async (dir, log, onLine, { language = null } = {}) => {
+export const recordWith = (speaker = null) => async (dir, log, onLine, { language = null, voice = null } = {}) => {
   const { main } = await import('../scripts/voices.mjs');
-  await main([dir, ...(language ? ['--lang', language] : [])], { log, onClip: (clip, { done, of }) => onLine(done, of, clip), ...(speaker ? { speaker } : {}) });
+  const choices = [...(language ? ['--lang', language] : []), ...(voice ? ['--voice', voice] : [])];
+  await main([dir, ...choices], { log, onClip: (clip, { done, of }) => onLine(done, of, clip), ...(speaker ? { speaker } : {}) });
 };
 
-/** A language's name as it is written in a sentence: french is French. */
+/**
+ * The narrators besides Peter that a service may offer, by the first name people ask for
+ * them by, and the Pocket TTS voice each one is. All speak British English.
+ */
+export const NARRATORS = { anna: 'anna', vera: 'vera', stuart: 'stuart_bell', charles: 'charles', paul: 'paul' };
+
+/** A language's name, or a narrator's, as it is written in a sentence: french is French, anna is Anna. */
 export const languageName = (language) => language[0].toUpperCase() + language.slice(1);
 
 /** Draws a reel's own picture for link previews, from its reel.json, parsed. Resolves to a PNG. */
@@ -69,9 +77,10 @@ export class Reels {
    * @param {(dir: string, out: string) => Promise<void>} [options.video]   draws a folder's reel as an MP4
    * @param {(raw: object) => Promise<Uint8Array>} [options.picture]   draws a reel's picture for link previews, as a PNG
    * @param {string[]} [options.languages]   the languages besides English the narrator can read here (those whose voice models are to hand)
+   * @param {string[]} [options.narrators]   the narrators besides Peter that may be asked for here, by first name (see NARRATORS)
    */
-  constructor({ store, record = recordWith(), video = drawVideo, picture = drawPicture, now = () => Date.now(), keepDays = KEEP_DAYS, maxQueue = 20, languages = [], log = () => {} }) {
-    Object.assign(this, { store, record, video, picture, now, keepDays, maxQueue, languages, log });
+  constructor({ store, record = recordWith(), video = drawVideo, picture = drawPicture, now = () => Date.now(), keepDays = KEEP_DAYS, maxQueue = 20, languages = [], narrators = [], log = () => {} }) {
+    Object.assign(this, { store, record, video, picture, now, keepDays, maxQueue, languages, narrators, log });
     this.queue = [];
     this.running = null;
     this.notes = new Map();   // how far each reel that is still being written has got: note()
@@ -112,9 +121,14 @@ export class Reels {
    * keep their recordings, so only what changed is recorded (`kept` in its status says how
    * many). The earlier reel need not be recorded yet: it will be by the time this one's turn comes.
    * `language` is the language its words are in, for the narrator to read it in: one of `languages`, or English.
+   * `narrator` is who reads it, by first name: one of `narrators`, or Peter.
    */
-  async create(raw, { improves = null, language = null } = {}) {
+  async create(raw, { improves = null, language = null, narrator = null } = {}) {
     const reel = this.check(raw);
+    const who = narrator && narrator !== 'peter' ? narrator : null;
+    if (who && !(this.narrators.includes(who) && NARRATORS[who])) {
+      throw new ReelError([`narrator: the narrators here are ${['Peter', ...this.narrators.map(languageName)].join(', ')}, not ${JSON.stringify(narrator)}. Leave it out for Peter.`]);
+    }
     const spoken = language && language !== 'english' ? language : null;
     if (spoken && !this.languages.includes(spoken)) {
       throw new ReelError([`language: Peter reads ${['English', ...this.languages.map(languageName)].join(', ')} here, not ${JSON.stringify(language)}. Write the reel in English, and tell the person so.`]);
@@ -122,21 +136,26 @@ export class Reels {
     if (this.queue.length >= this.maxQueue) throw new BusyError();
     const status = { ...this.blank(reel.title, 'queued'), ...this.measure(reel) };
     await this.store.put(`reels/${status.id}/reel.json`, JSON.stringify(raw));
-    const kept = await this.shared(improves, reel);
+    const kept = await this.shared(improves, reel, { language: spoken, narrator: who });
     if (kept) Object.assign(status, { improves, kept });   // its recordings are fetched when this one's turn comes (run)
     if (spoken) status.language = spoken;
+    if (who) status.narrator = who;
     await this.save(status);
     this.enqueue({ id: status.id, kind: 'voice' });
     // with nothing else in hand its recording has begun already, and whoever asked is told so
     return this.running?.id === status.id ? { ...status, state: 'recording' } : status;
   }
 
-  /** How many of a checked reel's lines the earlier reel `from` also says, word for word. None if `from` is not a reel. */
-  async shared(from, reel) {
-    if (!(await this.status(from))) return 0;
-    let earlier;
-    try { earlier = reelFromData(await this.reel(from)); } catch { return 0; }   // not written yet
-    const said = new Set(earlier.scenes.map((scene) => scene.say));
+  /**
+   * How many of a checked reel's lines the earlier reel `from` also says, word for word, in the
+   * same language and the same voice. None if `from` is not a reel.
+   */
+  async shared(from, reel, { language = null, narrator = null } = {}) {
+    const earlier = await this.status(from);
+    if (!earlier || (earlier.language ?? null) !== language || (earlier.narrator ?? null) !== narrator) return 0;
+    let before;
+    try { before = reelFromData(await this.reel(from)); } catch { return 0; }   // not written yet
+    const said = new Set(before.scenes.map((scene) => scene.say));
     return new Set(reel.scenes.map((scene) => scene.say).filter((line) => said.has(line))).size;
   }
 
@@ -416,7 +435,7 @@ export class Reels {
         };
         try {
           try {
-            await this.record(dir, (line) => this.log(`${id}: ${line}`), onLine, { language: status.language ?? null });
+            await this.record(dir, (line) => this.log(`${id}: ${line}`), onLine, { language: status.language ?? null, voice: NARRATORS[status.narrator] ?? null });
           } finally {
             await progress;
           }

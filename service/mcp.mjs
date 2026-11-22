@@ -50,7 +50,7 @@ const TIMING = ['every', 'start'];
  * The reel.json format as make_reel's input: the format's own schema, without the fields the
  * service sets itself, and saying what makes a reel good where Claude will read it as it writes.
  */
-function reelInput(languages = []) {
+function reelInput(languages = [], narrators = []) {
   const reel = reelSchema();
   delete reel.$schema;   // a tool's input is a plain object schema
   delete reel.properties.images;   // no pictures from elsewhere (limits.mjs)
@@ -80,6 +80,12 @@ function reelInput(languages = []) {
       description: 'The language every word of the reel is written in, for Peter to read it in. Leave it out for English.'
     };
   }
+  if (narrators.length) {
+    reel.properties.narrator = {
+      enum: ['peter', ...narrators],
+      description: 'Who reads the reel aloud. Leave it out for Peter; set it only when the person asks for another voice.'
+    };
+  }
   reel.properties.improves = {
     type: 'string',
     description: 'To change a reel you made: the id of that reel. Send the whole reel again with the changes; the lines you leave word for word as they were keep their recordings, so it is ready sooner.'
@@ -95,8 +101,14 @@ function languageAdvice(languages) {
     `(titles, captions, what he says, the pictures' words) and set "language". In any other language, ${elsewhere}.`;
 }
 
-/** The tools, as tools/list shows them. `languages` are the ones besides English that Peter can read here. */
-export function toolList(languages = []) {
+/** What the guide says about who reads: `narrators` are the ones besides Peter that may be asked for here. */
+function narratorAdvice(narrators) {
+  return `The narrator is Peter. If the person asks for a different voice, they can have ${narrators.map(languageName).join(', ')}: set "narrator". ` +
+    'Do not offer the choice unless they ask about the voice.';
+}
+
+/** The tools, as tools/list shows them. `languages` are the ones besides English that Peter can read here, and `narrators` who else may read. */
+export function toolList(languages = [], narrators = []) {
   return [
     {
       name: 'reel_format',
@@ -115,7 +127,7 @@ export function toolList(languages = []) {
         'To change a reel you made, send the whole reel again with "improves" set to its id: only the lines you changed are recorded again.\n' +
         'It answers at once with a link. The voice takes about as long to record as the reel lasts; the reel then plays by itself, in the chat where the player shows, and at the link. ' +
         `Do not wait or check on it. ${HAND_OVER}`,
-      inputSchema: reelInput(languages),
+      inputSchema: reelInput(languages, narrators),
       annotations: { title: 'Make a pixel reel', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
       _meta: SHOWS_PLAYER
     },
@@ -196,7 +208,7 @@ function exampleJson() {
 }
 
 /** The guide reel_format returns: built from the pictures themselves, so it never drifts. `languages` are the ones besides English that Peter can read here. */
-export function formatGuide(languages = []) {
+export function formatGuide(languages = [], narrators = []) {
   const pictures = Object.entries(PICTURES).filter(([type]) => type !== 'image').map(([type, { fields }]) => {
     const list = Object.entries(fields).filter(([key]) => !TIMING.includes(key)).map(([key, kind]) => `${key}${kind.endsWith('?') ? ' (optional)' : ''}`).join(', ');
     return `- ${type}: ${PICTURE_NOTES[type]} Fields: ${list}.`;
@@ -213,6 +225,7 @@ export function formatGuide(languages = []) {
     '- It keeps private things private. Anyone with the link can watch, so when you explain someone\'s letter, bill or chat, leave out names, addresses and account or reference numbers unless they ask for them.',
     '- Plain dashes, no emoji.',
     `- ${languageAdvice(languages)}`,
+    ...(narrators.length ? [`- ${narratorAdvice(narrators)}`] : []),
     '',
     'What to put in, by what you are given:',
     ...Object.values(WHAT_TO_PUT_IN).map((line) => `- ${line}`),
@@ -250,11 +263,12 @@ const told = (words, data) => ({ ...text(words), structuredContent: { ...data, m
 function describe(status, baseUrl) {
   const { watch, video } = links(baseUrl, status.id);
   const about = `${status.scenes} scenes, about ${clockTime(status.seconds * 1000)}${status.language ? `, in ${languageName(status.language)}` : ''}`;
+  const who = status.narrator ? languageName(status.narrator) : 'Peter';
   const plays = `It plays by itself as soon as the voice is ready, in the chat where the player shows, and at ${watch}`;
   const said = {
     writing: `"${status.title}" is still being written. It plays by itself, once it is written and recorded, at ${watch}`,
-    queued: `"${status.title}" is made (${about}) and waiting its turn: Peter is recording another reel first. ${plays}\n${HAND_OVER} There is no need to check on it.`,
-    recording: `"${status.title}" is made (${about}) and Peter is recording the voice now${status.lines ? ` (${status.recorded} of ${status.lines} lines done)` : ''}, which takes about as long as the reel lasts. ${plays}\n${HAND_OVER} There is no need to check on it.`,
+    queued: `"${status.title}" is made (${about}) and waiting its turn: another reel is being recorded first. ${plays}\n${HAND_OVER} There is no need to check on it.`,
+    recording: `"${status.title}" is made (${about}) and ${who} is recording the voice now${status.lines ? ` (${status.recorded} of ${status.lines} lines done)` : ''}, which takes about as long as the reel lasts. ${plays}\n${HAND_OVER} There is no need to check on it.`,
     ready: `"${status.title}" is ready: ${status.scenes} scenes, ${clockTime(status.seconds * 1000)}. Watch it at ${watch}`,
     failed: `"${status.title}" could not be made. ${status.error ?? ''}`.trim()
   }[status.state];
@@ -283,8 +297,8 @@ export function createMcpServer({ reels, baseUrl, client = 'local', limits = nul
         `Write the reel with make_reel; reel_format has the full guide. ${HAND_OVER}`
     }
   );
-  const languages = reels.languages ?? [];
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: toolList(languages) }));
+  const languages = reels.languages ?? [], narrators = reels.narrators ?? [];
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: toolList(languages, narrators) }));
   server.setRequestHandler(ListPromptsRequestSchema, async () => ({ prompts: promptList() }));
   server.setRequestHandler(GetPromptRequestSchema, async ({ params }) => {
     const prompt = promptMessages(params.name, params.arguments);
@@ -311,15 +325,17 @@ export function createMcpServer({ reels, baseUrl, client = 'local', limits = nul
     const args = params.arguments ?? {};
     switch (params.name) {
       case 'reel_format':
-        return text(formatGuide(languages));
+        return text(formatGuide(languages, narrators));
       case 'make_reel': {
         const refused = limits?.reels.check(client);
         if (refused) return failure(`No more reels for now. ${refused}`);
         try {
           // every reel made here is in the one format, so one that does not say is not sent back for it
-          const { improves, language, ...reel } = args;   // not part of the reel: which earlier reel this one is a change to, and the language it is in
+          // not part of the reel: which earlier reel this one is a change to, the language it is in, and who reads it
+          const { improves, language, narrator, ...reel } = args;
+          const word = (value) => (typeof value === 'string' ? value : null);
           const made = await reels.create(reel.format === undefined ? { format: REEL_FORMAT, ...reel } : reel,
-            { improves: typeof improves === 'string' ? improves : null, language: typeof language === 'string' ? language : null });
+            { improves: word(improves), language: word(language), narrator: word(narrator) });
           limits?.reels.count(client);   // only a reel that is made counts: one sent back to be fixed does not
           return describe(made, baseUrl);
         } catch (err) {

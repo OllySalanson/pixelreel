@@ -16,8 +16,10 @@ ENV HF_HOME=/opt/huggingface
 # VOICE_LANGUAGES names other languages for the narrator to read ("french spanish"): each adds about
 # 190 MB, and is switched on when the service runs with PIXELREEL_LANGUAGES (docs/deploy.md)
 ARG VOICE_LANGUAGES=""
+# VOICE_NAMES names other narrators' voices ("anna stuart_bell"), switched on with PIXELREEL_NARRATORS
+ARG VOICE_NAMES=""
 COPY scripts/setup-voices.sh scripts/setup-voices.sh
-RUN VOICE_LANGUAGES="$VOICE_LANGUAGES" sh scripts/setup-voices.sh && chmod -R a+rX /opt/huggingface
+RUN VOICE_LANGUAGES="$VOICE_LANGUAGES" VOICE_NAMES="$VOICE_NAMES" sh scripts/setup-voices.sh && chmod -R a+rX /opt/huggingface
 
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
