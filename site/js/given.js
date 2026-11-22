@@ -90,12 +90,12 @@ export function nameOf(given) {
 const json = (value) => ({ headers: { 'content-type': 'application/json' }, body: JSON.stringify(value) });
 
 /** What to send for words: a short line is a request (a link, or a few words); anything longer is writing to explain. */
-function wordsRequest(words, language) {
+function wordsRequest(words, language, narrator) {
   const tidy = words.replace(/\r\n?/g, '\n').trim();
   if (!tidy) throw new GivenError(SAYS.nothing);
   if (tidy.length > TEXT_MAX) throw new GivenError(SAYS.long);
   if (isVideoLink(tidy)) throw new GivenError(SAYS.video);
-  const more = language ? { language } : {};
+  const more = { ...(language ? { language } : {}), ...(narrator ? { narrator } : {}) };
   return tidy.length <= ABOUT_MAX && !tidy.includes('\n') ? json({ about: tidy, ...more }) : json({ text: tidy, ...more });
 }
 
@@ -117,13 +117,14 @@ export function languageFor(preferred = [], offered = []) {
  * What to send the service (the headers and body of a POST to /try) for what was given:
  * { words } or { file }. A PDF or a picture goes as it is, the picture made smaller first by
  * `shrink` (a browser's job: see maker.js) when it is a big one; a file of plain writing
- * goes as its words. `language` is the language the reel is asked for in, if not English.
+ * goes as its words. `language` is the language the reel is asked for in, if not English,
+ * and `narrator` who is asked to read it, by first name, if not Peter.
  * Throws a GivenError, to show the person, for anything else.
  */
-export async function requestFor(given, { shrink = null, language = null } = {}) {
-  if (!given.file) return wordsRequest(given.words ?? '', language);
-  // a file goes as its own bytes, so the language asked for goes beside it
-  const beside = language ? { 'x-reel-language': language } : {};
+export async function requestFor(given, { shrink = null, language = null, narrator = null } = {}) {
+  if (!given.file) return wordsRequest(given.words ?? '', language, narrator);
+  // a file goes as its own bytes, so the language and the narrator asked for go beside it
+  const beside = { ...(language ? { 'x-reel-language': language } : {}), ...(narrator ? { 'x-reel-narrator': narrator } : {}) };
   let file = given.file;
   const kind = fileKind(new Uint8Array(await file.slice(0, 12).arrayBuffer()));
   if (kind === 'application/pdf') {
@@ -140,5 +141,5 @@ export async function requestFor(given, { shrink = null, language = null } = {})
   }
   if (!isWriting(file)) throw new GivenError(SAYS.other);
   if (file.size > TEXT_MAX * 4) throw new GivenError(SAYS.long);
-  return wordsRequest(await file.text(), language);
+  return wordsRequest(await file.text(), language, narrator);
 }

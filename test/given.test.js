@@ -87,6 +87,10 @@ describe('what the page sends for it', () => {
     assert.deepEqual((await requestFor({ file: file('shot.png', 'image/png', PNG) }, { language: 'spanish' })).headers, { 'content-type': 'image/png', 'x-reel-language': 'spanish' });
     assert.deepEqual((await requestFor({ file: new File(['Cher Sam'], 'lettre.txt', { type: 'text/plain' }) }, { language: 'french' })).body, JSON.stringify({ about: 'Cher Sam', language: 'french' }));
     assert.deepEqual((await requestFor({ file: file('letter.pdf', 'application/pdf', PDF) })).headers, { 'content-type': 'application/pdf' }, 'English is said by saying nothing');
+    // and who is asked to read it
+    assert.deepEqual(await sent({ words: 'tea' }, { narrator: 'anna' }), { type: 'application/json', body: { about: 'tea', narrator: 'anna' } });
+    assert.deepEqual(await sent({ words: 'le thé' }, { language: 'french', narrator: 'anna' }), { type: 'application/json', body: { about: 'le thé', language: 'french', narrator: 'anna' } });
+    assert.deepEqual((await requestFor({ file: file('letter.pdf', 'application/pdf', PDF) }, { language: 'french', narrator: 'anna' })).headers, { 'content-type': 'application/pdf', 'x-reel-language': 'french', 'x-reel-narrator': 'anna' });
   });
 
   it('starts on the language the browser says its reader prefers, if Peter reads it here', () => {

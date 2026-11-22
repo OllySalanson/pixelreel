@@ -759,3 +759,11 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | Under the player | On paper |
 | --- | --- |
 | ![On one page: How to read your gas meter. Every scene, at a glance. Print it. Then the scenes, numbered, three across, each a picture with its title.](log/v32-on-one-page.jpg) | ![The printed sheet: How to read your gas meter, and six numbered scenes with pictures and a few words each.](log/v32-on-paper.jpg) |
+
+### Version 33
+
+- **The narrator you chose reads the reels you make here.** With Anna chosen, the page
+  says "Anna will read the reels you make", and that was true of the words written for
+  Claude but not of a reel made in the box, which Peter read whoever was chosen. Now the
+  box sends the choice with what it is given, and the reel's page says "Anna is recording
+  scene 3 of 6" while it waits. A reel made simpler or shorter keeps whoever read it.

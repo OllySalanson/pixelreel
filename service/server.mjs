@@ -9,7 +9,7 @@ import { createMcpServer } from './mcp.mjs';
 import { BusyError, isId, languageName } from './reels.mjs';
 import { addToClaudeLink, appManifest, robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
 import { sendBytes, sendSqueezed, sendStatic, squeezed, tagOf } from './static.mjs';
-import { languageOf, MAX_WORDS_BODY, OWN_NAMES, PDF_MAX, sourceOf, TryError } from './try.mjs';
+import { languageOf, MAX_WORDS_BODY, narratorOf, OWN_NAMES, PDF_MAX, sourceOf, TryError } from './try.mjs';
 
 /** The most a request to /mcp may carry. A long reel is a few kilobytes. */
 export const MAX_BODY = 256 * 1024;
@@ -205,8 +205,9 @@ async function handleTry(req, res, context) {
     return;
   }
   try {
-    // the language asked for comes in the JSON, or beside a file; a reel written again stays in the language it is in
+    // the language and the narrator asked for come in the JSON, or beside a file; a reel written again keeps its own
     source.language = languageOf(source.language ?? req.headers['x-reel-language'], reels.languages);
+    source.narrator = narratorOf(source.narrator ?? req.headers['x-reel-narrator'], reels.narrators);   // who reads it, chosen on the home page
   } catch (err) {
     if (!(err instanceof TryError)) throw err;
     sendJson(res, 400, { error: err.message });
@@ -217,7 +218,11 @@ async function handleTry(req, res, context) {
     // written (what it was made from was never kept), without the timings its recording gave it.
     const first = await reels.status(source.id), reel = first?.state === 'ready' ? await reels.reel(source.id) : null;
     if (!reel) { sendJson(res, 404, { error: 'That reel has gone, so it cannot be made again.' }); return; }
-    source = { kind: 'reel', how: source.how, reel: unpaced(reel), language: reels.languages.includes(first.language) ? first.language : null };
+    source = {
+      kind: 'reel', how: source.how, reel: unpaced(reel),
+      // it stays in the language it is in, and with whoever read it
+      language: reels.languages.includes(first.language) ? first.language : null, narrator: reels.narrators.includes(first.narrator) ? first.narrator : null
+    };
   }
   const caller = callerOf(req, trustProxy);
   const refused = limits?.tries.hit(caller);
@@ -274,11 +279,11 @@ async function writeReel({ reels, writer, limits, log }, id, source, caller) {
   try {
     let reel = await writer(source, { onProgress });
     try {
-      await reels.write(id, reel, { language: source.language });
+      await reels.write(id, reel, { language: source.language, narrator: source.narrator });
     } catch (err) {
       if (!(err instanceof ReelError)) throw err;
       reel = await writer(source, { before: reel, problems: err.problems, onProgress });   // one chance to put it right
-      await reels.write(id, reel, { language: source.language });
+      await reels.write(id, reel, { language: source.language, narrator: source.narrator });
     }
   } catch (err) {
     if (err instanceof TryError && err.free) limits?.tries.undo(caller);   // what never reached Claude is not one of the visitor's goes

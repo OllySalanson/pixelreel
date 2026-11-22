@@ -212,15 +212,17 @@ export class Reels {
    * Gives a reel started with begin() its scenes (parsed reel.json) and starts recording it.
    * Throws a ReelError, leaving the reel still waiting to be written, if they have problems.
    * `language` is the language its words are in, for the narrator to read it in: one of
-   * `languages`, or English. Null if the reel has gone, or is no longer waiting for its scenes.
+   * `languages`, or English; `narrator` is who reads it: one of `narrators`, or Peter. Null
+   * if the reel has gone, or is no longer waiting for its scenes.
    */
-  async write(id, raw, { language = null } = {}) {
+  async write(id, raw, { language = null, narrator = null } = {}) {
     const reel = this.check(raw);
     const status = await this.status(id);
     if (status?.state !== 'writing') return null;
     this.notes.delete(id);
     const written = { ...status, ...this.measure(reel), state: 'queued' };
     if (language && language !== 'english' && this.languages.includes(language)) written.language = language;
+    if (narrator && narrator !== 'peter' && this.narrators.includes(narrator) && NARRATORS[narrator]) written.narrator = narrator;
     await this.store.put(`reels/${id}/reel.json`, JSON.stringify(raw));
     await this.save(written);
     this.enqueue({ id, kind: 'voice' });

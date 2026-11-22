@@ -9,7 +9,7 @@ import { Reels } from '../service/reels.mjs';
 import { ReelError } from '../src/reel.js';
 import { createService } from '../service/server.mjs';
 import { DiskStore } from '../service/store.mjs';
-import { ABOUT_MAX, AGAIN, languageOf, OWN_NAMES, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError, writtenSoFar } from '../service/try.mjs';
+import { ABOUT_MAX, AGAIN, languageOf, narratorOf, OWN_NAMES, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError, writtenSoFar } from '../service/try.mjs';
 import { createWriter, PAGE_READER, PAGE_TOKENS } from '../service/writer.mjs';
 
 const tmp = mkdtempSync(join(tmpdir(), 'pixelreel-try-'));
@@ -60,8 +60,8 @@ describe('what a visitor asks for', () => {
 
   it('tells a few words from writing, a PDF and a picture, by what they are and not what they are called', () => {
     const json = (value) => Buffer.from(JSON.stringify(value));
-    assert.deepEqual(sourceOf('application/json', json({ about: ' my gas  bill ' })), { ...words('my gas bill'), language: undefined });
-    assert.deepEqual(sourceOf('application/json; charset=utf-8', json({ text: 'Dear Sam,\n\nPay up.' })), { kind: 'text', text: 'Dear Sam,\n\nPay up.', language: undefined });
+    assert.deepEqual(sourceOf('application/json', json({ about: ' my gas  bill ' })), { ...words('my gas bill'), language: undefined, narrator: undefined });
+    assert.deepEqual(sourceOf('application/json; charset=utf-8', json({ text: 'Dear Sam,\n\nPay up.' })), { kind: 'text', text: 'Dear Sam,\n\nPay up.', language: undefined, narrator: undefined });
     assert.deepEqual(sourceOf('application/pdf', PDF), { kind: 'pdf', data: PDF.toString('base64') });
     assert.deepEqual(sourceOf('image/jpeg', JPEG), { kind: 'picture', type: 'image/jpeg', data: JPEG.toString('base64') });
     assert.deepEqual(sourceOf('application/pdf', PNG), { kind: 'picture', type: 'image/png', data: PNG.toString('base64') }, 'a picture called a PDF is still a picture');
@@ -98,8 +98,17 @@ describe('what a visitor asks for', () => {
     assert.equal(OWN_NAMES.french, 'Français');
     // what was asked for is carried with the words, as it came
     const json = (value) => Buffer.from(JSON.stringify(value));
-    assert.deepEqual(sourceOf('application/json', json({ about: 'le thé', language: 'french' })), { kind: 'words', about: 'le thé', language: 'french' });
-    assert.deepEqual(sourceOf('application/json', json({ text: 'Cher Sam,\n\nPayez.', language: 'french' })), { kind: 'text', text: 'Cher Sam,\n\nPayez.', language: 'french' });
+    assert.deepEqual(sourceOf('application/json', json({ about: 'le thé', language: 'french' })), { kind: 'words', about: 'le thé', language: 'french', narrator: undefined });
+    assert.deepEqual(sourceOf('application/json', json({ text: 'Cher Sam,\n\nPayez.', language: 'french' })), { kind: 'text', text: 'Cher Sam,\n\nPayez.', language: 'french', narrator: undefined });
+  });
+
+  it('takes Peter to be reading unless a narrator who reads here is asked for', () => {
+    for (const none of [undefined, null, '', 'peter']) assert.equal(narratorOf(none, ['anna']), null);
+    assert.equal(narratorOf('anna', ['anna', 'paul']), 'anna');
+    for (const not of ['vera', 'Anna', 7, ['anna'], 'constructor']) assert.throws(() => narratorOf(not, ['anna']), (err) => err instanceof TryError && /does not read here/.test(err.message));
+    assert.throws(() => narratorOf('anna'), TryError, 'nobody but Peter reads unless the service says so');
+    const json = (value) => Buffer.from(JSON.stringify(value));
+    assert.deepEqual(sourceOf('application/json', json({ about: 'tea', narrator: 'anna' })), { kind: 'words', about: 'tea', language: undefined, narrator: 'anna' });
   });
 
   it("finds the reel in Claude's reply, even inside a code fence", () => {
@@ -240,6 +249,15 @@ describe('the writer', () => {
     assert.match(english, /Write the reel in English, whatever language what the visitor gave is in\. Use British spelling\./);
     assert.match(english, /Peter reads English only/);
     assert.deepEqual(said, ['try: words in french, 1200 tokens in, 600 out (claude-sonnet-5-5)', 'try: words, 1200 tokens in, 600 out (claude-sonnet-5-5)']);
+  });
+
+  it('tells Claude who will read the reel, when it is not Peter', async () => {
+    const client = fakeClient(reply(JSON.stringify(tea)), reply(JSON.stringify(tea)));
+    const write = createWriter({ client });
+    await write({ ...words('tea'), narrator: 'anna' });
+    await write(words('tea'));
+    assert.match(client.asked[0].system, /This reel will be read by Anna, not Peter.*Never have the narrator say they are Peter\./);
+    assert.doesNotMatch(client.asked[1].system, /will be read by/);
   });
 
   it('measures a PDF before it is read, and turns away one that is too long, for nothing', async () => {
@@ -410,9 +428,9 @@ describe('make it right here, over HTTP', () => {
   const calls = [];
   let answers = [];
   const writer = async (source, more = {}) => { calls.push([source, more]); const next = await (answers.shift() ?? tea); if (next instanceof Error) throw next; return next; };
-  const spoken = [];   // the language each reel was recorded in
-  const recordIn = async (dir, log, onLine, { language = null } = {}) => { spoken.push(language); await fakeRecord(dir); };
-  const reels = new Reels({ store: new DiskStore(join(tmp, 'store')), record: recordIn, video: async () => {}, languages: ['french', 'spanish'] });
+  const spoken = [], voices = [];   // the language each reel was recorded in, and the voice it was read in
+  const recordIn = async (dir, log, onLine, { language = null, voice = null } = {}) => { spoken.push(language); voices.push(voice); await fakeRecord(dir); };
+  const reels = new Reels({ store: new DiskStore(join(tmp, 'store')), record: recordIn, video: async () => {}, languages: ['french', 'spanish'], narrators: ['anna', 'stuart'] });
   const limits = { tries: new RateLimit({ perHour: 1000, perDay: 1000 }) };
   const server = createService({ reels, baseUrl: 'https://reels.example', limits, writer, trustProxy: true });
   const off = createService({ reels, baseUrl: 'https://reels.example' });
@@ -475,7 +493,7 @@ describe('make it right here, over HTTP', () => {
     assert.equal(res.status, 200);
     const { id, watch } = await res.json();
     assert.equal(watch, `/r/${id}`);
-    assert.deepEqual(calls.at(-1)[0], { ...words('my gas bill'), language: null });
+    assert.deepEqual(calls.at(-1)[0], { ...words('my gas bill'), language: null, narrator: null });
     // Claude has not answered yet, and the reel already has a page to wait on
     assert.deepEqual(await reels.status(id).then((s) => [s.state, s.title]), ['writing', 'Your reel']);
     calls.at(-1)[1].onProgress({ title: 'Tea', scenes: 3 });
@@ -496,7 +514,7 @@ describe('make it right here, over HTTP', () => {
     answers = [{ title: 'No scenes' }, tea];
     assert.equal((await outcome(await ask('tea'))).state, 'ready');
     const [source, more] = calls.at(-1);
-    assert.deepEqual(source, { ...words('tea'), language: null });
+    assert.deepEqual(source, { ...words('tea'), language: null, narrator: null });
     assert.deepEqual(more.before, { title: 'No scenes' });
     assert.ok(more.problems.some((p) => /scenes/.test(p)), 'it is told what was wrong');
     answers = [{ title: 'No scenes' }, { title: 'Still none' }];
@@ -508,11 +526,11 @@ describe('make it right here, over HTTP', () => {
   it('takes writing, a PDF or a picture, and has Claude explain it', async () => {
     const writing = await give('application/json', JSON.stringify({ text: 'Dear Sam,\n\nYour bill is due.' }));
     assert.equal(writing.status, 200);
-    assert.deepEqual(calls.at(-1)[0], { kind: 'text', text: 'Dear Sam,\n\nYour bill is due.', language: null });
+    assert.deepEqual(calls.at(-1)[0], { kind: 'text', text: 'Dear Sam,\n\nYour bill is due.', language: null, narrator: null });
     assert.equal((await give('application/pdf', PDF)).status, 200);
-    assert.deepEqual(calls.at(-1)[0], { kind: 'pdf', data: PDF.toString('base64'), language: null });
+    assert.deepEqual(calls.at(-1)[0], { kind: 'pdf', data: PDF.toString('base64'), language: null, narrator: null });
     assert.equal((await give('image/jpeg', JPEG)).status, 200);
-    assert.deepEqual(calls.at(-1)[0], { kind: 'picture', type: 'image/jpeg', data: JPEG.toString('base64'), language: null });
+    assert.deepEqual(calls.at(-1)[0], { kind: 'picture', type: 'image/jpeg', data: JPEG.toString('base64'), language: null, narrator: null });
     await server.written();
     await reels.idle();
   });
@@ -530,7 +548,7 @@ describe('make it right here, over HTTP', () => {
     assert.equal(res.status, 200);
     const { id } = await res.json();
     assert.notEqual(id, first.id, 'it is a new reel: the first stays as it is');
-    assert.deepEqual(calls.at(-1)[0], { kind: 'reel', how: 'simpler', reel: list, language: null }, 'Claude is given the reel as it was written, without the timings of its recording');
+    assert.deepEqual(calls.at(-1)[0], { kind: 'reel', how: 'simpler', reel: list, language: null, narrator: null }, 'Claude is given the reel as it was written, without the timings of its recording');
     assert.equal((await reels.status(id)).title, 'Tea, properly', 'and it keeps its name while it is written');
     release();
     await server.written();
@@ -587,7 +605,7 @@ describe('make it right here, over HTTP', () => {
     assert.doesNotMatch(without, /\{\{languages\}\}/);
     // words, with the language in the JSON
     let status = await outcome(await give('application/json', JSON.stringify({ about: 'le thé', language: 'french' })));
-    assert.deepEqual(calls.at(-1)[0], { ...words('le thé'), language: 'french' });
+    assert.deepEqual(calls.at(-1)[0], { ...words('le thé'), language: 'french', narrator: null });
     assert.deepEqual([status.state, status.language, spoken.at(-1)], ['ready', 'french', 'french'], 'and Peter is asked to read it in French');
     // a file, with the language beside it
     status = await outcome(await give('application/pdf', PDF, { 'x-reel-language': 'spanish' }));
@@ -603,6 +621,29 @@ describe('make it right here, over HTTP', () => {
     assert.match((await german.json()).error, /cannot read that language here/);
     assert.equal((await give('image/jpeg', JPEG, { 'x-reel-language': 'klingon' })).status, 400);
     assert.equal(calls.length, before);
+  });
+
+  it('has the reel read by whoever was chosen, if they read here', async () => {
+    let status = await outcome(await give('application/json', JSON.stringify({ about: 'tea', narrator: 'stuart' })));
+    assert.equal(calls.at(-1)[0].narrator, 'stuart');
+    assert.deepEqual([status.state, status.narrator, voices.at(-1)], ['ready', 'stuart', 'stuart_bell'], 'and the recorder is asked for that voice');
+    assert.equal((await playOf(status.id)).narrator, 'Stuart', 'the reel\'s page says who reads it');
+    // a file, with the narrator beside it, in French
+    status = await outcome(await give('image/jpeg', JPEG, { 'x-reel-narrator': 'anna', 'x-reel-language': 'french' }));
+    assert.deepEqual([status.narrator, status.language, voices.at(-1), spoken.at(-1)], ['anna', 'french', 'anna', 'french']);
+    // Peter, said or unsaid, is the usual way
+    status = await outcome(await give('application/json', JSON.stringify({ about: 'tea', narrator: 'peter' })));
+    assert.deepEqual([calls.at(-1)[0].narrator, status.narrator, voices.at(-1)], [null, undefined, null]);
+    // a narrator who does not read here is turned away before Claude is asked
+    const before = calls.length;
+    const vera = await give('application/json', JSON.stringify({ about: 'tea', narrator: 'vera' }));
+    assert.equal(vera.status, 400);
+    assert.match((await vera.json()).error, /does not read here/);
+    assert.equal(calls.length, before);
+    // and a reel written again keeps whoever read it
+    const first = await outcome(await give('application/json', JSON.stringify({ about: 'tea', narrator: 'anna' })));
+    const again = await outcome(await give('application/json', JSON.stringify({ again: first.id, how: 'simpler', narrator: 'stuart' })));
+    assert.deepEqual([calls.at(-1)[0].narrator, again.narrator, voices.at(-1)], ['anna', 'anna', 'anna']);
   });
 
   it('writes a reel again in the language it is in', async () => {
