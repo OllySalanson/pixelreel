@@ -20,12 +20,14 @@
 // (each visitor, default 5) and PIXELREEL_TRIES_PER_DAY (everyone, default 30) set which model,
 // how hard it thinks, and how many.
 // Recording needs Pocket TTS set up (scripts/setup-voices.sh) and ffmpeg; videos need
-// @napi-rs/canvas.
+// @napi-rs/canvas. The voice is loaded once, when the service starts, and kept ready
+// (service/voice.mjs); PIXELREEL_WARM_VOICE=0 loads it afresh for each reel instead.
 import { join } from 'node:path';
 import { CLAUDE_ADDRESSES, RateLimit } from './limits.mjs';
-import { Reels } from './reels.mjs';
+import { recordWith, Reels } from './reels.mjs';
 import { createService } from './server.mjs';
 import { DiskStore, S3Store } from './store.mjs';
+import { WarmVoice } from './voice.mjs';
 
 const port = Number(process.env.PORT) || 8787;
 const baseUrl = process.env.PIXELREEL_URL || `http://localhost:${port}`;
@@ -33,7 +35,11 @@ const data = process.env.PIXELREEL_DATA || join(process.cwd(), '.service-data');
 const log = (line) => console.log(`${new Date().toISOString()} ${line}`);
 
 const store = process.env.PIXELREEL_S3_BUCKET ? S3Store.fromEnv(process.env) : new DiskStore(data);
-const reels = new Reels({ store, log });
+// The voice is loaded as soon as the service wakes, and kept: by the time Claude has written
+// a reel's scenes, Peter is ready to read them. PIXELREEL_WARM_VOICE=0 loads it for each reel instead.
+const voice = process.env.PIXELREEL_WARM_VOICE === '0' ? null : new WarmVoice({ log });
+voice?.start();
+const reels = new Reels({ store, log, record: recordWith(voice ? (...job) => voice.speak(...job) : null) });
 await reels.resume();
 const sweep = async () => {
   const gone = await reels.sweep().catch((err) => { log(`sweep failed: ${err.message}`); return []; });
@@ -70,7 +76,7 @@ server.listen(port, () => log(`Pixel Reel is at ${baseUrl}: connector ${baseUrl}
 const stop = () => {
   log('stopping: finishing the job in hand first');
   server.close();
-  reels.stop().then(() => process.exit(0));
+  reels.stop().then(() => { voice?.stop(); process.exit(0); });
 };
 process.on('SIGINT', stop);
 process.on('SIGTERM', stop);
