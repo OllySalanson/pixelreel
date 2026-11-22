@@ -1246,3 +1246,26 @@ Checked with `scripts/site-fit.js` at 320, 390 and 1280 pixels wide with words i
 and the choices open: nothing cut in two or too wide at any of the 27 settings. The
 reading aloud was checked with a stand-in for the device's voice, which heard "Paste a link
 here." and "Read by Peter in English."; nobody has listened to it on a real device.
+
+### Version 54
+
+The home page on a phone was nearly 19,000 pixels from top to foot, and a good deal of
+that was two lists with one thing to a row.
+
+- **Posters two across.** The six examples under Now showing stood one above the other,
+  each as wide as the phone: more than two screens of scrolling to see what there was. They are
+  now two across, like posters on a wall, and all six are on one screen. The same goes
+  for "More to watch" under every reel.
+- **Narrators two across.** The six narrators' cards did the same. They are two across
+  as well, with each card's two buttons one under the other, at the foot of the card so
+  that they line up along a row.
+- **Only while the words have room.** Both go back to one to a row when the letters are
+  made bigger, or wider, or the phone is narrower than 360 pixels. The posters' rule is in
+  `rem` and the narrators' in `ch`, so they follow the letters, not the screen.
+
+Measured in the headless browser at 390 pixels wide: 18,401 pixels from top to foot, with
+the new part about Make it comfy in it, where it was 18,791 without.
+
+| Now showing, and the narrators, on a phone |
+| --- |
+| ![On a phone: the six example reels as posters, two across, all on one screen. Beside it, the six narrators' cards, two across, each with Hear and Choose one under the other.](log/v54-two-across.jpg) |

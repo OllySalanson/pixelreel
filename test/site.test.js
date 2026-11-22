@@ -981,6 +981,24 @@ describe('getting the site onto a phone with no address to type', () => {
   });
 });
 
+describe('on a phone, posters and narrators two across', () => {
+  const css = readFileSync(root('site/css/site.css'), 'utf8');
+  const phone = css.slice(css.indexOf('@media (max-width: 40rem) {'), css.indexOf('@media (max-width: 23.5rem) {'));
+
+  it('lays posters out as many across as fit with their words whole, not one to a row', () => {
+    assert.match(phone, /\n {2}\.posters \{ grid-template-columns: repeat\(auto-fill, minmax\(min\(100%, 9\.25rem\), 1fr\)\);/, 'in rem, so bigger letters bring it back to one');
+    assert.doesNotMatch(phone, /\.posters[^{]*\{ grid-template-columns: minmax\(0, 1fr\); \}/, 'no rule left that puts them one to a row');
+    assert.doesNotMatch(phone, /\.facts, \.points, \.posters/);
+  });
+
+  it('does the same for the narrators, with each card\'s buttons at its foot so that they line up along a row', () => {
+    assert.match(phone, /\n {2}\.voices-list \{ --gap: 0\.5rem; grid-template-columns: repeat\(auto-fit, minmax\(min\(100%, 13ch\), 1fr\)\); \}/, 'in ch, so wider letters bring it back to one');
+    assert.match(phone, /\n {2}\.voice \{ display: grid; grid-template-rows: auto 1fr auto auto;/);
+    // the rows are a card's four parts, in this order
+    assert.match(narratorsHtml(['anna']), /<li class="voice">\s*<p class="voice-name">[^<]+<\/p>\s*<p class="voice-kind">[^<]+<\/p>\s*<button [^>]*>[^<]+<\/button>\s*<label class="voice-pick">/);
+  });
+});
+
 describe('Make it comfy, tried on the home page', () => {
   const part = html.home.slice(html.home.indexOf('<section class="section" id="comfy"'), html.home.indexOf('<section class="section night cinema" id="examples"'));
   const tiles = [...part.matchAll(/<li( data-needs-speech hidden)?><button class="comfy-try" type="button" data-try="([a-z]+):([a-z0-9]+)" aria-pressed="false">[\s\S]*?<span class="comfy-words">([^<]+)<\/span><span class="comfy-on" aria-hidden="true">On<\/span><\/button><\/li>/g)];

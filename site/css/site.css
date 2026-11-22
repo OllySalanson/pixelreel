@@ -839,7 +839,19 @@ html[data-aloud="on"] :is(h1, h2, h3, p, li, summary, dt, dd, figcaption):not(:i
   .maker-here > .btn-big { min-height: 4.5rem; font-size: 1.375rem; }
   .hero-go { gap: 0.4rem; }
   .people { --across: 1; }
-  .facts, .points, .posters, .sheet, .names, .downloads { grid-template-columns: minmax(0, 1fr); }
+  .facts, .points, .sheet, .names, .downloads { grid-template-columns: minmax(0, 1fr); }
+  /* posters go two across on a phone, like posters on a wall, while their words have room: with bigger letters, one */
+  .posters { grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.25rem), 1fr)); gap: 0.5rem; }
+  .poster-title { margin: 0.7rem 0.7rem 0; font-size: 1.0625rem; line-height: 1.25; }
+  .poster-meta { margin: 0.45rem 0.7rem 0; font-size: 1.1875rem; gap: 0.1rem 0.5rem; }
+  .poster { padding-bottom: 0.8rem; }
+  /* and the narrators two across, each with its two buttons one under the other */
+  .voices-list { --gap: 0.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13ch), 1fr)); }
+  /* a card's buttons sit at its foot, so they line up along a row whatever the words above them take */
+  .voice { display: grid; grid-template-rows: auto 1fr auto auto; gap: 0; padding: 0.9rem 0.8rem 1rem; }
+  .voice-kind { font-size: 0.9375rem; }
+  .voice .btn, .voice-pick { margin-top: 0.6rem; }
+  .voice .btn { padding-inline: 0.25rem; font-size: 1rem; }
   .points, .facts { gap: 1.5rem; }
   .walk-step { grid-template-columns: minmax(0, 1fr); }
   .walk-step > .shot, .walk-step > .box { grid-column: 1; }
