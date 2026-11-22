@@ -60,6 +60,16 @@ describe('timing pictures to the voice', () => {
     assert.deepEqual(Object.keys(picture), ['type', 'items', 'start', 'every']);
   });
 
+  it('brings each row of a table in as something in it is said', () => {
+    const say = 'On Sundays the first bus leaves the High Street at five past nine. It reaches the library a few minutes later, and the station at twenty past.';
+    const picture = pacePicture({ type: 'table', columns: ['Stop', 'Time'], rows: [['High Street', '9:05'], ['Library', '9:12'], ['Station', '9:20']] }, say, 9);
+    const [first, second, third] = times(picture, 3);
+    near(first, 2.4, 0.8, 'the High Street');
+    near(second, 5.2, 0.9, 'the library');
+    near(third, 7.3, 0.9, 'the station');
+    assert.deepEqual(Object.keys(picture), ['type', 'columns', 'rows', 'start', 'every']);
+  });
+
   it('tells apart labels that share a word by the words they do not share', () => {
     const say = 'If your meter has red numbers, or numbers after a decimal point, leave those out. Just the black ones.';
     const [red, black] = spokenAt(['Red numbers', 'Black numbers'], say, 6);

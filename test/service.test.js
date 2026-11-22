@@ -660,7 +660,7 @@ describe('the service over HTTP', async () => {
     assert.equal(properties.images, undefined, 'no pictures from elsewhere, so none are offered');
     assert.match($defs.scene.properties.say.description, /12 to 25 words/);
     const pictures = $defs.picture.oneOf;
-    assert.deepEqual(pictures.map((p) => p.title), ['title', 'list', 'terminal', 'code', 'chat', 'big', 'icons', 'flow', 'compare', 'sprite']);
+    assert.deepEqual(pictures.map((p) => p.title), ['title', 'list', 'terminal', 'code', 'chat', 'big', 'icons', 'flow', 'compare', 'table', 'sprite']);
     for (const picture of pictures) {
       assert.equal(picture.properties.every ?? picture.properties.start, undefined, `${picture.title}: the service does the timing, so Claude is not asked to guess it`);
     }
@@ -690,6 +690,12 @@ describe('the service over HTTP', async () => {
     assert.equal(new Set(example.scenes.map((s) => s.picture.type)).size, example.scenes.length, 'every scene has a different picture');
     assert.equal(new Set(example.scenes.at(-1).picture.rows.map((r) => r.length)).size, 1, "the sprite's rows are all one length");
     assert.doesNotMatch(guide, /\bevery\b.*\bstart\b/, 'the guide does not offer timing fields');
+    // a table, for what is set out in rows and columns: said plainly, with its shape and what not to do instead
+    assert.match(guide, /^- table: A small table for things set out in rows and columns \(a timetable, a bill, prices, dates\): rows arrive one by one, the newest lit\. Fields: rows, columns \(optional\), heading \(optional\)\.$/m);
+    assert.match(guide, /"rows" is 1 to 5 rows, each a list of 2 to 4 short cells, every row the same length, such as \[\["High Street", "9:05"\], \["Station", "9:20"\]\]/);
+    assert.match(guide, /Do not make icons stand for days, times or amounts: put them in a table\./);
+    const timetable = { ...example, title: 'Sunday buses', scenes: [example.scenes[0], { title: 'The times', caption: 'Two buses each Sunday morning.', say: 'On Sundays the first bus leaves the High Street at five past nine, and reaches the station at twenty past.', picture: { type: 'table', columns: ['Stop', '1st bus', '2nd bus'], rows: [['High Street', '9:05', '9:35'], ['Station', '9:20', '9:50']] } }] };
+    assert.deepEqual(limitProblems(reelFromData(timetable), timetable), [], 'and a reel with one is within the limits here');
   });
 
   it('makes a reel, shows it, makes its video and deletes it', async () => {

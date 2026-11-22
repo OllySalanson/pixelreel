@@ -1719,6 +1719,66 @@ function compare(t, px, p) {
   });
 }
 
+/** The most rows and columns a table picture can have, the fewest columns, and the most letters in a cell and across a row. */
+const TABLE_MAX = { rows: 5, cols: 4, minCols: 2, cell: 24, across: 56 };
+
+/**
+ * A small table on a paper card: a row of headings if it has one, then rows that arrive
+ * one by one, the newest lit. The first column is read from the left, as names are; the
+ * rest sit in the middle of their columns, as times and amounts do.
+ */
+function table(t, px, p) {
+  const { W, H } = px;
+  dotted(px);
+  const top = p.heading ? 34 : 10, room = H - top - 10, widest = W - 24;
+  if (p.heading) px.sign(p.heading, W / 2, 9, fit(px, p.heading, 16, W - 40), GOLD);
+  const lines = [...(p.columns ? [p.columns] : []), ...p.rows], cols = p.rows[0].length, head = p.columns ? 1 : 0;
+  const lay = memo(p, 'table', () => {
+    const rowH = Math.min(26, Math.floor(room / lines.length));
+    const widths = (size) => Array.from({ length: cols }, (_, c) => Math.max(...lines.map((line) => px.textW(line[c], size))) + 14);
+    const total = (size) => widths(size).reduce((a, b) => a + b, 0);
+    const size = [16, 14, 12, 10].find((sz) => sz + 6 <= rowH && total(sz) <= widest) ?? 10;
+    const natural = widths(size), sum = total(size);
+    // a table of little words is opened out, so it does not look lost; one too wide for the picture is squeezed to fit
+    const want = sum > widest ? widest : Math.max(sum, Math.min(widest, 232));
+    const colW = natural.map((w) => Math.floor(w * want / sum));
+    return { rowH, size, colW, width: colW.reduce((a, b) => a + b, 0) };
+  });
+  const { rowH, size, colW, width } = lay, height = rowH * lines.length;
+  const x0 = Math.round((W - width) / 2), y0 = top + Math.floor((room - height) / 2);
+  const every = p.every ?? 1.4, start = p.start ?? 0.6, latest = Math.floor((t - start) / every);
+  px.rect(NIGHT, x0 + 2, y0 + 2, width + 2, height + 2);
+  px.window(x0 - 1, y0 - 1, width + 2, height + 2, LIGHT);
+  lines.forEach((line, r) => {
+    const y = y0 + r * rowH, i = r - head, at = start + i * every;
+    const heading = r < head, here = heading || t >= at, lit = !heading && i === latest && t < at + every + 1;
+    px.rect(heading ? BLUE : lit ? GOLD : i % 2 ? '#f1e7cb' : LIGHT, x0, y, width, rowH);
+    if (r) px.rect(heading || r === head ? INK : '#cfc3a0', x0, y, width, 1);
+    if (!here) return;
+    const slide = heading ? 0 : Math.round(px.tween(t, at, 0.3, -8, 0, 'out'));
+    let x = x0;
+    line.forEach((cell, c) => {
+      const s = fit(px, cell, size, colW[c] - 8, 8), ty = y + Math.round((rowH - s) / 2) - 1;
+      if (c) px.text(cell, x + Math.round(colW[c] / 2) + slide, ty, s, heading ? CREAM : INK, 'center');
+      else px.text(cell, x + 7 + slide, ty, s, heading ? CREAM : INK, 'left');
+      x += colW[c];
+    });
+  });
+  let x = x0;
+  for (let c = 0; c < cols - 1; c++) { x += colW[c]; px.rect('#cfc3a0', x, y0 + head * rowH + 1, 1, height - head * rowH - 1); }
+}
+
+/** What is wrong with a table's rows and columns, beyond their being lists of text. */
+function tableShape(p) {
+  const cols = p.rows[0].length;
+  if (p.rows.some((row) => row.length !== cols)) return ['picture.rows must all have the same number of cells'];
+  if (p.columns && p.columns.length !== cols) return [`picture.columns has ${p.columns.length} headings for rows of ${cols} cells: give one for each column`];
+  const lines = [...(p.columns ? [p.columns] : []), ...p.rows];
+  const across = Array.from({ length: cols }, (_, c) => Math.max(...lines.map((line) => [...line[c]].length))).reduce((a, b) => a + b, 0);
+  if (across > TABLE_MAX.across) return [`picture: this table is too wide to read: the longest cell of each column comes to ${across} letters, and ${TABLE_MAX.across} fit. Shorten the cells, or use fewer columns`];
+  return [];
+}
+
 /** Pixel art of the reel's own, from rows of palette letters, scaled to fill the picture. */
 function sprite(t, px, p) {
   const { W, H } = px;
@@ -1750,6 +1810,7 @@ const PICTURES = {
   icons: { fields: { items: 'items', heading: 'text?', every: 'number?', start: 'number?' }, draw: icons },
   flow: { fields: { items: 'items', heading: 'text?', every: 'number?', start: 'number?' }, draw: flow },
   compare: { fields: { bad: 'item', good: 'item', heading: 'text?', every: 'number?', start: 'number?' }, draw: compare },
+  table: { fields: { rows: 'cells', columns: 'heads?', heading: 'text?', every: 'number?', start: 'number?' }, draw: table, check: tableShape },
   sprite: { fields: { rows: 'rows', colours: 'colours?', label: 'text?' }, draw: sprite, check: spriteLetters }
 };
 
@@ -1774,6 +1835,8 @@ const isIconItem = (v, labelled) => v !== null && typeof v === 'object' && !Arra
 const iconHelp = `icons: ${Object.keys(ICONS).join(', ')}`;
 
 const isText = (v) => typeof v === 'string' && v.trim() !== '';
+/** One row of a table: a few short cells of text. */
+const isCells = (v) => Array.isArray(v) && v.length >= TABLE_MAX.minCols && v.length <= TABLE_MAX.cols && v.every((cell) => isText(cell) && [...cell].length <= TABLE_MAX.cell);
 const KINDS = {
   text: [isText, 'must be text'],
   list: [(v) => Array.isArray(v) && v.length > 0 && v.every((s) => typeof s === 'string'), 'must be a list of text, for example ["One", "Two"]'],
@@ -1785,6 +1848,9 @@ const KINDS = {
   item: [(v) => isIconItem(v, true), `must be { icon, label }, such as { "icon": "phone", "label": "Ring us" }, with ${iconHelp}`],
   rows: [(v) => Array.isArray(v) && v.length >= 1 && v.length <= SPRITE_MAX.rows && v.every((r) => typeof r === 'string' && r.length <= SPRITE_MAX.cols) && v.some((r) => r.length),
     `must be a list of rows of palette letters, such as ["..yy..", ".yyyy."], up to ${SPRITE_MAX.rows} rows of up to ${SPRITE_MAX.cols} letters`],
+  cells: [(v) => Array.isArray(v) && v.length >= 1 && v.length <= TABLE_MAX.rows && v.every((row) => isCells(row)),
+    `must be 1 to ${TABLE_MAX.rows} rows, each a list of ${TABLE_MAX.minCols} to ${TABLE_MAX.cols} short cells of text, such as [["High Street", "9:05"], ["Station", "9:20"]]`],
+  heads: [(v) => isCells(v), `must be a list of ${TABLE_MAX.minCols} to ${TABLE_MAX.cols} short headings, one for each column, such as ["Stop", "Time"]`],
   colours: [(v) => v !== null && typeof v === 'object' && !Array.isArray(v) &&
     Object.entries(v).every(([k, c]) => [...k].length === 1 && k !== '.' && k !== ' ' && typeof c === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)),
     'must be letters and the colours they stand for, such as { "h": "#6b3e2e" }']
@@ -1844,7 +1910,7 @@ function noSignal(t, px) {
   px.sign('Have you tried turning it off and on again?', W / 2, 82, 12, NIGHT, CREAM);
 }
 
-return { highlight, PICTURES, ICON_NAMES, SPRITE_MAX, pictureProblems, drawPicture, noSignal };
+return { highlight, TABLE_MAX, PICTURES, ICON_NAMES, SPRITE_MAX, pictureProblems, drawPicture, noSignal };
 })();
 
 __m['transitions.js'] = (() => {
@@ -2260,7 +2326,7 @@ __m['format.js'] = (() => {
 // a reel can be written by a tool, an AI agent or a web service and played safely, since
 // nothing in it ever runs. Every picture comes from the ready-made ones (pictures.js).
 // Pure: no DOM, so the same checks run in the browser, in the tools and in the tests.
-const { ICON_NAMES, PICTURES, SPRITE_MAX } = __m['pictures.js'];
+const { ICON_NAMES, PICTURES, SPRITE_MAX, TABLE_MAX } = __m['pictures.js'];
 const { PALETTE } = __m['palette.js'];
 const { CAPTION_STYLES, LANGUAGES, normalizeReel, ReelError } = __m['reel.js'];
 const { TRANSITIONS } = __m['transitions.js'];
@@ -2283,6 +2349,7 @@ const PICTURE_NOTES = {
   icons: 'One to four everyday icons dropping in one by one, each with a label underneath.',
   flow: 'One to four icons joined by arrows, arriving in turn: how one thing leads to the next.',
   compare: 'Two cards side by side: the one to avoid, with a cross, then the one to choose, with a tick.',
+  table: 'A small table for things set out in rows and columns (a timetable, a bill, prices, dates): rows arrive one by one, the newest lit.',
   sprite: 'Pixel art of your own from rows of palette letters, scaled up to fill the picture, with an optional label.'
 };
 
@@ -2380,6 +2447,20 @@ const KIND_SCHEMAS = {
     maxItems: 4,
     items: { type: 'object', additionalProperties: false, required: ['icon'], properties: { icon: { enum: ICON_NAMES }, label: TEXT } }
   },
+  cells: {
+    type: 'array',
+    minItems: 1,
+    maxItems: TABLE_MAX.rows,
+    items: { type: 'array', minItems: TABLE_MAX.minCols, maxItems: TABLE_MAX.cols, items: { ...TEXT, maxLength: TABLE_MAX.cell } },
+    description: 'The rows of the table, each a list of short cells, every row with the same number: a word or two, a time, an amount. Such as [["High Street", "9:05"], ["Station", "9:20"]].'
+  },
+  heads: {
+    type: 'array',
+    minItems: TABLE_MAX.minCols,
+    maxItems: TABLE_MAX.cols,
+    items: { ...TEXT, maxLength: TABLE_MAX.cell },
+    description: 'A heading for each column, such as ["Stop", "Time"].'
+  },
   rows: {
     type: 'array',
     minItems: 1,
@@ -2399,8 +2480,9 @@ const KIND_SCHEMAS = {
  * The reel.json format as a JSON Schema (draft 2020-12), built from the ready-made pictures,
  * so it can never drift from what the player draws. Tools can hand it to an AI agent as the
  * shape to write. A few rules are beyond a schema (an image picture must name one of the
- * reel's images, and a sprite's letters must be in the palette or its colours), so
- * reelFromData stays the final word.
+ * reel's images, a sprite's letters must be in the palette or its colours, and a table's
+ * rows must be as long as each other and not too wide to read), so reelFromData stays the
+ * final word.
  */
 function reelSchema() {
   const pictures = Object.entries(PICTURES).map(([type, { fields }]) => {

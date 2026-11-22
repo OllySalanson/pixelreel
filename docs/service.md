@@ -166,7 +166,7 @@ The same advice is in the guide, for someone who asks in their own words.
 
 ### Pictures timed to the voice
 
-A list, a row of icons, a flow, a compare or a chat brings its items in one at a time.
+A list, a row of icons, a flow, a compare, a table or a chat brings its items in one at a time.
 Whoever writes the reel cannot know how long Peter will take over a line, so on a guess the
 items bunch at the start of a long line, or are still waiting when a short one ends. Once the
 voice is recorded, `service/pacing.mjs` sets each such picture's `start` and `every` itself:

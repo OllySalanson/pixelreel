@@ -1,6 +1,6 @@
 // Times a reel's pictures to its voice. Whoever writes a reel cannot know how long the
-// narrator will take over a line, so the items of a list, a row of icons, a flow, a compare
-// or a chat would arrive on a guess: bunched at the start of a long line, or still waiting
+// narrator will take over a line, so the items of a list, a row of icons, a flow, a compare,
+// a table or a chat would arrive on a guess: bunched at the start of a long line, or still waiting
 // when a short one ends. Once the voice is recorded the service knows how long each line
 // lasts, and from the words themselves about when each one is said, so it sets every such
 // picture's `start` and `every` to bring each item in as the narrator names it. Pure: no
@@ -21,7 +21,7 @@ const LONGEST_WAIT = 3.5, WAIT_SHARE = 0.55;
 const CLIP_LEAD = 0.12;
 
 /** How far apart a picture's items arrive when its author does not say, as in src/pictures.js. */
-const USUAL = { list: 1.4, icons: 1.4, flow: 1.4, compare: 2, chat: 1.8 };
+const USUAL = { list: 1.4, icons: 1.4, flow: 1.4, compare: 2, chat: 1.8, table: 1.4 };
 /** A chat shows its typing dots for most of a second before each message. */
 const CHAT_QUICKEST = 1;
 
@@ -82,6 +82,7 @@ function labelsOf(picture) {
     case 'icons':
     case 'flow': return picture.items.map((item) => item.label ?? '');
     case 'compare': return [picture.bad.label, picture.good.label];
+    case 'table': return picture.rows.map((row) => row.join(' '));   // a row arrives when any of its cells is said
     case 'chat': return picture.messages.map(() => '');   // a chat is not read out: its messages keep a steady beat
     default: return null;
   }

@@ -8,7 +8,7 @@ import { CallToolRequestSchema, GetPromptRequestSchema, ListPromptsRequestSchema
 import { pageHtml } from '../scripts/page.mjs';
 import { PICTURE_NOTES, REEL_FORMAT, reelSchema } from '../src/format.js';
 import { ICON_GROUPS } from '../src/icons.js';
-import { PICTURES } from '../src/pictures.js';
+import { PICTURES, TABLE_MAX } from '../src/pictures.js';
 import { ReelError } from '../src/reel.js';
 import { APP_WORDS, LANG_CODES } from '../src/words.js';
 import { clockTime } from '../src/timing.js';
@@ -258,7 +258,8 @@ export function formatGuide(languages = [], narrators = []) {
     'Icons, by what they are about:',
     ...Object.entries(ICON_GROUPS).map(([group, names]) => `- ${group}: ${names.join(', ')}.`),
     'Pick the icon that means the thing, and keep labels to two or three words. If no icon means it, do not make one stand for it: use a list, a big word or a sprite instead.',
-    'The pictures are timed to the voice for you. Label the items of a list, icons, flow or compare with words the narrator says, in the order they are said, and each one arrives as it is spoken.',
+    'The pictures are timed to the voice for you. Label the items of a list, icons, flow or compare with words the narrator says, in the order they are said, and each one arrives as it is spoken. A table\'s rows do the same: say them in order, naming what is in each.',
+    `A table is for what is set out in rows and columns: a timetable, a bill, prices, dates, opening hours. "rows" is 1 to ${TABLE_MAX.rows} rows, each a list of ${TABLE_MAX.minCols} to ${TABLE_MAX.cols} short cells, every row the same length, such as [["High Street", "9:05"], ["Station", "9:20"]]; "columns" gives a heading for each column. Keep a cell to a word or two, a time or an amount. Do not make icons stand for days, times or amounts: put them in a table.`,
     'In a title or big picture, keep "text" short: a word or two in capitals, or a number.',
     'A sprite is drawn from rows of letters, one a pixel: k black, w white, r red, g green, b blue, y yellow, o orange, p purple, t teal, s skin, n brown, e grey, c cream, B R N G darker blue, red, brown, green, and . see-through. ' +
       'Draw one only to show the thing itself (the numbers on a meter, a volcano), 12 to 24 pixels across, outlined in k, with every row the same length. If nobody would know what it is, use icons instead.',
