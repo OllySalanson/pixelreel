@@ -76,7 +76,7 @@ function reelInput(languages = [], narrators = []) {
   delete reel.$schema;   // a tool's input is a plain object schema
   delete reel.properties.images;   // no pictures from elsewhere (limits.mjs)
   reel.required = reel.required.filter((key) => key !== 'format');   // taken as read (make_reel)
-  reel.properties.scenes.description = 'Five to seven scenes, one idea each, in the order a person needs them: about 40 seconds in all.';
+  reel.properties.scenes.description = 'Five to seven scenes, one idea each, in the order a person needs them: about 40 seconds in all. If the person asked for a number of scenes or a length, that many.';
   reel.properties.scenes.maxItems = LIMITS.scenes;
   const scene = reel.$defs.scene.properties;
   scene.title.description = 'One to three words.';
@@ -145,7 +145,7 @@ export function toolList(languages = [], narrators = []) {
       title: 'Make a pixel reel',
       description: 'Makes a pixel reel: a short pixel-art explainer that plays like a little cartoon, one idea a scene, read aloud by Peter, a warm recorded British narrator. ' +
         `${WHEN}\n` +
-        'The reel is this tool\'s input: 5 to 7 scenes, about 40 seconds in all. Each scene has a title, one short caption, what Peter says (12 to 25 plain words) and a picture. ' +
+        'The reel is this tool\'s input: 5 to 7 scenes, about 40 seconds in all, or the number or length the person asked for. Each scene has a title, one short caption, what Peter says (12 to 25 plain words) and a picture. ' +
         'Open on a title picture, mix the pictures, and label a picture\'s items with words Peter says, so each arrives as he says it. reel_format has the full guide and a finished reel.\n' +
         'To change a reel you made, send the whole reel again with "improves" set to its id: only the lines you changed are recorded again.\n' +
         'It answers at once with a link. The reel can be played within seconds in the chat, where the player shows, while the rest of the voice is recorded; at the link it plays once the voice is finished, which takes about as long as the reel lasts. ' +
@@ -241,7 +241,7 @@ export function formatGuide(languages = [], narrators = []) {
     'Each scene has "title" (one to three words), "caption" (one short sentence on screen, 12 words at most), "say" (what the narrator says: one or two short sentences, 12 to 25 words; leave it out to have the caption read) and "picture".',
     '',
     'What makes a good reel:',
-    '- It is short: 5 to 7 scenes, about 40 seconds in all. One idea a scene, in the order a person needs them. Leave out whatever does not change what they understand or do.',
+    '- It is short: 5 to 7 scenes, about 40 seconds in all. If the person asks for a number of scenes or a length ("three scenes", "under half a minute"), give them that, not more. One idea a scene, in the order a person needs them. Leave out whatever does not change what they understand or do.',
     '- It sounds like Peter, the narrator: warm, plain, British, a little dry. Short everyday words, written to be said aloud ("It isn\'t." "That\'s it."). No jargon unless the scene explains it.',
     '- It opens on a title picture, and ends on what to do next, or the one thing to remember.',
     '- It is honest: every claim is true to what the person gave you. For money, health or the law, say to check with whoever sent the original.',

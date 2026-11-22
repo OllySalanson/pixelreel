@@ -44,6 +44,30 @@ export function limitProblems(reel, raw) {
 }
 
 /**
+ * Slips in a reel's own drawings that are worth sending back before anything is recorded:
+ * a sprite whose rows are not all one length, where a stray letter or space has pushed the
+ * rest of that row sideways. The player draws such a sprite as it is given, so this is not
+ * part of the format: it is asked only where whoever wrote the reel is at hand to mend it
+ * and a second go costs nothing (Claude in a chat, through make_reel).
+ */
+export function slipProblems(raw) {
+  const problems = [];
+  (Array.isArray(raw?.scenes) ? raw.scenes : []).forEach((scene, i) => {
+    const rows = scene?.picture?.type === 'sprite' && Array.isArray(scene.picture.rows) ? scene.picture.rows.map((row) => [...String(row)].length) : [];
+    const counts = new Map();
+    for (const length of rows) counts.set(length, (counts.get(length) ?? 0) + 1);
+    if (counts.size < 2) return;
+    const [usual, times] = [...counts].sort((a, b) => b[1] - a[1])[0];
+    const odd = rows.map((length, at) => [at, length]).filter(([, length]) => length !== usual);
+    const which = times * 2 > rows.length && odd.length <= 4
+      ? `${odd.map(([at, length]) => `rows[${at}] has ${length}`).join(', ')}, where the others have ${usual}`
+      : `they run from ${Math.min(...rows)} to ${Math.max(...rows)}`;
+    problems.push(`scene ${i + 1}: picture.rows must all be the same length, or the drawing breaks where one is not: ${which}. A space counts as a pixel. Mend each row where it went wrong, so the drawing lines up: adding "." to its end only hides it.`);
+  });
+  return problems;
+}
+
+/**
  * The addresses Claude calls a connector from: Anthropic's published outbound ranges
  * (platform.claude.com/docs/en/api/ip-addresses). Everyone who uses Pixel Reel from Claude
  * reaches the service from one of these, so they cannot be told apart, and are counted together.

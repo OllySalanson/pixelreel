@@ -17,8 +17,9 @@ for when the connector is not there: its page plays with captions and the device
 ## Steps
 
 1. **Plan the scenes.** 5 to 7 scenes, about 40 seconds in all, one idea each, in the order
-   a person needs them. Only things that change what the person understands or does get
-   their own scene.
+   a person needs them. If the person asked for a number of scenes or a length, give them
+   that, not more. Only things that change what the person understands or does get their
+   own scene.
 2. **Write `reel.json`** in the format below.
 3. **Make the page:**
 
@@ -121,7 +122,8 @@ black, `w` white, `r` red, `g` green, `b` blue, `y` yellow, `o` orange, `p` purp
 `s` skin, `n` brown, `e` grey, `c` cream, capitals `B`, `R`, `N`, `G` for darker blue, red,
 brown and green, and `.` for see-through. `colours` adds letters of your own, such as
 `{ "h": "#6b3e2e" }`. Keep sprites small and bold (about 8 to 16 pixels across): a face, a
-sun, a simple object.
+sun, a simple object. Make every row the same length: a stray space or letter pushes the
+rest of that row sideways.
 
 A scene with no `picture` shows its title on a plain card. Mix the pictures so the reel
 moves: open with `title`, use `icons` or `list` for what is involved, `flow` for steps that
