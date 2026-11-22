@@ -808,7 +808,8 @@ html[data-aloud="on"] :is(h1, h2, h3, p, li, summary, dt, dd, figcaption):not(:i
   .letter { max-height: 19rem; }
   .walk-step { grid-template-columns: auto minmax(0, 1fr); }
   .walk-step > .shot, .walk-step > .box { grid-column: 2; width: min(100% - var(--u) * 2, 26rem); }
-  .steps { grid-template-columns: minmax(0, 1fr); max-width: 30rem; gap: 2.5rem; }
+  /* steps go as many across as fit with their words whole: three on a tablet, one on a phone, fewer with bigger letters */
+  .steps { grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: 2.5rem clamp(1rem, 2.5vw, 1.5rem); }
   .people { --across: 2; }
   .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .wireless { order: -1; }
