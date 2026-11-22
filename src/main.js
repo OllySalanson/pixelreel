@@ -5,6 +5,7 @@ import { inlineReel, loadReel } from './load.js';
 import { createNarrator } from './narrator.js';
 import { noSignal } from './pictures.js';
 import { Player } from './player.js';
+import { INTRO, QUIET_INTRO } from './reel.js';
 import { clockTime, narrationMs, typedLength } from './timing.js';
 import { transitionMs } from './transitions.js';
 
@@ -98,6 +99,12 @@ async function start() {
 
   function leaveIntro() { intro = false; }
 
+  // What is said before Play is pressed. With the sound off (as a page with no recordings
+  // starts) the usual words would promise sound that does not come, so they say how to get it.
+  function introWords() {
+    return reel.intro === INTRO && player.muted ? QUIET_INTRO : reel.intro;
+  }
+
   // The picture's clock: the narration's while playing or paused part-way; a preview that
   // loops through the scene for one that has not started (before Play, or browsing paused).
   function sceneTime(now) {
@@ -136,7 +143,7 @@ async function start() {
   function paintCaption() {
     const s = scenes[player.index];
     const title = intro ? 'Press Play' : `${player.index + 1}. ${s.title}`;
-    const text = intro ? reel.intro : s.caption;
+    const text = intro ? introWords() : s.caption;
     if (text !== typedText) { typedText = text; typed = 0; }
     let n = text.length;
     if (!intro && s.captions === 'typewriter' && !calm.matches && player.playing) {
@@ -162,7 +169,7 @@ async function start() {
     const cap = $('cap'), main = document.querySelector('main'), page = document.documentElement;
     cap.style.minHeight = '';
     const least = parseFloat(getComputedStyle(cap).minHeight) || 0;
-    const all = [['Press Play', reel.intro], ...scenes.map((s, i) => [`${i + 1}. ${s.title}`, s.caption])];
+    const all = [['Press Play', reel.intro], ...(reel.intro === INTRO ? [['Press Play', QUIET_INTRO]] : []), ...scenes.map((s, i) => [`${i + 1}. ${s.title}`, s.caption])];
     cap.classList.remove('typing');
     $('cap-rest').textContent = '';
     // Sizes the caption for the player as wide as it can be with `more` pixels taken off the

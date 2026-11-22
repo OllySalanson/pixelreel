@@ -494,6 +494,7 @@ describe('the service over HTTP', async () => {
     const client = await connect();
     assert.deepEqual(client.getServerVersion(), {
       name: 'pixelreel', title: 'Pixel Reel', version: '0.1.0', websiteUrl: 'https://reels.example',
+      description: 'Turns anything wordy into a short pixel-art cartoon, read aloud by a warm recorded narrator: for anyone who would rather watch than read.',
       icons: [{ src: 'https://reels.example/site/art/icon-192.png', mimeType: 'image/png', sizes: ['192x192'] },
         { src: 'https://reels.example/site/art/icon-512.png', mimeType: 'image/png', sizes: ['512x512'] }]
     });

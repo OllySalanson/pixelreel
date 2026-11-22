@@ -84,7 +84,7 @@ export function normalizeReel(raw, { base = '' } = {}) {
   if (problems.length) throw new ReelError(problems);
   return {
     title: raw.title.trim(),
-    intro: raw.intro ?? 'Sound will start. Use Next and Back any time.',
+    intro: raw.intro ?? INTRO,
     note: raw.note ?? '',
     transition,
     captions,
@@ -94,6 +94,12 @@ export function normalizeReel(raw, { base = '' } = {}) {
     opens: raw.scenes[0].picture?.type ?? (typeof raw.scenes[0].draw === 'function' ? 'drawing' : 'card')
   };
 }
+
+/** What a reel says before Play is pressed, unless it says its own. */
+export const INTRO = 'Sound will start. Use Next and Back any time.';
+
+/** What the player says instead while the sound is off, as on a page with no recordings: it must not promise sound. */
+export const QUIET_INTRO = 'The sound is off. Press Sound to have it read aloud. Use Next and Back any time.';
 
 /** A plain title card, for scenes that do not draw their own picture. */
 export function defaultDraw(t, px, scene) {
