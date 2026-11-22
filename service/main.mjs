@@ -4,9 +4,12 @@
 // (default http://localhost:PORT), used in the links it gives; PIXELREEL_DATA is the folder
 // it keeps reels in (default .service-data), unless PIXELREEL_S3_BUCKET names a bucket to keep
 // them in instead (with PIXELREEL_S3_ENDPOINT, _REGION, _KEY_ID and _SECRET; see
-// docs/deploy.md). PIXELREEL_TRUST_PROXY=1 behind a proxy that sets
-// X-Forwarded-For; PIXELREEL_REELS_PER_HOUR (each caller, default 10), PIXELREEL_REELS_PER_DAY
-// (everyone, default 300) and PIXELREEL_VIDEOS_PER_HOUR (default 10) set the rate limits.
+// docs/deploy.md). PIXELREEL_TRUST_PROXY=1 behind a proxy that sets X-Forwarded-For (or how
+// many proxies, if more than one); PIXELREEL_REELS_PER_HOUR (each caller, default 10),
+// PIXELREEL_REELS_PER_DAY (everyone, default 300) and PIXELREEL_VIDEOS_PER_HOUR (default 10) set
+// the rate limits, and PIXELREEL_CLAUDE_PER_HOUR (default 60) what everyone using Claude may
+// make between them, as they all call from the few addresses in PIXELREEL_CLAUDE_ADDRESSES
+// (default Anthropic's published ones).
 // PIXELREEL_LISTED=1 lets search engines list the website (never the reels); without it every
 // page asks them not to, for as long as Pixel Reel is by invitation. Unless NODE_ENV is
 // production (as it is in the image), browsers check for a newer copy of the site's files
@@ -18,7 +21,7 @@
 // Recording needs Pocket TTS set up (scripts/setup-voices.sh) and ffmpeg; videos need
 // @napi-rs/canvas.
 import { join } from 'node:path';
-import { RateLimit } from './limits.mjs';
+import { CLAUDE_ADDRESSES, RateLimit } from './limits.mjs';
 import { Reels } from './reels.mjs';
 import { createService } from './server.mjs';
 import { DiskStore, S3Store } from './store.mjs';
@@ -39,9 +42,12 @@ await sweep();
 setInterval(sweep, 3600_000).unref();
 
 const setting = (name, fallback) => Number(process.env[name]) || fallback;
+// everyone using Claude calls from a few addresses of Anthropic's, so they share one, bigger, allowance
+const ranges = process.env.PIXELREEL_CLAUDE_ADDRESSES === undefined ? CLAUDE_ADDRESSES : process.env.PIXELREEL_CLAUDE_ADDRESSES.split(',').map((r) => r.trim()).filter(Boolean);
+const shared = { ranges, perHour: setting('PIXELREEL_CLAUDE_PER_HOUR', 60) };
 const limits = {
-  reels: new RateLimit({ perHour: setting('PIXELREEL_REELS_PER_HOUR', 10), perDay: setting('PIXELREEL_REELS_PER_DAY', 300) }),
-  videos: new RateLimit({ perHour: setting('PIXELREEL_VIDEOS_PER_HOUR', 10), perDay: setting('PIXELREEL_REELS_PER_DAY', 300) }),
+  reels: new RateLimit({ perHour: setting('PIXELREEL_REELS_PER_HOUR', 10), perDay: setting('PIXELREEL_REELS_PER_DAY', 300), shared }),
+  videos: new RateLimit({ perHour: setting('PIXELREEL_VIDEOS_PER_HOUR', 10), perDay: setting('PIXELREEL_REELS_PER_DAY', 300), shared }),
   tries: new RateLimit({ perHour: setting('PIXELREEL_TRIES_PER_HOUR', 3), perDay: setting('PIXELREEL_TRIES_PER_DAY', 20) })
 };
 
@@ -57,7 +63,7 @@ if (process.env.PIXELREEL_TRY === '1') {
   }
 }
 
-const server = createService({ reels, baseUrl, log, limits, writer, trustProxy: process.env.PIXELREEL_TRUST_PROXY === '1', listed: process.env.PIXELREEL_LISTED === '1', fresh: process.env.NODE_ENV !== 'production' });
+const server = createService({ reels, baseUrl, log, limits, writer, trustProxy: Number(process.env.PIXELREEL_TRUST_PROXY) || 0, listed: process.env.PIXELREEL_LISTED === '1', fresh: process.env.NODE_ENV !== 'production' });
 server.listen(port, () => log(`Pixel Reel is at ${baseUrl}: connector ${baseUrl}/mcp, reels kept in ${store}`));
 
 const stop = () => {

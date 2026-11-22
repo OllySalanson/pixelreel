@@ -264,11 +264,13 @@ export function createMcpServer({ reels, baseUrl, client = 'local', limits = nul
       case 'reel_format':
         return text(formatGuide());
       case 'make_reel': {
-        const refused = limits?.reels.hit(client);
+        const refused = limits?.reels.check(client);
         if (refused) return failure(`No more reels for now. ${refused}`);
         try {
           // every reel made here is in the one format, so one that does not say is not sent back for it
-          return describe(await reels.create(args.format === undefined ? { format: REEL_FORMAT, ...args } : args), baseUrl);
+          const made = await reels.create(args.format === undefined ? { format: REEL_FORMAT, ...args } : args);
+          limits?.reels.count(client);   // only a reel that is made counts: one sent back to be fixed does not
+          return describe(made, baseUrl);
         } catch (err) {
           if (err instanceof ReelError) return failure(`This reel has problems. Fix them all, then call make_reel again:\n- ${err.problems.join('\n- ')}`);
           if (err instanceof BusyError) return failure(err.message);

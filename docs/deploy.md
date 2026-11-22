@@ -11,9 +11,13 @@ docker run -p 8787:8787 -e PIXELREEL_URL=https://reels.example -v pixelreel-data
 - `PIXELREEL_URL` must be the public `https://` address people and Claude reach it at.
 - `/data` is where reels are kept. Give it a disk that survives restarts, or reels vanish
   before their 30 days are up.
-- `PIXELREEL_TRUST_PROXY=1` is on in the image, as most hosts put a proxy in front that sets
-  `X-Forwarded-For`. Turn it off (`0`) if yours does not, or callers could pretend to be
-  someone else to get round the rate limits.
+- `PIXELREEL_TRUST_PROXY=1` is on in the image, as most hosts put a proxy in front that adds
+  the caller's address to `X-Forwarded-For`. Turn it off (`0`) if yours does not, or callers
+  could pretend to be someone else to get round the rate limits; set it to `2` if two
+  proxies are in front (a load balancer and the host's own, say). After the first request
+  the log has a line starting `callers:` that says how many addresses arrived and whether
+  that matches. If it does not, fix the setting: with it too low everyone looks like one
+  caller and shares one allowance.
 - `GET /health` answers `ok` once it is up.
 - `PIXELREEL_LISTED=1` lets search engines list the website, for once Pixel Reel is open to
   everyone. Until then leave it off: every page asks them to keep out, which also keeps

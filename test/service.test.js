@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
-import { LIMITS, limitProblems, RateLimit } from '../service/limits.mjs';
+import { CLAUDE_ADDRESSES, inRanges, LIMITS, limitProblems, RateLimit } from '../service/limits.mjs';
 import { EXAMPLE_REEL, formatGuide } from '../service/mcp.mjs';
 import { BusyError, isId, KEEP_DAYS, newId, Reels } from '../service/reels.mjs';
 import { reelFromData } from '../src/format.js';
@@ -261,6 +261,40 @@ describe('the service limits', () => {
     assert.equal(limit.hit('a'), null, 'a new day, a new hour');
   });
 
+  it('checks without counting, so only what is made is counted', () => {
+    const limit = new RateLimit({ perHour: 1, perDay: 5, now: () => 0 });
+    assert.equal(limit.check('a'), null);
+    assert.equal(limit.check('a'), null, 'asking does not use anything up');
+    limit.count('a');
+    assert.match(limit.check('a'), /^That is 1 in the last hour from here\./);
+  });
+
+  it('knows which addresses are in a range', () => {
+    for (const address of ['160.79.104.0', '160.79.111.255', '153.61.208.1', '153.61.223.255', '::ffff:160.79.105.9', ' 160.79.106.1 ']) {
+      assert.equal(inRanges(address, CLAUDE_ADDRESSES), true, address);
+    }
+    for (const address of ['160.79.112.0', '160.79.103.255', '153.61.224.0', '8.8.8.8', '2607:6bc0::1', 'unknown', '', '160.79.104', '999.79.104.1']) {
+      assert.equal(inRanges(address, CLAUDE_ADDRESSES), false, address);
+    }
+    assert.equal(inRanges('192.0.2.7', ['192.0.2.7']), true, 'one address is a range of one');
+    assert.equal(inRanges('192.0.2.8', ['192.0.2.7', 'nonsense/99']), false);
+    assert.equal(inRanges('203.0.113.9', ['0.0.0.0/0']), true);
+  });
+
+  it('counts everyone behind shared addresses together, with more room, and says so', () => {
+    let clock = 0;
+    const limit = new RateLimit({ perHour: 1, perDay: 100, shared: { ranges: CLAUDE_ADDRESSES, perHour: 3 }, now: () => clock });
+    assert.equal(limit.hit('160.79.104.5'), null);
+    assert.equal(limit.hit('160.79.110.9'), null, 'a second person on Claude, from another of its addresses');
+    assert.equal(limit.hit('153.61.209.1'), null);
+    clock += 20 * 60000;
+    assert.equal(limit.hit('160.79.104.5'), 'People using Claude have made 3 in the last hour between them, which is as many as Pixel Reel can make. Try again in 40 minutes.');
+    assert.equal(limit.hit('203.0.113.7'), null, 'someone elsewhere still has their own hour');
+    assert.equal(limit.hit('203.0.113.7'), 'That is 1 in the last hour from here. Try again in 60 minutes.');
+    clock += 41 * 60000;
+    assert.equal(limit.hit('153.61.209.1'), null, 'room again once the hour has moved on');
+  });
+
   it('refuses a reel past the limits, and when too many are waiting', async () => {
     const reels = new Reels({ store: freshStore(), record: () => new Promise(() => {}), video: fakeVideo, maxQueue: 1 });
     await assert.rejects(reels.create({ ...tea, scenes: Array.from({ length: 13 }, () => scene()) }), (err) => err instanceof ReelError && /too many/.test(err.problems[0]));
@@ -285,7 +319,7 @@ describe('the site pages', () => {
 describe('the service over HTTP', async () => {
   const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
   const { StreamableHTTPClientTransport } = await import('@modelcontextprotocol/sdk/client/streamableHttp.js');
-  const { createService, MAX_BODY } = await import('../service/server.mjs');
+  const { callerOf, createService, MAX_BODY } = await import('../service/server.mjs');
   const reels = new Reels({ store: freshStore(), record: fakeRecord, video: fakeVideo, picture: fakePicture });
   const limits = { reels: new RateLimit({ perHour: 1000, perDay: 1000 }), videos: new RateLimit({ perHour: 1000, perDay: 1000 }) };
   const server = createService({ reels, baseUrl: 'https://reels.example/', limits, trustProxy: true });
@@ -530,6 +564,56 @@ describe('the service over HTTP', async () => {
     await Promise.all([one.close(), two.close()]);
     limits.reels = new RateLimit({ perHour: 1000, perDay: 1000 });
     await reels.idle();
+  });
+
+  it('does not count a reel sent back to be fixed against the caller', async () => {
+    limits.reels = new RateLimit({ perHour: 1, perDay: 100 });
+    const client = await connect();
+    const wrong = await client.callTool({ name: 'make_reel', arguments: { ...tea, scenes: [] } });
+    assert.equal(wrong.isError, true);
+    assert.match(words(wrong), /^This reel has problems/);
+    assert.equal((await client.callTool({ name: 'make_reel', arguments: tea })).isError, undefined, 'the try that failed used nothing up');
+    assert.match(words(await client.callTool({ name: 'make_reel', arguments: tea })), /^No more reels for now\./);
+    await client.close();
+    limits.reels = new RateLimit({ perHour: 1000, perDay: 1000 });
+    await reels.idle();
+  });
+
+  it('takes a caller to be who the proxy in front saw, not who the caller says they are', async () => {
+    const said = [];
+    const req = (forwarded) => ({ headers: forwarded === undefined ? {} : { 'x-forwarded-for': forwarded }, socket: { remoteAddress: '10.0.0.1' } });
+    assert.equal(callerOf(req('203.0.113.7'), 1), '203.0.113.7');
+    assert.equal(callerOf(req('1.2.3.4, 203.0.113.7'), 1), '203.0.113.7', 'an address the caller wrote in front is not believed');
+    assert.equal(callerOf(req('1.2.3.4, 203.0.113.7, 198.51.100.1'), 2), '203.0.113.7', 'two proxies in front: the second from the end');
+    assert.equal(callerOf(req('203.0.113.7'), 2), '203.0.113.7', 'fewer than expected: the first there is');
+    assert.equal(callerOf(req('1.2.3.4'), 0), '10.0.0.1', 'no proxy trusted: the connection itself');
+    assert.equal(callerOf(req(undefined), 1), '10.0.0.1');
+
+    // over HTTP: someone who writes a new address in front each time is still one caller
+    const strict = { reels: new RateLimit({ perHour: 1, perDay: 100 }), videos: new RateLimit({ perHour: 100, perDay: 100 }) };
+    const other = createService({ reels, baseUrl: 'https://reels.example', limits: strict, trustProxy: 1, log: (line) => said.push(line) });
+    await new Promise((ok) => other.listen(0, '127.0.0.1', ok));
+    const asking = async (forwarded) => {
+      const client = new Client({ name: 'test', version: '1' });
+      await client.connect(new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${other.address().port}/mcp`), { requestInit: { headers: { 'x-forwarded-for': forwarded } } }));
+      return client;
+    };
+    try {
+      const one = await asking('9.9.9.9, 203.0.113.7'), two = await asking('8.8.8.8, 203.0.113.7');
+      assert.equal((await one.callTool({ name: 'make_reel', arguments: tea })).isError, undefined);
+      assert.match(words(await two.callTool({ name: 'make_reel', arguments: tea })), /^No more reels for now\. That is 1 in the last hour from here\./);
+      await Promise.all([one.close(), two.close()]);
+      assert.deepEqual(said.filter((line) => line.startsWith('callers:')), [
+        'callers: X-Forwarded-For came with 2 addresses, but PIXELREEL_TRUST_PROXY is 1. If 2 proxies are in front, set it to 2, or callers are told apart wrongly'
+      ], 'it says once how many addresses arrive, and never what they are');
+      const plain = await asking('203.0.113.7');
+      await plain.close();
+      assert.equal(said.filter((line) => line.startsWith('callers:')).at(-1), 'callers: X-Forwarded-For came with 1 address, as PIXELREEL_TRUST_PROXY=1 expects');
+    } finally {
+      other.close();
+      other.closeAllConnections();
+      await reels.idle();
+    }
   });
 
   it("keeps a reel's title as words, whatever is in it", async () => {

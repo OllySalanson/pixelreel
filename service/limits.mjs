@@ -34,26 +34,69 @@ export function limitProblems(reel, raw) {
 }
 
 /**
- * Counts what each caller does in a sliding hour, and what everyone does in a day. hit()
- * says why not, or null and counts it. Kept in memory: a restart forgets, which is fine.
+ * The addresses Claude calls a connector from: Anthropic's published outbound ranges
+ * (platform.claude.com/docs/en/api/ip-addresses). Everyone who uses Pixel Reel from Claude
+ * reaches the service from one of these, so they cannot be told apart, and are counted together.
+ */
+export const CLAUDE_ADDRESSES = ['160.79.104.0/21', '153.61.208.0/20'];
+
+/** An IPv4 address (alone, or as IPv6 writes one: ::ffff:192.0.2.1) as a number, or null for anything else. */
+function ipv4Number(address) {
+  const parts = /^(?:::ffff:)?(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/i.exec(String(address).trim())?.slice(1).map(Number);
+  return parts && parts.every((n) => n <= 255) ? parts.reduce((sum, n) => sum * 256 + n, 0) : null;
+}
+
+/** True if `address` is in one of `ranges`, each written like 192.0.2.0/24 (or one address). */
+export function inRanges(address, ranges) {
+  const ip = ipv4Number(address);
+  if (ip === null) return false;
+  return ranges.some((range) => {
+    const [base, bits = '32'] = String(range).split('/'), start = ipv4Number(base), size = 2 ** (32 - Number(bits));
+    return start !== null && size >= 1 && Math.floor(ip / size) === Math.floor(start / size);
+  });
+}
+
+/**
+ * Counts what each caller does in a sliding hour, and what everyone does in a day. check()
+ * says why not, or null; count() counts one; hit() does both. Callers in `shared.ranges`
+ * (many people behind a few addresses, as with Claude) are counted together, against
+ * `shared.perHour`. Kept in memory: a restart forgets, which is fine.
  */
 export class RateLimit {
-  constructor({ perHour, perDay, now = () => Date.now() }) {
-    Object.assign(this, { perHour, perDay, now });
+  constructor({ perHour, perDay, shared = null, now = () => Date.now() }) {
+    Object.assign(this, { perHour, perDay, shared, now });
     this.callers = new Map();
     this.day = [];
   }
 
-  hit(caller) {
-    const at = this.now();
+  /** Who a caller is counted as, and how many they may make in an hour. */
+  bucket(caller) {
+    return this.shared && inRanges(caller, this.shared.ranges) ? { key: 'shared', most: this.shared.perHour, together: true } : { key: caller, most: this.perHour, together: false };
+  }
+
+  check(caller) {
+    const at = this.now(), { key, most, together } = this.bucket(caller);
     this.day = this.day.filter((t) => t > at - 86400000);
-    const mine = (this.callers.get(caller) ?? []).filter((t) => t > at - 3600000);
-    if (mine.length >= this.perHour) return `That is ${this.perHour} in the last hour from here. Try again in ${Math.ceil((mine[0] + 3600000 - at) / 60000)} minutes.`;
+    const mine = (this.callers.get(key) ?? []).filter((t) => t > at - 3600000);
+    if (mine.length >= most) {
+      const wait = `Try again in ${Math.ceil((mine[0] + 3600000 - at) / 60000)} minutes.`;
+      return together ? `People using Claude have made ${most} in the last hour between them, which is as many as Pixel Reel can make. ${wait}`
+        : `That is ${most} in the last hour from here. ${wait}`;
+    }
     if (this.day.length >= this.perDay) return 'Pixel Reel has made as many reels as it can today. Try again tomorrow.';
-    mine.push(at);
-    this.day.push(at);
-    this.callers.set(caller, mine);
-    if (this.callers.size > 10000) for (const [key, times] of this.callers) if (!times.some((t) => t > at - 3600000)) this.callers.delete(key);
     return null;
+  }
+
+  count(caller) {
+    const at = this.now(), { key } = this.bucket(caller);
+    this.callers.set(key, [...(this.callers.get(key) ?? []).filter((t) => t > at - 3600000), at]);
+    this.day.push(at);
+    if (this.callers.size > 10000) for (const [k, times] of this.callers) if (!times.some((t) => t > at - 3600000)) this.callers.delete(k);
+  }
+
+  hit(caller) {
+    const refused = this.check(caller);
+    if (!refused) this.count(caller);
+    return refused;
   }
 }
