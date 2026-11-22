@@ -938,6 +938,21 @@ describe('getting the site onto a phone with no address to type', () => {
   });
 });
 
+describe('on Dark paper, which is chosen so that nothing dazzles', () => {
+  const css = readFileSync(root('site/css/site.css'), 'utf8');
+
+  it('dims the letter that is there to be hard to read, which was the one white thing on the page', () => {
+    assert.match(css, /\n\.letter \{[^}]*--sheet: #fffefa;[^}]*background: var\(--sheet\);/);
+    assert.match(css, /\nhtml\[data-paper="night"\] \.letter \{ --sheet: #c9c5b4;/);
+    assert.match(css, /\.letter::after \{[^}]*linear-gradient\(var\(--sheet-clear\), var\(--sheet\) 85%\)/, 'and it fades out into the same colour');
+  });
+
+  it('gives the picture of a phone a light edge, since the phone is nearly black', () => {
+    const rule = /\nhtml\[data-paper="night"\] \.handset \.px \{ filter: ([^}]*) \}/.exec(css)?.[1] ?? '';
+    assert.equal(rule.split('var(--line))').length - 1, 4, 'an edge on each of its four sides');
+  });
+});
+
 describe("a reel's own QR code", () => {
   const css = readFileSync(root('site/css/site.css'), 'utf8');
   const label = 'A QR code. It opens this page on a phone.';

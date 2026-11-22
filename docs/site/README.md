@@ -1037,3 +1037,21 @@ the reel's own address. Not yet printed on real paper, nor pointed at with a rea
 | On a screen, beside Print it, and on paper |
 | --- |
 | ![Under a reel on a computer: the heading, Print it, and a QR code with "Watch it on your phone. Point its camera at this square." Beside it, the printed page: the code under the title, with "To hear it read out, point a phone's camera at this square. It works until 22 December.", then the six scenes.](log/v46-reel-code.jpg) |
+
+### Version 47
+
+Went down the whole home page on a phone with the paper set to Dark. It holds up. Two
+things did not:
+
+- **The phone had vanished.** The picture of a phone under "Keep it a press away" (and at
+  the top of the page about the phone) is nearly black, so on Dark paper only its screen
+  showed, a grid of coloured squares floating in the dark. It now has a light pixel edge
+  there, like every card on Dark paper.
+- **The letter dazzled.** Dark paper is chosen so that nothing dazzles, and the made-up
+  pension letter in "Same letter. Two ways to take it in." stayed bright white: the one
+  white thing on the page. On Dark paper it is now the grey of paper in a dim room. It is
+  still paper, and still as dense as ever.
+
+| The letter and the phone on Dark paper |
+| --- |
+| ![On Dark paper: the pension letter as a dim grey sheet, and the picture of a phone with a light edge round it.](log/v47-dark.jpg) |

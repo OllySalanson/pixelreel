@@ -266,14 +266,17 @@ html.reel-filling { overflow: hidden; }
   box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line); }
 .way-note { margin-top: 1.25rem; font-size: 1.125rem; color: var(--ink-soft); }
 /* the letter is everything this site is not: small, grey, justified, endless. It is a picture of a letter, not for reading. */
-.letter { position: relative; max-height: 27rem; margin: var(--u) calc(var(--u) * 4) calc(var(--u) * 4) var(--u); padding: 1.6rem 1.75rem 0; overflow: hidden; background: #fffefa; color: #5b5f66;
+.letter { position: relative; max-height: 27rem; margin: var(--u) calc(var(--u) * 4) calc(var(--u) * 4) var(--u); padding: 1.6rem 1.75rem 0; overflow: hidden; --sheet: #fffefa; --sheet-clear: rgba(255, 254, 250, 0); --under: #e9e4cf; background: var(--sheet); color: #5b5f66;
   font: 0.8125rem/1.42 Georgia, 'Times New Roman', serif; letter-spacing: 0; word-spacing: 0; text-align: justify; user-select: none;
   box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line),
-    calc(var(--u) * 2) calc(var(--u) * 2) 0 0 #e9e4cf, calc(var(--u) * 2) calc(var(--u) * 2) 0 var(--u) var(--line), calc(var(--u) * 4) calc(var(--u) * 4) 0 0 #e9e4cf, calc(var(--u) * 4) calc(var(--u) * 4) 0 var(--u) var(--line); }
+    calc(var(--u) * 2) calc(var(--u) * 2) 0 0 var(--under), calc(var(--u) * 2) calc(var(--u) * 2) 0 var(--u) var(--line), calc(var(--u) * 4) calc(var(--u) * 4) 0 0 var(--under), calc(var(--u) * 4) calc(var(--u) * 4) 0 var(--u) var(--line); }
 .letter p { max-width: none; margin-bottom: 0.7rem; text-wrap: wrap; }
 .letter-ref { font-size: 0.75rem; text-align: right; }
 .letter-title { font-weight: 700; text-align: left; color: #3d4047; }
-.letter::after { content: ''; position: absolute; inset: auto 0 0; height: 7rem; background: linear-gradient(rgba(255, 254, 250, 0), #fffefa 85%); }
+.letter::after { content: ''; position: absolute; inset: auto 0 0; height: 7rem; background: linear-gradient(var(--sheet-clear), var(--sheet) 85%); }
+/* on Dark paper, chosen so that nothing dazzles, the letter is the grey of paper in a dim room: still paper, still dense */
+html[data-paper="night"] .letter { --sheet: #c9c5b4; --sheet-clear: rgba(201, 197, 180, 0); --under: #a9a594; color: #3f434a; }
+html[data-paper="night"] .letter-title { color: #25272c; }
 .ways .reel { margin-right: calc(var(--u) * 4); }
 
 /* who it is for */
@@ -520,6 +523,8 @@ html[data-app] [data-not-app] { display: none; }
 .pocket-have { margin-top: 1.5rem; font-size: 1.375rem; font-weight: 700; }
 .handset { display: grid; justify-items: center; }
 .handset .px { width: min(62%, 14.25rem); height: auto; filter: drop-shadow(calc(var(--u) * 3) calc(var(--u) * 3) 0 rgba(20, 27, 45, 0.16)); }
+/* the phone is nearly black: on Dark paper it gets a light edge, like every card there, or only its screen shows */
+html[data-paper="night"] .handset .px { filter: drop-shadow(var(--u) 0 0 var(--line)) drop-shadow(calc(var(--u) * -1) 0 0 var(--line)) drop-shadow(0 var(--u) 0 var(--line)) drop-shadow(0 calc(var(--u) * -1) 0 var(--line)); }
 /* what to press, a picture and a few words to each */
 .presses { display: grid; gap: 1.25rem; padding: 0.25rem 1.4rem 1.5rem; counter-reset: press; }
 .presses li { display: flex; flex-wrap: wrap; gap: 0.6rem 1.25rem; align-items: center; }
