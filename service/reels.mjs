@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { reelFromData } from '../src/format.js';
 import { clipLookup, ReelError } from '../src/reel.js';
-import { limitProblems } from './limits.mjs';
+import { limitProblems, reelMs } from './limits.mjs';
 import { paceReel } from './pacing.mjs';
 import { narrationMs, timeline } from '../src/timing.js';
 
@@ -95,7 +95,7 @@ export class Reels {
 
   /** What is known of a reel once its scenes are: how many, and about how long it will run. */
   measure(reel) {
-    return { title: reel.title, scenes: reel.scenes.length, seconds: Math.round(timeline(reel.scenes.map((s) => narrationMs(s, null))).total / 1000) };
+    return { title: reel.title, scenes: reel.scenes.length, seconds: Math.round(reelMs(reel) / 1000) };
   }
 
   /**
