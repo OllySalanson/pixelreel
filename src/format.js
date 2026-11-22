@@ -20,7 +20,7 @@ export const PICTURE_NOTES = {
   terminal: 'A terminal window. Lines starting with "$ " type out; the rest is output.',
   code: 'An editor that types out the code, with simple highlighting.',
   chat: 'Messages arriving with a typing indicator. The first sender sits on the left.',
-  big: 'One huge word or number, punched in, with a line underneath.',
+  big: 'One big word or number on a paper card, punched in, with a line underneath: for the one number or word the reel turns on. Once in a reel is plenty.',
   image: "One of the reel's own images, named in images, slowly pushing in.",
   icons: 'One to four everyday icons dropping in one by one, each with a label underneath.',
   flow: 'One to four icons joined by arrows, arriving in turn: how one thing leads to the next.',

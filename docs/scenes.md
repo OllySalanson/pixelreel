@@ -139,7 +139,9 @@ picture: { type: 'code', title: 'tea.js', lines: ['const cup = brew({', "  leave
 picture: { type: 'chat', title: 'Kitchen', messages: [{ from: 'Kettle', text: 'Ready.' }, { from: 'You', text: 'Pour away.' }] }
 ```
 
-**big**: one huge word or number, punched in, with a line underneath.
+**big**: one big word or number on a paper card, punched in, a gold line drawn under it,
+with a line of words beneath. For the one number or word the reel turns on; once in a reel
+is plenty.
 
 ```js
 picture: { type: 'big', text: '3 MIN', sub: 'and not a second more' }
@@ -190,7 +192,7 @@ The icons, by what they are about:
 - **Weather and nature:** `sun`, `moon`, `cloud`, `rain`, `water`, `fire`, `bolt`, `tree`
 - **Signs:** `tick`, `cross`, `warning`, `question`, `star`, `lightbulb`
 
-Pick the one that means the thing; if none does, a list, a big word or a sprite says it
+Pick the one that means the thing; if none does, a list, a table or a sprite says it
 better than an icon that does not fit. `every` and `start` set their timing, as for a list.
 
 **sprite**: pixel art of your own, from rows of [sprite letters](#sprite-letters), scaled up to
