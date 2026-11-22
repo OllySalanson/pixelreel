@@ -127,6 +127,10 @@ any other app (an installable web app). Three things make it one:
   Reel for a photo it cannot take. Nothing shared is sent to the service by the sharing
   itself. If the worker is not there to take it, the service answers `/share` by sending the
   browser on to the box, without reading what was sent.
+- **The lock screen.** While a reel plays, the player tells the phone what it is
+  (`tellPhone` in `site/js/player.js`, the browser's Media Session): the scene, the reel and
+  Reelie's picture show on the lock screen, and Play, Pause, Next and Back there, on
+  headphones or in a car do what the player's own buttons do.
 
 `test/app.test.js` runs the worker in Node with stand-ins for a browser's caches and network.
 To try it for real, open the site in a browser, stop the service, and reload: pages already
@@ -708,3 +712,15 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | Before pressing, and after, on a laptop | A phone on its side |
 | --- | --- |
 | ![A player with a small button of four corners at the top right of its picture; then the same reel filling the screen, its words and buttons under the picture.](log/v29-fills-the-screen.jpg) | ![The reel on a phone held on its side: the picture, then one row with the words on the left and Back, Play, Next and Sound on on the right.](log/v29-on-its-side.jpg) |
+
+### Version 30
+
+- **A reel on the lock screen.** While a reel plays, the phone now knows what it is: the
+  lock screen shows the scene ("3. Read left to right"), the reel it is from and Reelie's
+  picture, with Play, Pause, Next and Back. The buttons on headphones and in a car work it
+  too. So a reel can be listened to with the phone in a pocket: Next goes to the next scene,
+  Back to the one before, as on the player itself.
+- It is the player that played last that the phone shows, and a browser with no such thing
+  is left as it was.
+- There is no picture of this one: a lock screen cannot be photographed from a browser.
+  Checked there by reading back what the browser was told while a reel played.
