@@ -92,7 +92,7 @@ one. For any other language, write the reel in it and leave `language` out.
 | `type` | Fields (`?` is optional) | Shows |
 | --- | --- | --- |
 | `title` | `text`, `sub?` | A big title dropping in over a night sky, with a line typed underneath. |
-| `big` | `text`, `sub?` | One huge word or number, punched in, with a line underneath. Keep `text` to about 8 characters. |
+| `big` | `text`, `sub?` | One big word or number on a paper card, punched in, with a line underneath. Keep `text` to about 8 characters. Once in a reel is plenty. |
 | `list` | `items` (list of text), `heading?`, `numbered?` (true/false), `every?` and `start?` (seconds) | Items arriving one by one with a tick, or a number. Up to about 5 short items. |
 | `chat` | `messages` (list of `{ "from": "...", "text": "..." }`), `title?`, `every?`, `start?` | Messages arriving with a typing indicator. The first sender sits on the left. |
 | `terminal` | `lines` (list of text), `title?` | A terminal window. Lines starting with `$ ` type out; the rest is output. |
@@ -114,7 +114,7 @@ The icons, by what they are about:
 - **Signs:** `tick`, `cross`, `warning`, `question`, `star`, `lightbulb`
 
 Pick the one that means the thing, and keep labels to two or three words. If no icon means
-it, do not make one stand for it: use a `list`, a `big` word or a `sprite` instead.
+it, do not make one stand for it: use a `list`, a `table` or a `sprite` instead.
 
 A `sprite` is drawn from rows of letters, one letter a pixel, up to 40 rows of up to 64: `k`
 black, `w` white, `r` red, `g` green, `b` blue, `y` yellow, `o` orange, `p` purple, `t` teal,
@@ -126,8 +126,8 @@ sun, a simple object.
 A scene with no `picture` shows its title on a plain card. Mix the pictures so the reel
 moves: open with `title`, use `icons` or `list` for what is involved, `flow` for steps that
 lead to each other, `compare` for do this, not that, `table` for what is set out in rows
-and columns (times, amounts, dates: never make icons stand for those), `big` for one number
-or word that matters, and `chat` for a conversation. `example.json` beside this file is a finished reel.
+and columns (times, amounts, dates: never make icons stand for those), `big` once at most,
+for the one number or word the reel turns on, and `chat` for a conversation. `example.json` beside this file is a finished reel.
 
 ## What the person gets
 

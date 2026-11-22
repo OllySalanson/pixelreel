@@ -88,6 +88,28 @@ describe('ready-made pictures', () => {
     for (const label of ['A long letter', 'A pixel reel']) assert.ok(g.texts.some((x) => x.str === label), label);
   });
 
+  it('shows a big word on a still paper card: nothing rushes about behind it', () => {
+    const drawn = (p, t) => { const g = fakeContext(); createKit(g, {}).picture(p, t); return g; };
+    const p = { type: 'big', text: '£83.50', sub: 'the total to pay' };
+    const settled = drawn(p, 5);
+    assert.equal(JSON.stringify(drawn(p, 9).rects), JSON.stringify(settled.rects), 'once the word has landed, the picture holds still');
+    assert.equal(JSON.stringify(drawn(p, 9).texts), JSON.stringify(settled.texts));
+    assert.ok(settled.texts.some((x) => x.str === '£83.50') && settled.texts.some((x) => x.str === 'the total to pay'));
+    for (const g of [drawn(p, 0), drawn(p, 0.4), settled]) {
+      for (const r of g.rects) {
+        assert.ok(!['#1d1236', '#2c1b52', '#3a2470'].includes(r.c), 'none of the old purple');
+        assert.ok(r.x >= 0 && r.x + r.w <= 320 && r.y >= 0 && r.y + r.h <= 180, `inside the picture: ${JSON.stringify(r)}`);
+      }
+      assert.ok(g.rects.some((r) => r.c === '#fdf6e3' && r.w >= 180 && r.h >= 60), 'the card is paper, there from the first moment');
+    }
+    assert.equal(drawn(p, 0.4).rects.filter((r) => r.c === '#ffcc4d').length, 0, 'the gold line is drawn once the word has landed');
+    assert.equal(settled.rects.filter((r) => r.c === '#ffcc4d').length, 1);
+    // a long line underneath wraps inside the card, and a word alone still gets one
+    for (const one of [{ type: 'big', text: 'ONE THING AT A TIME', sub: 'fixed fee for being connected, whatever you use' }, { type: 'big', text: '6' }]) {
+      for (const r of drawn(one, 30).rects) assert.ok(r.x >= 0 && r.x + r.w <= 320 && r.y >= 0 && r.y + r.h <= 180, JSON.stringify(r));
+    }
+  });
+
   it('fills a table in a row at a time, the headings there from the start', () => {
     const words = (t) => { const g = fakeContext(); createKit(g, {}).picture(examples.table, t); return g.texts.map((x) => x.str); };
     const cells = (rows) => ['SUNDAY BUSES', 'Stop', '1st bus', '2nd bus', ...rows.flat()];

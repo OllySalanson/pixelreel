@@ -247,25 +247,26 @@ function chat(t, px, p) {
   });
 }
 
+/** One big word or number on a paper card, punched in, a gold line drawn under it, and a line of words beneath. */
 function big(t, px, p) {
   const { W, H } = px;
-  px.rect('#1d1236', 0, 0, W, H);
-  // squares rushing out from the middle
-  for (let k = 0; k < 10; k++) {
-    const r = ((k * 22 + t * 26) % 220) + 4, c = k % 2 ? '#2c1b52' : '#3a2470';
-    px.rect(c, W / 2 - r, H / 2 - r, 2 * r, 6); px.rect(c, W / 2 - r, H / 2 + r - 6, 2 * r, 6);
-    px.rect(c, W / 2 - r, H / 2 - r, 6, 2 * r); px.rect(c, W / 2 + r - 6, H / 2 - r, 6, 2 * r);
-  }
-  const size = fit(px, p.text, 48, W - 30);
-  const cy = p.sub ? 58 : 72;
+  dotted(px);
+  const lay = memo(p, 'big', () => {
+    const sub = p.sub ? px.wrap(p.sub, W - 76, 16) : [];
+    const size = fit(px, p.text, sub.length > 1 ? 48 : 60, W - 76), wordW = px.textW(p.text, size);
+    const w = Math.min(W - 24, Math.max(190, wordW + 64, ...sub.map((line) => px.textW(line, 16) + 44)));
+    const h = 22 + size + 12 + (sub.length ? 8 + sub.length * 19 : 0) + 14;
+    return { size, wordW, sub, w, h };
+  });
+  const { size, wordW, sub, w, h } = lay, x = Math.round((W - w) / 2), y = Math.round((H - h) / 2), cy = y + 22;
+  px.rect(NIGHT, x + 3, y + 3, w, h);
+  px.window(x, y, w, h, LIGHT);
+  // the line under the word is drawn from the left once the word has landed, and then stays
+  const lineW = Math.round(px.tween(t, 0.6, 0.4, 0, wordW + 12, 'out'));
+  if (lineW > 0) px.rect(GOLD, Math.round(W / 2 - wordW / 2 - 6), cy + size + 3, lineW, 5);
   const k = px.tween(t, 0.1, 0.6, 0, 1, 'back');
-  if (k > 0.05) {
-    px.zoom(k, W / 2, cy + size / 2, () => {
-      px.text(p.text, W / 2, cy + 3, size, INK, 'center');
-      px.text(p.text, W / 2, cy, size, GOLD, 'center', '#a52222');
-    });
-  }
-  if (p.sub) typedBlock(px, p.sub, W / 2, cy + size + 10, t, 0.9, 16, LIGHT, W - 50);
+  if (k > 0.05) px.zoom(k, W / 2, cy + size / 2, () => px.text(p.text, W / 2, cy, size, INK, 'center'));
+  if (sub.length) typedBlock(px, p.sub, W / 2, cy + size + 20, t, 0.9, 16, '#2b3550', W - 76);
 }
 
 function image(t, px, p) {
