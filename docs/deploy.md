@@ -91,9 +91,8 @@ Why these:
 - `--max-instances 1`: the queue is in memory, so one copy (see above).
 - `--memory 4Gi`: the voice model needs about 1.3 GB, and a Cloud Run copy's `/tmp`, where
   jobs work, is in memory too.
-- `PIXELREEL_URL` starts as the service's own `run.app` address, and changes to
-  `https://pixelreel.pro` once that answers (`gcloud run services update pixelreel --region
-  europe-west1 --update-env-vars PIXELREEL_URL=https://pixelreel.pro`).
+- `PIXELREEL_URL` is `https://pixelreel.pro`, so the links the service gives use it. The
+  service's own address, `https://pixelreel-252679649337.europe-west1.run.app`, still answers.
 
 Callers' addresses are kept out of the logs: the project's `_Default` log sink excludes Cloud
 Run's request logs (`pixelreel-request-logs`), as the privacy page says. The image repository
@@ -101,13 +100,16 @@ keeps the latest two images.
 
 ### The address
 
-`pixelreel.pro` and `www.pixelreel.pro` are Cloud Run domain mappings, which need the domain
-verified for the Google account that makes them:
+Pixel Reel is at `https://pixelreel.pro`; the connector address to paste into Claude is
+`https://pixelreel.pro/mcp`. `pixelreel.pro` and `www.pixelreel.pro` are Cloud Run domain
+mappings, made like this (all done; for another domain, or to make them again). The domain
+must be verified for the Google account that makes them:
 
 1. In [Search Console](https://search.google.com/search-console), add a **Domain** property for
    `pixelreel.pro`. It gives a TXT record (`google-site-verification=...`); add it at the
    domain's DNS host, then press Verify.
-2. Make the mappings: `gcloud beta run domain-mappings create --service pixelreel --domain
+2. Make the mappings (once verified, or Google refuses and they must be deleted and made
+   again): `gcloud beta run domain-mappings create --service pixelreel --domain
    pixelreel.pro --region europe-west1` (and again for `www.pixelreel.pro`).
 3. At the DNS host, point the names at Google, replacing any records already there for them:
 
