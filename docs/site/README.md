@@ -209,6 +209,22 @@ top is on two rows, where a word is cut in two, where words sit on a pattern in 
 night scenes, and where the page is wider than the screen. Fix a layout it complains about by letting it reflow (a `flex-basis` or a column
 width in `ch`, which grows with the letters), not by a rule for one size of screen.
 
+Three things it cannot see, so look at them by hand:
+
+- **Inside a dialog** (the menu, Make it comfy, the theatre). Open it with `showModal()`
+  and compare its `scrollWidth` with its `clientWidth`, at 320 pixels wide with
+  OpenDyslexic, the biggest size and the roomiest spacing.
+- **What only someone with a mouse is shown** (the QR code and its words, `.scan`). A
+  headless browser says it has no mouse, so the rule never applies there. Switch it on by
+  setting that rule's `media.mediaText` to `screen` through `document.styleSheets`.
+- **The printed page.** Set every `@media print` rule's `mediaText` to `screen` the same
+  way, at 794 by 1123 pixels, which is a sheet of A4.
+
+A device is told apart by what the browser says it is (`deviceOf` in `site/js/app.js`), so
+to see what a phone is shown (`data-on-phone`), give the headless browser an iPhone's user
+agent. To check that a QR code reads, a reader such as zxing-cpp will read one from a
+screenshot.
+
 ## The reels it plays
 
 All are `reel.json` reels in `reels/`, written the way Claude writes them through the
