@@ -3,6 +3,7 @@
 // transitions as src/main.js), with the site's own buttons round it, and any number can sit
 // on one page. Only one talks at a time, and none makes a sound until it is pressed.
 import { calm, onComfortChange } from './calm.js';
+import { sentenceAt, sentencesOf } from './follow.js';
 import { pacedClock, rateOf } from './pace.js';
 import { loadReel } from './reels.js';
 import { createKit, H, W } from '../../src/kit.js';
@@ -262,14 +263,36 @@ export class ReelPlayer {
     this.root.dispatchEvent(new CustomEvent('reelopen', { bubbles: true }));   // for anything on the page that waits for a reel to be ready (kept.js)
   }
 
-  /** Every caption goes in the caption's box at once, one showing, so the box is as tall as the longest and never jumps. */
-  setWords(list, on) {
+  /**
+   * Every caption goes in the caption's box at once, one showing, so the box is as tall as
+   * the longest and never jumps. With `sentences`, each is written a sentence at a time, so
+   * that the one being said can be marked (follow).
+   */
+  setWords(list, on, sentences = false) {
+    this.saying = null;
     this.words.replaceChildren(...list.map((text, i) => {
       const p = document.createElement('p');
-      p.textContent = text;
+      if (sentences && i) p.append(...sentencesOf(text).map((sentence) => Object.assign(document.createElement('span'), { textContent: sentence })));
+      else p.textContent = text;
       p.classList.toggle('on', i === on);
       return p;
     }));
+  }
+
+  /**
+   * Marks the sentence being said, when every word the narrator says is written under the
+   * picture, so a reader keeps their place. Nothing is marked before the reel starts or
+   * once it has ended.
+   */
+  follow() {
+    if (!this.allWords) return;
+    const { index, elapsedMs, ended } = this.player, scene = this.show.reel.scenes[index];
+    const line = this.words.children[index + 1], seconds = this.show.clipFor(scene)?.seconds ?? this.show.durations[index] / 1000;
+    const now = this.intro || ended || !line?.children.length ? null : line.children[sentenceAt([...line.children].map((span) => span.textContent), seconds, elapsedMs / 1000)];
+    if (now === this.saying) return;
+    this.saying?.classList.remove('now');
+    now?.classList.add('now');
+    this.saying = now ?? null;
   }
 
   /** Plays from the start, or carries on. */
@@ -327,7 +350,7 @@ export class ReelPlayer {
     if (all !== this.allWords) {
       this.allWords = all;
       this.root.classList.toggle('all-words', all);
-      this.setWords([reel.intro, ...scenes.map((s) => (all ? s.say ?? s.caption : s.caption))], 0);
+      this.setWords([reel.intro, ...scenes.map((s) => (all ? s.say ?? s.caption : s.caption))], 0, all);
     }
     [...this.words.children].forEach((p, i) => p.classList.toggle('on', i === (this.intro ? 0 : state.index + 1)));
     if (state.ended && !this.wasEnded) {
@@ -370,6 +393,7 @@ export class ReelPlayer {
   }
 
   paintProgress() {
+    this.follow();
     const { line, reel } = this.show, at = this.intro ? 0 : this.player.positionMs;
     this.fill.style.width = `${(100 * at) / line.total}%`;
     const second = Math.floor(at / 1000);

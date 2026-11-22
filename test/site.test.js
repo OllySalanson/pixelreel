@@ -6,6 +6,7 @@ import { textArt } from '../scripts/site-art.mjs';
 import { addToClaudeLink, EXAMPLES, NARRATORS, narratorsHtml, pageFacts, playerHtml, robotsTxt, SITE_PAGES, siteModules, sitemapXml, sitePage, spriteSvg, WATCH, watchPage } from '../service/site.mjs';
 import { staticFile } from '../service/static.mjs';
 import { hopHeight, lookAt, REELIE, SAYINGS, SCENES } from '../site/js/landscape.js';
+import { sentenceAt, sentencesOf } from '../site/js/follow.js';
 import { askFor } from '../site/js/maker.js';
 import { nowPlaying } from '../site/js/player.js';
 import { PACES, pacedClock, rateOf } from '../site/js/pace.js';
@@ -602,6 +603,38 @@ describe('the whole reel on one page', () => {
     assert.match(print, /\.storyboard \.step \{ break-inside: avoid;/);
     assert.match(print, /\.sheet-made \{ display: block;/, 'and it says where it came from');
     assert.match(css, /\n\.sheet-made \{ display: none; \}/, 'which the screen does not');
+  });
+});
+
+describe('following the words', () => {
+  const line = "It's free. There's nothing to sign up for. No account, no name, no email address.";
+
+  it('takes a line a sentence at a time, losing nothing of it', () => {
+    const sentences = sentencesOf(line);
+    assert.deepEqual(sentences, ["It's free. ", "There's nothing to sign up for. ", 'No account, no name, no email address.']);
+    assert.equal(sentences.join(''), line);
+    assert.deepEqual(sentencesOf('It runs 2.5 times faster! Really? "Yes." Fine'), ['It runs 2.5 times faster! ', 'Really? ', '"Yes." ', 'Fine'], 'a full stop inside a number ends nothing');
+    assert.deepEqual(sentencesOf('One thing'), ['One thing']);
+    assert.deepEqual(sentencesOf(''), []);
+    for (const name of ['gas-meter', 'pension-letter', 'site-phone']) {
+      for (const scene of parseReelJson(readFileSync(root(`reels/${name}/reel.json`), 'utf8')).scenes) assert.equal(sentencesOf(scene.say).join(''), scene.say, `${name}: ${scene.title}`);
+    }
+  });
+
+  it('marks each sentence for a share of the line in proportion to its letters, and the last to the end', () => {
+    const sentences = sentencesOf(line);
+    assert.deepEqual([0, 0.5, 1.2, 2.5, 4, 6.5, 99].map((elapsed) => sentenceAt(sentences, 6.6, elapsed)), [0, 0, 1, 1, 2, 2, 2]);
+    assert.equal(sentenceAt(['One thing'], 3, 0), 0);
+    assert.equal(sentenceAt(['One thing'], 3, 30), 0);
+    assert.equal(sentenceAt([], 3, 1), -1, 'a line with no sentences has none to mark');
+  });
+
+  it('is done by the player only where every word is written, and never before a reel starts or after it ends', () => {
+    const code = readFileSync(root('site/js/player.js'), 'utf8'), css = readFileSync(root('site/css/site.css'), 'utf8');
+    assert.match(code, /follow\(\) \{\s*if \(!this\.allWords\) return;/);
+    assert.match(code, /const now = this\.intro \|\| ended \|\| !line\?\.children\.length \? null :/);
+    assert.match(code, /paintProgress\(\) \{\s*this\.follow\(\);/, 'as often as the bar that shows where you are is drawn');
+    assert.match(css, /\.reel-words span\.now \{ color: var\(--gold\); \}/);
   });
 });
 
