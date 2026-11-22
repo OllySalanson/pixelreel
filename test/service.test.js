@@ -1033,6 +1033,15 @@ describe('the service over HTTP', async () => {
     assert.ok(claude.includes('href="https://claude.ai/customize/connectors?modal=add-custom-connector&amp;connectorName=Pixel%20Reel&amp;connectorUrl=https%3A%2F%2Freels.example%2Fmcp"'), 'the big button opens Claude with the name and address filled in');
   });
 
+  it('has a short address that goes straight to adding it in Claude', async () => {
+    const res = await fetch(`${local}/add`, { redirect: 'manual' });
+    assert.equal(res.status, 302);
+    assert.equal(res.headers.get('location'), 'https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Pixel%20Reel&connectorUrl=https%3A%2F%2Freels.example%2Fmcp');
+    assert.equal(res.headers.get('cache-control'), 'no-store');
+    assert.equal(res.headers.get('x-robots-tag'), 'noindex, nofollow');
+    assert.equal((await fetch(`${local}/add/`, { redirect: 'manual' })).status, 404, 'only that address');
+  });
+
   it('sends a page compressed, and not at all to a browser that has it', async () => {
     const plain = await fetch(`${local}/`, { headers: { 'accept-encoding': 'identity' } });
     const small = await fetch(`${local}/`, { headers: { 'accept-encoding': 'br' } });
