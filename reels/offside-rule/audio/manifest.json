@@ -1,0 +1,36 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "The offside rule. Everybody argues about it. It is simpler than it sounds.",
+      "file": "9ee4d8e5b0564200.mp3",
+      "seconds": 5.44
+    },
+    {
+      "text": "It is all about one moment. The moment a team mate passes the ball forward to you.",
+      "file": "6ccbfb808e03b83d.mp3",
+      "seconds": 4.96
+    },
+    {
+      "text": "At that moment, look at the last defender, not counting the goalkeeper. If you are level with them, or behind them, you are onside. Play on.",
+      "file": "b8a1bb4c50f27765.mp3",
+      "seconds": 8.72
+    },
+    {
+      "text": "But if you are already past that defender, and ahead of the ball, when it is played, you are offside. Up goes the flag.",
+      "file": "62bed4fbd74b4296.mp3",
+      "seconds": 6.72
+    },
+    {
+      "text": "A little small print. You cannot be offside in your own half. Or straight from a throw in, a corner, or a goal kick.",
+      "file": "003f78d541183aec.mp3",
+      "seconds": 6.96
+    },
+    {
+      "text": "And that is it. It is where you are when the ball is played. Not where you are when you get it. Now you can explain it to everybody else.",
+      "file": "3c08297bcd07816b.mp3",
+      "seconds": 7.44
+    }
+  ]
+}

@@ -1,0 +1,154 @@
+{
+  "format": "pixelreel/1",
+  "title": "The offside rule, at last",
+  "transition": "wipe",
+  "scenes": [
+    {
+      "title": "Offside",
+      "caption": "The rule everybody argues about. It is simpler than it sounds.",
+      "say": "The offside rule. Everybody argues about it. It is simpler than it sounds.",
+      "picture": {
+        "type": "title",
+        "text": "OFFSIDE",
+        "sub": "Explained at last"
+      }
+    },
+    {
+      "title": "One moment",
+      "caption": "It is all about the moment the ball is passed to you.",
+      "say": "It is all about one moment. The moment a team mate passes the ball forward to you.",
+      "picture": {
+        "type": "big",
+        "text": "ONE MOMENT",
+        "sub": "when the ball is passed"
+      }
+    },
+    {
+      "title": "Onside",
+      "caption": "Level with the last defender, or behind them. Play on.",
+      "say": "At that moment, look at the last defender, not counting the goalkeeper. If you are level with them, or behind them, you are onside. Play on.",
+      "picture": {
+        "type": "sprite",
+        "label": "ONSIDE",
+        "rows": [
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGgggggg",
+          "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGyGggggggggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGyGggggggggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGkkkggggggggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGsssggggggggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGbbbbbgggwwwwwwwwwwwwwwwwwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGsbbbsgggwgggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGbbbbbgggwgggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGwwwggggwgggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGkGkggggwgggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGkykggggwgggGGGGGGGGggggck",
+          "GGGGGGGGgkkkggggGGGGGGGGggggggggGGGGGGGGggggwgggGGGGGGkkkgggck",
+          "GGGGGGGGgsssggggGGGGGGGGggggggggGGGGGGyGggggwgggGGGGGGsssgggck",
+          "GGGGGGGGrrrrrgggGGGGGGGGggggggggGGGGGGGGggggwgggGGGGGyyyyyggck",
+          "GGGGGGGGsrrrsgggGGGGGGGGggggggggGGGGGGyGggggwgggGGGGGsyyysggck",
+          "GGGGGGGGrrrrrgggGGGGGGGGggggggggGGGGGGGGggggwgggGGGGGyyyyyggck",
+          "GGGGGGGGgwwwggggGGGGGGGGggggggggGGGGGGyGggggwgggGGGGGGwwwgggck",
+          "GGGGGGGGgkgkggewGGGGGGGGggggggggGGGGGGGGggggwgggGGGGGGkGkgggck",
+          "GGGGGGGGgkgkggwwGwGGGGGwgkkkgwggGGGGGkkkggggwgggGGGGGGkGkgggck",
+          "GGGGGGGGggggggggGGGGwGGGgswsggggGGGGGsssggggwgggGGGGGGGGggggck",
+          "GGGGGGGGggggggggGGGGGGGGbbbbbgggGGGGrrrrrgggwgggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGsbbbsgggGGGGsrrrsgggwgggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGbbbbbgggGGGGrrrrrgggwgggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGgwwwggggGGGGGwwwggggwgggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGgkgkggggGGGGGkykggggwwwwwwwwwwwwwwwwwg",
+          "GGGGGGGGggggggggGGGGGGGGgkgkggggGGGGGkGkggggggggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGyGggggggggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGyGggggggggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGggggwg",
+          "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGgggggg"
+        ]
+      }
+    },
+    {
+      "title": "Offside",
+      "caption": "Past the last defender when the ball is played. Flag up.",
+      "say": "But if you are already past that defender, and ahead of the ball, when it is played, you are offside. Up goes the flag.",
+      "picture": {
+        "type": "sprite",
+        "label": "OFFSIDE",
+        "rows": [
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGgggggg",
+          "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGyGggggggggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGyGggggggggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGkkkggggggggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGsssggggggggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGbbbbbgggwwwwwwwwwwwwwwwwwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGsbbbsgggwgggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGbbbbbgggwgggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGwwwggggwgggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGkGkggggwgggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGkykggggwgggGGGGGGGGggggck",
+          "GGGGGGGGgkkkggggGGGGGGGGggggggggGGGGGGGGggggwgggGGGGGGkkkgggck",
+          "GGGGGGGGgsssggggGGGGGGGGggggggggGGGGGGyGggggwgggGGGGGGsssgggck",
+          "GGGGGGGGrrrrrgggGGGGGGGGggggggggGGGGGGGGggggwgggGGGGGyyyyyggck",
+          "GGGGGGGGsrrrsgggGGGGGGGGggggggggGGGGGGyGggggwgggGGGGGsyyysggck",
+          "GGGGGGGGrrrrrgggGGGGGGGGggggggggGGGGGGGGggggwgggGGGGGyyyyyggck",
+          "GGGGGGGGgwwwggggGGGGGGGGggggggggGGGGGGyGggggwgggGGGGGGwwwgggck",
+          "GGGGGGGGgkgkggewGGGGGGGGggggggggGGGGGGGGggggwgggGGGGGGkGkgggck",
+          "GGGGGGGGgkgkggwwGwGGGGGwgkkkgwggGGGGGGyGggggkkkgGGGGGGkGkgggck",
+          "GGGGGGGGggggggggGGGGwGGGgswsggggGGGGGGGGggggsssgGGGGGGGGggggck",
+          "GGGGGGGGggggggggGGGGGGGGbbbbbgggGGGGGGyGgggrrrrrGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGsbbbsgggGGGGGGGGgggsrrrsGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGbbbbbgggGGGGGGyGgggrrrrrGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGgwwwggggGGGGGGGGggggwwwgGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGgkgkggggGGGGGGyGggggkwkwwwwwwwwwwwwwwg",
+          "GGGGGGGGggggggggGGGGGGGGgkgkggggGGGGGGGGggggkgkgGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGyGggggggggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGyGggggggggGGGGGGGGggggwg",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGggggwg",
+          "wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww",
+          "GGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGggggggggGGGGGGGGgggggg"
+        ]
+      }
+    },
+    {
+      "title": "The small print",
+      "caption": "Not in your own half. Not from a throw-in, a corner or a goal kick.",
+      "say": "A little small print. You cannot be offside in your own half. Or straight from a throw in, a corner, or a goal kick.",
+      "picture": {
+        "type": "list",
+        "heading": "NEVER OFFSIDE",
+        "items": [
+          "In your own half",
+          "From a throw-in",
+          "From a corner",
+          "From a goal kick"
+        ],
+        "start": 2.8,
+        "every": 1.2
+      }
+    },
+    {
+      "title": "That is it",
+      "caption": "It is where you are when the ball is played. Not when you get it.",
+      "say": "And that is it. It is where you are when the ball is played. Not where you are when you get it. Now you can explain it to everybody else.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "tick",
+            "label": "When it is played"
+          },
+          {
+            "icon": "cross",
+            "label": "Not when you get it"
+          }
+        ],
+        "start": 1.5,
+        "every": 2
+      }
+    }
+  ]
+}

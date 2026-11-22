@@ -86,7 +86,7 @@ connector (ready-made pictures only) and recorded by Peter with `npm run voices`
 | `site-what`, `site-how`, `site-who`, `site-peter`, `site-make`, `site-good`, `site-questions` | "Make a pixel reel about this", one for each part of the home page. With `site-open`, they are also "Watch this whole page". |
 | `site-open` | The reel for "It is all open", and the code typing out beside it. |
 | `site-privacy`, `site-terms` | "Make a pixel reel about this" on the privacy and terms pages. A plain page gets the button by naming a reel in the comment at its top (`reel: site-privacy`). |
-| `gas-meter`, `pension-letter`, `volcano`, `cup-of-tea` | The examples under Now showing. `pension-letter` also plays beside the letter in "Same letter, two ways". |
+| `gas-meter`, `pension-letter`, `volcano`, `cup-of-tea`, `offside-rule`, `blue-sky` | The examples under Now showing. `pension-letter` also plays beside the letter in "Same letter, two ways". |
 
 Change a reel's words and it needs recording again (`npm run voices <name>`); a test fails
 until it is. Change what a part of the page says, and change its reel to match. A picture's
@@ -192,3 +192,15 @@ looked like the old site.
 | A shared reel | Waiting for the voice | It is all open |
 | --- | --- | --- |
 | ![A shared reel's page: the player under a night sky.](log/v4-reel.jpg) | ![Reelie waits under a RECORDING sign.](log/v4-waiting.jpg) | ![The open-source part of the home page, with code typing out.](log/v4-open.jpg) |
+
+### Version 5
+
+- **Six examples, not four.** Now showing gains "The offside rule, at last" and "Why the sky
+  is blue", each with pixel art drawn for it: a football pitch with the last defender's line
+  marked, sunlight fanning out into its colours, a sunset. The posters sit three by two.
+- The two questions the make-one box suggests (the offside rule, why the sky is blue) are now
+  ones a visitor can watch the answer to on the same page.
+
+| Six examples |
+| --- |
+| ![Six example reels as posters, three by two, on a strip of film.](log/v5-gallery.jpg) |
