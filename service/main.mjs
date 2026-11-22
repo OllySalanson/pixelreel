@@ -40,7 +40,9 @@ const log = (line) => console.log(`${new Date().toISOString()} ${line}`);
 const store = process.env.PIXELREEL_S3_BUCKET ? S3Store.fromEnv(process.env) : new DiskStore(data);
 // The voice is loaded as soon as the service wakes, and kept: by the time Claude has written
 // a reel's scenes, Peter is ready to read them. PIXELREEL_WARM_VOICE=0 loads it for each reel instead.
-const voice = process.env.PIXELREEL_WARM_VOICE === '0' ? null : new WarmVoice({ log });
+// Another language's model is loaded the first time a reel is in it, and kept for the next:
+// PIXELREEL_KEEP_LANGUAGES says how many are held at once (2 unless told; each is about 220 MB to hold).
+const voice = process.env.PIXELREEL_WARM_VOICE === '0' ? null : new WarmVoice({ log, keep: Number(process.env.PIXELREEL_KEEP_LANGUAGES) || 2 });
 voice?.start();
 // Peter reads English. PIXELREEL_LANGUAGES names the other languages he may read here (french, german,
 // spanish, italian, portuguese, dutch): only ones whose voice models are to hand (docs/deploy.md).

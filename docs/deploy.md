@@ -146,9 +146,12 @@ they sound.
   writable and nothing is downloaded when the service runs.
 - To switch them off without a new image:
   `gcloud run services update pixelreel --region europe-west1 --project pixelreel-515501 --update-env-vars PIXELREEL_LANGUAGES=,PIXELREEL_NARRATORS=`.
-- The voice kept loaded is the English one. A reel in another language loads that
-  language's model for the reel, in a second process, so for its length the service holds
-  two models.
+- The English model is kept loaded for good, about 0.8 GB. Another language's model is
+  loaded into the same Python the first time a reel is in it and kept for the next, two
+  at once unless `PIXELREEL_KEEP_LANGUAGES` says otherwise, at about 450 MB each: so the
+  voice holds up to about 1.7 GB of the 4 GiB. Measured on a development machine, memory
+  stayed level over seven changes of language. If the voice ever comes to hold more than
+  2.6 GB it stops after the reel in hand and is started afresh, and the log says so.
 - A narrator's voice is a file for each language, so the build fetches every narrator for
   every language, then loads each again with nothing allowed to be fetched
   (`scripts/setup-voices.sh`). A build with one missing stops there. The first image with

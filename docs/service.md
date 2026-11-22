@@ -56,6 +56,7 @@ npm run service
 | `PIXELREEL_LANGUAGES` | none (all six in the image) | Other languages Peter may read, such as `french,spanish`. Off, every reel is in English. See [Other languages](#other-languages). |
 | `PIXELREEL_NARRATORS` | none (all five in the image) | Narrators besides Peter that may be asked for, such as `anna,stuart`. Off, Peter reads every reel. See [Other narrators](#other-narrators). |
 | `PIXELREEL_WARM_VOICE` | on | `0` loads the voice afresh for each reel, instead of once when the service starts. Saves about 1 GB of memory, and makes every reel wait longer. |
+| `PIXELREEL_KEEP_LANGUAGES` | `2` | How many languages besides English the loaded voice holds at once. Each is about 450 MB of memory; fewer means a reel in a language not held waits for its model to load. |
 
 It records one reel at a time, and carries on with any waiting after a restart. Stopping it
 (Ctrl+C) finishes the job in hand first. To put it online, see [deploy.md](deploy.md).
@@ -228,8 +229,11 @@ another language.
 - Each language is a model of its own, about 220 MB, and it must be to hand: on your
   machine it downloads itself the first time; in the image it has to be built in
   ([deploy.md](deploy.md#other-languages-and-narrators)).
-- The voice kept loaded is the English one, so a reel in another language loads its model
-  each time: on Cloud Run its first line comes about 12 seconds later than an English reel's.
+- The English model is kept loaded for good. Another language's model is loaded into the
+  same Python the first time a reel is in it, and kept for the next reel in that language.
+  It holds two other languages at once unless `PIXELREEL_KEEP_LANGUAGES` says otherwise;
+  a third makes the one longest unused give way. Each one held is about 450 MB of memory.
+  The log says each time one is loaded, how long it took and what the voice then holds.
 - **What has been checked, and what has not.** A line in each of the six languages was
   recorded with Peter's voice and written down again by a speech-to-text model: each was
   heard in the right language, word for word. Two whole French reels that a real Claude

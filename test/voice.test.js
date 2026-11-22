@@ -35,7 +35,7 @@ describe('the voice kept ready', () => {
     const { warm, said, usual, starts } = voice();
     assert.equal(await warm.start(), true);
     assert.equal(await warm.start(), true, 'asking again does not start another');
-    assert.deepEqual(starts(), ['--serve --voice peter_yearsley --threads 3']);
+    assert.deepEqual(starts(), ['--serve --voice peter_yearsley --threads 3 --keep 2']);
     assert.match(said[0], /^voice: peter_yearsley is loaded and ready, after \d+\.\d seconds$/);
 
     const first = lines('Boil the kettle.', 'Pour it.'), done = [];
@@ -97,13 +97,37 @@ describe('the voice kept ready', () => {
     assert.equal(starts().length, 1, 'one job it could not do does not stop it');
   });
 
+  it('speaks other languages too, loading each one the first time it is asked for', async () => {
+    const { warm, said, usual, starts } = voice('', { keep: 3 });
+    const french = lines('Un.', 'Deux.'), again = lines('Trois.'), english = lines('Four.');
+    await warm.speak(french, { engine: 'pocket', voice: 'anna', lang: 'french' }, 2, () => {});
+    await warm.speak(again, { engine: 'pocket', voice: 'anna', lang: 'french' }, 2, () => {});
+    await warm.speak(english, PETER, 2, () => {});
+    assert.deepEqual(usual, [], 'none of it the usual way, which would load the model afresh for each reel');
+    assert.equal(readFileSync(french[1].wav, 'utf8'), 'anna says in french: Deux.');
+    assert.equal(readFileSync(english[0].wav, 'utf8'), 'peter_yearsley says: Four.', 'and English is not named');
+    assert.deepEqual(starts(), ['--serve --voice peter_yearsley --threads 3 --keep 3'], 'in the one Python, told how many languages to hold');
+    assert.deepEqual(said.filter((line) => /model is loaded/.test(line)), ['voice: the french model is loaded, after 0.1 seconds (holding 1600 MB)'], 'the model is loaded once, and the log says how long it took and what it holds');
+  });
+
+  it('starts afresh when the loaded voice says it holds too much, losing nothing', async () => {
+    const { warm, said, usual, starts } = voice('fills');
+    const done = [], in1 = lines('Un.'), in2 = lines('Eins.'), in3 = lines('Four.');
+    await warm.speak(in1, { engine: 'pocket', voice: 'peter_yearsley', lang: 'french' }, 2, (wav) => done.push(wav));
+    await warm.speak(in2, { engine: 'pocket', voice: 'peter_yearsley', lang: 'german' }, 2, (wav) => done.push(wav));
+    await new Promise((ok) => warm.child ? warm.child.once('close', ok) : ok());   // it stops itself once that reel is spoken
+    await warm.speak(in3, PETER, 2, (wav) => done.push(wav));
+    assert.deepEqual(done, [in1[0].wav, in2[0].wav, in3[0].wav], 'every line was spoken');
+    assert.deepEqual(usual, [], 'and none the usual way: the reel that filled it was finished first');
+    assert.equal(starts().length, 2, 'it was started again for the next reel');
+    assert.ok(said.includes('voice: holding 2700 MB, more than it should: starting afresh'), said.join('\n'));
+  });
+
   it('leaves other engines, and what goes wrong after a line is spoken, alone', async () => {
     const { warm, usual, starts } = voice();
     await warm.speak(lines('One.'), { engine: 'kokoro', voice: 'bm_george' }, 2, () => {});
     assert.deepEqual(usual, ['One.'], 'Kokoro is not Pocket TTS: it is spoken the usual way');
-    await warm.speak(lines('Un.'), { engine: 'pocket', voice: 'peter_yearsley', lang: 'french' }, 2, () => {});
-    assert.deepEqual(usual.splice(1), ['Un.'], 'and so is another language: the voice kept loaded is the English one');
-    assert.deepEqual(starts(), [], 'and nothing is loaded for either');
+    assert.deepEqual(starts(), [], 'and nothing is loaded for it');
     await assert.rejects(warm.speak(lines('Two.', 'Three.'), PETER, 2, () => { throw new Error('ffmpeg could not encode it'); }), /^Error: ffmpeg could not encode it$/);
     assert.deepEqual(usual, ['One.'], 'a line that was spoken but could not be saved is not spoken again');
     // the voice is still finishing "Three." of the reel that was given up on: its lines are not taken for this one's

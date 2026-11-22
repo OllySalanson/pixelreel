@@ -12,7 +12,12 @@ the voice named by --voice once, prints {"ready": true}, then takes a job a line
 long as stdin stays open, ending each with {"done": true}, or {"error": "..."} if that job
 could not be spoken. A job's "id" comes back on every line about it, so its lines are
 never taken for another's. Loading takes far longer than speaking a line, so a reel recorded
-this way starts being spoken at once.
+this way starts being spoken at once. The English model stays loaded for good. Another
+language's is loaded the first time a job asks for it, which it says with
+{"loaded": "french", "seconds": 9.1}, and is kept for the next such job; --keep says how
+many other languages are held at once (2 unless told), the one longest unused making way.
+If it comes to hold more than --most MB all the same (2600 unless told), it says
+{"full": true} after the job in hand and stops, for the service to start it afresh.
 
 Needs the pocket-tts and soundfile packages (scripts/setup-voices.sh installs them). The
 model downloads itself the first time, about 220 MB.
@@ -20,9 +25,11 @@ You do not normally run this yourself: npm run voices does. It is not called poc
 because that name would hide the pocket_tts package it imports.
 """
 
+import gc
 import json
 import os
 import sys
+import time
 
 
 def calm(threads: int) -> None:
@@ -44,7 +51,7 @@ def load(threads: int, language=None):
     try:
         model = TTSModel.load_model(language=language) if language and language != "english" else TTSModel.load_model()
     except Exception as err:  # a language it does not speak, or a model that could not be fetched
-        sys.exit(f"Pocket TTS could not load its {language or 'English'} model ({err}).")
+        raise ValueError(f"Pocket TTS could not load its {language or 'English'} model ({err}).") from err
     states = {}
 
     def voice(name: str):
@@ -57,6 +64,25 @@ def load(threads: int, language=None):
         return states[name]
 
     return model, sf, voice
+
+
+def release() -> None:
+    """Gives the memory of models let go back to the machine, where it can be (glibc keeps it otherwise)."""
+    gc.collect()
+    try:
+        import ctypes
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except (OSError, AttributeError):
+        pass  # not glibc: the memory is reused all the same
+
+
+def holds() -> int:
+    """How much memory this is holding, in MB, or 0 where that cannot be read."""
+    try:
+        with open("/proc/self/statm") as statm:
+            return int(statm.read().split()[1]) * os.sysconf("SC_PAGE_SIZE") // (1024 * 1024)
+    except (OSError, ValueError, IndexError):
+        return 0
 
 
 def speak(job: dict, model, sf, voice, about: dict = {}) -> None:
@@ -74,12 +100,31 @@ def serve(args: list) -> None:
         return args[args.index(name) + 1] if name in args else fallback
 
     threads = int(option("--threads", "2"))
+    keep = max(1, int(option("--keep", "2")))
+    most = int(option("--most", "2600"))
     calm(threads)
-    model, sf, voice = load(threads)
     try:
-        voice(option("--voice", "peter_yearsley"))
+        english = load(threads)
+        english[2](option("--voice", "peter_yearsley"))
     except ValueError as err:
         sys.exit(str(err))
+    others = {}  # the other languages' models, the one used longest ago first
+
+    def loaded(language: str, about: dict):
+        """The model for `language`, loading it if it is not held, and letting the one longest unused go to make room."""
+        if language == "english":
+            return english
+        if language in others:
+            others[language] = others.pop(language)  # used just now
+            return others[language]
+        while len(others) >= keep:
+            del others[next(iter(others))]
+        release()
+        began = time.monotonic()
+        others[language] = load(threads, language)
+        print(json.dumps({"loaded": language, "seconds": round(time.monotonic() - began, 1), "holds": holds(), **about}), flush=True)
+        return others[language]
+
     print(json.dumps({"ready": True}), flush=True)
     for text in sys.stdin:
         if not text.strip():
@@ -88,12 +133,14 @@ def serve(args: list) -> None:
         try:
             job = json.loads(text)
             about = {"id": job.get("id")}
-            if job.get("language", "english") != "english":  # the one kept loaded speaks English
-                raise ValueError(f"this voice is loaded for English, not {job['language']}")
-            speak(job, model, sf, voice, about)
+            # not kept in names of this loop's own: a model let go must have nothing still holding it
+            speak(job, *loaded(job.get("language") or "english", about), about)
             print(json.dumps({"done": True, **about}), flush=True)
         except Exception as err:  # this job failed; the next may not
             print(json.dumps({"error": str(err), **about}), flush=True)
+        if holds() > most:  # models let go do not always give their memory back: start afresh rather than grow
+            print(json.dumps({"full": True, "holds": holds()}), flush=True)
+            return
 
 
 def main() -> None:
@@ -103,8 +150,8 @@ def main() -> None:
     job = json.load(sys.stdin)
     threads = int(job.get("threads", 2))
     calm(threads)
-    model, sf, voice = load(threads, job.get("language"))
     try:
+        model, sf, voice = load(threads, job.get("language"))
         speak(job, model, sf, voice)
     except ValueError as err:
         sys.exit(str(err))
