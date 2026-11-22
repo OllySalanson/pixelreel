@@ -13,6 +13,14 @@ export function deviceOf({ userAgent = '', platform = '', maxTouchPoints = 0 } =
   return /Android/.test(userAgent) ? 'android' : 'computer';
 }
 
+/** What to call the device in hand, in a sentence: 'phone', 'iPad', 'tablet' or 'computer'. */
+export function deviceName({ userAgent = '', platform = '', maxTouchPoints = 0 } = {}) {
+  if (/iPad/.test(userAgent) || (platform === 'MacIntel' && maxTouchPoints > 1)) return 'iPad';
+  if (/iPhone|iPod/.test(userAgent)) return 'phone';
+  if (/Android/.test(userAgent)) return /Mobile/.test(userAgent) ? 'phone' : 'tablet';   // an Android phone says it is mobile; a tablet does not
+  return 'computer';
+}
+
 /** The site's own pages that `links` (a list of addresses) lead to, each once, as paths: for the service worker to keep. */
 export function pagesAmong(links, origin) {
   const paths = new Set();

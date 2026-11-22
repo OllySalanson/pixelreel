@@ -3,6 +3,7 @@
 // makes it an app on a phone. Without it the pages still read and link.
 import { startApp } from './app.js';
 import { startComfort } from './comfort.js';
+import { startKept } from './kept.js';
 import { startCopying, startMaker } from './maker.js';
 import { ReelPlayer } from './player.js';
 import { startRuler } from './ruler.js';
@@ -23,6 +24,7 @@ startHearing();
 startMaker();
 startCopying();
 startSending();
+startKept();   // before the page a reel is watched on asks for its reel, so it hears when that is ready
 startWatching();
 startSignal();
 for (const root of document.querySelectorAll('main .reel[data-reel]')) {

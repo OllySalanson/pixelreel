@@ -45,6 +45,9 @@ seen by whoever might get the link.
 - So that it opens with no internet, your browser keeps a copy of the pages of this site
   you have opened, and of the voice in any of its example reels you have played. The copies
   stay on your own device. They are never sent anywhere.
+- A reel someone made is kept on your device only if you ask: with the Keep button on its
+  page, or by adding Pixel Reel to your home screen, which keeps each reel you open there.
+  The copy goes on the day the reel is deleted. The same button removes it sooner.
 - The box that writes what to say to Claude does its work on your device. What you type in
   it is not sent to Pixel Reel.
 - Where the box says Make my reel, it makes the reel for you. Then what you give it (your

@@ -38,8 +38,9 @@ function clock(shot, now) {
   return at < shot.span ? at : null;
 }
 
-export function startShots() {
-  const shots = [...document.querySelectorAll('canvas.shot[data-reel]')].map(makeShot);
+/** Wakes the pictures in `scope`: the whole page, or a part of it that was added later. */
+export function startShots(scope = document) {
+  const shots = [...scope.querySelectorAll('canvas.shot[data-reel]')].map(makeShot);
   let ticking = false;
   // a shot at rest shows its finished picture; `rested` says it has been drawn that way
   const rest = (shot) => { fitCanvas(shot.canvas); draw(shot, shot.span); shot.rested = true; };
@@ -98,7 +99,7 @@ export function startShots() {
   onComfortChange(() => { shots.forEach((s) => { s.rested = false; }); tick(); });
 
   // how long each reel on show lasts, in words
-  for (const el of document.querySelectorAll('[data-length]')) {
+  for (const el of scope.querySelectorAll('[data-length]')) {
     loadReel(el.dataset.length).then(({ line }) => { el.textContent = lengthWords(line.total); }).catch(() => {});
   }
 }

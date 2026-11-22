@@ -101,9 +101,20 @@ any other app (an installable web app). Three things make it one:
   adding itself, so there the button does it in one press. An iPhone will not, so there the
   button leads to the steps, and the page opens with the ones for the device in hand first.
 
+- **Reels kept to play with no internet** (`site/js/kept.js`). A made reel belongs to
+  whoever has its link, so nothing of it is kept unless someone asks: with "Keep it on this
+  phone" on its page, or by having Pixel Reel on their home screen, where each reel they
+  open is kept for them. A kept reel is its page, its `play.json` and its recordings, in a
+  store of its own (`KEPT` there, `REELS` in the worker: the same name). The worker still
+  asks the service first, and answers from the kept copy only when the service cannot be
+  reached. The copy goes when the service's does: on the day `play.json` says the reel is
+  kept until, or at once if the service says the reel has gone. The page shown when there
+  is no internet lists the kept reels, as posters to press.
+
 `test/app.test.js` runs the worker in Node with stand-ins for a browser's caches and network.
 To try it for real, open the site in a browser, stop the service, and reload: pages already
-opened still show, and a reel already played still plays.
+opened still show, a reel of the site's already played still plays, and so does a made reel
+that was kept.
 
 ## Changing it
 
@@ -537,3 +548,26 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | Under a reel that is ready to play |
 | --- |
 | ![Under the player: Send it to someone. Then, Too much to take in? Make it simpler. Make it shorter.](log/v23-simpler-shorter.jpg) |
+
+### Version 24
+
+- **A reel can be kept, to play with no internet.** A made reel's page has a new button,
+  "Keep it on this phone" (or this iPad, tablet or computer: it says which). Pressed, the
+  whole reel is kept on the device: its page, its pictures and Peter's voice. After that it
+  plays on a train, in a lift, or anywhere else the internet does not reach. The same
+  button removes it.
+- **For someone with Pixel Reel on their home screen, nothing to press:** every reel they
+  open there is kept for them.
+- **Your reels still play.** The page shown when there is no internet now lists the reels
+  kept on the device, each as a poster with its first picture, how long it runs and the day
+  it goes.
+- **Kept only as long as the reel is.** A kept copy goes on the day the service deletes the
+  reel, and at once if the reel is deleted sooner. Nothing is kept of a reel unless someone
+  asks: reels belong to whoever has their link, and a shared computer should not remember
+  them.
+- Tried in a browser with the service stopped: a kept reel's page opened and played, sound
+  and all, and a page never opened showed the kept reels to choose from.
+
+| Kept, on a laptop and on a phone | With no internet: the reels that still play |
+| --- | --- |
+| ![A reel's page with the button Remove it from this computer; and on a phone, Remove it from this phone, and the words Kept on this phone. It will play with no internet.](log/v24-kept.jpg) | ![Your reels still play: two posters, A proper cup of tea and How to read your gas meter, each marked Yours, with its length and the day it goes.](log/v24-yours.jpg) |
