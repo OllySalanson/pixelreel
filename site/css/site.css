@@ -321,7 +321,9 @@ h1 { font-size: clamp(2.6rem, 4.2vw + 1rem, 4.75rem); line-height: 1.06; letter-
 .finale h2 { font-size: clamp(2.5rem, 4.6vw + 1rem, 4.75rem); }
 .finale .lead { color: var(--cream); }
 .finale .row { margin-top: 2rem; }
-.foot { padding-block: 3rem clamp(9rem, 15vw, 13rem); overflow: hidden; }
+.finale-send p { max-width: none; font-weight: 500; color: var(--cream); }
+html:not([data-ready]) .finale-send { visibility: hidden; }   /* its button needs the script, so neither is seen without it; its room is kept */
+.foot { padding-block: 3rem clamp(11rem, 16vw, 13rem); overflow: hidden; }   /* room under the words for the hills, Reelie asleep and a few Zs */
 .foot-in { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 2rem 4rem; border-top: var(--u) solid #22344f; padding-top: 3rem; }
 .foot-brand p { margin-top: 0.5rem; color: var(--mist); }
 .foot-nav { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: 0.25rem 1.5rem; align-content: start; }

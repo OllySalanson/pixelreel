@@ -82,8 +82,8 @@ finds what does not fit) and to Still.
 No test can see how a page is laid out, so [`scripts/site-fit.js`](../../scripts/site-fit.js)
 does it in a browser: paste it into the console of a page, at a phone's width and at a
 laptop's, and it tries all 27 settings of Make it comfy and says where the bar across the
-top is on two rows, where a word is cut in two, and where the page is wider than the
-screen. Fix a layout it complains about by letting it reflow (a `flex-basis` or a column
+top is on two rows, where a word is cut in two, where words sit on a pattern in one of the
+night scenes, and where the page is wider than the screen. Fix a layout it complains about by letting it reflow (a `flex-basis` or a column
 width in `ch`, which grows with the letters), not by a rule for one size of screen.
 
 ## The reels it plays
@@ -325,3 +325,23 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | An example's page, on a laptop and a phone | What a message shows for it |
 | --- | --- |
 | ![The offside rule's page: a large player and Send it to someone; and the page that explains Pixel Reel, on a phone.](log/v12-watch-page.jpg) | ![OFFSIDE, explained at last, with a play button and the reel's name.](log/v12-watch-card.jpg) |
+
+### Version 13
+
+- **Words off the pattern, everywhere.** "Words never sit on a pattern" is a rule of this
+  site, and on a phone it was being broken twice: "Right then. Your turn." sat on the dusk
+  at the foot of the home page, and sleeping Reelie's Zs drifted up across the footer's
+  small print. The dusk now ends above the words, however near the top a narrow screen
+  puts them, and the Zs fade out before they reach any. The scenes also look again at
+  where the words are every time they draw, and keep more plain sky round them, enough
+  for OpenDyslexic's tall letters.
+- **`scripts/site-fit.js` checks it.** It reads the sky under every run of words that lies
+  on a scene, and says where it finds more than one colour. Run on the live site first, it
+  found both faults.
+- **Know someone who would rather watch?** The foot of the home page has a quiet button
+  that sends on the page of the reel that explains Pixel Reel.
+- The moon in the footer is smaller and sits above the footer's line, which used to cross it.
+
+| On a phone: the foot of the home page, and the footer, before and after |
+| --- |
+| ![Before: a heading on a dithered sunset, and Zs across small print. After: both on plain night sky.](log/v13-off-the-pattern.jpg) |
