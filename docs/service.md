@@ -319,6 +319,10 @@ Who reads the reel, and in which language, is one line between the box and the b
 ("Read by Peter in English"). It opens when pressed, so there is nothing to decide before
 making a reel, and the choice made last time is kept.
 
+Many apps copy a link with its headline over it ("Share", then "Copy"). The page takes
+that as the link (`linkWithTitle` in `site/js/given.js`), so that Claude reads the page:
+sent as it came it would be a few lines of writing, and the reel would explain the headline.
+
 The visitor is taken to the reel's own page straight away, and waits there with something to
 watch. The service asks Claude to write the scenes through the Claude API after it has
 answered, and the page says what is being done and how far along it is: a sign ("Writing",

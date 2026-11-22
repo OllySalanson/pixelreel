@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { ABOUT_MAX, canTake, fileKind, GivenError, givenFrom, givenFromClipboard, isLink, isVideoLink, languageFor, nameOf, PDF_MAX, PICTURE_MAX, requestFor, SHRINK_OVER, TEXT_MAX } from '../site/js/given.js';
+import { ABOUT_MAX, canTake, fileKind, GivenError, givenFrom, givenFromClipboard, isLink, isVideoLink, languageFor, linkWithTitle, nameOf, PDF_MAX, PICTURE_MAX, requestFor, SHRINK_OVER, TEXT_MAX } from '../site/js/given.js';
 
 const PDF = Buffer.from('%PDF-1.7\n1 0 obj\n');
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 16, 0x4a, 0x46, 0x49, 0x46, 0, 1]);
@@ -17,6 +17,22 @@ describe('what someone gives the page', () => {
   it('knows a web address from a few words', () => {
     for (const link of ['https://example.com/a?b=1', 'http://example.com', 'www.example.com/story', ' HTTPS://EXAMPLE.COM ']) assert.ok(isLink(link), link);
     for (const not of ['my gas bill', 'see https://example.com', 'https://example.com and more', 'example.com', '']) assert.ok(!isLink(not), not);
+  });
+
+  it('takes a link copied with its headline as the link, and nothing else as one', () => {
+    assert.equal(linkWithTitle('Council Tax: how it works\nhttps://www.gov.uk/council-tax'), 'https://www.gov.uk/council-tax');
+    assert.equal(linkWithTitle('  https://example.com/a?b=1 \r\n\r\nA headline\nThe Daily Example  '), 'https://example.com/a?b=1', 'the link first, blank lines, and a site\'s name as well');
+    assert.equal(linkWithTitle('www.example.com/story\nA headline'), 'www.example.com/story');
+    // one line is left as it is: the service already reads a page named in a line of words
+    assert.equal(linkWithTitle('A headline https://example.com/a'), null);
+    assert.equal(linkWithTitle('https://example.com/a'), null);
+    assert.equal(linkWithTitle('my gas bill'), null);
+    // writing with a link in it is writing: a letter, two links, a link in the middle of a line, or more than a headline
+    assert.equal(linkWithTitle('Dear Sam,\nPay at https://example.com/pay\nThanks'), null);
+    assert.equal(linkWithTitle('https://example.com/a\nhttps://example.com/b'), null);
+    assert.equal(linkWithTitle('See www.example.com for more\nhttps://example.com/a'), null);
+    assert.equal(linkWithTitle(`${'word '.repeat(50)}\nhttps://example.com/a`), null);
+    assert.equal(linkWithTitle('One\nTwo\nThree\nFour\nhttps://example.com/a'), null);
   });
 
   it('knows the address of a YouTube video, which cannot be read', () => {
@@ -103,6 +119,10 @@ describe('what the page sends for it', () => {
     assert.deepEqual(await sent({ words: '  my gas bill ' }), { type: 'application/json', body: { about: 'my gas bill' } });
     assert.deepEqual(await sent({ words: 'https://example.com/story' }), { type: 'application/json', body: { about: 'https://example.com/story' } });
     assert.deepEqual(await sent({ words: 'Dear Sam,\r\n\r\nPay up.' }), { type: 'application/json', body: { text: 'Dear Sam,\n\nPay up.' } });
+    // a link copied with its headline is the link: as writing, the reel would explain the headline and never read the page
+    assert.deepEqual(await sent({ words: 'Council Tax: how it works\r\nhttps://www.gov.uk/council-tax\r\n' }), { type: 'application/json', body: { about: 'https://www.gov.uk/council-tax' } });
+    assert.deepEqual((await sent({ words: 'Dear Sam,\nPay at https://example.com/pay\nThanks' })).body, { text: 'Dear Sam,\nPay at https://example.com/pay\nThanks' }, 'a letter with a link in it is still a letter');
+    await assert.rejects(requestFor({ words: 'A film about tea\nhttps://youtu.be/jNQXAC9IVRw' }), (err) => err instanceof GivenError && /cannot watch a video/.test(err.message));
     assert.deepEqual((await sent({ words: 'x'.repeat(ABOUT_MAX + 1) })).body, { text: 'x'.repeat(ABOUT_MAX + 1) });
     await assert.rejects(requestFor({ words: '  \n ' }), (err) => err instanceof GivenError && /Say what you want explained/.test(err.message));
     await assert.rejects(requestFor({ words: 'https://youtu.be/jNQXAC9IVRw' }), (err) => err instanceof GivenError && /cannot watch a video/.test(err.message));
