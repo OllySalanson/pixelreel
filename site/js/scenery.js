@@ -1,6 +1,6 @@
 // Puts the pixel landscapes (landscape.js) behind the site's night bands:
-// <canvas class="scene" data-scene="hero">. Each is drawn small (one of its pixels is UNIT of
-// the page's) and scaled up crisply, a few times a second, and only while it is on screen.
+// <canvas class="scene" data-scene="hero">. Each is drawn on a coarse grid (one of its pixels
+// is UNIT of the page's), a few times a second, and only while it is on screen.
 // When calm, each is drawn once and holds still.
 import { calm, onComfortChange } from './calm.js';
 import { SCENES } from './landscape.js';
@@ -8,22 +8,26 @@ import { createKit } from '../../src/kit.js';
 
 const UNIT = 4;         // page pixels to one pixel of scenery, the same as --u in site.css
 const FRAME_MS = 125;   // 8 frames a second: slow, calm movement
+const FOOT = 96;        // how much of a scene's foot must show before it counts as seen, in page pixels
 
 const paper = () => getComputedStyle(document.documentElement).getPropertyValue('--paper').trim() || '#faf3e1';
 
 export function startScenes() {
   const scenes = [...document.querySelectorAll('canvas.scene[data-scene]')].map((canvas) => ({
-    canvas, g: canvas.getContext('2d'), draw: SCENES[canvas.dataset.scene], visible: false, w: 0, h: 0, quiet: []
+    canvas, g: canvas.getContext('2d'), draw: SCENES[canvas.dataset.scene], visible: false, w: 0, h: 0, quiet: [], met: null
   })).filter((scene) => scene.draw);
   for (const scene of scenes) scene.px = createKit(scene.g);
   const born = performance.now();
 
   const paint = (scene, now) => {
     if (!scene.w) return;
-    scene.g.setTransform(1, 0, 0, 1, 0, 0);
+    scene.g.setTransform(UNIT, 0, 0, UNIT, 0, 0);   // drawn at the page's own resolution, so its words are crisp
     scene.g.imageSmoothingEnabled = false;
     const still = calm();
-    scene.draw(scene.px, scene.w, scene.h, still ? 6.5 : (now - born) / 1000, { quiet: scene.quiet, paper: paper(), still });
+    // a scene's foot, where anyone in it stands, can be a long scroll below its top
+    if (scene.met === null && scene.visible && scene.canvas.getBoundingClientRect().bottom - FOOT <= innerHeight) scene.met = now;
+    const met = scene.met === null ? null : (now - scene.met) / 1000;
+    scene.draw(scene.px, scene.w, scene.h, still ? 6.5 : (now - born) / 1000, { quiet: scene.quiet, paper: paper(), still, met });
   };
   // where the words are, in the scene's own pixels, with a little room round them
   const quietZones = (scene, box) => [...scene.canvas.parentElement.querySelectorAll('[data-quiet]')].map((el) => {
@@ -32,11 +36,13 @@ export function startScenes() {
   });
   const size = (scene) => {
     const box = scene.canvas.getBoundingClientRect();
-    const w = Math.ceil(box.width / UNIT), h = Math.ceil(box.height / UNIT);
+    const width = Math.round(box.width), height = Math.round(box.height);
     scene.quiet = quietZones(scene, box);
-    if (w === scene.w && h === scene.h) return;
-    Object.assign(scene, { w, h });
-    Object.assign(scene.canvas, { width: w, height: h });
+    if (width === scene.canvas.width && height === scene.canvas.height && scene.w) return;
+    // the canvas holds exactly the pixels it shows, so nothing is squeezed; the scene is
+    // drawn in whole units, and what hangs over the edge of the last one is cut off
+    Object.assign(scene.canvas, { width, height });
+    Object.assign(scene, { w: Math.ceil(width / UNIT), h: Math.ceil(height / UNIT) });
     paint(scene, performance.now());
   };
 

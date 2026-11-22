@@ -5,6 +5,7 @@ import { startCopying, startMaker } from './maker.js';
 import { ReelPlayer } from './player.js';
 import { startScenes } from './scenery.js';
 import { startShots } from './shots.js';
+import { startSignal } from './signal.js';
 import { startHearing, startTheatre } from './theatre.js';
 import { startWatching } from './watch.js';
 
@@ -16,6 +17,7 @@ startHearing();
 startMaker();
 startCopying();
 startWatching();
+startSignal();
 for (const root of document.querySelectorAll('main .reel[data-reel]')) {
   new ReelPlayer(root).load(root.dataset.reel).catch((err) => console.error(err));
 }
