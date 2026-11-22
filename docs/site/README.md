@@ -1282,3 +1282,22 @@ the new part about Make it comfy in it, where it was 18,791 without.
 This one is a guard, not a fault that was seen: the Paste button has still only been
 pressed with a stand-in for the clipboard, never on a real phone, and which browsers hand
 a link over without words is not something that was tried.
+
+### Version 56
+
+Looked at the home page on a tablet (820 pixels wide), which nobody had.
+
+- **Three steps down one side.** Under "Three steps. One of them is pressing play." the
+  steps stood one above the other in a column less than half the page wide, with the other
+  half empty beside them. They now go as many across as fit with their words whole: three
+  on a tablet, two on a small one, one on a phone, and fewer with bigger letters.
+- **The scenes under a reel did worse:** one to a row, each as wide as the page, so a
+  reel of six scenes went a long way down. They follow the same rule now, three across.
+- **A test for half-merged files.** Three of us write to this log, and it collides on most
+  rebases. Twice today a rebase of mine was carried on with git's marks still in this file,
+  and every test passed. Both were caught before they were pushed. A test now fails on any
+  file that holds them.
+
+| The three steps on a tablet, and the scenes under a reel |
+| --- |
+| ![On a tablet: the three steps side by side across the page. Beside it, the six scenes of a reel, three across.](log/v56-steps-tablet.jpg) |

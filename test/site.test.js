@@ -981,6 +981,16 @@ describe('getting the site onto a phone with no address to type', () => {
   });
 });
 
+describe('on a tablet, steps as many across as fit', () => {
+  it('lays the three steps, and the scenes under a reel, out across the page, not down one side of it', () => {
+    const css = readFileSync(root('site/css/site.css'), 'utf8');
+    const tablet = css.slice(css.indexOf('@media (max-width: 60rem) {'), css.indexOf('@media (max-width: 40rem) {'));
+    assert.match(tablet, /\n {2}\.steps \{ grid-template-columns: repeat\(auto-fit, minmax\(min\(100%, 13rem\), 1fr\)\);/, 'in rem, so bigger letters take fewer across');
+    assert.doesNotMatch(tablet, /\.steps \{[^}]*max-width/, 'and nothing holds them to the left half');
+    assert.doesNotMatch(css.slice(css.indexOf('@media (max-width: 40rem) {')), /\n {2}\.steps \{/, 'a phone gets one across by the same rule, with no rule of its own');
+  });
+});
+
 describe('on a phone, posters and narrators two across', () => {
   const css = readFileSync(root('site/css/site.css'), 'utf8');
   const phone = css.slice(css.indexOf('@media (max-width: 40rem) {'), css.indexOf('@media (max-width: 23.5rem) {'));

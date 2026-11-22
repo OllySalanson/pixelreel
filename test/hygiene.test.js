@@ -19,7 +19,16 @@ function* textFiles(dir) {
   }
 }
 
+// the marks git leaves where two changes met: seven of one sign and a space, at the start of a line
+const MARKS = ['<', '>'].map((sign) => `${sign.repeat(7)} `);
+
 describe('house style', () => {
+  it('holds no half-merged file: nothing git left for someone to finish', () => {
+    // No other test notices these in a page of notes, and a rebase is easily carried on past them.
+    const offenders = [...textFiles(ROOT)].filter((f) => readFileSync(f, 'utf8').split('\n').some((line) => MARKS.some((mark) => line.startsWith(mark))));
+    assert.deepEqual(offenders.map((f) => f.slice(ROOT.length)), []);
+  });
+
   it('uses a plain dash, never an em dash', () => {
     const offenders = [...textFiles(ROOT)].filter((f) => readFileSync(f, 'utf8').includes(EM_DASH));
     assert.deepEqual(offenders.map((f) => f.slice(ROOT.length)), []);
