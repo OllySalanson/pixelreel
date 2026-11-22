@@ -31,6 +31,9 @@ html[data-space="2"] { --leading: 1.85; --tracking: 0.05em; --wording: 0.18em; }
 html[data-space="3"] { --leading: 2.1; --tracking: 0.09em; --wording: 0.32em; }
 html[data-paper="blue"] { --paper: #e7f0f8; --tint: #d8e6f2; --card: #f6fafd; }
 html[data-paper="peach"] { --paper: #fcebdc; --tint: #f8dcc6; --card: #fff7f0; }
+html[data-paper="mint"] { --paper: #e6f4ea; --tint: #d5ecdc; --card: #f5fbf7; }
+html[data-paper="rose"] { --paper: #fbe9ee; --tint: #f6d9e1; --card: #fff6f8; }
+html[data-paper="lilac"] { --paper: #efe9f9; --tint: #e2d9f3; --card: #f9f6fd; }
 html[data-paper="night"] { --paper: #101a2e; --tint: #0b1322; --card: #19263f; --ink: #f4f1dc; --ink-soft: #b9c3d8; --line: #ebeac5; --focus: #ffcc4d; color-scheme: dark; }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -627,6 +630,9 @@ dialog { color: var(--ink); }
 .pick .p-cream { background: #faf3e1; color: #141b2d; }
 .pick .p-blue { background: #e7f0f8; color: #141b2d; }
 .pick .p-peach { background: #fcebdc; color: #141b2d; }
+.pick .p-mint { background: #e6f4ea; color: #141b2d; }
+.pick .p-rose { background: #fbe9ee; color: #141b2d; }
+.pick .p-lilac { background: #efe9f9; color: #141b2d; }
 .pick .p-night { background: #101a2e; color: #f4f1dc; }
 .pick-paper input:checked + span { box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line), 0 calc(var(--u) * 3) 0 0 var(--gold-lip); font-weight: 700; }
 .comfort-reset { justify-self: start; padding: 0.25rem 0; font-weight: 500; background: none; border: 0; text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; }

@@ -26,8 +26,9 @@ People who find reading hard work. Every choice follows from that:
   Words never sit on a pattern or a picture: even the stars keep clear of them.
 - **Buttons.** Every main thing to do is a big button that says what it does.
 - **Make it comfy.** A panel on every page changes the letters (Lexend, Atkinson
-  Hyperlegible Next or OpenDyslexic), their size and spacing, the colour of the paper,
-  whether pictures move, how fast Peter reads, and whether every word he says is written
+  Hyperlegible Next or OpenDyslexic), their size and spacing, the colour of the paper (cream,
+  five tints or dark),
+  whether pictures move, how fast a reel is read, and whether every word he says is written
   under the pictures. It is kept on the reader's device only.
 - **A ruler to keep your place.** Make it comfy can lay a clear band across the page, with
   the rest dimmed, that follows the pointer or a finger: the reading ruler many dyslexic
@@ -829,3 +830,20 @@ afternoon of three people changing it. One thing was off:
 | The sentence being said, in gold |
 | --- |
 | ![4. What you might get. Next comes a guess at what you might get each year, when you retire, in gold; then, It's an estimate. Not a promise.](log/v37-follow-the-words.jpg) |
+
+### Version 38
+
+- **Three more colours of paper.** Make it comfy offered cream, blue, peach and dark. It now
+  offers mint, rose and lilac too. Tinted paper is one of the commonest things people who
+  find black on white hard to read ask for, and which tint helps differs from one person
+  to the next, so more to choose from is the point.
+- **Every paper is held to the same mark.** A test now works out how much the words stand
+  out on each paper, its tinted parts and its cards: the main ink at least 12 to 1 and the
+  quieter ink at least 6 to 1, where the least that is called readable is 4.5 to 1. A new
+  paper that fails it fails the tests.
+- **"How fast it is read"** is what Make it comfy now calls the pace, since it may be Anna
+  or Stuart reading and not Peter.
+
+| Mint, rose and lilac, and the choice in Make it comfy |
+| --- |
+| ![The same part of the home page on mint, on rose and on lilac paper; and Make it comfy, where Paper offers Cream, Blue, Peach, Mint, Rose, Lilac and Dark.](log/v38-more-paper.jpg) |

@@ -606,6 +606,50 @@ describe('the whole reel on one page', () => {
   });
 });
 
+describe('the colour of the paper', () => {
+  const css = readFileSync(root('site/css/site.css'), 'utf8'), layout = readFileSync(root('site/layout.html'), 'utf8');
+  const papers = [...layout.matchAll(/<input type="radio" name="paper" value="([a-z]+)"( checked)?><span class="p-([a-z]+)">(\w+)<\/span>/g)].map(([, value, usual, swatch, name]) => ({ value, usual: Boolean(usual), swatch, name }));
+  /** How much brighter one colour is than another, as the rules for readable text count it: 1 (the same) to 21 (black on white). */
+  const contrast = (a, b) => {
+    const light = (hex) => {
+      const [r, g, bl] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+    };
+    const [hi, lo] = [light(a), light(b)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+  const root0 = /:root \{([^}]*)\}/.exec(css)[1];
+  const coloursOf = (value) => {
+    const rule = value === 'cream' ? root0 : new RegExp(`html\\[data-paper="${value}"\\] \\{([^}]*)\\}`).exec(css)?.[1];
+    const colour = (name) => new RegExp(`--${name}: (#[0-9a-f]{6})`).exec(rule ?? '')?.[1] ?? new RegExp(`--${name}: (#[0-9a-f]{6})`).exec(root0)[1];
+    return rule && { paper: colour('paper'), tint: colour('tint'), card: colour('card'), ink: colour('ink'), soft: colour('ink-soft') };
+  };
+
+  it('offers cream, which is the usual one, five tints and dark', () => {
+    assert.deepEqual(papers.map(({ name }) => name), ['Cream', 'Blue', 'Peach', 'Mint', 'Rose', 'Lilac', 'Dark']);
+    assert.deepEqual(papers.filter(({ usual }) => usual).map(({ value }) => value), ['cream']);
+  });
+
+  it('has its colours for every paper that can be chosen, and shows each choice in its own colour', () => {
+    for (const { value, swatch, name } of papers) {
+      const colours = coloursOf(value);
+      assert.ok(colours, `${name} has no colours in the stylesheet`);
+      assert.equal(swatch, value, `${name}'s swatch is its own`);
+      assert.match(css, new RegExp(`\\.pick \\.p-${value} \\{ background: ${colours.paper};`), `${name}'s swatch is the colour of its paper`);
+    }
+  });
+
+  it('keeps the words standing out on every paper: far more than the least that is called readable', () => {
+    for (const { value, name } of papers) {
+      const { paper, tint, card, ink, soft } = coloursOf(value);
+      for (const [ground, called] of [[paper, 'paper'], [tint, 'tinted paper'], [card, 'a card']]) {
+        assert.ok(contrast(ink, ground) >= 12, `${name}: ink on ${called} is ${contrast(ink, ground).toFixed(1)} to 1`);
+        assert.ok(contrast(soft, ground) >= 6, `${name}: the quieter ink on ${called} is ${contrast(soft, ground).toFixed(1)} to 1`);
+      }
+    }
+  });
+});
+
 describe('following the words', () => {
   const line = "It's free. There's nothing to sign up for. No account, no name, no email address.";
 
