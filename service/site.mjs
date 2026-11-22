@@ -303,7 +303,8 @@ export function postersHtml({ links = false, except = null } = {}) {
  * One of the site's pages, for a service at `baseUrl`. `listed` says whether search engines
  * may list it: until Pixel Reel is open to everyone, every page asks them not to. `values`
  * fills names of the page's own (already safe to put in HTML), such as `here` ("on" when the
- * service can write a reel for a visitor itself); `title`, `description`, `path`, `image` (a
+ * service can write a reel for a visitor itself) and `languages` (the choices of language it
+ * can write one in, as HTML); `title`, `description`, `path`, `image` (a
  * whole address), `imagealt` and `fetch` (files to ask for early) replace the page's own,
  * for a page that stands for many, such as a reel's.
  */
@@ -312,7 +313,7 @@ export function sitePage(name, baseUrl, { listed = false, values = {}, title = n
   const markdown = !existsSync(siteFile(`pages/${name}.html`));
   const { facts, body } = pageFacts(readFileSync(siteFile(`pages/${name}.${markdown ? 'md' : 'html'}`), 'utf8'));
   // the connector's address is long and has no spaces: <wbr> lets a narrow screen break it before "/mcp", not mid-word
-  const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', posters: postersHtml(), voices: narratorsHtml(narrators), whoreads: whoReads(narrators), ...values };
+  const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', languages: '', posters: postersHtml(), voices: narratorsHtml(narrators), whoreads: whoReads(narrators), ...values };
   const heading = /^# (.+)$/m.exec(body)?.[1];
   title ??= facts.title ?? (heading && heading !== 'Pixel Reel' ? `${heading} - Pixel Reel` : 'Pixel Reel');
   // a plain page that has a reel of itself offers it straight under its heading

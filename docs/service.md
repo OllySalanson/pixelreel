@@ -311,6 +311,16 @@ page of its own, under the same name while it is written, and the first stays as
 counts as one of the visitor's reels for the hour, and costs about as much as a reel from a
 few words.
 
+**In the reader's own language.** Where Peter can read more than English
+([Other languages](#other-languages)), the box asks "Read it to me in" and offers English and
+each of those languages, called what its speakers call it (Français, Español). It starts on
+the language the browser says its reader prefers, if that is one on offer, and remembers the
+last one chosen on the device. Claude is told to write every word of the reel in that
+language, whatever language what was given is in, so a letter in English can be explained in
+Spanish; the reel is recorded with that language's model. A reel made simpler or shorter
+stays in the language it is in. With no other language switched on, there is no choice and
+every reel is in English.
+
 **Your reels.** The home page lists the reels a visitor has made here, under the box, so
 that they can find them again, call them what they like, and delete them. The list is kept
 in the visitor's own browser and never sent to the service. When a reel is begun, `/try`

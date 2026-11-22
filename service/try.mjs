@@ -69,8 +69,9 @@ export function sourceOf(type, bytes) {
       if (typeof body.again !== 'string' || !/^[A-Za-z0-9_-]{22}$/.test(body.again) || !Object.hasOwn(AGAIN, body.how)) throw new TryError('That reel cannot be made again.');
       return { kind: 'again', id: body.again, how: body.how };
     }
-    if (typeof body?.text === 'string') return { kind: 'text', text: tidyText(body.text) };
-    return { kind: 'words', about: tidyAbout(body?.about) };
+    // `language` is what was asked for, as it came: the service knows which languages it offers (languageOf)
+    if (typeof body?.text === 'string') return { kind: 'text', text: tidyText(body.text), language: body.language };
+    return { kind: 'words', about: tidyAbout(body?.about), language: body?.language };
   }
   const kind = fileKind(bytes);
   if (!kind) throw new TryError('Pixel Reel can read a PDF, a photo, or plain writing. Save that as a PDF, then give it again.');
@@ -96,6 +97,20 @@ export function writtenSoFar(text) {
     // an escape Claude has only half written: the title is not there yet
   }
   return { title, scenes: (text.match(new RegExp(`"caption"\\s*:\\s*${quoted}`, 'g')) ?? []).length };
+}
+
+/** What each language Peter can read is called by the people who speak it, for the box's choice of language. */
+export const OWN_NAMES = { english: 'English', french: 'Français', german: 'Deutsch', spanish: 'Español', italian: 'Italiano', portuguese: 'Português', dutch: 'Nederlands' };
+
+/**
+ * The language a visitor asked for their reel in, as the recorder knows it: null for
+ * English, or for none asked for. `offered` are the languages besides English that Peter
+ * can read here; anything else is a TryError.
+ */
+export function languageOf(asked, offered = []) {
+  if (asked === undefined || asked === null || asked === '' || asked === 'english') return null;
+  if (typeof asked !== 'string' || !offered.includes(asked)) throw new TryError('Peter cannot read that language here. Choose another.');
+  return asked;
 }
 
 /** The JSON object in Claude's reply, which may come wrapped in a code fence or a few stray words. */

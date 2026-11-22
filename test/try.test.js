@@ -2,14 +2,14 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { after, before, describe, it } from 'node:test';
+import { after, afterEach, before, describe, it } from 'node:test';
 import Anthropic from '@anthropic-ai/sdk';
 import { RateLimit } from '../service/limits.mjs';
 import { Reels } from '../service/reels.mjs';
 import { ReelError } from '../src/reel.js';
 import { createService } from '../service/server.mjs';
 import { DiskStore } from '../service/store.mjs';
-import { ABOUT_MAX, AGAIN, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError, writtenSoFar } from '../service/try.mjs';
+import { ABOUT_MAX, AGAIN, languageOf, OWN_NAMES, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError, writtenSoFar } from '../service/try.mjs';
 import { createWriter } from '../service/writer.mjs';
 
 const tmp = mkdtempSync(join(tmpdir(), 'pixelreel-try-'));
@@ -55,8 +55,8 @@ describe('what a visitor asks for', () => {
 
   it('tells a few words from writing, a PDF and a picture, by what they are and not what they are called', () => {
     const json = (value) => Buffer.from(JSON.stringify(value));
-    assert.deepEqual(sourceOf('application/json', json({ about: ' my gas  bill ' })), words('my gas bill'));
-    assert.deepEqual(sourceOf('application/json; charset=utf-8', json({ text: 'Dear Sam,\n\nPay up.' })), { kind: 'text', text: 'Dear Sam,\n\nPay up.' });
+    assert.deepEqual(sourceOf('application/json', json({ about: ' my gas  bill ' })), { ...words('my gas bill'), language: undefined });
+    assert.deepEqual(sourceOf('application/json; charset=utf-8', json({ text: 'Dear Sam,\n\nPay up.' })), { kind: 'text', text: 'Dear Sam,\n\nPay up.', language: undefined });
     assert.deepEqual(sourceOf('application/pdf', PDF), { kind: 'pdf', data: PDF.toString('base64') });
     assert.deepEqual(sourceOf('image/jpeg', JPEG), { kind: 'picture', type: 'image/jpeg', data: JPEG.toString('base64') });
     assert.deepEqual(sourceOf('application/pdf', PNG), { kind: 'picture', type: 'image/png', data: PNG.toString('base64') }, 'a picture called a PDF is still a picture');
@@ -83,6 +83,18 @@ describe('what a visitor asks for', () => {
     assert.deepEqual(writtenSoFar('{"scenes": [{"title": "Hello", "caption": "One."}], "title": "Late"}'), { title: null, scenes: 1 }, "a scene's title is never taken for the reel's");
     assert.equal(writtenSoFar(`{"title": "${'x'.repeat(200)}"`).title.length, 80);
     assert.deepEqual(writtenSoFar('{"cannot": "That page would not load."}'), { title: null, scenes: 0 });
+  });
+
+  it('takes a reel to be in English unless it is asked for in a language Peter can read here', () => {
+    for (const none of [undefined, null, '', 'english']) assert.equal(languageOf(none, ['french']), null);
+    assert.equal(languageOf('french', ['french', 'spanish']), 'french');
+    for (const not of ['german', 'klingon', 7, ['french'], 'French']) assert.throws(() => languageOf(not, ['french']), (err) => err instanceof TryError && /cannot read that language here/.test(err.message));
+    assert.throws(() => languageOf('french'), TryError, 'none is offered unless the service says so');
+    assert.equal(OWN_NAMES.french, 'Français');
+    // what was asked for is carried with the words, as it came
+    const json = (value) => Buffer.from(JSON.stringify(value));
+    assert.deepEqual(sourceOf('application/json', json({ about: 'le thé', language: 'french' })), { kind: 'words', about: 'le thé', language: 'french' });
+    assert.deepEqual(sourceOf('application/json', json({ text: 'Cher Sam,\n\nPayez.', language: 'french' })), { kind: 'text', text: 'Cher Sam,\n\nPayez.', language: 'french' });
   });
 
   it("finds the reel in Claude's reply, even inside a code fence", () => {
@@ -192,6 +204,21 @@ describe('the writer', () => {
     assert.equal(client.asked[2].messages[0].content, 'Make a pixel reel about this:\n(a reel to be written again, shorter, which is not repeated here)');
     await write.fits({ kind: 'reel', how: 'shorter', reel: tea });
     assert.equal(client.counted.length, 0, 'a reel is never long');
+  });
+
+  it('has Claude write the reel in the language that was asked for', async () => {
+    const french = { ...tea, title: 'Le thé', language: 'french', narrator: 'peter' };
+    const client = fakeClient(reply(JSON.stringify(french)), reply(JSON.stringify(tea))), said = [];
+    const write = createWriter({ client, log: (line) => said.push(line) });
+    const written = await write({ ...words('how tea is made'), language: 'french' });
+    assert.deepEqual(written, { ...tea, title: 'Le thé' }, 'what Claude says of the language is not part of the reel: the service knows what was asked for');
+    const [asked, english] = [client.asked[0].system, (await write(words('tea')), client.asked[1].system)];
+    assert.match(asked, /asked for this reel in French, whatever language what they gave is in\. Write every word of it in French/);
+    assert.match(asked, /Peter can also read French/, 'and the guide agrees that he can');
+    assert.doesNotMatch(asked, /Write the reel in English/);
+    assert.match(english, /Write the reel in English, whatever language what the visitor gave is in\. Use British spelling\./);
+    assert.match(english, /Peter reads English only/);
+    assert.deepEqual(said, ['try: words in french, 1200 tokens in, 600 out (claude-sonnet-5-5)', 'try: words, 1200 tokens in, 600 out (claude-sonnet-5-5)']);
   });
 
   it('measures a PDF before it is read, and turns away one that is too long, for nothing', async () => {
@@ -362,7 +389,9 @@ describe('make it right here, over HTTP', () => {
   const calls = [];
   let answers = [];
   const writer = async (source, more = {}) => { calls.push([source, more]); const next = await (answers.shift() ?? tea); if (next instanceof Error) throw next; return next; };
-  const reels = new Reels({ store: new DiskStore(join(tmp, 'store')), record: fakeRecord, video: async () => {} });
+  const spoken = [];   // the language each reel was recorded in
+  const recordIn = async (dir, log, onLine, { language = null } = {}) => { spoken.push(language); await fakeRecord(dir); };
+  const reels = new Reels({ store: new DiskStore(join(tmp, 'store')), record: recordIn, video: async () => {}, languages: ['french', 'spanish'] });
   const limits = { tries: new RateLimit({ perHour: 1000, perDay: 1000 }) };
   const server = createService({ reels, baseUrl: 'https://reels.example', limits, writer, trustProxy: true });
   const off = createService({ reels, baseUrl: 'https://reels.example' });
@@ -373,6 +402,9 @@ describe('make it right here, over HTTP', () => {
     localOff = `http://127.0.0.1:${off.address().port}`;
   });
   after(() => { for (const s of [server, off]) { s.close(); s.closeAllConnections(); } });
+  // a writer that a test is holding back is let go when the test ends, however it ends: a check that fails must not leave the rest waiting for ever
+  const holding = [];
+  afterEach(() => { for (const release of holding.splice(0)) release(); });
   const ask = (about, headers = {}) => fetch(`${local}/try`, { method: 'POST', headers: { 'content-type': 'application/json', origin: 'https://reels.example', ...headers }, body: JSON.stringify({ about }) });
   const give = (type, body, headers = {}) => fetch(`${local}/try`, { method: 'POST', headers: { 'content-type': type, origin: 'https://reels.example', ...headers }, body });
 
@@ -416,12 +448,13 @@ describe('make it right here, over HTTP', () => {
   it('says where to watch at once, and has Claude write the reel while the visitor waits there', async () => {
     let release;
     const held = new Promise((ok) => { release = ok; });
+    holding.push(release);
     answers = [held.then(() => tea)];
     const res = await ask('  my gas\n bill ');
     assert.equal(res.status, 200);
     const { id, watch } = await res.json();
     assert.equal(watch, `/r/${id}`);
-    assert.deepEqual(calls.at(-1)[0], words('my gas bill'));
+    assert.deepEqual(calls.at(-1)[0], { ...words('my gas bill'), language: null });
     // Claude has not answered yet, and the reel already has a page to wait on
     assert.deepEqual(await reels.status(id).then((s) => [s.state, s.title]), ['writing', 'Your reel']);
     calls.at(-1)[1].onProgress({ title: 'Tea', scenes: 3 });
@@ -442,7 +475,7 @@ describe('make it right here, over HTTP', () => {
     answers = [{ title: 'No scenes' }, tea];
     assert.equal((await outcome(await ask('tea'))).state, 'ready');
     const [source, more] = calls.at(-1);
-    assert.deepEqual(source, words('tea'));
+    assert.deepEqual(source, { ...words('tea'), language: null });
     assert.deepEqual(more.before, { title: 'No scenes' });
     assert.ok(more.problems.some((p) => /scenes/.test(p)), 'it is told what was wrong');
     answers = [{ title: 'No scenes' }, { title: 'Still none' }];
@@ -454,11 +487,11 @@ describe('make it right here, over HTTP', () => {
   it('takes writing, a PDF or a picture, and has Claude explain it', async () => {
     const writing = await give('application/json', JSON.stringify({ text: 'Dear Sam,\n\nYour bill is due.' }));
     assert.equal(writing.status, 200);
-    assert.deepEqual(calls.at(-1)[0], { kind: 'text', text: 'Dear Sam,\n\nYour bill is due.' });
+    assert.deepEqual(calls.at(-1)[0], { kind: 'text', text: 'Dear Sam,\n\nYour bill is due.', language: null });
     assert.equal((await give('application/pdf', PDF)).status, 200);
-    assert.deepEqual(calls.at(-1)[0], { kind: 'pdf', data: PDF.toString('base64') });
+    assert.deepEqual(calls.at(-1)[0], { kind: 'pdf', data: PDF.toString('base64'), language: null });
     assert.equal((await give('image/jpeg', JPEG)).status, 200);
-    assert.deepEqual(calls.at(-1)[0], { kind: 'picture', type: 'image/jpeg', data: JPEG.toString('base64') });
+    assert.deepEqual(calls.at(-1)[0], { kind: 'picture', type: 'image/jpeg', data: JPEG.toString('base64'), language: null });
     await server.written();
     await reels.idle();
   });
@@ -471,11 +504,12 @@ describe('make it right here, over HTTP', () => {
     await reels.store.put(`reels/${first.id}/reel.json`, JSON.stringify({ ...list, scenes: [{ ...list.scenes[0], picture: { ...list.scenes[0].picture, every: 1.1, start: 0.4 } }] }));
     let release;
     answers = [new Promise((ok) => { release = ok; }).then(() => tea)];
+    holding.push(release);
     const res = await give('application/json', JSON.stringify({ again: first.id, how: 'simpler' }));
     assert.equal(res.status, 200);
     const { id } = await res.json();
     assert.notEqual(id, first.id, 'it is a new reel: the first stays as it is');
-    assert.deepEqual(calls.at(-1)[0], { kind: 'reel', how: 'simpler', reel: list }, 'Claude is given the reel as it was written, without the timings of its recording');
+    assert.deepEqual(calls.at(-1)[0], { kind: 'reel', how: 'simpler', reel: list, language: null }, 'Claude is given the reel as it was written, without the timings of its recording');
     assert.equal((await reels.status(id)).title, 'Tea, properly', 'and it keeps its name while it is written');
     release();
     await server.written();
@@ -516,12 +550,45 @@ describe('make it right here, over HTTP', () => {
     // one that is still being written can be deleted too, and what Claude then writes goes nowhere
     let release;
     answers = [new Promise((ok) => { release = ok; }).then(() => tea)];
+    holding.push(release);
     const early = await (await ask('tea')).json();
     assert.equal((await forget(early.id, { 'x-reel-key': early.key })).status, 200);
     release();
     await server.written();
     await reels.idle();
     assert.equal(await reels.status(early.id), null);
+  });
+
+  it('makes a reel in the language that is asked for, and offers only the languages Peter reads here', async () => {
+    const page = await (await fetch(`${local}/`)).text(), without = await (await fetch(`${localOff}/`)).text();
+    assert.match(page, /<fieldset class="pick maker-language" id="maker-language" hidden>\s*<legend>Read it to me in<\/legend>\s*<label><input type="radio" name="language" value="english" checked><span lang="en">English<\/span><\/label>\s*<label><input type="radio" name="language" value="french"><span lang="fr">Français<\/span><\/label>\s*<label><input type="radio" name="language" value="spanish"><span lang="es">Español<\/span><\/label>\s*<\/fieldset>/);
+    assert.doesNotMatch(without, /name="language"/, 'none where the service makes no reels');
+    assert.doesNotMatch(without, /\{\{languages\}\}/);
+    // words, with the language in the JSON
+    let status = await outcome(await give('application/json', JSON.stringify({ about: 'le thé', language: 'french' })));
+    assert.deepEqual(calls.at(-1)[0], { ...words('le thé'), language: 'french' });
+    assert.deepEqual([status.state, status.language, spoken.at(-1)], ['ready', 'french', 'french'], 'and Peter is asked to read it in French');
+    // a file, with the language beside it
+    status = await outcome(await give('application/pdf', PDF, { 'x-reel-language': 'spanish' }));
+    assert.equal(calls.at(-1)[0].language, 'spanish');
+    assert.deepEqual([status.language, spoken.at(-1)], ['spanish', 'spanish']);
+    // English, said or unsaid, is the usual way
+    status = await outcome(await give('application/json', JSON.stringify({ about: 'tea', language: 'english' })));
+    assert.deepEqual([calls.at(-1)[0].language, status.language, spoken.at(-1)], [null, undefined, null]);
+    // a language Peter does not read here is turned away before Claude is asked
+    const before = calls.length;
+    const german = await give('application/json', JSON.stringify({ about: 'Tee', language: 'german' }));
+    assert.equal(german.status, 400);
+    assert.match((await german.json()).error, /cannot read that language here/);
+    assert.equal((await give('image/jpeg', JPEG, { 'x-reel-language': 'klingon' })).status, 400);
+    assert.equal(calls.length, before);
+  });
+
+  it('writes a reel again in the language it is in', async () => {
+    const first = await outcome(await give('application/json', JSON.stringify({ about: 'le thé', language: 'french' })));
+    const again = await outcome(await give('application/json', JSON.stringify({ again: first.id, how: 'shorter', language: 'spanish' })));
+    assert.equal(calls.at(-1)[0].language, 'french', 'whatever language is chosen in the box just now');
+    assert.deepEqual([again.language, spoken.at(-1)], ['french', 'french']);
   });
 
   it('offers to write a reel again only where the service can, once it plays', async () => {
