@@ -463,5 +463,46 @@ export const SPRITES = {
       '................',
       '................'
     ]
+  },
+  // the make page: a link (two links of a chain), drawn in ink alone to sit on a coloured tile, and a clipboard, for the button that pastes
+  link: {
+    rows: [
+      '................',
+      '..........kkkk..',
+      '.........kkkkkk.',
+      '........kkk..kk.',
+      '.......kkk...kk.',
+      '......kkk...kkk.',
+      '.....kkkk..kkk..',
+      '....kkkkkkkkk...',
+      '...kkkkkkkkk....',
+      '..kkk..kkkk.....',
+      '.kkk...kkk......',
+      '.kk...kkk.......',
+      '.kk..kkk........',
+      '.kkkkkk.........',
+      '..kkkk..........',
+      '................'
+    ]
+  },
+  paste: {
+    rows: [
+      '................',
+      '.....kkkkkk.....',
+      '...kkkeeeekkk...',
+      '..knnkeeeeknnk..',
+      '..knkkkkkkkknk..',
+      '..knwwwwwwwwnk..',
+      '..knweeeeeewnk..',
+      '..knwwwwwwwwnk..',
+      '..knweeeeeewnk..',
+      '..knwwwwwwwwnk..',
+      '..knweeeewwwnk..',
+      '..knwwwwwwwwnk..',
+      '..knwwwwwwwwnk..',
+      '..knnnnnnnnnnk..',
+      '..kkkkkkkkkkkk..',
+      '................'
+    ]
   }
 };

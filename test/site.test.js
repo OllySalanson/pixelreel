@@ -443,11 +443,44 @@ describe('making a reel has a page of its own', () => {
   it('is a form to fill in, with nothing on the page that plays', () => {
     assert.match(html.make, /<h1 id="make-title">Make a pixel reel<\/h1>/);
     assert.match(html.make, /<form class="maker" id="maker" action="\/claude" data-here="off">/);
-    for (const id of ['maker-what', 'maker-go', 'maker-file', 'mine', 'drop-over']) assert.match(html.make, new RegExp(`id="${id}"`), id);
+    for (const id of ['maker-what', 'maker-paste', 'maker-read', 'maker-go', 'maker-photo', 'maker-choose', 'maker-file', 'mine', 'drop-over']) assert.match(html.make, new RegExp(`id="${id}"`), id);
     // the part of the page that is the page's own: the bar, the foot and the theatre are on every page
     const own = html.make.slice(html.make.indexOf('<main'), html.make.indexOf('</main>'));
     assert.ok(own.includes('id="maker"'));
     assert.doesNotMatch(own, /class="reel"|data-reels?=|<canvas/, 'no player, no reel button, no moving picture');
+  });
+
+  it('says what goes in its one big box, and has the big button straight after it', () => {
+    const form = html.make.slice(html.make.indexOf('<form class="maker"'), html.make.indexOf('</form>'));
+    // the box is named for the commonest thing put in it, with a picture of a link beside the words
+    assert.match(form, /<label class="maker-label" for="maker-what"><span class="tile tile-gold"><svg class="px"[^>]*>.*?<\/svg><\/span><span>Paste a link here<\/span><\/label>/);
+    assert.match(form, /<textarea id="maker-what" name="about" [^>]*placeholder="Or type a question"><\/textarea>\s*<button class="btn btn-paper maker-paste" id="maker-paste" type="button" hidden><svg class="px"[^>]*>.*?<\/svg><span>Paste<\/span><\/button>/);
+    // in the order someone meets them: the box, who reads it (one line, folded shut), the big button, then every other way in
+    const order = ['id="maker-what"', 'id="maker-paste"', '<details class="maker-read" id="maker-read" hidden>', 'id="maker-who"', 'id="maker-language"', 'id="maker-go"', 'id="maker-photo"', 'id="maker-choose"', 'class="tries"', 'id="maker-own-open"', 'id="ask-words"'];
+    const places = order.map((part) => form.indexOf(part));
+    assert.ok(places.every((at) => at >= 0), `all there: ${places}`);
+    assert.deepEqual(places, [...places].sort((a, b) => a - b), 'and in that order');
+    assert.doesNotMatch(form, /<details[^>]* open/, 'the choices start folded away, so there is nothing to decide before the big button');
+    // one thing between the box and the button, and that is a line of words, not a row of choices
+    const between = form.slice(form.indexOf('</details>'), form.indexOf('<button class="btn btn-gold btn-big" id="maker-go" type="submit">Make my reel</button>'));
+    assert.ok(between.length > 20 && between.length < 400, 'the big button is where it is looked for');
+    assert.doesNotMatch(between, /<button|<input|<fieldset/);
+    // a photo and a PDF have a button each, which says what it does, and the chooser shows only that kind
+    assert.match(form, /<button class="btn btn-paper" id="maker-photo" type="button" data-accept="image\/\*">/);
+    assert.match(form, /<button class="btn btn-paper" id="maker-choose" type="button" data-accept="application\/pdf,[^"]*">.*?<span>Choose a PDF<\/span><\/button>/);
+    for (const [, accept] of form.matchAll(/data-accept="([^"]*)"/g)) {
+      const whole = /<input id="maker-file" type="file" accept="([^"]*)"/.exec(form)[1].split(',');
+      for (const kind of accept.split(',')) assert.ok(whole.includes(kind), `${kind} is a kind the chooser takes`);
+    }
+  });
+
+  it('wakes the box with everything its script looks for, and reads the clipboard only on a press', () => {
+    const script = readFileSync(root('site/js/maker.js'), 'utf8');
+    const looked = [...script.matchAll(/\bid\('([a-z-]+)'\)/g)].map(([, id]) => id);
+    assert.ok(looked.length >= 12);
+    for (const id of looked) assert.ok(html.make.includes(` id="${id}"`), `the page has nothing called ${id}`);
+    assert.equal([...script.matchAll(/givenFromClipboard\(/g)].length, 1);
+    assert.match(script, /paste\.addEventListener\('click', async \(\) => \{\s*let given;\s*try \{\s*given = await givenFromClipboard\(navigator\.clipboard\);/, 'inside the press, where a browser allows it');
   });
 
   it('leaves the home page its words about it, and a big button that goes there', () => {

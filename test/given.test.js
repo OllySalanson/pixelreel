@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { ABOUT_MAX, canTake, fileKind, GivenError, givenFrom, isLink, isVideoLink, languageFor, nameOf, PDF_MAX, PICTURE_MAX, requestFor, SHRINK_OVER, TEXT_MAX } from '../site/js/given.js';
+import { ABOUT_MAX, canTake, fileKind, GivenError, givenFrom, givenFromClipboard, isLink, isVideoLink, languageFor, nameOf, PDF_MAX, PICTURE_MAX, requestFor, SHRINK_OVER, TEXT_MAX } from '../site/js/given.js';
 
 const PDF = Buffer.from('%PDF-1.7\n1 0 obj\n');
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 16, 0x4a, 0x46, 0x49, 0x46, 0, 1]);
@@ -52,6 +52,36 @@ describe('what someone gives the page', () => {
     assert.ok(canTake(transfer({ 'text/plain': 'words' })));
     assert.ok(!canTake(transfer({ 'text/html': '<b>x</b>' })));
     assert.ok(!canTake(null));
+  });
+
+  it('reads what was copied, for the button that pastes: words first, then a picture', async () => {
+    /** Stands in for navigator.clipboard: `items` are what read() gives, each a map of kind to what it holds. */
+    const item = (kinds) => ({ types: Object.keys(kinds), getType: async (kind) => new Blob([kinds[kind]], { type: kind }) });
+    const copied = (...items) => ({ read: async () => items.map(item), readText: async () => { throw new Error('read() answered, so this is not asked'); } });
+    assert.deepEqual(await givenFromClipboard(copied({ 'text/html': '<a>x</a>', 'text/plain': '  https://example.com/a  ' })), { words: 'https://example.com/a' });
+    // a letter copied from its own program brings a picture of itself along with its words: the words are what was meant
+    assert.deepEqual(await givenFromClipboard(copied({ 'image/png': PNG, 'text/plain': 'Dear Sam' })), { words: 'Dear Sam' });
+    const shot = await givenFromClipboard(copied({ 'image/png': PNG }));
+    assert.deepEqual([shot.file.type, shot.file.name, shot.file.size, nameOf(shot)], ['image/png', 'A copied picture', PNG.length, 'A copied picture']);
+    assert.equal((await requestFor(shot)).headers['content-type'], 'image/png', 'and it is sent as any other picture is');
+    assert.equal(await givenFromClipboard(copied()), null, 'nothing copied');
+    assert.equal(await givenFromClipboard(copied({ 'text/plain': ' \n ' })), null, 'only spaces copied');
+    assert.equal(await givenFromClipboard(copied({ 'text/html': '<b>x</b>' })), null, 'nothing it can use');
+  });
+
+  it('reads plain words where that is all a browser hands over, and asks only once when it is refused', async () => {
+    assert.deepEqual(await givenFromClipboard({ readText: async () => ' my gas bill ' }), { words: 'my gas bill' });
+    assert.equal(await givenFromClipboard({ readText: async () => '' }), null);
+    // some browsers say an empty clipboard is a fault: plain words are tried instead
+    const fault = Object.assign(new Error('No valid data on clipboard'), { name: 'DataError' });
+    assert.deepEqual(await givenFromClipboard({ read: async () => { throw fault; }, readText: async () => 'tea' }), { words: 'tea' });
+    await assert.rejects(givenFromClipboard({ read: async () => { throw fault; } }), /No valid data/);
+    // refused by the person, or by the browser: asking again another way would put the question to them twice
+    const refused = Object.assign(new Error('Read permission denied.'), { name: 'NotAllowedError' });
+    let asked = 0;
+    await assert.rejects(givenFromClipboard({ read: async () => { throw refused; }, readText: async () => { asked++; return 'tea'; } }), /denied/);
+    assert.equal(asked, 0);
+    await assert.rejects(givenFromClipboard({ readText: async () => { throw refused; } }), /denied/);
   });
 
   it('names what was given, briefly', () => {

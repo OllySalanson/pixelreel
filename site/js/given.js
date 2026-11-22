@@ -77,6 +77,38 @@ export function givenFrom(transfer, { words: wordsFirst = false } = {}) {
   return words ? { words } : null;
 }
 
+/**
+ * What is on the clipboard, for a button that pastes: { words }, { file } for a copied
+ * picture, or null when there is nothing there to use. `clipboard` is the browser's
+ * navigator.clipboard, read on a press. Words win over a picture, as they do for a paste
+ * from the keyboard. Throws when the browser, or the person, will not let the page read it.
+ */
+export async function givenFromClipboard(clipboard) {
+  if (clipboard.read) {
+    let items = null;
+    try {
+      items = await clipboard.read();
+    } catch (err) {
+      // refused: asking again another way would only ask the person twice. Anything else (some browsers say so of an empty clipboard) is worth one go as plain words.
+      if (err?.name === 'NotAllowedError' || !clipboard.readText) throw err;
+    }
+    if (items) {
+      for (const item of items) {
+        if (!item.types.includes('text/plain')) continue;
+        const words = (await (await item.getType('text/plain')).text()).trim();
+        if (words) return { words };
+      }
+      for (const item of items) {
+        const type = item.types.find((kind) => /^image\//.test(kind));
+        if (type) return { file: new File([await item.getType(type)], 'A copied picture', { type }) };
+      }
+      return null;
+    }
+  }
+  const words = (await clipboard.readText()).trim();
+  return words ? { words } : null;
+}
+
 /** True while something that could be dropped is being dragged over the page: a file, a link or some writing. */
 export const canTake = (transfer) => [...(transfer?.types ?? [])].some((type) => type === 'Files' || type === 'text/uri-list' || type === 'text/plain');
 

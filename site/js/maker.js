@@ -1,11 +1,13 @@
-// Make a pixel reel (the form on its own page, /make): turns what someone wants explained
-// into the words to give to Claude, to copy across. Nothing is sent anywhere; Claude and the connector do the making.
+// Make a pixel reel (the form on its own page, /make): one big box to paste a link into (a
+// button does the pasting), one line that says who reads it and in which language, and one
+// big button. It turns what someone wants explained into the words to give to Claude, to
+// copy across. Nothing is sent anywhere; Claude and the connector do the making.
 // Where the service has Make it right here switched on, the box makes the reel itself
 // instead: from what is typed or pasted in it, a file that is chosen, or anything dropped
 // anywhere on the page (given.js works out what was given, and what to send for it). The
 // service answers at once with the reel's own page, which shows it being made (watch.js).
 import { calm } from './calm.js';
-import { canTake, GivenError, givenFrom, isLink, languageFor, nameOf, PICTURE_SIDE, requestFor } from './given.js';
+import { canTake, GivenError, givenFrom, givenFromClipboard, isLink, languageFor, nameOf, PICTURE_SIDE, requestFor } from './given.js';
 import { mineStorage, rememberMine } from './mine.js';
 import { copyText } from './send.js';
 import { keepNarrator, narratorName, readNarrator } from './voice.js';
@@ -61,11 +63,21 @@ export function startHere() {
   about.dataset.reel = about.dataset.reelHere;
 }
 
+/** Brings what has just changed onto the screen: to the middle of it, or (`block` 'start') to the top. */
+const show = (el, block = 'center') => el.scrollIntoView({ block, behavior: calm() ? 'auto' : 'smooth' });
+
 export function startMaker() {
   const form = document.getElementById('maker');
   if (!form) return;
-  const box = form.querySelector('textarea'), words = document.getElementById('ask-words'), open = document.getElementById('ask-open');
+  const id = (name) => document.getElementById(name);
+  const box = form.querySelector('textarea'), words = id('ask-words'), open = id('ask-open');
   const here = form.dataset.here === 'on';
+  // what the box says back: a nudge, or with `sorry`, why something could not be done
+  const said = id(here ? 'here-said' : 'maker-said');
+  const say = (text, sorry = false) => {
+    said.textContent = text;
+    said.classList.toggle('sorry', sorry);
+  };
   // the box is one line that grows with what is put in it, as far as its styles let it
   const grow = () => { box.style.height = 'auto'; box.style.height = `${box.scrollHeight + box.offsetHeight - box.clientHeight}px`; };
   // The language the reel is read in, where more than English can be read here: the one chosen
@@ -76,6 +88,21 @@ export function startMaker() {
   // on this device, here or on the cards under Meet Peter, which keep it in the same place.
   const readers = [...form.querySelectorAll('input[name="who"]')];
   const narrator = () => { const chosen = readers.find((reader) => reader.checked)?.value; return chosen && chosen !== 'peter' ? chosen : null; };
+  // Both choices are folded away under one line that says what is chosen ("Read by Peter in
+  // English"), so that nobody has to decide anything before the big button: it opens to change them.
+  const reads = id('maker-read-says');
+  const named = (group) => {
+    const name = group.find((one) => one.checked)?.nextElementSibling;
+    if (!name) return null;
+    const chip = document.createElement('b');
+    chip.textContent = name.textContent;
+    if (name.lang) chip.lang = name.lang;   // "Français" is said as French
+    return chip;
+  };
+  const sayRead = () => {
+    const who = named(readers), tongue = named(choices);
+    reads.replaceChildren(...(who ? ['Read by ', who] : ['Read']), ...(tongue ? [' in ', tongue] : []));
+  };
   const update = () => {
     const who = narrator(), ask = askFor(box.value, who ? narratorName(who) : null, language());
     words.textContent = ask;
@@ -85,8 +112,22 @@ export function startMaker() {
   };
   box.addEventListener('input', update);
   addEventListener('resize', grow);
+  // Words that arrive on a press (pasted, or one of the things to try) go into the box to be
+  // looked over, and the keyboard goes to the button that is next: a clipboard can hold anything.
+  const next = here ? id('maker-go') : form.querySelector('button[data-copy]');
+  const ready = (text, note) => {
+    box.value = text;
+    update();
+    say(note);
+    next.focus({ preventScroll: true });
+    // the box and the button are seen together: the page moves only if one of them is off the screen (the things to try are under them)
+    const bar = document.querySelector('.top')?.getBoundingClientRect().bottom ?? 0;
+    if (form.getBoundingClientRect().top < bar || next.getBoundingClientRect().bottom > innerHeight) show(form, 'start');
+  };
+  const pasted = (text) => ready(text, here ? 'Pasted. Now press Make my reel.' : 'Pasted. Now press Copy the words.');
   for (const chip of form.querySelectorAll('[data-try]')) {
-    chip.addEventListener('click', () => { box.value = chip.dataset.try; update(); });
+    // where the box makes the reel itself, the things to try sit under the big button, so the way back up to it is said
+    chip.addEventListener('click', () => { if (here) ready(chip.dataset.try, 'Now press Make my reel.'); else { box.value = chip.dataset.try; update(); } });
   }
   // Enter in the box does the main thing, as it would in a box of one line; Shift and Enter starts a new line
   box.addEventListener('keydown', (e) => {
@@ -103,10 +144,11 @@ export function startMaker() {
       choice.checked = choice.value === start;
       choice.addEventListener('change', () => {
         try { localStorage.setItem(LANGUAGE, choice.value); } catch { /* as above */ }
+        sayRead();
         update();   // the words for Claude say which language
       });
     }
-    document.getElementById('maker-language').hidden = false;
+    id('maker-language').hidden = false;
   }
   if (readers.length) {
     let kept = null;
@@ -116,12 +158,38 @@ export function startMaker() {
       reader.checked = reader.value === start;
       reader.addEventListener('change', () => {
         try { keepNarrator(localStorage, reader.value); } catch { /* as above */ }
+        sayRead();
         update();   // the words for Claude say who
       });
     }
-    document.getElementById('maker-who').hidden = false;
+    id('maker-who').hidden = false;
   }
-  const make = here ? makeHere(form, box, update, language, narrator) : null;
+  if (choices.length || readers.length) {
+    sayRead();
+    id('maker-read').hidden = false;
+  }
+  const make = here ? makeHere(form, box, { update, say, pasted, language, narrator }) : null;
+  // The button that pastes: one press puts what was copied into the box, with no pressing
+  // and holding on a phone. Only where the browser lets a page read the clipboard on a press.
+  const paste = id('maker-paste');
+  if (navigator.clipboard?.read || navigator.clipboard?.readText) {
+    paste.hidden = false;
+    paste.addEventListener('click', async () => {
+      let given;
+      try {
+        given = await givenFromClipboard(navigator.clipboard);
+      } catch {
+        // the browser would not hand it over, or the person said no: the box still takes a paste of its own
+        update();
+        say('That did not paste. Press in the box, then paste there.', true);
+        box.focus({ preventScroll: true });
+        return;
+      }
+      if (given?.words) pasted(given.words);
+      else if (given?.file && make) make(given);   // a copied picture, such as a screenshot of a letter
+      else { update(); say(given ? 'That is a picture. Copy a link or some words, then press Paste.' : 'Nothing to paste yet. Copy a link first, then press Paste.', true); }
+    });
+  }
   if (!here) box.maxLength = ASK_MAX;
   // the main thing: make the reel here, or else copy the words, the same as the first button
   form.addEventListener('submit', (e) => {
@@ -151,11 +219,12 @@ async function shrinkPicture(file) {
  * to the reel's page, which shows it being written and recorded. It also takes anything dropped on the page,
  * a file that is chosen, and what is pasted when the pointer is not in a box.
  */
-function makeHere(form, box, update, language, narrator) {
+function makeHere(form, box, { update, say, pasted, language, narrator }) {
   const id = (name) => document.getElementById(name);
-  const said = id('here-said'), wait = id('maker-wait'), over = id('drop-over'), file = id('maker-file'), own = id('maker-own'), ownOpen = id('maker-own-open');
+  const wait = id('maker-wait'), over = id('drop-over'), file = id('maker-file'), own = id('maker-own'), ownOpen = id('maker-own-open');
   id('maker-here').hidden = false;
   // giving the words to their own Claude is still there, behind a button
+  id('maker-other').hidden = false;
   own.hidden = true;
   ownOpen.addEventListener('click', () => {
     own.hidden = !own.hidden;
@@ -163,11 +232,6 @@ function makeHere(form, box, update, language, narrator) {
   });
 
   // While Claude writes, the box shows only that: what was given, and that it is being made.
-  // what the box says back: a nudge, or with `sorry`, why something could not be made
-  const say = (words, sorry = false) => {
-    said.textContent = words;
-    said.classList.toggle('sorry', sorry);
-  };
   // The words last asked about are kept, on this device and only until the tab is closed, so
   // that someone sent back here from a reel that could not be made finds them in the box.
   const keep = (asked) => {
@@ -191,13 +255,11 @@ function makeHere(form, box, update, language, narrator) {
     wait.hidden = !on;
     for (const el of form.elements) el.disabled = on;
   };
-  // brings what has just changed to the middle of the screen: a drop can land anywhere on the page
-  const show = (el) => el.scrollIntoView({ block: 'center', behavior: calm() ? 'auto' : 'smooth' });
 
   async function make(given) {
     if (busy) return;
     if (!given.file && !given.words.trim()) {
-      say('Say what you want explained.', true);
+      say('Paste a link, or type a question, first.', true);
       box.focus();
       return;
     }
@@ -222,11 +284,14 @@ function makeHere(form, box, update, language, narrator) {
       setBusy(false);
       say(err instanceof GivenError ? err.message : navigator.onLine === false ? 'You are not online. Check your internet, then try again.' : 'That did not work. Try again in a minute.', true);
       if (form.contains(from)) from.focus({ preventScroll: true });
-      show(said);
+      show(id('here-said'));
     }
   }
 
-  id('maker-choose').addEventListener('click', () => file.click());
+  // a photo, or a PDF: a button each, and the chooser opens showing only that kind
+  for (const way of [id('maker-photo'), id('maker-choose')]) {
+    way.addEventListener('click', () => { file.accept = way.dataset.accept; file.click(); });
+  }
   file.addEventListener('change', () => {
     if (file.files[0]) make({ file: file.files[0] });
     file.value = '';   // so the same file can be chosen again
@@ -258,12 +323,7 @@ function makeHere(form, box, update, language, narrator) {
     const inBox = e.target instanceof Element && e.target.closest('input, textarea, [contenteditable]');
     if (!given.file && inBox) return;
     e.preventDefault();
-    if (given.file) { make(given); return; }
-    box.value = given.words;
-    update();
-    say('Pasted. Now press Make my reel.');
-    id('maker-go').focus({ preventScroll: true });
-    show(id('maker-go'));
+    if (given.file) make(given); else pasted(given.words);
   });
 
   // coming back to this page with Back finds it as it was left: ready, not still waiting

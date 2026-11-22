@@ -305,11 +305,19 @@ own page for making a reel ([/make](../site/pages/make.html), "Make a pixel reel
 of every page) makes the reel itself. The visitor gives it one thing to explain, in
 whichever way is easiest for them:
 
-- **Type or paste** a link or a few words into the box, and press **Make my reel**.
+- **Paste a link** into the one big box, which says "Paste a link here". Its **Paste** button
+  puts in whatever was last copied, in one press, so nobody has to press and hold on a phone.
+  Then press **Make my reel**, the big button straight under it.
+- **Type a question**, or a few words, into the same box.
 - **Paste some writing** (an email, a letter) into the box. It grows to hold it.
+- **Take a photo**, or **Choose a PDF**: a button each, under the big button, for a letter or
+  a bill.
 - **Drop** a link, a PDF, a picture or some writing **anywhere on the make page**. A panel says
   "Drop it here" while it is dragged, and the reel is started as soon as it lands.
-- **Choose a file**, or on a phone **take a photo** of a letter or a bill.
+
+Who reads the reel, and in which language, is one line between the box and the big button
+("Read by Peter in English"). It opens when pressed, so there is nothing to decide before
+making a reel, and the choice made last time is kept.
 
 The visitor is taken to the reel's own page straight away, and waits there with something to
 watch. The service asks Claude to write the scenes through the Claude API after it has
