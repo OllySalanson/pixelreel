@@ -525,6 +525,35 @@ describe("Peter's pace", () => {
   });
 });
 
+describe('a reel that fills the screen', () => {
+  const player = playerHtml('gas-meter'), css = readFileSync(root('site/css/site.css'), 'utf8'), code = readFileSync(root('site/js/player.js'), 'utf8');
+
+  it('has a button for it in the corner of the picture, with a name, out of sight until its script has woken', () => {
+    assert.match(player, /<button class="reel-full" type="button" aria-label="Fill the screen" aria-pressed="false" hidden><svg class="ico on"[^>]*>.*?<\/svg><svg class="ico"[^>]*>.*?<\/svg><\/button>\s*<\/div>\s*<div class="reel-seek"/s);
+    assert.match(code, /this\.fullKey\.hidden = false;/);
+    for (const name of pages) if (html[name].includes('class="reel"')) assert.match(html[name], /class="reel-full"/, `${name}: every player has it`);
+  });
+
+  it('is laid over the whole page where the browser will not make it the whole screen, as on an iPhone', () => {
+    assert.match(code, /if \(!this\.root\.requestFullscreen\) \{ over\(\); return; \}/);
+    assert.match(code, /this\.root\.requestFullscreen\(\)\.then\([^;]*, over\);/, 'and where the browser refuses');
+    assert.match(css, /:root \.reel\.is-filling \{ position: fixed; inset: 0; z-index: 200;/);
+    assert.match(css, /html\.reel-filling \{ overflow: hidden; \}/, 'with the page under it held still');
+  });
+
+  it('gives the picture all the room its words and buttons leave, and puts the words beside the buttons on a phone on its side', () => {
+    assert.match(css, /:root \.reel\.is-full \{ display: grid; grid-template-rows: minmax\(0, 1fr\) auto auto auto;/);
+    assert.match(css, /\.reel\.is-full canvas \{ width: min\(100cqw, 100cqh \* 16 \/ 9\); \}/);
+    assert.match(css, /@media \(max-height: 34rem\) and \(orientation: landscape\) \{\s*:root \.reel\.is-full \{ grid-template-columns: minmax\(0, 1fr\) auto;/);
+  });
+
+  it('is left with the same button, with F, or with Escape', () => {
+    assert.match(code, /aria-label', on \? 'Leave full screen' : 'Fill the screen'\)/);
+    assert.match(code, /e\.key\.toLowerCase\(\) === 'f' && this\.fullKey\) this\.toggleFull\(\)/);
+    assert.match(code, /e\.key === 'Escape' && this\.root\.classList\.contains\('is-filling'\)/);
+  });
+});
+
 describe('who reads', () => {
   const others = ['anna', 'vera', 'stuart', 'charles', 'paul'];
   const home = sitePage('home', 'https://reels.example', { narrators: others }), plain = sitePage('home', 'https://reels.example');

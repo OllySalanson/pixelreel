@@ -34,6 +34,9 @@ People who find reading hard work. Every choice follows from that:
   readers use on paper. It gets out of the way of a reel that is playing.
 - **Nothing lost with the sound off.** A reel shows a few words and Peter says the rest.
   With the sound off, every word he says is written under the picture instead.
+- **As big as the screen.** Every player has a button in the corner of its picture that
+  fills the whole screen with the reel, for anyone who needs it large, or is watching on a
+  phone held on its side.
 - **Watch instead.** Every part of the home page has a "Make a pixel reel about this" button
   that plays a reel of that part, made earlier. "Watch this whole page" plays them all.
 - **Calm.** Sound only ever starts on a press. Pictures hold still for anyone whose device
@@ -688,3 +691,20 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | The cards on a laptop, with Anna chosen, and on a phone |
 | --- |
 | ![Or choose who reads to you: cards for Peter, Anna, Vera, Stuart, Charles and Paul, each with Hear and Choose. Anna's says Chosen, with a tick. Under them: Anna will read the reels you make.](log/v28-who-reads.jpg) |
+
+### Version 29
+
+- **A reel can fill the screen.** Every player has a new button in the corner of its
+  picture. Pressed, the reel takes the whole screen: the picture as large as the room above
+  its words and buttons allows, on plain night. The same button puts it back, and so do F
+  and Escape. "Watch this whole page" carries on through its reels without leaving.
+- **On a phone held on its side** the picture takes the height of the screen, and the words
+  go beside the buttons under it. Where a phone will turn its own screen for a film, it
+  turns it for a reel.
+- **Where a browser will not give a page the whole screen** (an iPhone will not), the reel
+  is laid over the whole page instead, which looks the same.
+- The button is the player's own: an outline of four corners, on the same grid as the rest.
+
+| Before pressing, and after, on a laptop | A phone on its side |
+| --- | --- |
+| ![A player with a small button of four corners at the top right of its picture; then the same reel filling the screen, its words and buttons under the picture.](log/v29-fills-the-screen.jpg) | ![The reel on a phone held on its side: the picture, then one row with the words on the left and Back, Play, Next and Sound on on the right.](log/v29-on-its-side.jpg) |
