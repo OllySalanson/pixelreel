@@ -1493,7 +1493,7 @@ describe('the menu, where the bar has no room for its links', () => {
   const menuOf = (page) => /<dialog class="menu" id="menu"[^>]*>([\s\S]*?)<\/dialog>/.exec(page)?.[1] ?? '';
 
   it('has a Menu button on every page, shown only when the links are not', () => {
-    for (const name of pages) assert.match(html[name], /<button class="top-menu" type="button" data-open="menu" aria-haspopup="dialog">Menu<\/button>/, name);
+    for (const name of pages) assert.match(html[name], /<a class="top-menu" href="#more" data-open="menu">Menu<\/a>/, name);
     assert.match(css, /\n\.top-menu \{ display: none; \}/, 'out of sight while the links have room');
     assert.match(css, /\.top-in\[data-tight\] \.top-menu \{ display: inline-flex; \}/, 'there when boot.js lets go of the links');
     // every rule that hides the links for a width of screen shows the button in the same breath
@@ -1523,7 +1523,8 @@ describe('the menu, where the bar has no room for its links', () => {
   // a pretend page: a Menu button, and a dialog with a link, a button and some words in it
   const pretend = () => {
     const heard = {}, dialog = { open: false, showModal() { this.open = true; }, close() { this.open = false; }, addEventListener: (name, run, onTheWayDown) => { heard[name] = run; heard.onTheWayDown = onTheWayDown; } };
-    const opener = { addEventListener: (name, run) => { opener.press = run; } };
+    const opener = { says: {}, hears: {}, stopped: 0, setAttribute(name, value) { this.says[name] = value; }, addEventListener(name, run) { this.hears[name] = run; } };
+    opener.press = (key = null) => (key === null ? opener.hears.click : opener.hears.keydown)({ key, preventDefault: () => { opener.stopped++; } });
     startMenu({ getElementById: (id) => (id === 'menu' ? dialog : null), querySelectorAll: (selector) => (selector === '[data-open="menu"]' ? [opener] : []) });
     const inside = (pressable) => ({ closest: (selector) => (selector === 'a, button' && pressable ? {} : null) });
     return { dialog, opener, heard, inside };
@@ -1533,6 +1534,20 @@ describe('the menu, where the bar has no room for its links', () => {
     const { dialog, opener } = pretend();
     opener.press();
     assert.equal(dialog.open, true);
+  });
+
+  it('is a link to the links at the foot until its script makes a button of it', () => {
+    // without the script a button would do nothing at all; a link still gets somewhere
+    for (const name of pages) assert.match(html[name], /<nav class="foot-nav" id="more" aria-label="More pages">/, `${name}: where the link leads`);
+    const { dialog, opener } = pretend();
+    assert.deepEqual(opener.says, { role: 'button', 'aria-haspopup': 'dialog' }, 'a screen reader is told what it has become');
+    opener.press();
+    assert.equal(opener.stopped, 1, 'pressed, it opens the menu and does not jump to the foot');
+    dialog.close();
+    opener.press('Enter');
+    assert.equal(dialog.open, false, 'Enter is a press already: the browser sends it as one');
+    opener.press(' ');
+    assert.deepEqual([dialog.open, opener.stopped], [true, 2], 'and it answers to Space, as a button does');
   });
 
   it('closes when anything in it is pressed, or the dimmed page beside it, and not for a press on its words', () => {

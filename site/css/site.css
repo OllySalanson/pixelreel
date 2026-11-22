@@ -104,6 +104,7 @@ button { font: inherit; letter-spacing: inherit; word-spacing: inherit; color: i
   box-shadow: 0 calc(var(--u) * -1) 0 0 #3b5173, 0 var(--u) 0 0 #3b5173, calc(var(--u) * -1) 0 0 0 #3b5173, var(--u) 0 0 0 #3b5173; margin: var(--u); }
 .top-comfort { display: inline-flex; }
 .top-comfort:hover, .top-menu:hover { background: var(--navy); }
+.top-menu { text-decoration: none; }   /* it is written as a link (to the foot's links, for a page whose scripts never ran) */
 .top-comfort .aa { font-weight: 800; font-size: 1.25rem; color: var(--gold); letter-spacing: 0; }
 .top .top-add { margin-block: 0 calc(var(--u) * 2); }
 

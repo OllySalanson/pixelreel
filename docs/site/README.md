@@ -1502,3 +1502,21 @@ Looked at in a browser on a phone's screen: under a reel just made, on a watch p
 the player over the home page, with making reels switched on and off. Found on the way,
 and not from this change: with the biggest OpenDyslexic letters at 320 pixels wide, the
 player that opens over a page is 6 pixels wider than its frame.
+
+### Version 67
+
+Another of mine, from Version 44. The pages are meant to work without JavaScript, reels
+aside, and the Menu button did not.
+
+- **A Menu button that did nothing.** On a phone the stylesheet shows the Menu button
+  whether or not the page's scripts have run, and without them a button does nothing at
+  all. Before the button was there, a phone with no scripts had no menu either; now it
+  had one that looked as if it worked.
+- **It is a link first.** Menu is now written as a link to the links at the foot of the
+  page, which are much the same links. Where the scripts run, as they nearly always do,
+  it is made a button: it opens the menu, answers to Space as a button does, and tells a
+  screen reader that it is a button that opens something.
+
+Tried in the headless browser both ways: as it is, a press opens the menu and the page
+stays where it was; with its script's hold on it taken away, a press goes to the links at
+the foot. `scripts/site-press.js` and `scripts/site-fit.js` say all well with it.
