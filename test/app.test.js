@@ -430,6 +430,12 @@ describe('a reel kept on the device', () => {
     assert.match(page, /<p class="watch-sent" id="watch-keep-says" role="status"><\/p>/);
   });
 
+  it('is the only thing on its page that is called kept: the small print says the day the reel is deleted', () => {
+    const page = sitePage('reel', ORIGIN, { values: { reelid: ID, reeltitle: 'Tea' } });
+    assert.match(page, /<p id="watch-kept" hidden>Only people with this link can watch\. It is deleted on <span id="watch-until"><\/span>\.<\/p>/);
+    assert.doesNotMatch(page, /It is kept until/, 'or the same word would mean a copy on the phone and the reel at the service');
+  });
+
   it('is offered on the page for when there is no internet, in a part of it out of sight until there is one to show', () => {
     const offline = sitePage('offline', ORIGIN);
     assert.match(offline, /<section class="section night cinema" aria-labelledby="yours-title" hidden>/);
