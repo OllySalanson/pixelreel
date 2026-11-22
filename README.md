@@ -140,6 +140,10 @@ on by itself, and the Sound button reads it with your device's voice. For the wa
 narrator, put the same `reel.json` in `reels/<name>/` here, then run `npm run voices <name>`
 and `npm run page <name>`.
 
+Or run the Pixel Reel service and add it to Claude as a connector: Claude writes the scenes,
+the service records the narrator and hands back a link to watch, and an MP4 if you ask. See
+[docs/service.md](docs/service.md).
+
 ## Write a scene
 
 ```js
@@ -230,6 +234,7 @@ reels/what-is-pixelreel/    a smaller example
 scripts/                    npm start, new, voices, check, page, video and skill, and
                             setup-voices.sh
 skill/                      the Claude skill: SKILL.md and example.json, and the ZIP to upload
+service/                    the Pixel Reel service: a Claude connector and a page for each reel
 docs/                       writing scenes, voices, sharing, and the pictures in this README
 test/                       unit tests (node --test)
 fonts/                      Orange Kid, the pixel font (CC0)

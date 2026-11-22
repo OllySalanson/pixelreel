@@ -13,5 +13,5 @@ export default [
     }
   },
   { files: ['src/**/*.js', 'reels/**/*.js', 'scripts/templates/*.js'], languageOptions: { globals: globals.browser } },
-  { files: ['scripts/**/*.mjs', 'test/**/*.js', 'eslint.config.js'], languageOptions: { globals: globals.node } }
+  { files: ['scripts/**/*.mjs', 'service/**/*.mjs', 'test/**/*.js', 'eslint.config.js'], languageOptions: { globals: globals.node } }
 ];
