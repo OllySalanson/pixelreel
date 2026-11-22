@@ -3,7 +3,9 @@
 Reads one JSON job from stdin:
   {"voice": "peter_yearsley", "threads": 2,
    "lines": [{"text": "Hello!", "wav": "/tmp/x.wav"}, ...]}
-and prints one JSON line per finished WAV: {"wav": "...", "seconds": 3.4}.
+and prints one JSON line per finished WAV: {"wav": "...", "seconds": 3.4}. A job may name
+the "language" its words are in (french, german, spanish, italian, portuguese, dutch): each
+is a model of its own, which downloads itself the first time, about 190 MB.
 
 With --serve it stays running, for the service (service/voice.mjs): it loads the model and
 the voice named by --voice once, prints {"ready": true}, then takes a job a line for as
@@ -29,8 +31,8 @@ def calm(threads: int) -> None:
         os.environ.setdefault(var, str(threads))
 
 
-def load(threads: int):
-    """The model, the function that saves audio, and a function giving a voice's state (kept, once made)."""
+def load(threads: int, language=None):
+    """The model (for `language`, or English), the function that saves audio, and a function giving a voice's state (kept, once made)."""
     try:
         import soundfile as sf
         import torch
@@ -39,7 +41,10 @@ def load(threads: int):
         sys.exit(f"{err}. Run scripts/setup-voices.sh first, or point PIXELREEL_PYTHON at a Python that has pocket-tts and soundfile.")
 
     torch.set_num_threads(threads)
-    model = TTSModel.load_model()
+    try:
+        model = TTSModel.load_model(language=language) if language and language != "english" else TTSModel.load_model()
+    except Exception as err:  # a language it does not speak, or a model that could not be fetched
+        sys.exit(f"Pocket TTS could not load its {language or 'English'} model ({err}).")
     states = {}
 
     def voice(name: str):
@@ -83,6 +88,8 @@ def serve(args: list) -> None:
         try:
             job = json.loads(text)
             about = {"id": job.get("id")}
+            if job.get("language", "english") != "english":  # the one kept loaded speaks English
+                raise ValueError(f"this voice is loaded for English, not {job['language']}")
             speak(job, model, sf, voice, about)
             print(json.dumps({"done": True, **about}), flush=True)
         except Exception as err:  # this job failed; the next may not
@@ -96,7 +103,7 @@ def main() -> None:
     job = json.load(sys.stdin)
     threads = int(job.get("threads", 2))
     calm(threads)
-    model, sf, voice = load(threads)
+    model, sf, voice = load(threads, job.get("language"))
     try:
         speak(job, model, sf, voice)
     except ValueError as err:

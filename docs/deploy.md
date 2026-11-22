@@ -130,6 +130,21 @@ must be verified for the Google account that makes them:
    lists the records Google wants, if they ever differ.
 4. Google issues the certificate once the records are seen, usually within an hour.
 
+### Other languages
+
+Off. To let Peter read reels in other languages (see
+[service.md](service.md#other-languages) for what has and has not been checked), the image
+must hold each language's voice model, and the service must be told:
+
+1. In the `Dockerfile`, set `ARG VOICE_LANGUAGES="french spanish"` (any of french, german,
+   spanish, italian, portuguese, dutch). Each adds about 190 MB to the image. With Docker
+   itself, `--build-arg VOICE_LANGUAGES="french spanish"` does the same without the edit.
+2. Deploy, and add `--update-env-vars PIXELREEL_LANGUAGES=french,spanish`.
+
+A language switched on without its model in the image cannot be recorded: the image's model
+folder is not writable, so nothing is downloaded when the service runs, and such a reel
+fails with "The voice could not be recorded".
+
 ### Switching on Make it right here
 
 It is off. To let visitors without Claude have the service write a reel for them from what

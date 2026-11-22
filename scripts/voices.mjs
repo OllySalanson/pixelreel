@@ -26,13 +26,17 @@ export const ENGINES = {
 };
 export const DEFAULTS = { engine: 'pocket', bitrate: '48k', threads: 2 };
 
+/** The languages Pocket TTS speaks, as it names them (its --lang). Each but English is a model of its own, fetched the first time it is used. */
+export const POCKET_LANGUAGES = ['english', 'french', 'german', 'spanish', 'italian', 'portuguese', 'dutch'];
+
 /** Kokoro's voices are named like bm_george or af_heart; Pocket TTS's like peter_yearsley. */
 const KOKORO_VOICE = /^[a-z][fm]_[a-z]+$/;
 
 /** The file name a clip gets: the same words and the same narrator always give the same name. */
 export function clipFile(text, { engine, voice, speed, lang }) {
   // Kokoro and --command clips keep the names they had before there was a choice of engine
-  const narrator = engine === 'pocket' ? `pocket|${voice}` : `${voice}|${speed}|${lang}`;
+  // (and Pocket TTS's English clips the names they had before it spoke anything else)
+  const narrator = engine === 'pocket' ? `pocket|${voice}${lang ? `|${lang}` : ''}` : `${voice}|${speed}|${lang}`;
   return createHash('sha256').update(`${narrator}|${text}`).digest('hex').slice(0, 16) + '.mp3';
 }
 
@@ -40,7 +44,7 @@ export function clipFile(text, { engine, voice, speed, lang }) {
 function recordedWith(manifest) {
   const { engine, voice, speed, lang } = manifest ?? {};
   if (typeof voice !== 'string' || voice.startsWith('command: ')) return null;
-  if (engine === 'pocket') return { engine, voice };
+  if (engine === 'pocket') return { engine, voice, ...(POCKET_LANGUAGES.includes(lang) && lang !== 'english' ? { lang } : {}) };
   if ((engine ?? 'kokoro') === 'kokoro' && speed > 0 && typeof lang === 'string') return { engine: 'kokoro', voice, speed, lang };
   return null;
 }
@@ -50,6 +54,7 @@ function recordedWith(manifest) {
  * and --command (each undefined when not given). Without them a reel keeps the narrator its
  * manifest says it was recorded with, so recording one changed line never changes the voice;
  * a new reel gets Pocket TTS's peter_yearsley. A Kokoro voice name picks Kokoro by itself.
+ * For Pocket TTS, --lang is the language the words are in (POCKET_LANGUAGES); a reel keeps that too.
  */
 export function narrator(options, manifest = null) {
   const { engine: wanted, voice, speed, lang } = options;
@@ -67,8 +72,11 @@ export function narrator(options, manifest = null) {
   const engine = wanted ?? (voice ? (KOKORO_VOICE.test(voice) ? 'kokoro' : 'pocket') : before?.engine ?? DEFAULTS.engine);
   const base = before?.engine === engine && !voice ? before : ENGINES[engine];
   if (engine === 'pocket') {
-    if (speed || lang) throw new Error('Pocket TTS has no --speed or --lang. Those are for Kokoro: add --engine kokoro.');
-    return { engine, voice: voice ?? base.voice };
+    if (speed) throw new Error('Pocket TTS has no --speed. That is for Kokoro: add --engine kokoro.');
+    if (lang !== undefined && !POCKET_LANGUAGES.includes(lang)) throw new Error(`--lang must be one of ${POCKET_LANGUAGES.join(', ')} for Pocket TTS.`);
+    // English is Pocket TTS's own language and is not named, so its clips and manifests are as they always were
+    const language = lang ?? base.lang;
+    return { engine, voice: voice ?? base.voice, ...(language && language !== 'english' ? { lang: language } : {}) };
   }
   const settings = { engine, voice: voice ?? base.voice, speed: speed === undefined ? base.speed : Number(speed), lang: lang ?? base.lang };
   if (!(settings.speed > 0)) throw new Error('--speed must be a number above 0, for example 0.92');
@@ -158,7 +166,7 @@ export function speak(lines, settings, threads, onDone) {
   const modelDir = process.env.KOKORO_HOME || join(ROOT, 'models');
   const job = settings.engine === 'kokoro'
     ? { model: join(modelDir, 'kokoro-v1.0.onnx'), voices: join(modelDir, 'voices-v1.0.bin'), voice: settings.voice, speed: settings.speed, lang: settings.lang, threads, lines }
-    : { voice: settings.voice, threads, lines };
+    : { voice: settings.voice, threads, lines, ...(settings.lang ? { language: settings.lang } : {}) };
   return new Promise((ok, fail) => {
     const child = spawn(findPython(), [join(ROOT, 'scripts', engine.script)], { stdio: ['pipe', 'pipe', 'inherit'] });
     child.on('error', (err) => fail(new Error(`Could not start Python (${err.message}). Run scripts/setup-voices.sh, or set PIXELREEL_PYTHON.`)));
@@ -228,7 +236,7 @@ export async function main(args = process.argv.slice(2), { log = console.log, on
       log(`  ${clip.file}  ${clip.seconds.toFixed(1)}s  "${clip.text.slice(0, 60)}${clip.text.length > 60 ? '...' : ''}"`);
       onClip(clip, { done: ++done, of: todo.length });
     };
-    log(`Recording ${todo.length} of ${clips.length} clips with ${command ? 'your speech command' : `${ENGINES[settings.engine].name}, voice ${settings.voice}`}...`);
+    log(`Recording ${todo.length} of ${clips.length} clips with ${command ? 'your speech command' : `${ENGINES[settings.engine].name}, voice ${settings.voice}${settings.engine === 'pocket' && settings.lang ? `, in ${settings.lang}` : ''}`}...`);
     try {
       if (command) speakWithCommand(lines, command, (wav) => encode(wav));
       else await speaker(lines, settings, Number(values.threads) || DEFAULTS.threads, encode);

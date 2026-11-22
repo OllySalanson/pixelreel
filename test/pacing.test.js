@@ -31,6 +31,14 @@ describe('timing pictures to the voice', () => {
     assert.equal(year, null, 'a number in the thousands could be said several ways, so it is not guessed');
   });
 
+  it('reads words with accents as whole words, in any of the languages a reel can be in', () => {
+    assert.deepEqual(spokenWords('Voilà. Le thé est prêt, ça y est.').map((w) => w.word), ['voilà', 'le', 'thé', 'est', 'prêt', 'ça', 'y', 'est']);
+    assert.deepEqual(spokenWords('Öffnen Sie die Tür, bitte.').map((w) => w.word), ['öffnen', 'sie', 'die', 'tür', 'bitte']);
+    const say = "D'abord, trouvez le compteur. Il est souvent dehors, dans l'entrée, ou sous l'escalier.";
+    const [dehors, entree, escalier] = spokenAt(['Dehors', "Dans l'entrée", "Sous l'escalier"], say, 7);
+    assert.ok(dehors > 2 && entree > dehors && escalier > entree, `each label is found where it is said: ${[dehors, entree, escalier]}`);
+  });
+
   it('takes the labels in the order they arrive, even when the line names the second first', () => {
     // "bill" is said before "guess", but the guess card comes first: it cannot wait for the last word
     const [guess, bill] = spokenAt(['A guess', 'The right bill'], 'Why bother? Because then your bill is based on what you really used. Not on a guess.', 5.76);

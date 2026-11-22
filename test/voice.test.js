@@ -101,7 +101,9 @@ describe('the voice kept ready', () => {
     const { warm, usual, starts } = voice();
     await warm.speak(lines('One.'), { engine: 'kokoro', voice: 'bm_george' }, 2, () => {});
     assert.deepEqual(usual, ['One.'], 'Kokoro is not Pocket TTS: it is spoken the usual way');
-    assert.deepEqual(starts(), [], 'and nothing is loaded for it');
+    await warm.speak(lines('Un.'), { engine: 'pocket', voice: 'peter_yearsley', lang: 'french' }, 2, () => {});
+    assert.deepEqual(usual.splice(1), ['Un.'], 'and so is another language: the voice kept loaded is the English one');
+    assert.deepEqual(starts(), [], 'and nothing is loaded for either');
     await assert.rejects(warm.speak(lines('Two.', 'Three.'), PETER, 2, () => { throw new Error('ffmpeg could not encode it'); }), /^Error: ffmpeg could not encode it$/);
     assert.deepEqual(usual, ['One.'], 'a line that was spoken but could not be saved is not spoken again');
     // the voice is still finishing "Three." of the reel that was given up on: its lines are not taken for this one's

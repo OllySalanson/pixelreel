@@ -39,12 +39,15 @@ export const isId = (id) => typeof id === 'string' && ID.test(id);
  * A recorder: records the voice for the reel in folder `dir`, with npm run voices (Pocket TTS,
  * voice peter_yearsley), telling `onLine(done, of, clip)` as each line is recorded: how many
  * are done of how many, and the recording ({ text, file, seconds }), by then in the folder's
- * audio/. With a `speaker` (a WarmVoice's, service/voice.mjs) the lines are spoken by a voice kept loaded.
+ * audio/. Its last argument may name the `language` the words are in, if not English. With a `speaker` (a WarmVoice's, service/voice.mjs) the lines are spoken by a voice kept loaded.
  */
-export const recordWith = (speaker = null) => async (dir, log, onLine) => {
+export const recordWith = (speaker = null) => async (dir, log, onLine, { language = null } = {}) => {
   const { main } = await import('../scripts/voices.mjs');
-  await main([dir], { log, onClip: (clip, { done, of }) => onLine(done, of, clip), ...(speaker ? { speaker } : {}) });
+  await main([dir, ...(language ? ['--lang', language] : [])], { log, onClip: (clip, { done, of }) => onLine(done, of, clip), ...(speaker ? { speaker } : {}) });
 };
+
+/** A language's name as it is written in a sentence: french is French. */
+export const languageName = (language) => language[0].toUpperCase() + language.slice(1);
 
 /** Draws a reel's own picture for link previews, from its reel.json, parsed. Resolves to a PNG. */
 async function drawPicture(raw) {
@@ -65,9 +68,10 @@ export class Reels {
    * @param {(dir: string, log: Function, onLine: (done: number, of: number, clip?: object) => void) => Promise<void>} [options.record]   records a folder's voices, saying as each line is done
    * @param {(dir: string, out: string) => Promise<void>} [options.video]   draws a folder's reel as an MP4
    * @param {(raw: object) => Promise<Uint8Array>} [options.picture]   draws a reel's picture for link previews, as a PNG
+   * @param {string[]} [options.languages]   the languages besides English the narrator can read here (those whose voice models are to hand)
    */
-  constructor({ store, record = recordWith(), video = drawVideo, picture = drawPicture, now = () => Date.now(), keepDays = KEEP_DAYS, maxQueue = 20, log = () => {} }) {
-    Object.assign(this, { store, record, video, picture, now, keepDays, maxQueue, log });
+  constructor({ store, record = recordWith(), video = drawVideo, picture = drawPicture, now = () => Date.now(), keepDays = KEEP_DAYS, maxQueue = 20, languages = [], log = () => {} }) {
+    Object.assign(this, { store, record, video, picture, now, keepDays, maxQueue, languages, log });
     this.queue = [];
     this.running = null;
     this.notes = new Map();   // how far each reel that is still being written has got: note()
@@ -107,14 +111,20 @@ export class Reels {
    * `improves` is the id of an earlier reel this one is a change to: the lines the two share
    * keep their recordings, so only what changed is recorded (`kept` in its status says how
    * many). The earlier reel need not be recorded yet: it will be by the time this one's turn comes.
+   * `language` is the language its words are in, for the narrator to read it in: one of `languages`, or English.
    */
-  async create(raw, { improves = null } = {}) {
+  async create(raw, { improves = null, language = null } = {}) {
     const reel = this.check(raw);
+    const spoken = language && language !== 'english' ? language : null;
+    if (spoken && !this.languages.includes(spoken)) {
+      throw new ReelError([`language: Peter reads ${['English', ...this.languages.map(languageName)].join(', ')} here, not ${JSON.stringify(language)}. Write the reel in English, and tell the person so.`]);
+    }
     if (this.queue.length >= this.maxQueue) throw new BusyError();
     const status = { ...this.blank(reel.title, 'queued'), ...this.measure(reel) };
     await this.store.put(`reels/${status.id}/reel.json`, JSON.stringify(raw));
     const kept = await this.shared(improves, reel);
     if (kept) Object.assign(status, { improves, kept });   // its recordings are fetched when this one's turn comes (run)
+    if (spoken) status.language = spoken;
     await this.save(status);
     this.enqueue({ id: status.id, kind: 'voice' });
     // with nothing else in hand its recording has begun already, and whoever asked is told so
@@ -406,7 +416,7 @@ export class Reels {
         };
         try {
           try {
-            await this.record(dir, (line) => this.log(`${id}: ${line}`), onLine);
+            await this.record(dir, (line) => this.log(`${id}: ${line}`), onLine, { language: status.language ?? null });
           } finally {
             await progress;
           }

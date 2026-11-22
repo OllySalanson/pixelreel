@@ -22,11 +22,13 @@
 // Recording needs Pocket TTS set up (scripts/setup-voices.sh) and ffmpeg; videos need
 // @napi-rs/canvas. The voice is loaded once, when the service starts, and kept ready
 // (service/voice.mjs); PIXELREEL_WARM_VOICE=0 loads it afresh for each reel instead.
+// PIXELREEL_LANGUAGES (such as french,spanish) lets reels be made in other languages Peter can read.
 import { join } from 'node:path';
 import { CLAUDE_ADDRESSES, RateLimit } from './limits.mjs';
 import { recordWith, Reels } from './reels.mjs';
 import { createService } from './server.mjs';
 import { DiskStore, S3Store } from './store.mjs';
+import { POCKET_LANGUAGES } from '../scripts/voices.mjs';
 import { WarmVoice } from './voice.mjs';
 
 const port = Number(process.env.PORT) || 8787;
@@ -39,7 +41,13 @@ const store = process.env.PIXELREEL_S3_BUCKET ? S3Store.fromEnv(process.env) : n
 // a reel's scenes, Peter is ready to read them. PIXELREEL_WARM_VOICE=0 loads it for each reel instead.
 const voice = process.env.PIXELREEL_WARM_VOICE === '0' ? null : new WarmVoice({ log });
 voice?.start();
-const reels = new Reels({ store, log, record: recordWith(voice ? (...job) => voice.speak(...job) : null) });
+// Peter reads English. PIXELREEL_LANGUAGES names the other languages he may read here (french, german,
+// spanish, italian, portuguese, dutch): only ones whose voice models are to hand (docs/deploy.md).
+const asked = (process.env.PIXELREEL_LANGUAGES ?? '').split(',').map((l) => l.trim().toLowerCase()).filter(Boolean);
+const languages = asked.filter((l) => l !== 'english' && POCKET_LANGUAGES.includes(l));
+for (const l of asked) if (l !== 'english' && !languages.includes(l)) log(`PIXELREEL_LANGUAGES: Peter does not read "${l}"; he reads ${POCKET_LANGUAGES.join(', ')}`);
+if (languages.length) log(`Peter also reads ${languages.join(', ')} here`);
+const reels = new Reels({ store, log, languages, record: recordWith(voice ? (...job) => voice.speak(...job) : null) });
 await reels.resume();
 const sweep = async () => {
   const gone = await reels.sweep().catch((err) => { log(`sweep failed: ${err.message}`); return []; });
