@@ -1605,3 +1605,17 @@ marked, and the page is read as before.
 | A paragraph of the privacy page, and a question on Dark paper, with the sentence being said in gold |
 | --- |
 | ![A list on the privacy page: one item has an edge round it, and its first sentence is gold. Beside it, a question open on Dark paper, with the second sentence of its answer gold.](log/v72-the-sentence.jpg) |
+
+### Version 73
+
+- **On a phone held on its side, the bar across the top goes up with the page.** Stuck to
+  the top, it took 72 pixels of a screen 390 high: nearly a fifth of it, all the time, on
+  the one kind of screen with least to spare. On a screen that short and wide it now
+  scrolls away with the page. The menu is still at the top of every page.
+- **The player uses the room.** With the bar out of the way, a player in the page is as
+  tall as the screen allows: its picture is 350 pixels of the 390, where it was 286.
+- Held upright, and on anything bigger, the bar stays where it was.
+
+Tried in the headless browser at 844 by 390: the bar gone once the page is scrolled, the
+whole picture and its Play button on the screen. `scripts/site-fit.js` and
+`scripts/site-press.js` both say all well there.
