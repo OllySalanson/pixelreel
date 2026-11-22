@@ -82,9 +82,9 @@ describe('putting a page together', () => {
   });
 
   it('offers a plain page as a reel, straight under its heading, when it has one', () => {
-    assert.match(html.privacy, /<h1>Privacy<\/h1>\n<p class="doc-reel"><button class="btn btn-reel" type="button" data-reel="site-privacy">Make a pixel reel about this<\/button><\/p>/);
+    assert.match(html.privacy, /<h1>Privacy<\/h1>\n<p class="doc-reel"><button class="btn btn-reel" type="button" data-reel="site-privacy">Make a pixel reel about this<\/button><button /);
     assert.match(html.terms, /data-reel="site-terms"/);
-    assert.doesNotMatch(html.credits, /doc-reel/);
+    assert.doesNotMatch(html.credits, /btn-reel/, 'a page with no reel of itself offers none');
   });
 
   it('says when a page asks for a picture that does not exist', () => {
@@ -1212,6 +1212,51 @@ describe('press words to hear them', () => {
     assert.ok(silent.timers[0].ms > 1000, 'it waits a good while first');
     silent.timers[0].fn();
     assert.deepEqual(silent.changes, ['a line', null]);
+  });
+
+  it('reads several things one after another, all handed over in the one press, and says which it has come to', () => {
+    const { speech, aloud, changes } = voice();
+    aloud.sayAll([{ words: 'Privacy', about: 'the heading' }, { words: 'It keeps little. For a short time.', about: 'a paragraph' }, { words: '  ', about: 'nothing' }, { words: 'Questions', about: 'the last' }]);
+    assert.deepEqual(speech.said.map((u) => u.text), ['Privacy', 'It keeps little.', 'For a short time.', 'Questions'], 'a browser may refuse a voice that starts later than the press');
+    assert.deepEqual(changes, ['the heading']);
+    assert.deepEqual(speech.said.map((u) => typeof u.onstart), ['undefined', 'function', 'undefined', 'function'], 'only the first sentence of a later part says so');
+    speech.said[1].onstart();
+    assert.deepEqual([changes.at(-1), aloud.about], ['a paragraph', 'a paragraph']);
+    speech.said[3].onstart();
+    assert.equal(aloud.about, 'the last');
+    assert.equal(speech.said[2].onend, undefined, 'it is not over until the last of them');
+    speech.said[3].onend();
+    assert.deepEqual(changes, ['the heading', 'a paragraph', 'the last', null]);
+  });
+
+  it('takes no notice of a part starting once it has been stopped, or once something else is being read', () => {
+    const { speech, aloud, changes } = voice();
+    aloud.sayAll([{ words: 'One.', about: 'first' }, { words: 'Two.', about: 'second' }]);
+    const late = speech.said[1];
+    aloud.stop();
+    late.onstart();
+    assert.deepEqual(changes, ['first', null]);
+    aloud.say('Three.', 'third');
+    late.onstart();
+    assert.equal(aloud.about, 'third');
+  });
+
+  it('offers to read the whole page on the plain pages and the pages of steps, out of sight where the browser has no voice', () => {
+    const read = '<button class="btn btn-paper" type="button" data-read-page data-needs-speech hidden>Read this page to me</button>';
+    for (const name of ['privacy', 'terms']) assert.ok(html[name].includes(`Make a pixel reel about this</button>${read}</p>`), `${name}: beside its reel`);
+    assert.ok(html.credits.includes(`<p class="doc-reel">${read}</p>`), 'credits: on its own, since it has no reel');
+    for (const name of ['claude', 'app']) assert.match(html[name], new RegExp(`<div class="row">\\s*<button class="btn btn-reel"[^>]*>Make a pixel reel about this</button>\\s*${read.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*</div>`), name);
+    assert.ok(!html.home.includes('data-read-page'), 'the home page has Watch this whole page');
+    const css = readFileSync(root('site/css/site.css'), 'utf8');
+    assert.match(css, /\n\.doc \.doc-reel:not\(:has\(> :not\(\[hidden\]\)\)\) \{ display: none; \}/, 'and leaves no gap where it is not shown');
+  });
+
+  it('reads a page in the parts a press would read, with each question and its answer together', () => {
+    const aloud = readFileSync(root('site/js/aloud.js'), 'utf8');
+    assert.match(aloud, /if \(block\.closest\(NOT_READ\) \|\| block\.closest\('\[hidden\]'\) \|\| block\.offsetParent === null\) continue;/, 'nothing that is not for reading, or not on show');
+    assert.match(aloud, /if \(!question && \(block\.closest\('details'\) \|\| block\.querySelector\(READABLE\)\)\) continue;/, 'an answer goes with its question, and a card is read part by part');
+    assert.match(aloud, /button\.textContent = wholePage \? 'Stop reading' : 'Read this page to me';/);
+    assert.match(aloud, /if \(wholePage\) block\.scrollIntoView\(/, 'and what it is reading is kept in sight');
   });
 
   it('says nothing for no words', () => {

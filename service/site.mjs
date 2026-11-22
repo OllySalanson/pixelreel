@@ -377,7 +377,8 @@ export function sitePage(name, baseUrl, { listed = false, values = {}, title = n
   const heading = /^# (.+)$/m.exec(body)?.[1];
   title ??= facts.title ?? (heading && heading !== 'Pixel Reel' ? `${heading} - Pixel Reel` : 'Pixel Reel');
   // a plain page that has a reel of itself offers it straight under its heading
-  const watch = facts.reel ? `\n<p class="doc-reel"><button class="btn btn-reel" type="button" data-reel="${escapeHtml(facts.reel)}">Make a pixel reel about this</button></p>` : '';
+  // and every plain page offers to be read out, in full (aloud.js shows the button where the browser has a voice)
+  const watch = `\n<p class="doc-reel">${facts.reel ? `<button class="btn btn-reel" type="button" data-reel="${escapeHtml(facts.reel)}">Make a pixel reel about this</button>` : ''}<button class="btn btn-paper" type="button" data-read-page data-needs-speech hidden>Read this page to me</button></p>`;
   const main = markdown
     ? `<article class="doc">\n${markdownHtml(fill(body, { url: baseUrl, mcp: `${baseUrl}/mcp` })).replace('</h1>', () => `</h1>${watch}`)}\n</article>`
     : fill(dropComments(body), links);
