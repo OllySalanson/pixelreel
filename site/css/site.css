@@ -362,6 +362,19 @@ h1 { font-size: clamp(2.6rem, 4.2vw + 1rem, 4.75rem); line-height: 1.06; letter-
 .plain-btn:hover { text-decoration-color: var(--gold-lip); }
 .maker-own { margin-top: 0.25rem; }
 .maker-own .ask { margin-top: 1.5rem; }
+/* your reels: the ones made here, each a row with its name, how long it is kept, and what can be done with it */
+.mine { margin-top: clamp(2.5rem, 5vw, 4rem); }
+.mine-lead { margin-top: 0.4rem; color: var(--ink-soft); }
+.mine-list { display: grid; gap: calc(var(--u) * 4); margin: 1.25rem var(--u) 0; max-width: 50rem; }
+.mine-reel { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1.25rem; padding: 0.8rem 1.1rem; background: var(--card);
+  box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line); }
+.mine-name { flex: 1 1 12ch; min-width: 0; font-size: 1.3125rem; font-weight: 700; }
+.mine-until { color: var(--ink-soft); font-size: 1.0625rem; }
+.mine-keys, .mine-sure { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1.25rem; }
+.mine-sure { flex-basis: 100%; font-weight: 700; }
+.mine-rename { flex: 1 1 100%; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+/* the box takes the room there is, and never asks for more than the row has */
+.mine-rename input { flex: 1 1 14ch; width: 0; min-width: 0; max-width: 100%; padding: 0.6rem 0.8rem; font: 500 1.25rem/1.4 var(--font); letter-spacing: var(--tracking); color: var(--ink); background: var(--paper); border: var(--u) solid var(--line); border-radius: 0; }
 /* over the whole page while something is dragged across it: one plain panel to aim for */
 .drop-over { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: var(--gutter); background: rgba(11, 18, 32, 0.9); pointer-events: none; }
 .drop-over-in { display: grid; justify-items: center; gap: 0.5rem; padding: clamp(1.75rem, 5vw, 3rem) clamp(1.75rem, 6vw, 4.5rem); text-align: center; color: var(--ink); background: var(--card);

@@ -601,3 +601,20 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | The Android steps, and a link shared from the phone, landed in the box |
 | --- |
 | ![On an Android phone: press the three dots, press Add to Home screen; after that Pixel Reel is in your phone's Share menu. And: Say this to Claude, make me a pixel reel about this page, with Copy, and open Claude ringed, and Here it is.](log/v25-shared.jpg) |
+
+### Version 26
+
+- **Your reels.** A reel made here used to be found again only by whoever kept its link.
+  Now the home page lists them, under the box: the reels made on this device, newest first,
+  each with the day it is kept until. The list is kept in the browser and never sent
+  anywhere, so there is still no account, and nothing about anyone on the service.
+- **Call it what you like.** Rename puts a name of your own on a reel in the list ("Tea,
+  for Mum"), in a box that already holds what it is called now.
+- **Delete it for good.** Delete asks once more, in the row itself ("Delete it for good?
+  Yes, delete it. No, keep it."), and then the reel is gone at once for everyone, with its
+  recordings and its video. Only whoever made a reel can delete it: having its link is
+  enough to watch it, never to delete it.
+
+| The list, with one reel renamed and another about to be deleted |
+| --- |
+| ![Your reels. Tea, for Mum: kept until 22 December, Rename, Delete. How to make a proper cup of tea: Delete it for good? Yes, delete it. No, keep it.](log/v26-your-reels.jpg) |

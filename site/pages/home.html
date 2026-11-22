@@ -285,6 +285,13 @@ fetch: /reels/pixel-reel/reel.json /reels/pixel-reel/audio/manifest.json
       </div>
     </form>
   </div>
+  <!-- the reels made here, kept on this device only: mine.js fills it in, and shows it if there are any -->
+  <div class="wrap mine" id="mine" hidden>
+    <h3 id="mine-title">Your reels</h3>
+    <p class="mine-lead">The reels you have made here. This list is kept on this device only.</p>
+    <ul class="mine-list" id="mine-list" aria-labelledby="mine-title"></ul>
+    <p class="said" id="mine-said" role="status"></p>
+  </div>
   <!-- shown over the whole page while something is dragged across it -->
   <div class="drop-over" id="drop-over" aria-hidden="true" hidden>
     <div class="drop-over-in">

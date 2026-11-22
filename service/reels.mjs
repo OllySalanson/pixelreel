@@ -2,7 +2,7 @@
 // the background, and deleted after KEEP_DAYS. One job runs at a time, since recording a
 // voice and drawing a video both keep a processor busy. Everything lives in the store
 // (store.mjs); a job copies what it needs to a folder of its own and puts the results back.
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { mkdtemp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -17,6 +17,9 @@ import { narrationMs, timeline } from '../src/timing.js';
 export const KEEP_DAYS = 30;
 
 const ID = /^[A-Za-z0-9_-]{22}$/;
+
+/** The file, beside a reel's own, that holds what its owner's key hashes to (begin() and owns()). */
+const OWNER = 'owner.txt';
 
 /** A recording the recorder made and named itself (scripts/voices.mjs), which it will know again by its name. */
 const MADE_CLIP = /^[0-9a-f]{16}\.mp3$/;
@@ -180,14 +183,29 @@ export class Reels {
 
   /**
    * Starts a reel whose scenes are still being written: it has an id, and so a page to wait
-   * on, at once. write() gives it its scenes, or fail() gives up on it. Throws a BusyError
-   * if too many jobs are waiting.
+   * on, at once. write() gives it its scenes, or fail() gives up on it. With `owned`, what
+   * comes back has a `key` too, which is kept nowhere: whoever holds it may delete the reel
+   * (owns()). Throws a BusyError if too many jobs are waiting.
    */
-  async begin(title) {
+  async begin(title, { owned = false } = {}) {
     if (this.queue.length >= this.maxQueue) throw new BusyError();
     const status = this.blank(title, 'writing');
     await this.save(status);
-    return status;
+    if (!owned) return status;
+    // The one who began it is given a key nobody else has, and only what the key hashes to
+    // is kept: with it they may delete the reel (owns()), and without it nobody may.
+    const key = randomBytes(24).toString('base64url');
+    await this.store.put(`reels/${status.id}/${OWNER}`, createHash('sha256').update(key).digest('hex'));
+    return { ...status, key };
+  }
+
+  /** True if `key` is the one begin() gave whoever began reel `id`. */
+  async owns(id, key) {
+    if (!isId(id) || typeof key !== 'string' || !key) return false;
+    const kept = await this.store.get(`reels/${id}/${OWNER}`);
+    if (!kept) return false;
+    const mine = createHash('sha256').update(key).digest(), theirs = Buffer.from(kept.toString(), 'hex');
+    return mine.length === theirs.length && timingSafeEqual(mine, theirs);
   }
 
   /**
@@ -395,7 +413,7 @@ export class Reels {
     const dir = await mkdtemp(join(tmpdir(), 'pixelreel-job-'));
     for (const key of await this.store.list(`reels/${id}`)) {
       const name = key.slice(`reels/${id}/`.length);
-      if (name === 'status.json' || name === 'video.mp4' || name === 'card.png') continue;
+      if (name === 'status.json' || name === 'video.mp4' || name === 'card.png' || name === OWNER) continue;
       await mkdir(join(dir, name, '..'), { recursive: true });
       await writeFile(join(dir, name), await this.store.get(key));
     }

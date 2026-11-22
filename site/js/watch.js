@@ -3,6 +3,7 @@
 // how far along, then hands it to the player.
 import { calm, onComfortChange } from './calm.js';
 import { reelie } from './landscape.js';
+import { forgetMine, mineStorage, rememberMine, updateMine } from './mine.js';
 import { fitCanvas, ReelPlayer } from './player.js';
 import { showOf, waitingFor } from './reels.js';
 import { createKit, H, W } from '../../src/kit.js';
@@ -18,6 +19,7 @@ export function startWatching() {
   const player = new ReelPlayer(root), says = document.getElementById('watch-says');
   const big = root.querySelector('.reel-big'), words = root.querySelector('.reel-words p');
   const heading = document.getElementById('watch-title'), name = root.querySelector('.reel-title');
+  const mine = mineStorage();
   const keys = root.querySelectorAll('.reel-keys button');
   // nothing to play yet: the buttons say so by being switched off, and the words keep room for two lines
   const playable = (on) => {
@@ -85,6 +87,7 @@ export function startWatching() {
         const res = await fetch('/try', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ again: id, how: button.dataset.remake }) });
         const answer = await res.json().catch(() => ({}));
         if (!res.ok || !answer.watch) throw new Error(answer.error || 'That did not work. Try again in a minute.');
+        rememberMine(mine, answer);
         location.assign(answer.watch);
       } catch (err) {
         remakeSays.textContent = err instanceof TypeError ? (navigator.onLine === false ? 'You are not online. Check your internet, then try again.' : 'That did not work. Try again in a minute.') : err.message;
@@ -103,6 +106,9 @@ export function startWatching() {
       play = { state: 'unreachable' };
     }
     called(play.title);
+    // if whoever is watching made this reel, their list of reels learns its name and how long it is kept; one that came to nothing comes off it
+    if (play.state === 'failed' || play.state === 'gone') forgetMine(mine, id);
+    else if (play.state !== 'unreachable' && play.state !== 'writing') updateMine(mine, id, { title: play.title, expires: play.expires });
     if (play.state === 'ready') {
       waiting = false;
       says.textContent = '';
