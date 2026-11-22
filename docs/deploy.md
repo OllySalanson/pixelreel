@@ -126,6 +126,22 @@ must be verified for the Google account that makes them:
    lists the records Google wants, if they ever differ.
 4. Google issues the certificate once the records are seen, usually within an hour.
 
+### Switching on Make it right here
+
+It is off. To let visitors without Claude have the service write a reel for them (see
+[service.md](service.md#make-it-right-here) for what that costs and how it is kept safe),
+put a Claude API key in Secret Manager and switch it on:
+
+```sh
+printf '%s' "$ANTHROPIC_API_KEY" | gcloud secrets create pixelreel-claude-key --data-file=- --project pixelreel-515501
+gcloud secrets add-iam-policy-binding pixelreel-claude-key --project pixelreel-515501 \
+  --member serviceAccount:pixelreel-run@pixelreel-515501.iam.gserviceaccount.com --role roles/secretmanager.secretAccessor
+gcloud run services update pixelreel --region europe-west1 --project pixelreel-515501 \
+  --update-env-vars PIXELREEL_TRY=1 --update-secrets ANTHROPIC_API_KEY=pixelreel-claude-key:latest
+```
+
+To switch it off again: `--update-env-vars PIXELREEL_TRY=0`.
+
 ### What it costs
 
 Cloud Run bills an awake copy by the second, from the first request until it sleeps about

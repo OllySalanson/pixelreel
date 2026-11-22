@@ -46,6 +46,7 @@ The voice is Peter's: warm, plain, British, a little cheeky. Plain dashes only.
 | `service/site.mjs` | Puts a page together: the layout, the page, and the `{{names}}` in them. |
 | `service/static.mjs` | Serves the files a page loads, and only those. |
 | `scripts/site-art.mjs` | Draws `site/art/` from the sprites and the landscape (`npm run site-art`). |
+| `service/try.mjs`, `service/writer.mjs` | Make it right here, where the service has Claude write a reel for a visitor. Off by default: [service.md](../service.md#make-it-right-here). |
 
 A page can say `{{url}}`, `{{mcp}}` (the connector's address) and `{{add}}` (the link that
 opens Claude with the connector filled in), `{{icon:letter:4}}` for an everyday icon and
@@ -204,3 +205,16 @@ looked like the old site.
 | Six examples |
 | --- |
 | ![Six example reels as posters, three by two, on a strip of film.](log/v5-gallery.jpg) |
+
+### Version 6
+
+- **Make it right here, built and switched off.** Until now a visitor needed Claude to get a
+  reel. The make-one box can now offer a second button that has the service ask Claude for
+  them, and takes them to the reel's page to wait for the voice. It costs money for every
+  reel, so it is off, and the button is not on the page at all, until it is switched on
+  ([service.md](../service.md#make-it-right-here) has the costs and the safeguards).
+- Tried with a stand-in for Claude from the button through to a reel ready to play.
+
+| The button, when it is switched on |
+| --- |
+| ![The make-one box with a second button: Make it right here.](log/v6-here.jpg) |

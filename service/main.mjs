@@ -10,7 +10,11 @@
 // PIXELREEL_LISTED=1 lets search engines list the website (never the reels); without it every
 // page asks them not to, for as long as Pixel Reel is by invitation. Unless NODE_ENV is
 // production (as it is in the image), browsers check for a newer copy of the site's files
-// every time, so a change shows on the next reload.
+// every time, so a change shows on the next reload. PIXELREEL_TRY=1 switches on Make it
+// right here, where the service has Claude write a reel for a visitor (it needs a credential
+// for the Claude API, such as ANTHROPIC_API_KEY, and costs money a reel: docs/service.md);
+// PIXELREEL_TRY_MODEL, PIXELREEL_TRY_EFFORT, PIXELREEL_TRIES_PER_HOUR (each visitor, default 3)
+// and PIXELREEL_TRIES_PER_DAY (everyone, default 20) set which model, how hard it thinks, and how many.
 // Recording needs Pocket TTS set up (scripts/setup-voices.sh) and ffmpeg; videos need
 // @napi-rs/canvas.
 import { join } from 'node:path';
@@ -37,9 +41,23 @@ setInterval(sweep, 3600_000).unref();
 const setting = (name, fallback) => Number(process.env[name]) || fallback;
 const limits = {
   reels: new RateLimit({ perHour: setting('PIXELREEL_REELS_PER_HOUR', 10), perDay: setting('PIXELREEL_REELS_PER_DAY', 300) }),
-  videos: new RateLimit({ perHour: setting('PIXELREEL_VIDEOS_PER_HOUR', 10), perDay: setting('PIXELREEL_REELS_PER_DAY', 300) })
+  videos: new RateLimit({ perHour: setting('PIXELREEL_VIDEOS_PER_HOUR', 10), perDay: setting('PIXELREEL_REELS_PER_DAY', 300) }),
+  tries: new RateLimit({ perHour: setting('PIXELREEL_TRIES_PER_HOUR', 3), perDay: setting('PIXELREEL_TRIES_PER_DAY', 20) })
 };
-const server = createService({ reels, baseUrl, log, limits, trustProxy: process.env.PIXELREEL_TRUST_PROXY === '1', listed: process.env.PIXELREEL_LISTED === '1', fresh: process.env.NODE_ENV !== 'production' });
+
+// Make it right here: off unless asked for, because each reel it writes is paid for
+let writer = null;
+if (process.env.PIXELREEL_TRY === '1') {
+  try {
+    const { createWriter } = await import('./writer.mjs');
+    writer = createWriter({ model: process.env.PIXELREEL_TRY_MODEL || undefined, effort: process.env.PIXELREEL_TRY_EFFORT || undefined, log });
+    log(`Make it right here is on: at most ${limits.tries.perDay} reels a day, ${limits.tries.perHour} an hour for each visitor`);
+  } catch (err) {
+    log(`Make it right here stays off: ${err.message}`);   // no credential for the Claude API, most likely
+  }
+}
+
+const server = createService({ reels, baseUrl, log, limits, writer, trustProxy: process.env.PIXELREEL_TRUST_PROXY === '1', listed: process.env.PIXELREEL_LISTED === '1', fresh: process.env.NODE_ENV !== 'production' });
 server.listen(port, () => log(`Pixel Reel is at ${baseUrl}: connector ${baseUrl}/mcp, reels kept in ${store}`));
 
 const stop = () => {
