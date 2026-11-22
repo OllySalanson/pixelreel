@@ -172,7 +172,8 @@ function makeHere(form, box, update) {
     wait.focus({ preventScroll: true });
     show(wait);
     try {
-      const request = await requestFor(given, { shrink: shrinkPicture, language: language() });
+      // read by whoever was chosen on this page ("Anna will read the reels you make"), in the language chosen in the box
+      const request = await requestFor(given, { shrink: shrinkPicture, language: language(), narrator: chosenNarrator()?.toLowerCase() ?? null });
       const res = await fetch('/try', { method: 'POST', ...request });
       const answer = await res.json().catch(() => ({}));
       if (!res.ok || !answer.watch) throw new GivenError(answer.error || 'That did not work. Try again in a minute.');

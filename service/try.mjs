@@ -70,9 +70,9 @@ export function sourceOf(type, bytes) {
       if (typeof body.again !== 'string' || !/^[A-Za-z0-9_-]{22}$/.test(body.again) || !Object.hasOwn(AGAIN, body.how)) throw new TryError('That reel cannot be made again.');
       return { kind: 'again', id: body.again, how: body.how };
     }
-    // `language` is what was asked for, as it came: the service knows which languages it offers (languageOf)
-    if (typeof body?.text === 'string') return { kind: 'text', text: tidyText(body.text), language: body.language };
-    return { kind: 'words', about: tidyAbout(body?.about), language: body?.language };
+    // `language` and `narrator` are what was asked for, as they came: the service knows which it offers (languageOf, narratorOf)
+    if (typeof body?.text === 'string') return { kind: 'text', text: tidyText(body.text), language: body.language, narrator: body.narrator };
+    return { kind: 'words', about: tidyAbout(body?.about), language: body?.language, narrator: body?.narrator };
   }
   const kind = fileKind(bytes);
   if (!kind) throw new TryError('Pixel Reel can read a PDF, a photo, or plain writing. Save that as a PDF, then give it again.');
@@ -111,6 +111,16 @@ export const OWN_NAMES = { english: 'English', french: 'Français', german: 'Deu
 export function languageOf(asked, offered = []) {
   if (asked === undefined || asked === null || asked === '' || asked === 'english') return null;
   if (typeof asked !== 'string' || !offered.includes(asked)) throw new TryError('Peter cannot read that language here. Choose another.');
+  return asked;
+}
+
+/**
+ * Who a visitor asked to have read their reel, by first name: null for Peter, or for nobody
+ * asked for. `offered` are the narrators besides Peter that read here; anyone else is a TryError.
+ */
+export function narratorOf(asked, offered = []) {
+  if (asked === undefined || asked === null || asked === '' || asked === 'peter') return null;
+  if (typeof asked !== 'string' || !offered.includes(asked)) throw new TryError('That narrator does not read here. Choose another.');
   return asked;
 }
 

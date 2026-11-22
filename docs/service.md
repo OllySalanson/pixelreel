@@ -327,6 +327,12 @@ Spanish; the reel is recorded with that language's model. A reel made simpler or
 stays in the language it is in. With no other language switched on, there is no choice and
 every reel is in English.
 
+**Read by whoever was chosen.** Where other narrators read ([Other narrators](#other-narrators)), the
+home page lets a visitor choose one, and says "Anna will read the reels you make". A reel
+made in the box is read by that narrator: the choice goes with the request, is checked
+against the narrators the service offers, and Claude is told who will read, so that the
+narrator never says they are Peter. A reel made simpler or shorter keeps whoever read it.
+
 **Your reels.** The home page lists the reels a visitor has made here, under the box, so
 that they can find them again, call them what they like, and delete them. The list is kept
 in the visitor's own browser and never sent to the service. When a reel is begun, `/try`
