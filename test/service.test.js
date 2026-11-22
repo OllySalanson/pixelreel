@@ -2,12 +2,13 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { after, describe, it } from 'node:test';
+import { after, before, describe, it } from 'node:test';
 import { LIMITS, limitProblems, RateLimit } from '../service/limits.mjs';
 import { BusyError, isId, KEEP_DAYS, newId, Reels } from '../service/reels.mjs';
 import { reelFromData } from '../src/format.js';
 import { markdownHtml, SITE_PAGES } from '../service/site.mjs';
-import { checkKey, DiskStore } from '../service/store.mjs';
+import { checkKey, DiskStore, S3Store, signRequest } from '../service/store.mjs';
+import { fakeS3 } from './fake-s3.js';
 import { ReelError } from '../src/reel.js';
 
 const tmp = mkdtempSync(join(tmpdir(), 'pixelreel-service-'));
@@ -35,20 +36,60 @@ async function fakeRecord(dir) {
 
 const fakeVideo = async (dir, out) => writeFileSync(out, `video of ${JSON.parse(readFileSync(join(dir, 'reel.json'), 'utf8')).title}`);
 
+
 describe('the store', () => {
-  it('keeps bytes under keys, lists and deletes them', async () => {
-    const store = freshStore();
+  let s3;
+  before(async () => { s3 = await fakeS3(); });
+  after(() => s3.close());
+  const kinds = { 'on disk': freshStore, 'in an S3-style bucket': () => { s3.objects.clear(); return new S3Store(s3.options); } };
+  for (const [kind, fresh] of Object.entries(kinds)) {
+    it(`keeps bytes under keys, lists and deletes them (${kind})`, async () => {
+      const store = fresh();
+      await store.put('reels/a/reel.json', '{}');
+      await store.put('reels/a/audio/x.mp3', Buffer.from([1, 2, 3]));
+      await store.put('reels/a/audio/y.mp3', 'y');
+      await store.put('reels/b/reel.json', '{}');
+      await store.put('reels/c/reel.json', '{}');
+      await store.put('reels/ab/reel.json', '{}');
+      assert.equal(String(await store.get('reels/a/reel.json')), '{}');
+      assert.equal(await store.size('reels/a/audio/x.mp3'), 3);
+      assert.equal(await store.get('reels/a/nothing'), null);
+      assert.equal(await store.size('reels/a/nothing'), null);
+      assert.deepEqual((await store.list('reels/a')).sort(), ['reels/a/audio/x.mp3', 'reels/a/audio/y.mp3', 'reels/a/reel.json']);
+      assert.deepEqual((await store.folders('reels')).sort(), ['a', 'ab', 'b', 'c']);
+      await store.remove('reels/a');
+      assert.deepEqual(await store.list('reels/a'), []);
+      assert.deepEqual((await store.list('reels/ab')), ['reels/ab/reel.json']);
+      assert.deepEqual(await store.folders('nowhere'), []);
+      await store.remove('nowhere');
+    });
+  }
+
+  it('tries again when the bucket fails for a moment, and says so when it keeps failing', async () => {
+    s3.objects.clear();
+    const store = new S3Store(s3.options);
+    s3.failNext = 2;
     await store.put('reels/a/reel.json', '{}');
-    await store.put('reels/a/audio/x.mp3', Buffer.from([1, 2, 3]));
-    await store.put('reels/b/reel.json', '{}');
     assert.equal(String(await store.get('reels/a/reel.json')), '{}');
-    assert.equal(await store.size('reels/a/audio/x.mp3'), 3);
-    assert.equal(await store.get('reels/a/nothing'), null);
-    assert.deepEqual((await store.list('reels/a')).sort(), ['reels/a/audio/x.mp3', 'reels/a/reel.json']);
-    assert.deepEqual((await store.folders('reels')).sort(), ['a', 'b']);
-    await store.remove('reels/a');
-    assert.deepEqual(await store.list('reels/a'), []);
-    assert.deepEqual(await store.folders('nowhere'), []);
+    s3.failNext = 10;
+    await assert.rejects(store.get('reels/a/reel.json'), /could not read reels\/a\/reel.json: 503/);
+    s3.failNext = 0;
+  });
+
+  it('is refused by a bucket that does not know its secret', async () => {
+    const store = new S3Store({ ...s3.options, secretKey: 'wrong' });
+    await assert.rejects(store.put('reels/a/reel.json', '{}'), /could not save reels\/a\/reel.json: 403/);
+  });
+
+  it('signs requests the way AWS documents', () => {
+    // the GET Object example in the S3 docs (Authenticating Requests: AWS Signature Version 4)
+    const headers = signRequest({
+      method: 'GET', url: 'https://examplebucket.s3.amazonaws.com/test.txt', headers: { Range: 'bytes=0-9' }, region: 'us-east-1',
+      accessKey: 'AKIAIOSFODNN7EXAMPLE', secretKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY', date: new Date('2013-05-24T00:00:00Z')
+    });
+    assert.equal(headers.authorization, 'AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20130524/us-east-1/s3/aws4_request, ' +
+      'SignedHeaders=host;range;x-amz-content-sha256;x-amz-date, Signature=f0e8bdb87c964420e857bd35b5d6ed310bd44f0170aba48dd91039c6036bdb41');
+    assert.equal(headers.host, undefined);
   });
 
   it('refuses keys that could reach outside it', () => {
@@ -219,9 +260,12 @@ describe('the service over HTTP', async () => {
   const reels = new Reels({ store: freshStore(), record: fakeRecord, video: fakeVideo });
   const limits = { reels: new RateLimit({ perHour: 1000, perDay: 1000 }), videos: new RateLimit({ perHour: 1000, perDay: 1000 }) };
   const server = createService({ reels, baseUrl: 'https://reels.example/', limits, trustProxy: true });
-  await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
-  const local = `http://127.0.0.1:${server.address().port}`;
-  after(() => server.close());
+  let local;
+  before(async () => {
+    await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
+    local = `http://127.0.0.1:${server.address().port}`;
+  });
+  after(() => { server.close(); server.closeAllConnections(); });
 
   const connect = async () => {
     const client = new Client({ name: 'test', version: '1' });
