@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { ABOUT_MAX, canTake, fileKind, GivenError, givenFrom, isLink, languageFor, nameOf, PDF_MAX, PICTURE_MAX, requestFor, SHRINK_OVER, TEXT_MAX } from '../site/js/given.js';
+import { ABOUT_MAX, canTake, fileKind, GivenError, givenFrom, isLink, isVideoLink, languageFor, nameOf, PDF_MAX, PICTURE_MAX, requestFor, SHRINK_OVER, TEXT_MAX } from '../site/js/given.js';
 
 const PDF = Buffer.from('%PDF-1.7\n1 0 obj\n');
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 16, 0x4a, 0x46, 0x49, 0x46, 0, 1]);
@@ -17,6 +17,11 @@ describe('what someone gives the page', () => {
   it('knows a web address from a few words', () => {
     for (const link of ['https://example.com/a?b=1', 'http://example.com', 'www.example.com/story', ' HTTPS://EXAMPLE.COM ']) assert.ok(isLink(link), link);
     for (const not of ['my gas bill', 'see https://example.com', 'https://example.com and more', 'example.com', '']) assert.ok(!isLink(not), not);
+  });
+
+  it('knows the address of a YouTube video, which cannot be read', () => {
+    for (const video of ['https://www.youtube.com/watch?v=jNQXAC9IVRw', 'http://youtube.com/watch?v=x&t=3', 'www.youtube.com/shorts/abc', 'https://m.youtube.com/watch?v=x', 'https://music.youtube.com/watch?v=x', 'https://youtu.be/jNQXAC9IVRw', 'youtu.be/x', ' https://www.youtube.com/live/abc ', 'https://www.youtube.com/embed/abc']) assert.ok(isVideoLink(video), video);
+    for (const not of ['https://www.youtube.com/', 'https://www.youtube.com/@somebody', 'https://example.com/watch?v=x', 'https://notyoutube.com/watch?v=x', 'see https://youtu.be/x', 'youtube', '']) assert.ok(!isVideoLink(not), not);
   });
 
   it('knows a PDF and a picture by how they begin', () => {
@@ -70,6 +75,8 @@ describe('what the page sends for it', () => {
     assert.deepEqual(await sent({ words: 'Dear Sam,\r\n\r\nPay up.' }), { type: 'application/json', body: { text: 'Dear Sam,\n\nPay up.' } });
     assert.deepEqual((await sent({ words: 'x'.repeat(ABOUT_MAX + 1) })).body, { text: 'x'.repeat(ABOUT_MAX + 1) });
     await assert.rejects(requestFor({ words: '  \n ' }), (err) => err instanceof GivenError && /Say what you want explained/.test(err.message));
+    await assert.rejects(requestFor({ words: 'https://youtu.be/jNQXAC9IVRw' }), (err) => err instanceof GivenError && /cannot watch a video/.test(err.message));
+    await assert.rejects(requestFor({ file: new File(['https://www.youtube.com/watch?v=x\n'], 'link.txt', { type: 'text/plain' }) }), (err) => err instanceof GivenError && /cannot watch a video/.test(err.message));
     await assert.rejects(requestFor({ words: 'x'.repeat(TEXT_MAX + 1) }), (err) => err instanceof GivenError && /too much for one reel/.test(err.message));
   });
 
