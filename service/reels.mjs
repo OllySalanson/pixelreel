@@ -36,6 +36,12 @@ async function recordVoices(dir, log) {
   await main([dir], { log });
 }
 
+/** Draws a reel's own picture for link previews, from its reel.json, parsed. Resolves to a PNG. */
+async function drawPicture(raw) {
+  const { drawCard } = await import('./card.mjs');
+  return drawCard(raw);
+}
+
 /** Draws the reel in folder `dir` into the MP4 `out`, with npm run video. */
 async function drawVideo(dir, out) {
   const { renderVideo } = await import('../scripts/video.mjs');
@@ -48,9 +54,10 @@ export class Reels {
    * @param {import('./store.mjs').DiskStore} options.store   where reels are kept
    * @param {(dir: string, log: Function) => Promise<void>} [options.record]   records a folder's voices
    * @param {(dir: string, out: string) => Promise<void>} [options.video]   draws a folder's reel as an MP4
+   * @param {(raw: object) => Promise<Uint8Array>} [options.picture]   draws a reel's picture for link previews, as a PNG
    */
-  constructor({ store, record = recordVoices, video = drawVideo, now = () => Date.now(), keepDays = KEEP_DAYS, maxQueue = 20, log = () => {} }) {
-    Object.assign(this, { store, record, video, now, keepDays, maxQueue, log });
+  constructor({ store, record = recordVoices, video = drawVideo, picture = drawPicture, now = () => Date.now(), keepDays = KEEP_DAYS, maxQueue = 20, log = () => {} }) {
+    Object.assign(this, { store, record, video, picture, now, keepDays, maxQueue, log });
     this.queue = [];
     this.running = null;
   }
@@ -103,6 +110,26 @@ export class Reels {
     if (!isId(id)) return null;
     const bytes = await this.store.get(`reels/${id}/audio/manifest.json`);
     return bytes ? JSON.parse(bytes) : null;
+  }
+
+  /**
+   * A reel's own picture for a link sent in a message, as a PNG: drawn the first time it is
+   * asked for, which can be before the voice is recorded, and kept with the reel. Null if
+   * there is no such reel, or its picture cannot be drawn.
+   */
+  async card(id) {
+    if (!(await this.status(id))) return null;
+    const key = `reels/${id}/card.png`;
+    const kept = await this.store.get(key);
+    if (kept) return kept;
+    try {
+      const png = Buffer.from(await this.picture(await this.reel(id)));
+      if (await this.status(id)) await this.store.put(key, png);   // not if it was deleted meanwhile
+      return png;
+    } catch (err) {
+      this.log(`${id}: its picture could not be drawn: ${err.stack ?? err}`);
+      return null;
+    }
   }
 
   /** Asks for a reel's MP4. Does nothing if it is made, being made, or the voice is not ready yet. */
@@ -188,7 +215,7 @@ export class Reels {
     const dir = await mkdtemp(join(tmpdir(), 'pixelreel-job-'));
     for (const key of await this.store.list(`reels/${id}`)) {
       const name = key.slice(`reels/${id}/`.length);
-      if (name === 'status.json' || name === 'video.mp4') continue;
+      if (name === 'status.json' || name === 'video.mp4' || name === 'card.png') continue;
       await mkdir(join(dir, name, '..'), { recursive: true });
       await writeFile(join(dir, name), await this.store.get(key));
     }

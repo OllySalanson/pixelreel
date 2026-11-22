@@ -101,9 +101,12 @@ async function handleReel(req, res, id, rest, context) {
   }
   if (rest === '') {
     // The site's own page with its player, which asks for play.json and waits with the
-    // watcher while the voice is still being recorded. It names the reel, so a link sent
-    // in a message shows what it is, but holds none of its words.
-    const page = sitePage('reel', baseUrl, { values: { reelid: id, reeltitle: escapeHtml(status.title) }, title: `${status.title} - Pixel Reel`, path: `/r/${id}` });
+    // watcher while the voice is still being recorded. It names the reel and points at
+    // its own picture, so a link sent in a message shows what it is, but holds none of its words.
+    const page = sitePage('reel', baseUrl, {
+      values: { reelid: id, reeltitle: escapeHtml(status.title) }, title: `${status.title} - Pixel Reel`, path: `/r/${id}`,
+      image: `${baseUrl}/r/${id}/card.png`, imagealt: `${status.title}: a pixel reel. Press Play.`
+    });
     sendSqueezed(req, res, 200, squeezed(page), { ...SAFE, ...UNLISTED, 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': SITE_POLICY });
     return;
   }
@@ -118,6 +121,13 @@ async function handleReel(req, res, id, rest, context) {
       if (status.video === 'ready') play.video = `${baseUrl}/r/${id}/video.mp4`;
     }
     res.writeHead(200, { ...SAFE, ...UNLISTED, 'content-type': 'application/json', 'cache-control': 'no-store', 'access-control-allow-origin': '*' }).end(JSON.stringify(play));
+    return;
+  }
+  if (rest === 'card.png') {
+    // the reel's own picture, for a link sent in a message; the same card as every reel's if it cannot be drawn
+    const png = await reels.card(id);
+    if (!png) { res.writeHead(302, { ...SAFE, ...UNLISTED, location: '/site/art/reel-card.png', 'cache-control': 'no-store' }).end(); return; }
+    sendBytes(req, res, png, { ...SAFE, ...UNLISTED, 'content-type': 'image/png', 'cache-control': 'private, max-age=3600' });
     return;
   }
   const audio = /^audio\/(.+)$/.exec(rest);
