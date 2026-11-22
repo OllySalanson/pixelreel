@@ -16,8 +16,9 @@
 // every time, so a change shows on the next reload. PIXELREEL_TRY=1 switches on Make it
 // right here, where the service has Claude write a reel for a visitor (it needs a credential
 // for the Claude API, such as ANTHROPIC_API_KEY, and costs money a reel: docs/service.md);
-// PIXELREEL_TRY_MODEL, PIXELREEL_TRY_EFFORT, PIXELREEL_TRIES_PER_HOUR (each visitor, default 3)
-// and PIXELREEL_TRIES_PER_DAY (everyone, default 20) set which model, how hard it thinks, and how many.
+// PIXELREEL_TRY_MODEL (default claude-sonnet-5-5), PIXELREEL_TRY_EFFORT, PIXELREEL_TRIES_PER_HOUR
+// (each visitor, default 5) and PIXELREEL_TRIES_PER_DAY (everyone, default 30) set which model,
+// how hard it thinks, and how many.
 // Recording needs Pocket TTS set up (scripts/setup-voices.sh) and ffmpeg; videos need
 // @napi-rs/canvas.
 import { join } from 'node:path';
@@ -48,7 +49,7 @@ const shared = { ranges, perHour: setting('PIXELREEL_CLAUDE_PER_HOUR', 60) };
 const limits = {
   reels: new RateLimit({ perHour: setting('PIXELREEL_REELS_PER_HOUR', 10), perDay: setting('PIXELREEL_REELS_PER_DAY', 300), shared }),
   videos: new RateLimit({ perHour: setting('PIXELREEL_VIDEOS_PER_HOUR', 10), perDay: setting('PIXELREEL_REELS_PER_DAY', 300), shared }),
-  tries: new RateLimit({ perHour: setting('PIXELREEL_TRIES_PER_HOUR', 3), perDay: setting('PIXELREEL_TRIES_PER_DAY', 20) })
+  tries: new RateLimit({ perHour: setting('PIXELREEL_TRIES_PER_HOUR', 5), perDay: setting('PIXELREEL_TRIES_PER_DAY', 30) })
 };
 
 // Make it right here: off unless asked for, because each reel it writes is paid for

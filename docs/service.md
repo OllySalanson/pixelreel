@@ -142,43 +142,77 @@ video and the picture for link previews all play the same thing.
 **Off unless you switch it on, because every reel it makes is paid for.**
 
 Someone without Claude cannot use the connector. With this on, the website's "Make a pixel
-reel now" box gains a second button, "Make it right here": the visitor types a link or a few
-words, the service asks Claude to write the scenes through the Claude API, and they are
-taken to the reel's page, which plays it once the voice is recorded.
+reel now" box makes the reel itself. The visitor gives it one thing to explain, in whichever
+way is easiest for them:
+
+- **Type or paste** a link or a few words into the box, and press **Make my reel**.
+- **Paste some writing** (an email, a letter) into the box. It grows to hold it.
+- **Drop** a link, a PDF, a picture or some writing **anywhere on the page**. A panel says
+  "Drop it here" while it is dragged, and the reel is started as soon as it lands.
+- **Choose a file**, or on a phone **take a photo** of a letter or a bill.
+
+The service asks Claude to write the scenes through the Claude API, and the visitor is taken
+to the reel's page, which plays it once the voice is recorded. Giving the words to their own
+Claude is still there, behind "Use your own Claude instead".
 
 | Setting | Default | |
 | --- | --- | --- |
 | `PIXELREEL_TRY` | off | `1` switches it on. It also needs a credential for the Claude API, such as `ANTHROPIC_API_KEY`. |
-| `PIXELREEL_TRY_MODEL` | `claude-opus-5-5` | The model that writes. `claude-haiku-5-5` costs about a fortieth as much. |
+| `PIXELREEL_TRY_MODEL` | `claude-sonnet-5-5` | The model that writes. `claude-opus-5-5` costs twice as much, `claude-haiku-5-5` a twentieth. |
 | `PIXELREEL_TRY_EFFORT` | `low` | How hard the model thinks: `low`, `medium` or `high`. |
-| `PIXELREEL_TRIES_PER_HOUR` | `3` | How many each visitor (by address) may make in an hour. |
-| `PIXELREEL_TRIES_PER_DAY` | `20` | How many everyone may make in a day. This is the cap on what it can cost. |
+| `PIXELREEL_TRIES_PER_HOUR` | `5` | How many each visitor (by address) may make in an hour. |
+| `PIXELREEL_TRIES_PER_DAY` | `30` | How many everyone may make in a day. This is the cap on what it can cost. |
 
-What it costs is an estimate from the published prices, not yet measured. A reel from a few
-words is about 2,000 tokens in and 2,000 out; from a link, up to about 22,000 in, since
-Claude reads at most 20,000 tokens of one page. With `claude-opus-5-5` ($4 and $20 a million
-tokens) that is about 5 cents for a few words and up to about 13 cents for a long page; with
-`claude-haiku-5-5` ($0.10 and $0.50) it is a third of a cent at most. At 20 a day, the most
-it can cost is about $2.60 a day with Opus, or about 6 cents with Haiku, plus the recording
-(see [deploy.md](deploy.md#what-it-costs)). The service logs the tokens each reel took
-(`try: 1200 tokens in, 600 out`), so the real figure can be read from the logs.
+What a visitor may give, and how much of it:
+
+| | The most | |
+| --- | --- | --- |
+| A link or a few words | 600 letters | A link is read by Claude, once, up to 20,000 tokens of the page. |
+| Writing | 60,000 letters | About 10,000 words: a long article. |
+| A PDF | 10 MB, and 50,000 tokens | Counted with the Claude API's token counter, which is free, before Claude reads a page of it. That is about 25 pages. |
+| A picture | 5 MB | JPEG, PNG, GIF or WebP. The page makes a phone's photo smaller before sending it (2,000 pixels along its longest side). |
+
+A file is known by how it begins, never by its name or what the browser says it is. Anything
+else (a Word document, say) is turned away in plain words: "Save that as a PDF, then give it
+again."
+
+What it costs is an estimate from the published prices, not yet measured. With
+`claude-sonnet-5-5` ($2 and $10 a million tokens in and out) a reel is about 2,000 tokens out
+(2 cents) plus what Claude reads: about 3,000 tokens for a few words or a photo (under 1
+cent), up to about 22,000 for a link (4 cents), and at most 50,000 for a PDF (10 cents). So
+about 3 cents for a few words, and 12 cents at the very most. At 30 a day, the most it can
+cost is about $3.60 a day, and more likely under $1, plus the recording (see
+[deploy.md](deploy.md#what-it-costs)). The service logs what each reel was made from and the
+tokens it took (`try: pdf, 21000 tokens in, 1900 out (claude-sonnet-5-5)`), so the real
+figure can be read from the logs.
+
+A go that cost nothing is not counted against the visitor: a file turned away before Claude
+saw it, a PDF that was too long, or Claude being busy.
 
 How it is kept safe:
 
 - **The service never fetches an address a visitor gives it.** A link is read by Claude's
   own web fetch tool, on Anthropic's side, once, and no more than 20,000 tokens of it.
+- **Only a request that names a page may read one.** Writing, a PDF or a picture is given to
+  Claude with no way to fetch anything, so a link hidden inside a document goes nowhere.
 - **Only the website's own page may ask.** A request from another site, or one that does not
   say where it comes from, is refused, so no other site can spend the service's money. (A
   script can still pretend, which is what the caps are for.)
-- **What a visitor types, and what is on a page, is material to explain, never an
+- **What a visitor gives, and what is on a page, is material to explain, never an
   instruction.** Claude is told so, and whatever it writes still has to pass the same checks
-  and limits as any reel. If the reel has problems, Claude gets one chance to put it right.
-- **A request is one line of at most 600 letters.** It is not a place to paste a document.
+  and limits as any reel. If the reel has problems, Claude gets one chance to put it right,
+  and is not sent a long document a second time to do it.
+- **What a visitor gives is not kept.** It is held in memory while Claude reads it and then
+  dropped: only the reel is stored. Claude is told to leave out details that point at one
+  person and that the explanation does not need (names, addresses, account numbers), since
+  anyone with a reel's link can watch it.
 - If Claude declines, the visitor is told so in plain words. The request asks for Claude's
   default fallback model first, so a refusal by the one model is not the last word.
 
-`service/try.mjs` takes the request and `service/writer.mjs` asks Claude; the tests in
-`test/try.test.js` use a stand-in for both, so they cost nothing.
+`site/js/given.js` works out what was given and what to send for it (and holds the limits,
+which the service reads from there); `site/js/maker.js` is the box; `service/try.mjs` takes
+the request and `service/writer.mjs` asks Claude. The tests in `test/given.test.js` and
+`test/try.test.js` use a stand-in for Claude, so they cost nothing.
 
 ## Limits
 
@@ -232,7 +266,7 @@ The local tools (`npm run voices`, `page`, `video`) have no such limits.
 | `service/reels.mjs` | Making, recording, videos, expiry and deleting: one job at a time. |
 | `service/pacing.mjs` | Times a recorded reel's pictures to its voice. |
 | `service/limits.mjs` | How big a reel may be, and how many each caller may make. |
-| `service/try.mjs`, `service/writer.mjs` | Make it right here: a visitor's request, and Claude asked to write it. Off by default. |
+| `service/try.mjs`, `service/writer.mjs` | Make it right here: what a visitor gives (words, a link, writing, a PDF or a picture), and Claude asked to write it. Off by default. |
 | `service/site.mjs` | Puts the website's pages together, from `site/`. |
 | `service/static.mjs` | Serves the files those pages load (styles, scripts, fonts, pictures and the site's reels), and nothing else. |
 | `service/store.mjs` | Where reels are kept: a folder now, behind an interface an S3-style store can take over. |

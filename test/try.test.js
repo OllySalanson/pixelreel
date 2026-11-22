@@ -8,7 +8,7 @@ import { RateLimit } from '../service/limits.mjs';
 import { Reels } from '../service/reels.mjs';
 import { createService } from '../service/server.mjs';
 import { DiskStore } from '../service/store.mjs';
-import { ABOUT_MAX, replyJson, tidyAbout, TryError } from '../service/try.mjs';
+import { ABOUT_MAX, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError } from '../service/try.mjs';
 import { createWriter } from '../service/writer.mjs';
 
 const tmp = mkdtempSync(join(tmpdir(), 'pixelreel-try-'));
@@ -19,6 +19,13 @@ const tea = {
   title: 'Tea',
   scenes: [{ title: 'Kettle', caption: 'Boil it.', say: 'Boil the kettle.', picture: { type: 'big', text: 'BOIL' } }]
 };
+
+/** The start of a file of each kind the service takes, and one it does not. */
+const PDF = Buffer.from('%PDF-1.7\n1 0 obj\n<<>>\nendobj\n');
+const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 16, 0x4a, 0x46, 0x49, 0x46, 0, 1]);
+const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
+const ZIP = Buffer.from([0x50, 0x4b, 0x03, 0x04, 20, 0, 0, 0, 8, 0, 0, 0]);
+const words = (about) => ({ kind: 'words', about });
 
 /** Stands in for npm run voices. */
 async function fakeRecord(dir) {
@@ -38,6 +45,27 @@ describe('what a visitor asks for', () => {
     assert.equal(tidyAbout('x'.repeat(ABOUT_MAX)).length, ABOUT_MAX);
   });
 
+  it('keeps the lines of writing that is pasted in, and refuses too much of it', () => {
+    assert.equal(tidyText('  Dear Sam,\r\n\r\n\r\n\r\nYour bill \u0007is due.  \n\tThanks  '), 'Dear Sam,\n\nYour bill is due.\n\tThanks');
+    for (const bad of [undefined, 7, '', ' \n ']) assert.throws(() => tidyText(bad), TryError);
+    assert.throws(() => tidyText('x'.repeat(TEXT_MAX + 1)), /too much for one reel/);
+    assert.equal(tidyText('x'.repeat(TEXT_MAX)).length, TEXT_MAX);
+  });
+
+  it('tells a few words from writing, a PDF and a picture, by what they are and not what they are called', () => {
+    const json = (value) => Buffer.from(JSON.stringify(value));
+    assert.deepEqual(sourceOf('application/json', json({ about: ' my gas  bill ' })), words('my gas bill'));
+    assert.deepEqual(sourceOf('application/json; charset=utf-8', json({ text: 'Dear Sam,\n\nPay up.' })), { kind: 'text', text: 'Dear Sam,\n\nPay up.' });
+    assert.deepEqual(sourceOf('application/pdf', PDF), { kind: 'pdf', data: PDF.toString('base64') });
+    assert.deepEqual(sourceOf('image/jpeg', JPEG), { kind: 'picture', type: 'image/jpeg', data: JPEG.toString('base64') });
+    assert.deepEqual(sourceOf('application/pdf', PNG), { kind: 'picture', type: 'image/png', data: PNG.toString('base64') }, 'a picture called a PDF is still a picture');
+    assert.deepEqual(sourceOf(undefined, PDF), { kind: 'pdf', data: PDF.toString('base64') });
+    assert.throws(() => sourceOf('application/pdf', ZIP), (err) => err instanceof TryError && /PDF, a photo, or plain writing/.test(err.message));
+    assert.throws(() => sourceOf('image/png', Buffer.from('<svg onload="x()">')), TryError);
+    assert.throws(() => sourceOf('image/jpeg', Buffer.concat([JPEG, Buffer.alloc(PICTURE_MAX)])), /too big/);
+    for (const bad of ['{oops', '', 'null', '{"about":7}']) assert.throws(() => sourceOf('application/json', Buffer.from(bad)), TryError);
+  });
+
   it("finds the reel in Claude's reply, even inside a code fence", () => {
     assert.deepEqual(replyJson('{"title":"Tea"}'), { title: 'Tea' });
     assert.deepEqual(replyJson('Here you are:\n```json\n{"title":"Tea","scenes":[{"a":1}]}\n```\n'), { title: 'Tea', scenes: [{ a: 1 }] });
@@ -49,70 +77,127 @@ describe('what a visitor asks for', () => {
 describe('the writer', () => {
   /** A stand-in for the Claude API client: answers with each of `replies` in turn, and keeps what it was asked. */
   const fakeClient = (...replies) => {
-    const asked = [];
-    return {
+    const asked = [], counted = [];
+    const client = {
       asked,
+      counted,
+      size: 1000,   // what it says anything measures, in tokens: or an error, to fail with
+      messages: { countTokens: async (request) => { counted.push(structuredClone(request)); if (client.size instanceof Error) throw client.size; return { input_tokens: client.size }; } },
       beta: { messages: { create: async (request) => { asked.push(structuredClone(request)); const next = replies.shift(); if (next instanceof Error) throw next; return next; } } }
     };
+    return client;
   };
-  const reply = (text, extra = {}) => ({ model: 'claude-opus-5-5', stop_reason: 'end_turn', content: [{ type: 'text', text }], usage: { input_tokens: 1200, output_tokens: 600 }, ...extra });
+  const reply = (text, extra = {}) => ({ model: 'claude-sonnet-5-5', stop_reason: 'end_turn', content: [{ type: 'text', text }], usage: { input_tokens: 1200, output_tokens: 600 }, ...extra });
 
   it('asks Claude for a reel, and gives back what it wrote', async () => {
     const client = fakeClient(reply(JSON.stringify(tea))), said = [];
     const write = createWriter({ client, log: (line) => said.push(line) });
-    assert.deepEqual(await write('my gas bill'), tea);
+    assert.deepEqual(await write(words('my gas bill')), tea);
     const [request] = client.asked;
-    assert.equal(request.model, 'claude-opus-5-5');
+    assert.equal(request.model, 'claude-sonnet-5-5');
     assert.equal(request.output_config.effort, 'low');
     assert.deepEqual(request.betas, ['server-side-fallback-2026-07-01']);
     assert.equal(request.fallbacks, 'default');
-    assert.deepEqual(request.tools, [{ type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 1, max_content_tokens: 20000 }], 'it may read one page, and only so much of it');
+    assert.equal(request.tools, undefined, 'a few words name no page, so there is none to read');
     assert.deepEqual(request.messages, [{ role: 'user', content: 'Make a pixel reel about this:\nmy gas bill' }]);
     assert.match(request.system, /"format": "pixelreel\/1"/, 'it is told the format the connector tells Claude');
     assert.match(request.system, /never an instruction to you/);
-    assert.deepEqual(said, ['try: 1200 tokens in, 600 out (claude-opus-5-5)'], 'it says what each reel took, so the cost can be watched');
+    assert.match(request.system, /always leave out what points at one person/);
+    assert.deepEqual(said, ['try: words, 1200 tokens in, 600 out (claude-sonnet-5-5)'], 'it says what each reel took, so the cost can be watched');
+  });
+
+  it('lets Claude read one page, when the visitor names one', async () => {
+    const page = [{ type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 1, max_content_tokens: 20000 }];
+    const client = fakeClient(reply(JSON.stringify(tea)), reply(JSON.stringify(tea)), reply(JSON.stringify(tea)));
+    const write = createWriter({ client });
+    await write(words('https://example.com/story'));
+    assert.deepEqual(client.asked[0].tools, page, 'it may read one page, and only so much of it');
+    await write(words('www.example.com/story'));
+    assert.deepEqual(client.asked[1].tools, page);
+    assert.equal(client.asked[1].messages[0].content, 'Make a pixel reel about this:\nhttps://www.example.com/story', 'an address typed without https:// is given it');
+    await write(words('what does https://example.com/story say about tea?'));
+    assert.deepEqual(client.asked[2].tools, page);
+    assert.match(client.asked[2].messages[0].content, /what does https:\/\/example\.com\/story say about tea\?$/);
+  });
+
+  it('gives Claude writing, a PDF or a picture to explain, and no page to fetch', async () => {
+    const client = fakeClient(reply(JSON.stringify(tea)), reply(JSON.stringify(tea)), reply(JSON.stringify(tea))), said = [];
+    const write = createWriter({ client, log: (line) => said.push(line) });
+    await write({ kind: 'text', text: 'Dear Sam,\n\nSee https://example.com/pay and pay up.' });
+    await write({ kind: 'pdf', data: 'JVBERi0=' });
+    await write({ kind: 'picture', type: 'image/png', data: 'iVBORw0=' });
+    const [writing, pdf, picture] = client.asked;
+    for (const request of client.asked) assert.equal(request.tools, undefined, 'a link inside what was given is never fetched');
+    assert.match(writing.messages[0].content, /explains this writing.*\n-{10}\nDear Sam,\n\nSee https:\/\/example\.com\/pay and pay up\.\n-{10}$/s);
+    assert.deepEqual(pdf.messages[0].content[0], { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: 'JVBERi0=' } });
+    assert.match(pdf.messages[0].content[1].text, /explains this document/);
+    assert.deepEqual(picture.messages[0].content[0], { type: 'image', source: { type: 'base64', media_type: 'image/png', data: 'iVBORw0=' } });
+    assert.match(picture.messages[0].content[1].text, /what this picture shows or says/);
+    assert.deepEqual(said.map((line) => line.split(',')[0]), ['try: text', 'try: pdf', 'try: picture']);
+  });
+
+  it('measures a PDF before reading it, and turns away one that is too long, for nothing', async () => {
+    const client = fakeClient(reply(JSON.stringify(tea))), said = [];
+    const write = createWriter({ client, maxInputTokens: 5000, log: (line) => said.push(line) });
+    await write({ kind: 'pdf', data: 'JVBERi0=' });
+    assert.equal(client.counted.length, 1);
+    assert.equal(client.counted[0].model, 'claude-sonnet-5-5');
+    assert.deepEqual(client.counted[0].messages, client.asked[0].messages, 'what is measured is what is sent');
+    assert.equal(client.counted[0].system, client.asked[0].system);
+    client.size = 5001;
+    await assert.rejects(write({ kind: 'pdf', data: 'JVBERi0=' }), (err) => err instanceof TryError && err.free && /too long for one reel/.test(err.message));
+    assert.equal(client.asked.length, 1, 'Claude was never asked to read it');
+    assert.match(said.at(-1), /^try: a pdf of 5001 tokens was turned away/);
+    client.size = Object.create(Anthropic.RateLimitError.prototype);
+    await assert.rejects(write({ kind: 'pdf', data: 'JVBERi0=' }), (err) => err instanceof TryError && err.free && /busy/.test(err.message));
+    await assert.rejects(write(words('tea')), TypeError, 'the stand-in has run out of answers');
+    assert.equal(client.counted.length, 3, 'only a PDF is measured: the rest cannot be long');
   });
 
   it('takes the model and effort it is given', async () => {
     const client = fakeClient(reply(JSON.stringify(tea)));
-    await createWriter({ client, model: 'claude-haiku-5-5', effort: 'medium' })('tea');
+    await createWriter({ client, model: 'claude-haiku-5-5', effort: 'medium' })(words('tea'));
     assert.equal(client.asked[0].model, 'claude-haiku-5-5');
     assert.equal(client.asked[0].output_config.effort, 'medium');
   });
 
   it('asks for a reel to be put right, without reading the page again', async () => {
-    const client = fakeClient(reply(JSON.stringify(tea)));
-    await createWriter({ client })('tea', { before: { title: 'Tea' }, problems: ['scenes: give the reel at least one scene'] });
+    const client = fakeClient(reply(JSON.stringify(tea)), reply(JSON.stringify(tea)));
+    const mend = { before: { title: 'Tea' }, problems: ['scenes: give the reel at least one scene'] };
+    await createWriter({ client })(words('https://example.com/tea'), mend);
     const [request] = client.asked;
     assert.equal(request.tools, undefined);
     assert.equal(request.messages.length, 3);
     assert.deepEqual(request.messages[1], { role: 'assistant', content: '{"title":"Tea"}' });
     assert.match(request.messages[2].content, /Fix every one.*\n- scenes: give the reel at least one scene/s);
+    await createWriter({ client })({ kind: 'pdf', data: 'JVBERi0=' }, mend);
+    assert.equal(client.asked[1].messages[0].content, 'Make a pixel reel about this:\n(a document the visitor gave, which is not repeated here)', 'nor is a long document paid for twice');
+    assert.equal(client.counted.length, 0);
   });
 
   it('carries on a turn the page fetch paused', async () => {
-    const paused = { model: 'claude-opus-5-5', stop_reason: 'pause_turn', content: [{ type: 'server_tool_use', id: 't1', name: 'web_fetch', input: {} }], usage: { input_tokens: 10, output_tokens: 5 } };
+    const paused = { model: 'claude-sonnet-5-5', stop_reason: 'pause_turn', content: [{ type: 'server_tool_use', id: 't1', name: 'web_fetch', input: {} }], usage: { input_tokens: 10, output_tokens: 5 } };
     const client = fakeClient(paused, reply(JSON.stringify(tea)));
-    assert.deepEqual(await createWriter({ client })('https://example.com/story'), tea);
+    assert.deepEqual(await createWriter({ client })(words('https://example.com/story')), tea);
     assert.equal(client.asked.length, 2);
     assert.deepEqual(client.asked[1].messages.at(-1), { role: 'assistant', content: paused.content }, 'the paused turn is sent back as it came');
   });
 
   it('says so in plain words when Claude will not, or cannot', async () => {
-    const write = (...replies) => createWriter({ client: fakeClient(...replies) })('something');
-    await assert.rejects(write(reply('', { stop_reason: 'refusal', content: [] })), (err) => err instanceof TryError && /would not write/.test(err.message));
+    const write = (...replies) => createWriter({ client: fakeClient(...replies) })(words('something'));
+    await assert.rejects(write(reply('', { stop_reason: 'refusal', content: [] })), (err) => err instanceof TryError && !err.free && /would not write/.test(err.message));
     await assert.rejects(write(reply('{"title":', { stop_reason: 'max_tokens' })), (err) => err instanceof TryError && /did not finish/.test(err.message));
     await assert.rejects(write(reply('{"cannot": "That page  would not\\nload."}')), (err) => err instanceof TryError && err.message === 'That page would not load.');
     await assert.rejects(write(reply('I am afraid not.')), TryError);
-    await assert.rejects(write(Object.create(Anthropic.RateLimitError.prototype)), (err) => err instanceof TryError && /busy/.test(err.message));
-    await assert.rejects(write(Object.create(Anthropic.APIConnectionError.prototype)), (err) => err instanceof TryError && /could not be reached/.test(err.message));
+    await assert.rejects(write(Object.create(Anthropic.RateLimitError.prototype)), (err) => err instanceof TryError && err.free && /busy/.test(err.message));
+    await assert.rejects(write(Object.create(Anthropic.APIConnectionError.prototype)), (err) => err instanceof TryError && err.free && /could not be reached/.test(err.message));
     const broken = new Error('something else');
     await assert.rejects(write(broken), (err) => err === broken, 'anything unexpected is not dressed up');
   });
 
   it('logs what the API said when the fault is the service\'s own, and sends the visitor to their own Claude', async () => {
     const said = [];
-    const failing = (error) => createWriter({ client: fakeClient(error), log: (line) => said.push(line) })('tea');
+    const failing = (error) => createWriter({ client: fakeClient(error), log: (line) => said.push(line) })(words('tea'));
     const apiError = (Class, status, message) => Object.assign(Object.create(Class.prototype), { status, message });
     await assert.rejects(failing(apiError(Anthropic.AuthenticationError, 401, 'invalid x-api-key')), (err) => err instanceof TryError && /your own Claude/.test(err.message));
     await assert.rejects(failing(apiError(Anthropic.BadRequestError, 400, 'fallbacks: not supported')), (err) => err instanceof TryError && /Try again/.test(err.message));
@@ -126,7 +211,7 @@ describe('the writer', () => {
 describe('make it right here, over HTTP', () => {
   const calls = [];
   let answers = [];
-  const writer = async (about, more = {}) => { calls.push([about, more]); const next = answers.shift() ?? tea; if (next instanceof Error) throw next; return next; };
+  const writer = async (source, more = {}) => { calls.push([source, more]); const next = answers.shift() ?? tea; if (next instanceof Error) throw next; return next; };
   const reels = new Reels({ store: new DiskStore(join(tmp, 'store')), record: fakeRecord, video: async () => {} });
   const limits = { tries: new RateLimit({ perHour: 1000, perDay: 1000 }) };
   const server = createService({ reels, baseUrl: 'https://reels.example', limits, writer, trustProxy: true });
@@ -139,6 +224,7 @@ describe('make it right here, over HTTP', () => {
   });
   after(() => { for (const s of [server, off]) { s.close(); s.closeAllConnections(); } });
   const ask = (about, headers = {}) => fetch(`${local}/try`, { method: 'POST', headers: { 'content-type': 'application/json', origin: 'https://reels.example', ...headers }, body: JSON.stringify({ about }) });
+  const give = (type, body, headers = {}) => fetch(`${local}/try`, { method: 'POST', headers: { 'content-type': type, origin: 'https://reels.example', ...headers }, body });
 
   it('is not there at all unless the service was given a writer', async () => {
     const res = await fetch(`${localOff}/try`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"about":"tea"}' });
@@ -147,12 +233,23 @@ describe('make it right here, over HTTP', () => {
     assert.match(await (await fetch(`${local}/`)).text(), /data-here="on"/);
   });
 
+  it('keeps its part of the page hidden until the page is told it may, with everything the script looks for', async () => {
+    const page = await (await fetch(`${local}/`)).text();
+    assert.match(page, /<div class="maker-here" id="maker-here" hidden>/);
+    assert.match(page, /<div class="drop-over" id="drop-over" aria-hidden="true" hidden>/);
+    assert.match(page, /<input id="maker-file" type="file" accept="[^"]*application\/pdf[^"]*image\/\*[^"]*" hidden>/);
+    const script = readFileSync(new URL('../site/js/maker.js', import.meta.url), 'utf8');
+    const looked = [...script.matchAll(/\bid\('([a-z-]+)'\)/g)].map(([, id]) => id);
+    assert.ok(looked.length >= 8);
+    for (const id of looked) assert.ok(page.includes(` id="${id}"`), `the page has nothing called ${id}`);
+  });
+
   it('has Claude write the reel, starts recording it, and says where to watch', async () => {
     const res = await ask('  my gas\n bill ');
     assert.equal(res.status, 200);
     const { id, watch } = await res.json();
     assert.equal(watch, `/r/${id}`);
-    assert.deepEqual(calls.at(-1), ['my gas bill', {}]);
+    assert.deepEqual(calls.at(-1), [words('my gas bill'), {}]);
     await reels.idle();
     assert.equal((await reels.status(id)).state, 'ready');
     assert.equal((await fetch(`${local}${watch}`)).status, 200);
@@ -162,8 +259,8 @@ describe('make it right here, over HTTP', () => {
     answers = [{ title: 'No scenes' }, tea];
     const res = await ask('tea');
     assert.equal(res.status, 200);
-    const [about, more] = calls.at(-1);
-    assert.equal(about, 'tea');
+    const [source, more] = calls.at(-1);
+    assert.deepEqual(source, words('tea'));
     assert.deepEqual(more.before, { title: 'No scenes' });
     assert.ok(more.problems.some((p) => /scenes/.test(p)), 'it is told what was wrong');
     answers = [{ title: 'No scenes' }, { title: 'Still none' }];
@@ -171,6 +268,36 @@ describe('make it right here, over HTTP', () => {
     assert.equal(twice.status, 502);
     assert.match((await twice.json()).error, /could not write that reel/);
     await reels.idle();
+  });
+
+  it('takes writing, a PDF or a picture, and has Claude explain it', async () => {
+    const writing = await give('application/json', JSON.stringify({ text: 'Dear Sam,\n\nYour bill is due.' }));
+    assert.equal(writing.status, 200);
+    assert.deepEqual(calls.at(-1), [{ kind: 'text', text: 'Dear Sam,\n\nYour bill is due.' }, {}]);
+    assert.equal((await give('application/pdf', PDF)).status, 200);
+    assert.deepEqual(calls.at(-1), [{ kind: 'pdf', data: PDF.toString('base64') }, {}]);
+    assert.equal((await give('image/jpeg', JPEG)).status, 200);
+    assert.deepEqual(calls.at(-1), [{ kind: 'picture', type: 'image/jpeg', data: JPEG.toString('base64') }, {}]);
+    await reels.idle();
+  });
+
+  it('turns away a file it cannot read, or one that is too big, before Claude sees it', async () => {
+    const before = calls.length;
+    const zip = await give('application/zip', ZIP);
+    assert.equal(zip.status, 400);
+    assert.match((await zip.json()).error, /PDF, a photo, or plain writing/);
+    assert.equal((await give('image/png', Buffer.concat([PNG, Buffer.alloc(PICTURE_MAX)]))).status, 400);
+    const big = await give('application/pdf', Buffer.concat([PDF, Buffer.alloc(PDF_MAX)])).catch(() => null);   // the line may close before the whole file is sent
+    if (big) { assert.equal(big.status, 413); assert.match((await big.json()).error, /too big/); }
+    // sent a piece at a time, so that nothing says how big it is until it is too big
+    let left = PDF_MAX / (1024 * 1024) + 2;
+    const pieces = new ReadableStream({ pull(send) { if (left-- > 0) send.enqueue(new Uint8Array(1024 * 1024)); else send.close(); } }, { highWaterMark: 1 });
+    const piecemeal = await fetch(`${local}/try`, { method: 'POST', headers: { 'content-type': 'application/pdf', origin: 'https://reels.example' }, body: pieces, duplex: 'half' }).catch(() => null);
+    if (piecemeal) assert.equal(piecemeal.status, 413);
+    const long = await give('application/json', JSON.stringify({ text: 'x'.repeat(TEXT_MAX + 1) }));
+    assert.equal(long.status, 400);
+    assert.match((await long.json()).error, /too much for one reel/);
+    assert.equal(calls.length, before, 'and none of them reaches Claude');
   });
 
   it('passes on in plain words why a reel could not be written', async () => {
@@ -198,8 +325,20 @@ describe('make it right here, over HTTP', () => {
     assert.equal((await ask('tea', { 'x-forwarded-for': '203.0.113.9' })).status, 200);
     const again = await ask('tea', { 'x-forwarded-for': '203.0.113.9' });
     assert.equal(again.status, 429);
-    assert.match((await again.json()).error, /^No more reels from here for now\. That is 1 in the last hour/);
+    assert.match((await again.json()).error, /^No more reels just now\. That is 1 in the last hour from here\. Try again in 60 minutes\.$/);
     assert.equal((await ask('tea', { 'x-forwarded-for': '203.0.113.10' })).status, 200, 'each visitor has their own hour');
+    await reels.idle();
+  });
+
+  it('does not count a go that cost nothing', async () => {
+    limits.tries = new RateLimit({ perHour: 1, perDay: 100 });
+    const from = { 'x-forwarded-for': '203.0.113.20' };
+    answers = [new TryError('Claude is busy just now. Try again in a minute.', { free: true })];
+    assert.equal((await ask('tea', from)).status, 422);
+    assert.equal((await ask('tea', from)).status, 200, 'Claude never read the first, so the visitor still has their one');
+    answers = [new TryError('Claude would not write a reel about that.')];
+    assert.equal((await ask('tea', { 'x-forwarded-for': '203.0.113.21' })).status, 422);
+    assert.equal((await ask('tea', { 'x-forwarded-for': '203.0.113.21' })).status, 429, 'one that Claude read and declined is counted');
     await reels.idle();
   });
 });

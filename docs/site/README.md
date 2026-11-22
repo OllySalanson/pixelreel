@@ -48,7 +48,7 @@ The voice is Peter's: warm, plain, British, a little cheeky. Plain dashes only.
 | `service/site.mjs` | Puts a page together: the layout, the page, and the `{{names}}` in them. |
 | `service/static.mjs` | Serves the files a page loads, and only those. |
 | `scripts/site-art.mjs` | Draws `site/art/` from the sprites and the landscape (`npm run site-art`). |
-| `service/try.mjs`, `service/writer.mjs` | Make it right here, where the service has Claude write a reel for a visitor. Off by default: [service.md](../service.md#make-it-right-here). |
+| `site/js/given.js`, `service/try.mjs`, `service/writer.mjs` | Make it right here, where the service has Claude write a reel for a visitor from what they type, paste, drop or photograph. Off by default: [service.md](../service.md#make-it-right-here). |
 
 A page can say `{{url}}`, `{{mcp}}` (the connector's address) and `{{add}}` (the link that
 opens Claude with the connector filled in), `{{icon:letter:4}}` for an everyday icon and
@@ -370,3 +370,26 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | The end of a shared reel, and of the reel on the home page |
 | --- |
 | ![The end. Send it to someone. Watch it again. And: That is Pixel Reel. Add Pixel Reel to Claude. Watch it again.](log/v15-the-end.jpg) |
+
+### Version 16
+
+- **Make it right here takes the real thing.** Where it is switched on, the make-one box no
+  longer writes words for someone to carry to Claude: it makes the reel. One box, one big
+  button, and four ways in, so that nobody has to work out which one they are meant to use:
+  type a link or a few words, paste some writing (the box grows to hold it), choose a file,
+  or drop a link, a PDF, a photo or some writing anywhere on the page. A drop needs no second
+  press. On a phone, which has nothing to drag, the same place offers the camera: "Got a
+  letter or a bill? Take a photo of it."
+- **While Claude writes, the box says only that,** and names what it was given, so there is
+  nothing else to read and nothing to press twice. If it cannot be made, the reason comes
+  back as a notice of its own above the button, in plain words, and what was dropped is in
+  the box to put right.
+- Giving the words to their own Claude is still there, one press away, and it is still the
+  whole box where Make it right here is off.
+- Tried with a stand-in for Claude: typed, pasted, dropped (a link, writing, a PDF) and
+  chosen (a photo, on a phone), through to a reel ready to play; at 320, 390, 768 and 1280
+  pixels wide; and with `scripts/site-fit.js` at every Make it comfy setting.
+
+| The box | Dragging something over the page, and after it lands |
+| --- | --- |
+| ![The make-one box: What do you want explained, a big Make my reel button, and a place to drop a link, a PDF, a photo or some writing.](log/v16-make-here.jpg) | ![A panel over the page says Drop it here. Then the box says Making your reel, names the file, and says Claude is reading it.](log/v16-drop.jpg) |

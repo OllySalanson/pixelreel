@@ -132,17 +132,25 @@ must be verified for the Google account that makes them:
 
 ### Switching on Make it right here
 
-It is off. To let visitors without Claude have the service write a reel for them (see
-[service.md](service.md#make-it-right-here) for what that costs and how it is kept safe),
-put a Claude API key in Secret Manager and switch it on:
+It is off. To let visitors without Claude have the service write a reel for them from what
+they type, paste, drop or photograph (see [service.md](service.md#make-it-right-here) for
+what that costs and how it is kept safe), put a Claude API key in Secret Manager and switch
+it on. With the key in a file (here `~/.config/pixelreel/claude-key`), so that it is never
+typed or shown:
 
 ```sh
-printf '%s' "$ANTHROPIC_API_KEY" | gcloud secrets create pixelreel-claude-key --data-file=- --project pixelreel-515501
+tr -d '\r\n' < ~/.config/pixelreel/claude-key | gcloud secrets create pixelreel-claude-key --data-file=- --project pixelreel-515501
 gcloud secrets add-iam-policy-binding pixelreel-claude-key --project pixelreel-515501 \
   --member serviceAccount:pixelreel-run@pixelreel-515501.iam.gserviceaccount.com --role roles/secretmanager.secretAccessor
 gcloud run services update pixelreel --region europe-west1 --project pixelreel-515501 \
   --update-env-vars PIXELREEL_TRY=1 --update-secrets ANTHROPIC_API_KEY=pixelreel-claude-key:latest
 ```
+
+A new key later is a new version of the same secret (`gcloud secrets versions add
+pixelreel-claude-key --data-file=-`) and a redeploy. The model and the caps have defaults
+(`claude-sonnet-5-5`, 5 an hour for each visitor, 30 a day for everyone); set
+`PIXELREEL_TRY_MODEL`, `PIXELREEL_TRIES_PER_HOUR` or `PIXELREEL_TRIES_PER_DAY` the same way to
+change them. What each reel took is in the logs: look for lines that start `try:`.
 
 To switch it off again: `--update-env-vars PIXELREEL_TRY=0`.
 

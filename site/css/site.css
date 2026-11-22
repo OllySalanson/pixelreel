@@ -290,22 +290,75 @@ h1 { font-size: clamp(2.6rem, 4.2vw + 1rem, 4.75rem); line-height: 1.06; letter-
 
 /* make one now */
 .maker { padding: clamp(1.5rem, 3vw, 2.25rem); }
-.maker label { display: block; font-size: 1.375rem; font-weight: 700; }
-.maker input { display: block; width: 100%; margin-top: 0.75rem; padding: 0.9rem 1rem; font: 500 1.25rem/1.4 var(--font); letter-spacing: var(--tracking); color: var(--ink); background: var(--paper); border: var(--u) solid var(--line); border-radius: 0; }
-.maker input::placeholder { color: var(--ink-soft); opacity: 1; }
+.maker > label { display: block; font-size: 1.375rem; font-weight: 700; }
+.maker textarea { display: block; width: 100%; min-height: 3.6rem; max-height: 14rem; margin-top: 0.75rem; padding: 0.9rem 1rem; resize: none; overflow-y: auto; font: 500 1.25rem/1.4 var(--font); letter-spacing: var(--tracking); word-spacing: var(--wording); color: var(--ink); background: var(--paper); border: var(--u) solid var(--line); border-radius: 0; }
+.maker textarea::placeholder { color: var(--ink-soft); opacity: 1; }
+.maker textarea:disabled { opacity: 0.6; }
 .tries { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 3); margin-top: 1rem; }
 .tries button { min-height: 2.75rem; padding: 0.35rem 0.8rem; font-size: 1.0625rem; font-weight: 500; color: var(--ink); background: var(--tint); border: 0; cursor: pointer;
   box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line); margin: var(--u); }
 .tries button:hover { background: var(--gold); color: #141b2d; }
+.tries button:disabled { opacity: 0.6; cursor: progress; }
 .ask { margin: 1.75rem var(--u) 1.25rem; padding: 1rem 1.25rem 1.2rem; background: var(--navy); color: var(--cream);
   box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line); }
 .ask-label { font: 1.375rem/1.1 var(--pixel); letter-spacing: 0.04em; text-transform: uppercase; color: var(--teal); }
 .ask-words { margin-top: 0.4rem; font-size: 1.3125rem; font-weight: 500; line-height: 1.45; overflow-wrap: anywhere; }
-.maker-here { margin-top: 1.25rem; padding-top: 1.25rem; border-top: var(--u) solid var(--tint); }
-.maker-here p { margin-bottom: 0.5rem; font-weight: 500; }
 .btn:disabled { opacity: 0.6; cursor: progress; }
 .said { min-height: 1.6em; margin-top: 0.5rem; font-weight: 700; }
 .maker-first { margin-top: 0.75rem; font-size: 1.125rem; color: var(--ink-soft); }
+
+/* make it right here: one big button, and somewhere to drop the real thing */
+.maker-here { margin-top: 1rem; }
+.maker-here > .said { margin: 0 0 0.5rem; }
+.maker-here > .said:empty { min-height: 0; margin: 0 0 0.5rem; }
+/* why something could not be made: a notice of its own, not a line to miss */
+.said.sorry { margin: 0.5rem var(--u) 1.25rem; padding: 0.8rem 1.1rem 0.8rem calc(1.1rem + var(--u) * 2); max-width: none; background: var(--card);
+  box-shadow: inset calc(var(--u) * 2) 0 0 0 var(--red), 0 calc(var(--u) * -1) 0 0 var(--red), 0 var(--u) 0 0 var(--red), calc(var(--u) * -1) 0 0 0 var(--red), var(--u) 0 0 0 var(--red); }
+.maker-here > .btn-big { width: calc(100% - var(--u) * 2); }
+.maker-drop { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; align-items: flex-start; margin: 1.25rem var(--u) 0; padding: 1.1rem 1.25rem 0.75rem; background: var(--tint);
+  box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line); }
+.maker-drop .px { width: 3.5rem; height: auto; margin-top: 0.2rem; }
+.maker-drop .words { flex: 1 1 14ch; min-width: 0; }
+.maker-drop-title { font-size: 1.3125rem; font-weight: 700; line-height: 1.3; }
+.maker-drop .btn { margin-top: 0.25rem; }
+/* a phone has nothing to drag: it is offered its camera instead */
+.for-touch { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  .for-mouse { display: none; }
+  .for-touch { display: inline; }
+}
+/* while Claude writes, the box shows only what is being made */
+.maker[data-busy] { display: grid; align-content: center; }
+.maker[data-busy] > :not(.maker-here), .maker[data-busy] .maker-here > :not(.maker-wait) { display: none; }
+.maker[data-busy] .maker-here { margin-top: 0; }
+.maker-wait { display: grid; gap: 0.75rem; margin: 0 var(--u); padding: 1.5rem 1.5rem 1.6rem; background: var(--navy); color: var(--cream);
+  box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line); }
+.maker-wait:focus { outline: none; }
+.maker-wait-title { font-size: 1.75rem; font-weight: 800; line-height: 1.2; }
+.maker-wait-name { font: 1.625rem/1.15 var(--pixel); letter-spacing: 0.02em; word-spacing: 0; color: var(--gold); overflow-wrap: anywhere; max-width: none; }
+.maker-wait-name:empty { display: none; }
+.maker-wait-bar { display: flex; gap: calc(var(--u) * 2); margin-top: 0.5rem; }
+.maker-wait-bar i { flex: 1; height: calc(var(--u) * 4); background: var(--dusk); animation: making 1.6s steps(1, end) infinite; }
+.maker-wait-bar i:nth-child(2) { animation-delay: 0.2s; }
+.maker-wait-bar i:nth-child(3) { animation-delay: 0.4s; }
+.maker-wait-bar i:nth-child(4) { animation-delay: 0.6s; }
+.maker-wait-bar i:nth-child(5) { animation-delay: 0.8s; }
+.maker-wait-bar i:nth-child(6) { animation-delay: 1s; }
+.maker-wait-bar i:nth-child(7) { animation-delay: 1.2s; }
+.maker-wait-bar i:nth-child(8) { animation-delay: 1.4s; }
+@keyframes making { 0% { background: var(--gold); } 25% { background: var(--teal); } 50% { background: var(--dusk); } }
+.maker-wait > p:last-child { margin-top: 0.25rem; }
+.maker-other { margin-top: 0.75rem; }
+.plain-btn { min-height: 2.75rem; padding: 0.25rem 0; font-weight: 500; text-align: left; background: none; border: 0; text-decoration: underline; text-decoration-thickness: 0.12em; text-underline-offset: 0.2em; cursor: pointer; }
+.plain-btn:hover { text-decoration-color: var(--gold-lip); }
+.maker-own { margin-top: 0.25rem; }
+.maker-own .ask { margin-top: 1.5rem; }
+/* over the whole page while something is dragged across it: one plain panel to aim for */
+.drop-over { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: var(--gutter); background: rgba(11, 18, 32, 0.9); pointer-events: none; }
+.drop-over-in { display: grid; justify-items: center; gap: 0.5rem; padding: clamp(1.75rem, 5vw, 3rem) clamp(1.75rem, 6vw, 4.5rem); text-align: center; color: var(--ink); background: var(--card);
+  box-shadow: 0 0 0 var(--u) var(--line), 0 0 0 calc(var(--u) * 3) var(--gold), 0 0 0 calc(var(--u) * 4) var(--line); }
+.drop-over-title { font-size: clamp(2.1rem, 3.4vw + 1rem, 3.75rem); font-weight: 800; line-height: 1.1; letter-spacing: -0.015em; }
+.drop-over .px { margin-bottom: 0.75rem; }
 
 /* good to know */
 .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.75rem 2.5rem; }

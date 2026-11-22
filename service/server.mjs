@@ -9,13 +9,10 @@ import { createMcpServer } from './mcp.mjs';
 import { BusyError, isId } from './reels.mjs';
 import { robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
 import { sendBytes, sendSqueezed, sendStatic, squeezed, tagOf } from './static.mjs';
-import { tidyAbout, TryError } from './try.mjs';
+import { MAX_WORDS_BODY, PDF_MAX, sourceOf, TryError } from './try.mjs';
 
 /** The most a request to /mcp may carry. A long reel is a few kilobytes. */
 export const MAX_BODY = 256 * 1024;
-
-/** The most a request to /try may carry: a link, or a few words. */
-const MAX_TRY_BODY = 4 * 1024;
 
 const AUDIO_FILE = /^[A-Za-z0-9_-]{1,64}\.mp3$/;
 
@@ -53,17 +50,23 @@ p { margin: 0; }
 
 const sendPage = (res, status, html, extra = {}) => res.writeHead(status, { ...SAFE, 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', ...extra }).end(html);
 
-/** Reads a request body up to `max` bytes. Null if it is bigger. */
-async function readBody(req, max = MAX_BODY) {
+/**
+ * Reads a request body up to `max` bytes, as bytes. Null if it is bigger: the rest is left
+ * unread, and the line stays open so that the caller can be told why.
+ */
+async function readBytes(req, max) {
   const chunks = [];
   let size = 0;
-  for await (const chunk of req) {
+  for await (const chunk of req.iterator({ destroyOnReturn: false })) {
     size += chunk.length;
     if (size > max) return null;
     chunks.push(chunk);
   }
-  return Buffer.concat(chunks).toString('utf8');
+  return Buffer.concat(chunks);
 }
+
+/** Reads a request body up to `max` bytes, as text. Null if it is bigger. */
+const readBody = async (req, max = MAX_BODY) => (await readBytes(req, max))?.toString('utf8') ?? null;
 
 const rpcError = (res, status, code, message) => res.writeHead(status, { ...SAFE, 'content-type': 'application/json' })
   .end(JSON.stringify({ jsonrpc: '2.0', error: { code, message }, id: null }));
@@ -157,10 +160,11 @@ async function handleReel(req, res, id, rest, context) {
 const sendJson = (res, status, value) => res.writeHead(status, { ...SAFE, 'content-type': 'application/json', 'cache-control': 'no-store' }).end(JSON.stringify(value));
 
 /**
- * Make it right here: a visitor with no Claude of their own asks for a reel about a link or
- * a few words, the service's writer has Claude write it, and the visitor is sent to watch
- * it. Only there when the service was given a writer (service/writer.mjs), since every
- * reel made this way costs money; and counted more strictly than the connector.
+ * Make it right here: a visitor with no Claude of their own gives one thing to explain (a
+ * link or a few words, some writing, a PDF or a picture: sourceOf in service/try.mjs), the
+ * service's writer has Claude write the reel, and the visitor is sent to watch it. Only
+ * there when the service was given a writer (service/writer.mjs), since every reel made
+ * this way costs money; and counted more strictly than the connector.
  */
 async function handleTry(req, res, context) {
   const { reels, writer, limits, trustProxy, baseUrl } = context;
@@ -171,26 +175,41 @@ async function handleTry(req, res, context) {
   const elsewhere = req.headers.origin !== new URL(baseUrl).origin ||
     (req.headers['sec-fetch-site'] && req.headers['sec-fetch-site'] !== 'same-origin');
   if (elsewhere) { sendJson(res, 403, { error: 'Ask from the Pixel Reel website.' }); return; }
-  let about;
+  const type = req.headers['content-type'], words = /^application\/json\b/i.test(type ?? '');
+  const tooBig = () => {
+    // the rest of what is being sent is not wanted: once the answer has gone the line is cut, not read to its end
+    res.setHeader('connection', 'close');
+    res.once('finish', () => req.socket.destroy());
+    sendJson(res, 413, { error: words ? 'That is too much for one reel. Give it less: a few pages at most.' : 'That file is too big. Pixel Reel takes up to 10 MB.' });
+  };
+  const most = words ? MAX_WORDS_BODY : PDF_MAX;
+  if (Number(req.headers['content-length']) > most) { tooBig(); return; }
+  const bytes = await readBytes(req, most);
+  if (!bytes) { tooBig(); return; }
+  let source;
   try {
-    about = tidyAbout(JSON.parse((await readBody(req, MAX_TRY_BODY)) ?? 'null')?.about);
+    source = sourceOf(type, bytes);
   } catch (err) {
-    sendJson(res, 400, { error: err instanceof TryError ? err.message : 'Say what you want explained.' });
+    if (!(err instanceof TryError)) throw err;
+    sendJson(res, 400, { error: err.message });
     return;
   }
-  const refused = limits?.tries.hit(callerOf(req, trustProxy));
-  if (refused) { sendJson(res, 429, { error: `No more reels from here for now. ${refused}` }); return; }
+  const caller = callerOf(req, trustProxy);
+  const refused = limits?.tries.hit(caller);
+  if (refused) { sendJson(res, 429, { error: `No more reels just now. ${refused}` }); return; }
   try {
-    let reel = await writer(about), made;
+    let reel = await writer(source), made;
     try {
       made = await reels.create(reel);
     } catch (err) {
       if (!(err instanceof ReelError)) throw err;
-      reel = await writer(about, { before: reel, problems: err.problems });   // one chance to put it right
+      reel = await writer(source, { before: reel, problems: err.problems });   // one chance to put it right
       made = await reels.create(reel);
     }
     sendJson(res, 200, { id: made.id, watch: `/r/${made.id}` });
   } catch (err) {
+    // what never reached Claude, or never reached the recorder, is not one of the visitor's goes
+    if ((err instanceof TryError && err.free) || err instanceof BusyError) limits?.tries.undo(caller);
     if (err instanceof TryError || err instanceof BusyError) sendJson(res, 422, { error: err.message });
     else if (err instanceof ReelError) sendJson(res, 502, { error: 'Claude could not write that reel. Try again, or try other words.' });
     else throw err;
