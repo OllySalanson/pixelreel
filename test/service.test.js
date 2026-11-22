@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
-import { CLAUDE_ADDRESSES, inRanges, LIMITS, limitProblems, RateLimit } from '../service/limits.mjs';
+import { CLAUDE_ADDRESSES, inRanges, LIMITS, limitProblems, peterMs, RateLimit, reelMs } from '../service/limits.mjs';
 import { EXAMPLE_REEL, formatGuide, playerHtml } from '../service/mcp.mjs';
 import { BusyError, isId, KEEP_DAYS, newId, Reels } from '../service/reels.mjs';
 import { reelFromData } from '../src/format.js';
@@ -358,8 +358,31 @@ describe('the service limits', () => {
       'scene 1: caption has 161 characters; keep it to 160',
       'scene 1: picture.items has 9; keep it to 8'
     ]);
-    const long = { ...tea, scenes: Array.from({ length: 9 }, () => scene({ say: 'word '.repeat(70).trim() })) };
-    assert.deepEqual(problems(long), ['the reel would run about 4:22; keep it under 4:00, with fewer or shorter scenes']);
+    const long = { ...tea, scenes: Array.from({ length: 12 }, () => scene({ say: 'word '.repeat(70).trim() })) };
+    assert.deepEqual(problems(long), ['the reel would run about 4:07; keep it under 4:00, with fewer or shorter scenes']);
+    assert.deepEqual(problems({ ...long, scenes: long.scenes.slice(0, 11) }), [], 'eleven such scenes fit');
+  });
+
+  it("guesses how long Peter takes over a line from how long he took over the site's own", () => {
+    let lines = 0, off = 0, over = 0;
+    for (const name of readdirSync(new URL('../reels', import.meta.url))) {
+      let manifest;
+      try { manifest = JSON.parse(readFileSync(new URL(`../reels/${name}/audio/manifest.json`, import.meta.url), 'utf8')); } catch { continue; }
+      if (manifest.engine !== 'pocket' || manifest.voice !== 'peter_yearsley') continue;
+      for (const clip of manifest.clips) {
+        const guess = peterMs(clip.text) / 1000;
+        off += Math.abs(guess - clip.seconds);
+        over += guess - clip.seconds;
+        lines++;
+      }
+    }
+    assert.ok(lines > 80, `${lines} lines of his to go by`);
+    assert.ok(off / lines < 0.7, `on average ${(off / lines).toFixed(2)} seconds out a line`);
+    assert.ok(Math.abs(over / lines) < 0.25, `and neither long nor short overall: ${(over / lines).toFixed(2)} seconds a line`);
+    assert.equal(peterMs('  Boil the kettle.  '), 920 + 53 * 16, 'spaces round a line are not said');
+    // a reel of six ordinary lines is told to Claude as about what it will really run
+    const six = reelFromData({ ...tea, scenes: Array.from({ length: 6 }, () => scene({ say: 'First, find it. Gas meters often live in a box outside, in the hall, or under the stairs.' })) });
+    assert.equal(Math.round(reelMs(six) / 1000), 41);
   });
 
   it('counts each caller by the hour, and everyone by the day', () => {
@@ -495,6 +518,13 @@ describe('the service over HTTP', async () => {
     for (const picture of pictures) {
       assert.equal(picture.properties.every ?? picture.properties.start, undefined, `${picture.title}: the service does the timing, so Claude is not asked to guess it`);
     }
+    // where an icon is picked, it says what an icon is for
+    const icons = pictures.find((p) => p.title === 'icons'), compare = pictures.find((p) => p.title === 'compare');
+    assert.match(icons.description, /Only for things that each have an icon of their own/);
+    for (const slot of [icons.properties.items, pictures.find((p) => p.title === 'flow').properties.items, compare.properties.bad, compare.properties.good]) {
+      assert.match(slot.description, /^An icon must show the very thing its label names/);
+    }
+    assert.equal(icons.properties.items.items.properties.icon.enum.length, ICON_NAMES.length, 'and every icon is still offered');
     await client.close();
   });
 

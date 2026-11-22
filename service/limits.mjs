@@ -1,16 +1,27 @@
 // What the service will make, and how often: sizes that keep a reel short enough to watch
 // and quick to record, and rate limits so one caller (or a runaway agent) cannot use it all
 // up or run up a bill. Local tools have no such limits; these apply only to the service.
-import { clockTime, countWords, estimateSpeechMs, GAP_MS } from '../src/timing.js';
+import { clockTime, countWords, GAP_MS, MIN_SCENE_MS } from '../src/timing.js';
 
 export const LIMITS = {
   scenes: 12,          // a reel explains one thing; more scenes means two reels
-  sayWords: 70,        // per scene: about 30 seconds of speech
+  sayWords: 70,        // per scene: about 20 seconds of speech
   captionChars: 160,   // per scene: two lines on a phone
   titleChars: 80,
   listItems: 8,        // list, terminal, code and chat pictures
   minutes: 4           // the whole reel, pauses included
 };
+
+/**
+ * How long Peter takes to say a line, in ms: a little under a second to begin and end, and
+ * about 53 ms a letter. Measured from the site's own recorded reels (test/service.test.js
+ * holds it to them), so what the service says a reel will run is close to what it does. The
+ * player's own guess (estimateSpeechMs) is for reading along with no recording, which is slower.
+ */
+export const peterMs = (say) => Math.round(920 + 53 * String(say ?? '').trim().length);
+
+/** About how long a checked reel will run once Peter has recorded it, in ms: each scene at least as long as the player holds one, and the pause after it. */
+export const reelMs = (reel) => reel.scenes.reduce((ms, scene) => ms + Math.max(MIN_SCENE_MS, peterMs(scene.say)) + GAP_MS, 0);
 
 /** Everything about a checked reel (from reelFromData) and its raw JSON that is past the service's limits. */
 export function limitProblems(reel, raw) {
@@ -18,7 +29,6 @@ export function limitProblems(reel, raw) {
   if (reel.scenes.length > LIMITS.scenes) problems.push(`scenes: ${reel.scenes.length} is too many; a reel here has at most ${LIMITS.scenes}. Explain one thing, or make two reels.`);
   if (reel.title.length > LIMITS.titleChars) problems.push(`title: keep it to ${LIMITS.titleChars} characters`);
   if (raw.images && Object.keys(raw.images).length) problems.push('images: a reel made here cannot carry pictures from elsewhere; use the icons, or a sprite of your own');
-  let ms = 0;
   reel.scenes.forEach((s, i) => {
     const where = `scene ${i + 1}`;
     if (countWords(s.say) > LIMITS.sayWords) problems.push(`${where}: say has ${countWords(s.say)} words; keep it to ${LIMITS.sayWords}, or split the scene in two`);
@@ -27,8 +37,8 @@ export function limitProblems(reel, raw) {
     for (const key of ['items', 'lines', 'messages']) {
       if (Array.isArray(picture?.[key]) && picture[key].length > LIMITS.listItems) problems.push(`${where}: picture.${key} has ${picture[key].length}; keep it to ${LIMITS.listItems}`);
     }
-    ms += estimateSpeechMs(s.say) + GAP_MS;
   });
+  const ms = reelMs(reel);
   if (ms > LIMITS.minutes * 60000) problems.push(`the reel would run about ${clockTime(ms)}; keep it under ${clockTime(LIMITS.minutes * 60000)}, with fewer or shorter scenes`);
   return problems;
 }
