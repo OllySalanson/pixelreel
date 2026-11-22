@@ -146,8 +146,8 @@ h1 { font-size: clamp(2.6rem, 4.2vw + 1rem, 4.75rem); line-height: 1.06; letter-
 .reel-end .btn { width: auto; margin-block: var(--u) calc(var(--u) * 2); }
 .reel-big:hover { filter: brightness(1.06); }
 .reel-big[hidden] { display: none; }
-/* in the corner of the picture: fills the whole screen with the reel, and puts it back */
-.reel-full { position: absolute; top: calc(var(--u) * 2); right: calc(var(--u) * 2); z-index: 3; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; padding: 0; color: var(--cream); background: rgba(11, 18, 32, 0.72); border: 0; cursor: pointer;
+/* in the bottom corner of the picture, where pictures are plain (a title has its moon in the top one): fills the whole screen with the reel, and puts it back */
+.reel-full { position: absolute; bottom: calc(var(--u) * 2); right: calc(var(--u) * 2); z-index: 3; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; padding: 0; color: var(--cream); background: rgba(11, 18, 32, 0.72); border: 0; cursor: pointer;
   box-shadow: 0 calc(var(--u) * -1) 0 0 var(--frame), 0 var(--u) 0 0 var(--frame), calc(var(--u) * -1) 0 0 0 var(--frame), var(--u) 0 0 0 var(--frame); }
 .reel-full:hover { background: var(--dusk); }
 .reel-full .ico { width: 1.125rem; height: 1.125rem; fill: currentColor; }
