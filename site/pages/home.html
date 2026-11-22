@@ -210,12 +210,12 @@ fetch: /reels/pixel-reel/reel.json /reels/pixel-reel/audio/manifest.json
     </div>
     <!-- each switches one choice of Make it comfy on, and off again: comfort.js works them, and shows them, since without it they would do nothing -->
     <ul class="comfy-list" data-comfy hidden>
-      <li><button class="comfy-try" type="button" data-try="size:2" aria-pressed="false"><span class="comfy-glyph" aria-hidden="true">A</span><span class="comfy-words">Bigger letters</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
-      <li><button class="comfy-try" type="button" data-try="font:opendyslexic" aria-pressed="false">{{icon:book:3}}<span class="comfy-words">Letters made for dyslexia</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
-      <li><button class="comfy-try" type="button" data-try="paper:night" aria-pressed="false">{{icon:moon:3}}<span class="comfy-words">Dark paper</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
-      <li><button class="comfy-try" type="button" data-try="ruler:on" aria-pressed="false"><span class="comfy-glyph comfy-rule" aria-hidden="true"></span><span class="comfy-words">A ruler to keep your place</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
-      <li data-needs-speech hidden><button class="comfy-try" type="button" data-try="aloud:on" aria-pressed="false">{{icon:speech:3}}<span class="comfy-words">Hear any words you press</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
-      <li><button class="comfy-try" type="button" data-try="pace:slow" aria-pressed="false">{{icon:clock:3}}<span class="comfy-words">A slower voice</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
+      <li><button class="comfy-try" type="button" data-comfy-try="size:2" aria-pressed="false"><span class="comfy-glyph" aria-hidden="true">A</span><span class="comfy-words">Bigger letters</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
+      <li><button class="comfy-try" type="button" data-comfy-try="font:opendyslexic" aria-pressed="false">{{icon:book:3}}<span class="comfy-words">Letters made for dyslexia</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
+      <li><button class="comfy-try" type="button" data-comfy-try="paper:night" aria-pressed="false">{{icon:moon:3}}<span class="comfy-words">Dark paper</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
+      <li><button class="comfy-try" type="button" data-comfy-try="ruler:on" aria-pressed="false"><span class="comfy-glyph comfy-rule" aria-hidden="true"></span><span class="comfy-words">A ruler to keep your place</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
+      <li data-needs-speech hidden><button class="comfy-try" type="button" data-comfy-try="aloud:on" aria-pressed="false">{{icon:speech:3}}<span class="comfy-words">Hear any words you press</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
+      <li><button class="comfy-try" type="button" data-comfy-try="pace:slow" aria-pressed="false">{{icon:clock:3}}<span class="comfy-words">A slower voice</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
     </ul>
     <div class="row comfy-more" data-comfy hidden>
       <button class="btn btn-paper" type="button" data-open="comfort">See every choice</button>

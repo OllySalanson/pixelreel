@@ -1044,7 +1044,7 @@ describe('on a phone, posters and narrators two across', () => {
 
 describe('Make it comfy, tried on the home page', () => {
   const part = html.home.slice(html.home.indexOf('<section class="section" id="comfy"'), html.home.indexOf('<section class="section night cinema" id="examples"'));
-  const tiles = [...part.matchAll(/<li( data-needs-speech hidden)?><button class="comfy-try" type="button" data-try="([a-z]+):([a-z0-9]+)" aria-pressed="false">[\s\S]*?<span class="comfy-words">([^<]+)<\/span><span class="comfy-on" aria-hidden="true">On<\/span><\/button><\/li>/g)];
+  const tiles = [...part.matchAll(/<li( data-needs-speech hidden)?><button class="comfy-try" type="button" data-comfy-try="([a-z]+):([a-z0-9]+)" aria-pressed="false">[\s\S]*?<span class="comfy-words">([^<]+)<\/span><span class="comfy-on" aria-hidden="true">On<\/span><\/button><\/li>/g)];
 
   it('has a part of its own, between who it is for and the examples, with its reel', () => {
     assert.ok(part.length > 0, 'it is there, and before the examples');
@@ -1060,6 +1060,18 @@ describe('Make it comfy, tried on the home page', () => {
       assert.match(html.home, new RegExp(`<input type="radio" name="${key}" value="${value}"(?! checked)>`), `${words}: ${key} can be ${value}, and is not already`);
     }
     assert.deepEqual(tiles.filter((tile) => tile[1]).map((tile) => tile[3] + tile[2]), ['onaloud'], 'the one that needs a voice is out of sight where the browser has none');
+  });
+
+  it('leaves the make page\'s own "Or try one of these" buttons alone', () => {
+    // Both once answered to data-try, so Make it comfy took the make page's four buttons for
+    // its own and told a screen reader that each was a button that had been pressed.
+    const tries = [...html.make.matchAll(/<button type="button" data-try="([^"]+)">/g)];
+    assert.ok(tries.length >= 4, 'the make page still has them');
+    for (const [button] of tries) assert.doesNotMatch(button, /aria-pressed/);
+    const comfort = readFileSync(root('site/js/comfort.js'), 'utf8');
+    assert.match(comfort, /querySelectorAll\('button\[data-comfy-try\]'\)/);
+    assert.doesNotMatch(comfort, /\[data-try\]|dataset\.try\b/, 'Make it comfy looks only for buttons of its own');
+    for (const name of pages) if (name !== 'home') assert.doesNotMatch(html[name], /data-comfy-try/, name);
   });
 
   it('keeps the buttons out of sight until the script that works them is there', () => {

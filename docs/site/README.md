@@ -1375,3 +1375,18 @@ moves the mark) is not known until it is tried on a real phone and a real comput
 - Four lines were recorded again by Peter. A speech-to-text model heard each one say
   exactly what is written, and gave the moment each word is said, which is what the
   pictures' items are now timed to. Nobody has listened to them.
+
+### Version 60
+
+A fault of mine from Version 52, found while reading the make page for something else.
+
+- **Make it comfy took the make page's buttons for its own.** The home page's buttons that
+  switch a choice on, and the make page's four suggestions under "Or try one of these",
+  both answered to `data-try`. So on the make page a screen reader was told that each
+  suggestion was a button that had been pressed, and pressing one sent a needless change of
+  settings to every player. They still filled the box, which is why nothing looked wrong.
+  It went live with Version 52, at 19:16 UTC on 22 November. The home page's buttons now
+  have a name of their own, and a test keeps Make it comfy to them.
+
+Seen on the live site before it was put right: all four suggestions said `aria-pressed="true"`.
+After, on the same page here: none says anything of the kind, and pressing one changes no setting.

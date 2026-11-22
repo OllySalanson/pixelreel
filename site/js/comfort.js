@@ -53,9 +53,10 @@ export function startComfort() {
   for (const opener of document.querySelectorAll('[data-open="comfort"]')) {
     opener.addEventListener('click', () => { tick(); dialog.showModal(); });
   }
-  // The buttons on a page that switch one choice on, and off again: <button data-try="size:2">.
-  // Each shows whether its choice is the one in force, however that came about.
-  const tries = [...document.querySelectorAll('button[data-try]')].map((button) => [button, ...button.dataset.try.split(':')]);
+  // The buttons on a page that switch one choice on, and off again: <button data-comfy-try="size:2">.
+  // Each shows whether its choice is the one in force, however that came about. (The name is
+  // its own: the make page's "Or try one of these" buttons are data-try, and are maker.js's.)
+  const tries = [...document.querySelectorAll('button[data-comfy-try]')].map((button) => [button, ...button.dataset.comfyTry.split(':')]);
   const show = () => {
     const now = chosen();
     for (const [button, key, value] of tries) button.setAttribute('aria-pressed', String(now[key] === value));
