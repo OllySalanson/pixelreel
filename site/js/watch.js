@@ -1,7 +1,9 @@
 // The page a shared reel is watched on (/r/<id>): asks the service for the reel, waits with
-// Reelie while Peter is still recording it, then hands it to the player.
+// Reelie while Peter is still recording it, then hands it to the player. A reel is made to
+// be passed on, so the page has a button for that too.
 import { calm } from './calm.js';
 import { reelie } from './landscape.js';
+import { sendReel } from './send.js';
 import { fitCanvas, ReelPlayer } from './player.js';
 import { showOf } from './reels.js';
 import { createKit, H, W } from '../../src/kit.js';
@@ -39,6 +41,14 @@ export function startWatching() {
 
   const say = (text) => { says.textContent = text; words.textContent = text; };
 
+  // a phone has its own way of sending things (to WhatsApp, to a message); a computer copies the link
+  const send = document.getElementById('watch-send'), sent = document.getElementById('watch-sent');
+  send.hidden = false;   // its link works from the start, even while Peter is still recording
+  send.addEventListener('click', async () => {
+    const share = navigator.share && matchMedia('(pointer: coarse)').matches ? (what) => navigator.share(what) : null;
+    sent.textContent = await sendReel(document.getElementById('watch-title').textContent, `${location.origin}/r/${id}`, { share });
+  });
+
   async function look() {
     let play;
     try {
@@ -59,8 +69,12 @@ export function startWatching() {
       if (play.video) document.getElementById('watch-video').hidden = false;
       return;
     }
-    if (play.state === 'failed') { waiting = false; say(`Sorry, this reel could not be made. ${play.error ?? ''}`.trim()); return; }
-    if (play.state === 'gone') { waiting = false; say('This reel has gone. Reels are kept for 30 days.'); return; }
+    if (play.state === 'failed' || play.state === 'gone') {
+      waiting = false;
+      send.hidden = true;   // nothing to pass on
+      say(play.state === 'gone' ? 'This reel has gone. Reels are kept for 30 days.' : `Sorry, this reel could not be made. ${play.error ?? ''}`.trim());
+      return;
+    }
     say(play.state === 'unreachable' ? 'Trying to reach Pixel Reel. One moment.' : 'Peter is still recording this one. It will be ready to play here in a moment.');
     setTimeout(look, AGAIN_MS);
   }

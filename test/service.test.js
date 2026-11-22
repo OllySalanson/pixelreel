@@ -302,7 +302,7 @@ describe('the service over HTTP', async () => {
     await reels.idle();
     const ready = await client.callTool({ name: 'get_reel', arguments: { id } });
     assert.match(words(ready), /^"Tea" is ready: 2 scenes, 0:14\. Watch it at https:\/\/reels\.example\/r\//);
-    assert.match(await waiting.text(), /<h1 id="watch-title">Tea<\/h1>/, 'the page is there at once, and waits for the voice itself');
+    assert.match(await waiting.text(), /<h1 class="sr-only" id="watch-title">Tea<\/h1>/, 'the page is there at once, and waits for the voice itself');
 
     const page = await fetch(`${local}/r/${id}`);
     const html = await page.text();
@@ -399,7 +399,7 @@ describe('the service over HTTP', async () => {
     const { id } = await reels.create({ ...tea, title: 'Tea & <b>cake</b> "now"' });
     await reels.idle();
     const html = await (await fetch(`${local}/r/${id}`)).text();
-    assert.match(html, /<h1 id="watch-title">Tea &amp; &lt;b&gt;cake&lt;\/b&gt; &quot;now&quot;<\/h1>/);
+    assert.match(html, /<h1 class="sr-only" id="watch-title">Tea &amp; &lt;b&gt;cake&lt;\/b&gt; &quot;now&quot;<\/h1>/);
     assert.match(html, /<title>Tea &amp; &lt;b&gt;cake&lt;\/b&gt; &quot;now&quot; - Pixel Reel<\/title>/);
     assert.doesNotMatch(html, /<b>cake/);
   });

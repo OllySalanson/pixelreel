@@ -8,6 +8,7 @@ import { staticFile } from '../service/static.mjs';
 import { SCENES } from '../site/js/landscape.js';
 import { askFor } from '../site/js/maker.js';
 import { lengthWords, showOf } from '../site/js/reels.js';
+import { sendReel } from '../site/js/send.js';
 import { SPRITES } from '../site/js/sprites.js';
 import { parseReelJson } from '../src/format.js';
 import { createKit } from '../src/kit.js';
@@ -44,7 +45,7 @@ describe('putting a page together', () => {
       assert.match(html[name], /<dialog class="comfort" id="comfort"/, `${name} has Make it comfy`);
       assert.doesNotMatch(html[name], /\sstyle="/, `${name} has no inline styles: the site's policy would block them`);
     }
-    assert.match(html.reel, /<h1 id="watch-title">Tea<\/h1>/);
+    assert.match(html.reel, /<h1 class="sr-only" id="watch-title">Tea<\/h1>/);
     assert.doesNotMatch(html.reel, /\{\{/, 'a reel page has every name filled in');
     assert.match(html.home, /<link rel="canonical" href="https:\/\/reels\.example\/">/);
     assert.match(html.press, /<link rel="canonical" href="https:\/\/reels\.example\/press">/);
@@ -231,6 +232,36 @@ describe('the site\'s own pictures', () => {
     for (const [name, text] of Object.entries(textArt())) {
       assert.equal(readFileSync(root(`site/art/${name}`), 'utf8'), text, `site/art/${name} is out of date: run npm run site-art`);
     }
+  });
+});
+
+describe('passing a reel on', () => {
+  const link = 'https://reels.example/r/abc';
+  const copies = (works) => { const copied = []; return { copied, copy: async (text) => { copied.push(text); return works; } }; };
+
+  it('opens the phone\'s own way of sending, with the title and the link, and says nothing more', async () => {
+    const shared = [], { copied, copy } = copies(true);
+    assert.equal(await sendReel('Your gas bill', link, { share: async (what) => { shared.push(what); }, copy }), '');
+    assert.deepEqual(shared, [{ title: 'Your gas bill', text: 'Your gas bill, as a pixel reel. Press Play.', url: link }]);
+    assert.deepEqual(copied, []);
+  });
+
+  it('says nothing when they change their mind, and copies the link if sending fails', async () => {
+    const stopped = Object.assign(new Error('no'), { name: 'AbortError' }), { copied, copy } = copies(true);
+    assert.equal(await sendReel('A reel', link, { share: async () => { throw stopped; }, copy }), '');
+    assert.deepEqual(copied, []);
+    assert.equal(await sendReel('A reel', link, { share: async () => { throw new Error('not allowed'); }, copy }), 'Link copied. Paste it into a message.');
+    assert.deepEqual(copied, [link]);
+  });
+
+  it('copies the link on a computer, and gives it in words if that cannot be done', async () => {
+    assert.equal(await sendReel('A reel', link, copies(true)), 'Link copied. Paste it into a message.');
+    assert.equal(await sendReel('A reel', link, copies(false)), `That did not copy. The link is ${link}`);
+  });
+
+  it('has its button on a reel\'s page, out of sight until the script that works it has woken', () => {
+    assert.match(html.reel, /<button class="btn btn-gold" type="button" id="watch-send" hidden>Send it to someone<\/button>/);
+    assert.match(html.reel, /<p class="watch-sent" id="watch-sent" role="status"><\/p>/);
   });
 });
 

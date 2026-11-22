@@ -1,33 +1,14 @@
 // Make a pixel reel now: turns what someone wants explained into the words to give to
 // Claude, to copy across. Nothing is sent anywhere; Claude and the connector do the making.
 // Where the service has Make it right here switched on, a second button asks it for the reel.
+import { copyText } from './send.js';
+
 const EXAMPLE = 'my gas bill';
 
 /** The words to say to Claude for `what`: a web address, or a few words. */
 export function askFor(what) {
   const about = what.trim().replace(/\s+/g, ' ') || EXAMPLE;
   return /^(https?:\/\/|www\.)\S+$/i.test(about) ? `Make me a pixel reel about this page: ${about}` : `Make me a pixel reel about this: ${about}`;
-}
-
-/** Puts `text` on the clipboard. Resolves to whether it worked. */
-async function copyText(text) {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    // an older browser, or a page not allowed the clipboard: select it and copy the old way
-    const box = Object.assign(document.createElement('textarea'), { value: text, readOnly: true });
-    box.className = 'sr-only';
-    document.body.append(box);
-    box.select();
-    try {
-      return document.execCommand('copy');
-    } catch {
-      return false;
-    } finally {
-      box.remove();
-    }
-  }
 }
 
 /** Anything with data-copy="#id" copies that element's words when pressed, and says so. */

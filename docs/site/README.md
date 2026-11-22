@@ -43,7 +43,7 @@ The voice is Peter's: warm, plain, British, a little cheeky. Plain dashes only.
 | `site/layout.html` | The shell every page shares: the bar across the top, the foot, Make it comfy and the theatre. |
 | `site/pages/*.html`, `*.md` | A page each. The comment at the top holds its `title` and `description`. Plain pages are Markdown. `reel.html` is the page every shared reel is watched on (`/r/<id>`). |
 | `site/css/site.css` | The whole look. |
-| `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` is Make it comfy; `boot.js` runs before the page is drawn, to put its settings back and to keep the bar across the top on one row; `signal.js` is the test card on a page that is not there; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `sprites.js` is the site's own pixel art. |
+| `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` is Make it comfy; `boot.js` runs before the page is drawn, to put its settings back and to keep the bar across the top on one row; `signal.js` is the test card on a page that is not there; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `send.js` copies words and passes a reel on; `sprites.js` is the site's own pixel art. |
 | `site/fonts/`, `site/art/` | The fonts (with their licences), and the icons, logos and share picture. |
 | `service/site.mjs` | Puts a page together: the layout, the page, and the `{{names}}` in them. |
 | `service/static.mjs` | Serves the files a page loads, and only those. |
@@ -278,3 +278,21 @@ looked like the old site.
 | Biggest OpenDyslexic letters on a phone: the cards and the player, before and after |
 | --- |
 | ![Cards with words cut in two, then whole; the player's buttons ragged, then tidy.](log/v9-whole-words.jpg) |
+
+### Version 10
+
+The page a shared reel is watched on is where a reel does its work, so it got the round.
+
+- **Send it to someone.** A reel is made to be passed on, and its page had no way to do it.
+  The new button opens a phone's own way of sending things (WhatsApp, a message); on a
+  computer it copies the link and says so.
+- **A bigger reel.** The page said the reel's name twice, once above the player and once
+  inside it, and the first pushed the player down and made it small: about 480 pixels wide on
+  most laptops. Now the player says it alone, and is as big as will leave its picture, its
+  words and its buttons all on the screen: about 690 wide on a 1280 x 800 laptop.
+- **Bigger buttons.** In every player the four buttons now share out their row, so they are
+  larger, and tidy however narrow the player. "Sound on" no longer drops off the end.
+
+| A shared reel on a 1280 x 800 laptop: before, after |
+| --- |
+| ![Before: a small player under a large title, a button cut off. After: a large player, all of it in view, and Send it to someone.](log/v10-reel-page.jpg) |
