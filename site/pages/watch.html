@@ -32,6 +32,16 @@ description: A pixel reel: a short cartoon with a warm voice. Press Play, and Pe
       <h2 id="sheet-title">Every scene</h2>
       <p class="lead">Every scene, at a glance. Print it, and stick it on the fridge.</p>
       <button class="btn btn-gold" type="button" id="sheet-print">Print it</button>
+      <!-- the reel's own QR code. On a screen it is for watching on a phone, and shows only where there is a mouse.
+           On paper it always shows: it is the way from the paper back to the reel, and its voice -->
+      <div class="scan sheet-scan">
+        {{scanthis}}
+        <div class="words">
+          <h3 class="on-screen">Watch it on your phone</h3>
+          <p class="on-screen">Point its camera at this square.</p>
+          <p class="on-paper">To hear it read out, point a phone's camera at this square.</p>
+        </div>
+      </div>
     </div>
     <ol class="steps storyboard" id="sheet-list"></ol>
     <!-- on paper only: where it came from -->
