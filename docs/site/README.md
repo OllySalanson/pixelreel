@@ -856,3 +856,14 @@ afternoon of three people changing it. One thing was off:
 - **From a computer to a phone in one press.** Someone reading that page on a computer was
   told to open it on their phone, and left to work out how. The steps for a computer now
   have a button that copies the page's link, to paste into a message to themselves.
+
+### Version 40
+
+Looked at a made reel's page with everything three people have added to it this
+afternoon: Send it to someone, Save the video, Keep it on this phone, Make it simpler,
+Make it shorter, and the whole reel on one page. It holds together. One thing read badly:
+
+- **"Kept" meant two things.** The button says "Keep it on this phone", and two lines down
+  the small print said "It is kept until 22 December", meaning something else: how long
+  the service holds the reel. The small print now says what happens on that day: "It is
+  deleted on 22 December". Kept is left to mean the copy on the device.
