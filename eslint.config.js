@@ -2,7 +2,7 @@ import js from '@eslint/js';
 import globals from 'globals';
 
 export default [
-  { ignores: ['node_modules/', '.venv/', 'models/'] },
+  { ignores: ['node_modules/', '.venv/', 'models/', 'plugins/pixel-reel/skills/'] },   // the plugin's skill is made by npm run skill
   js.configs.recommended,
   {
     languageOptions: { ecmaVersion: 2023, sourceType: 'module' },

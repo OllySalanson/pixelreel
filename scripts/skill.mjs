@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // Packs the Claude skill: npm run skill writes skill/pixel-reel.zip, ready to upload in Claude
-// (Customize > Skills). It holds the hand-written SKILL.md and example.json from
-// skill/pixel-reel/, the player as a one-file page with a gap for the reel (template.html),
-// and make-page.mjs, which checks a reel.json with the player's own checks and fills the gap.
-// The ZIP is committed, so a test fails until it is remade after the player changes.
-import { readFileSync, writeFileSync } from 'node:fs';
+// (Customize > Skills), and the same files into plugins/pixel-reel/skills/pixel-reel/, for the
+// Claude Code plugin this repository offers as a marketplace (.claude-plugin/marketplace.json).
+// The skill holds the hand-written SKILL.md and example.json from skill/pixel-reel/, the
+// player as a one-file page with a gap for the reel (template.html), and make-page.mjs, which
+// checks a reel.json with the player's own checks and fills the gap. Both copies are
+// committed, so a test fails until they are remade after the player changes.
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { bundle } from './bundle.mjs';
@@ -13,6 +15,8 @@ import { zip } from './zip.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const SKILL_ZIP = join(ROOT, 'skill', 'pixel-reel.zip');
+/** Where the Claude Code plugin keeps the same skill, unzipped. */
+export const PLUGIN_SKILL = join(ROOT, 'plugins', 'pixel-reel', 'skills');
 /** Where the reel goes in template.html. */
 export const GAP = 'PIXELREEL_REEL_HERE';
 
@@ -70,5 +74,10 @@ export const skillZip = () => zip(skillFiles());
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const bytes = skillZip();
   writeFileSync(SKILL_ZIP, bytes);
-  console.log(`Wrote skill/pixel-reel.zip (${Math.round(bytes.length / 1024)} KB). Upload it in Claude: Customize > Skills.`);
+  for (const { name, data } of skillFiles()) {
+    if (name.endsWith('/')) mkdirSync(join(PLUGIN_SKILL, name), { recursive: true });
+    else writeFileSync(join(PLUGIN_SKILL, name), data);
+  }
+  console.log(`Wrote skill/pixel-reel.zip (${Math.round(bytes.length / 1024)} KB), to upload in Claude (Customize > Skills),`);
+  console.log('and plugins/pixel-reel/skills/pixel-reel/, the Claude Code plugin.');
 }

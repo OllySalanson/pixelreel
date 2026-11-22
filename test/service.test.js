@@ -6,6 +6,7 @@ import { after, describe, it } from 'node:test';
 import { LIMITS, limitProblems, RateLimit } from '../service/limits.mjs';
 import { BusyError, isId, KEEP_DAYS, newId, Reels } from '../service/reels.mjs';
 import { reelFromData } from '../src/format.js';
+import { markdownHtml, SITE_PAGES } from '../service/site.mjs';
 import { checkKey, DiskStore } from '../service/store.mjs';
 import { ReelError } from '../src/reel.js';
 
@@ -199,6 +200,18 @@ describe('the service limits', () => {
   });
 });
 
+describe('the site pages', () => {
+  it('turns the Markdown they use into HTML, escaping everything else', () => {
+    assert.equal(markdownHtml('<!-- a note -->\n# Hi <b>\n\nOne\nline, **bold**, *soft* and [a link](/x).\n\n- `code`\n- `https://a.example/mcp`\n  more\n\n1. first\n2. second'),
+      '<h1>Hi &lt;b&gt;</h1>\n<p>One line, <strong>bold</strong>, <em>soft</em> and <a href="/x">a link</a>.</p>\n' +
+      '<ul><li><code>code</code></li><li><code class="address">https:/<wbr>/<wbr>a.example/<wbr>mcp</code> more</li></ul>\n<ol><li>first</li><li>second</li></ol>');
+  });
+
+  it('has a page for each address, each with a heading', () => {
+    assert.deepEqual(Object.keys(SITE_PAGES), ['/', '/claude', '/privacy', '/terms', '/credits']);
+  });
+});
+
 describe('the service over HTTP', async () => {
   const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
   const { StreamableHTTPClientTransport } = await import('@modelcontextprotocol/sdk/client/streamableHttp.js');
@@ -339,5 +352,17 @@ describe('the service over HTTP', async () => {
       assert.equal((await fetch(`${local}/r/${id}/${bad}`)).status, 404, bad);
     }
     assert.equal(await (await fetch(`${local}/health`)).text(), 'ok');
+  });
+
+  it('serves its own pages, with the connector address filled in', async () => {
+    for (const path of Object.keys(SITE_PAGES)) {
+      const res = await fetch(`${local}${path}`);
+      assert.equal(res.status, 200, path);
+      assert.equal(res.headers.get('content-security-policy'), "default-src 'none'; style-src 'unsafe-inline'");
+      const html = await res.text();
+      assert.match(html, /<h1>[^<]+<\/h1>/, path);
+      assert.doesNotMatch(html, /\{\{|<!--/, `${path} has no placeholders or notes left in it`);
+    }
+    assert.match(await (await fetch(`${local}/claude`)).text(), /<code class="address">https:\/<wbr>\/<wbr>reels\.example\/<wbr>mcp<\/code>/);
   });
 });
