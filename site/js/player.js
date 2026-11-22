@@ -213,6 +213,7 @@ export class ReelPlayer {
     fitCanvas(this.canvas);
     this.changed(this.player.state);
     this.wake();
+    this.root.dispatchEvent(new CustomEvent('reelopen', { bubbles: true }));   // for anything on the page that waits for a reel to be ready (kept.js)
   }
 
   /** Every caption goes in the caption's box at once, one showing, so the box is as tall as the longest and never jumps. */

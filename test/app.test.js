@@ -8,7 +8,8 @@ import { runInNewContext } from 'node:vm';
 import { manifest } from '../scripts/site-art.mjs';
 import { robotsTxt, SITE_PAGES, sitemapXml, sitePage } from '../service/site.mjs';
 import { staticFile } from '../service/static.mjs';
-import { deviceOf, pagesAmong } from '../site/js/app.js';
+import { deviceName, deviceOf, pagesAmong } from '../site/js/app.js';
+import { forgetReel, isKept, KEPT, keepReel, keptReels, keptWords } from '../site/js/kept.js';
 
 const root = (path) => new URL(`../${path}`, import.meta.url);
 const ORIGIN = 'https://reels.example';
@@ -217,7 +218,7 @@ describe('the service worker', () => {
     const { ask, visit } = worker();
     assert.equal(ask('/try', { method: 'POST' }), null, 'something being sent');
     assert.equal(ask('https://elsewhere.example/site/js/main.js'), null, 'another site');
-    for (const path of ['/mcp', '/health', '/r/abcdefghijklmnopqrstuv/play.json', '/r/abcdefghijklmnopqrstuv/audio/clip0.mp3', '/r/abcdefghijklmnopqrstuv/card.png',
+    for (const path of ['/mcp', '/health', '/r/abcdefghijklmnopqrstuv/card.png', '/r/abcdefghijklmnopqrstuv/video.mp4', '/r/short/play.json',
       '/site/art/what-is-pixel-reel.mp4', '/reels/volcano/reel.js', '/package.json']) {
       assert.equal(ask(path), null, path);
     }
@@ -278,6 +279,171 @@ describe('the service worker', () => {
     assert.equal(await titleOf(await visit('/claude')), 'Add it');
     assert.equal(await (await ask('/site/css/site.css')).text(), 'body {}');
     assert.equal(await (await ask('/reels/volcano/audio/a.mp3')).text(), 'la');
+  });
+});
+
+describe('a reel kept on the device', () => {
+  const ID = 'abcdefghijklmnopqrstuv', OTHER = 'ZYXWVUTSRQPONMLKJIHGFE';
+  const inAWeek = new Date(Date.now() + 7 * 24 * 3600_000).toISOString(), lastWeek = new Date(Date.now() - 7 * 24 * 3600_000).toISOString();
+  /** What the service has for a reel that is ready: its page, what its player asks for, and two recordings. */
+  const reelOnService = (id, { title = 'Your gas bill', expires = inAWeek, state = 'ready' } = {}) => ({
+    [`/r/${id}`]: { body: PAGE(title), headers: { 'cache-control': 'no-store' } },
+    [`/r/${id}/play.json`]: {
+      headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+      body: JSON.stringify({ state, title, expires, reel: { title, scenes: [] }, clips: ['one', 'two'].map((name) => ({ text: name, file: `${ORIGIN}/r/${id}/audio/${name}.mp3`, seconds: 2 })) })
+    },
+    [`/r/${id}/audio/one.mp3`]: { body: 'ONE-ONE-ONE', headers: { 'content-type': 'audio/mpeg' } },
+    [`/r/${id}/audio/two.mp3`]: { body: 'TWO-TWO-TWO', headers: { 'content-type': 'audio/mpeg' } }
+  });
+  /** A worker on a site with that reel, and the two things kept.js is handed: the browser's store, and a way to ask the service. */
+  const withReel = (extra = {}) => {
+    const w = worker({ ...reelOnService(ID), ...extra });
+    return { ...w, hands: { store: w.caches, get: w.caches.fetchFrom.current } };
+  };
+
+  it('is kept whole: its page, both recordings, and what its player asks the service for', async () => {
+    const { caches, hands } = withReel();
+    assert.deepEqual(await keepReel(ID, hands), { id: ID, title: 'Your gas bill', expires: inAWeek });
+    assert.deepEqual(caches.paths(KEPT).sort(), [`/r/${ID}`, `/r/${ID}/audio/one.mp3`, `/r/${ID}/audio/two.mp3`, `/r/${ID}/play.json`]);
+    assert.ok(await isKept(ID, hands));
+    assert.ok(!(await isKept(OTHER, hands)));
+  });
+
+  it('is not kept at all if it is not ready, or if any of it cannot be fetched', async () => {
+    const recording = withReel(reelOnService(ID, { state: 'recording' }));
+    await assert.rejects(keepReel(ID, recording.hands));
+    const missing = withReel({ [`/r/${ID}/audio/two.mp3`]: { status: 404, body: 'gone' } });
+    await assert.rejects(keepReel(ID, missing.hands));
+    const gone = withReel({ [`/r/${ID}/play.json`]: { status: 404, body: '{"state":"gone"}' } });
+    await assert.rejects(keepReel(ID, gone.hands));
+    for (const { caches, hands } of [recording, missing, gone]) {
+      assert.deepEqual(caches.paths(KEPT), [], 'half a reel is no use on a train');
+      assert.ok(!(await isKept(ID, hands)));
+    }
+  });
+
+  it('is kept afresh when kept again, as a reel can be changed after it is made', async () => {
+    const { world, caches, hands } = withReel();
+    await keepReel(ID, hands);
+    const changed = JSON.parse(world.site[`/r/${ID}/play.json`].body);
+    changed.title = 'Your gas bill, shorter';
+    changed.clips = [changed.clips[0], { text: 'three', file: `${ORIGIN}/r/${ID}/audio/three.mp3`, seconds: 2 }];
+    world.site[`/r/${ID}/play.json`].body = JSON.stringify(changed);
+    world.site[`/r/${ID}/audio/three.mp3`] = { body: 'THREE', headers: { 'content-type': 'audio/mpeg' } };
+    assert.equal((await keepReel(ID, hands)).title, 'Your gas bill, shorter');
+    assert.deepEqual(caches.paths(KEPT).sort(), [`/r/${ID}`, `/r/${ID}/audio/one.mp3`, `/r/${ID}/audio/three.mp3`, `/r/${ID}/play.json`], 'the recording it no longer uses is let go');
+    world.online = false;
+    await assert.rejects(keepReel(ID, hands));
+    assert.equal((await keptReels(hands))[0].title, 'Your gas bill, shorter', 'and a copy that cannot be freshened is left as it was');
+  });
+
+  it('is forgotten when asked, and only that reel', async () => {
+    const { caches, hands } = withReel(reelOnService(OTHER, { title: 'The offside rule' }));
+    await keepReel(ID, hands);
+    await keepReel(OTHER, hands);
+    await forgetReel(ID, hands);
+    assert.ok(!(await isKept(ID, hands)));
+    assert.deepEqual(caches.paths(KEPT).sort(), [`/r/${OTHER}`, `/r/${OTHER}/audio/one.mp3`, `/r/${OTHER}/audio/two.mp3`, `/r/${OTHER}/play.json`]);
+  });
+
+  it('is listed with the others, the newest first, until the day the service deletes its own copy', async () => {
+    const { hands } = withReel({ ...reelOnService(OTHER, { title: 'The offside rule' }), ...reelOnService('0123456789abcdefghijkl', { title: 'An old one', expires: lastWeek }) });
+    await keepReel('0123456789abcdefghijkl', hands);
+    await keepReel(ID, hands);
+    await keepReel(OTHER, hands);
+    const kept = await keptReels(hands);
+    assert.deepEqual(kept.map(({ id, title, expires }) => [id, title, expires]), [[OTHER, 'The offside rule', inAWeek], [ID, 'Your gas bill', inAWeek]]);
+    assert.equal(kept[0].play.clips.length, 2, 'with what its player needs to play it');
+    assert.ok(!(await isKept('0123456789abcdefghijkl', hands)), 'one whose time is up is forgotten, not listed');
+  });
+
+  it('says on its poster how long it runs and the day it goes', () => {
+    assert.equal(keptWords(64_000, '2026-12-22T09:00:00.000Z'), '1 minute 4, until 22 December');
+    assert.equal(keptWords(41_500, null), '41 seconds');
+  });
+
+  it('plays with no internet: its page, what its player asks for, and its recordings a part at a time', async () => {
+    const { world, tell, visit, ask, hands } = withReel();
+    await tell('install');
+    await keepReel(ID, hands);
+    world.online = false;
+    assert.equal(await titleOf(await visit(`/r/${ID}`)), 'Your gas bill');
+    const play = await (await ask(`/r/${ID}/play.json`)).json();
+    assert.deepEqual([play.state, play.title, play.clips.length], ['ready', 'Your gas bill', 2]);
+    const part = await ask(`/r/${ID}/audio/two.mp3`, { headers: { range: 'bytes=4-6' } });
+    assert.deepEqual([part.status, part.headers.get('content-range'), await part.text()], [206, 'bytes 4-6/11', 'TWO']);
+    assert.equal(await (await ask(`/r/${ID}/audio/one.mp3`)).text(), 'ONE-ONE-ONE');
+    assert.equal(await titleOf(await visit(`/r/${OTHER}`)), 'Not online', 'a reel nobody kept has nothing to show');
+    await assert.rejects(ask(`/r/${OTHER}/play.json`));
+  });
+
+  it('still asks the service first, so a kept copy never hides how a reel really is', async () => {
+    const { world, asked, ask, visit, hands } = withReel();
+    await keepReel(ID, hands);
+    world.site[`/r/${ID}`] = { body: PAGE('Your gas bill, as the service has it now'), headers: { 'cache-control': 'no-store' } };
+    assert.equal(await titleOf(await visit(`/r/${ID}`)), 'Your gas bill, as the service has it now');
+    asked.length = 0;
+    await ask(`/r/${ID}/play.json`);
+    assert.deepEqual(asked, [`/r/${ID}/play.json`]);
+    world.site[`/r/${ID}/play.json`] = { status: 503, body: 'starting up' };
+    assert.equal((await (await ask(`/r/${ID}/play.json`)).json()).state, 'ready', 'unless the service is in trouble');
+  });
+
+  it('is forgotten the moment the service says the reel has gone', async () => {
+    const { world, ask, hands } = withReel();
+    await keepReel(ID, hands);
+    world.site[`/r/${ID}/play.json`] = { status: 404, body: '{"state":"gone"}' };
+    const answer = ask(`/r/${ID}/play.json`);
+    assert.equal((await (await answer).json()).state, 'gone');
+    await answer.settled();
+    assert.ok(!(await isKept(ID, hands)), 'deleted from the service is deleted from here');
+    world.online = false;
+    await assert.rejects(ask(`/r/${ID}/play.json`), 'so there is nothing to play it from, with no internet');
+  });
+
+  it('is forgotten, not played, once the day the service deletes its own copy has passed', async () => {
+    const { world, caches, tell, visit, ask, hands } = withReel(reelOnService(ID, { expires: lastWeek }));
+    await tell('install');
+    await keepReel(ID, hands);
+    world.online = false;
+    assert.equal(await titleOf(await visit(`/r/${ID}`)), 'Not online');
+    await assert.rejects(ask(`/r/${ID}/play.json`));
+    assert.deepEqual(caches.paths(KEPT), []);
+  });
+
+  it('leaves the recordings of a reel nobody kept to the service, part and all', async () => {
+    const { caches, ask } = withReel();
+    assert.equal(await (await ask(`/r/${ID}/audio/one.mp3`, { headers: { range: 'bytes=0-2' } })).text(), 'ONE-ONE-ONE', 'the stand-in service sends it whole: the worker did not cut it');
+    assert.deepEqual(caches.paths(KEPT), [], 'watching a reel does not keep it: asking does');
+  });
+
+  it('survives a newer version of the worker, which throws away only what older versions kept', async () => {
+    const { tell, hands } = withReel();
+    await keepReel(ID, hands);
+    await tell('activate');
+    assert.ok(await isKept(ID, hands));
+  });
+
+  it('has a button on its page, out of sight until the reel is ready and there is somewhere to keep it', () => {
+    const page = sitePage('reel', ORIGIN, { values: { reelid: ID, reeltitle: 'Tea' } });
+    assert.match(page, /<button class="btn btn-paper" type="button" id="watch-keep" hidden>Keep it on this phone<\/button>/);
+    assert.match(page, /<p class="watch-sent" id="watch-keep-says" role="status"><\/p>/);
+  });
+
+  it('is offered on the page for when there is no internet, in a part of it out of sight until there is one to show', () => {
+    const offline = sitePage('offline', ORIGIN);
+    assert.match(offline, /<section class="section night cinema" aria-labelledby="yours-title" hidden>/);
+    assert.match(offline, /<ul class="posters" data-kept><\/ul>/);
+  });
+
+  it('is said to be on a phone, an iPad, a tablet or a computer, whichever it is', () => {
+    assert.equal(deviceName({ userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile/15E148 Safari/604.1' }), 'phone');
+    assert.equal(deviceName({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15', platform: 'MacIntel', maxTouchPoints: 5 }), 'iPad');
+    assert.equal(deviceName({ userAgent: 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) Safari/604.1' }), 'iPad');
+    assert.equal(deviceName({ userAgent: 'Mozilla/5.0 (Linux; Android 15; Pixel 9) Chrome/131.0.0.0 Mobile Safari/537.36' }), 'phone');
+    assert.equal(deviceName({ userAgent: 'Mozilla/5.0 (Linux; Android 14; SM-X710) Chrome/131.0.0.0 Safari/537.36' }), 'tablet');
+    assert.equal(deviceName({ userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131.0.0.0 Safari/537.36' }), 'computer');
+    assert.equal(deviceName(), 'computer');
   });
 });
 

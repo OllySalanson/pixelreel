@@ -44,6 +44,11 @@ export function loadReel(name) {
   return loading.get(name);
 }
 
+/** Has a reel that is already in hand (see showOf) answer to its name, as if it had been loaded: for one that is not in reels/. */
+export function haveReel(show) {
+  loading.set(show.name, Promise.resolve(show));
+}
+
 /** How long something lasts, for people: "39 seconds", "1 minute 16". */
 export function lengthWords(ms) {
   const s = Math.floor(ms / 1000);   // whole seconds, as the player's clock counts them, so a reel has one length everywhere

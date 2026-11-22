@@ -21,3 +21,15 @@ description: There is no internet just now. Pages you have opened before still w
     </figure>
   </div>
 </section>
+
+<!-- the reels kept on this device, which play with no internet: kept.js fills it in, and shows it if there are any -->
+<section class="section night cinema" aria-labelledby="yours-title" hidden>
+  <canvas class="scene" data-scene="cinema" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div class="head" data-quiet>
+      <p class="eyebrow">Kept on this device</p>
+      <h2 id="yours-title">Your reels still play.</h2>
+    </div>
+    <ul class="posters" data-kept></ul>
+  </div>
+</section>
