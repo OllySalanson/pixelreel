@@ -22,8 +22,6 @@ export function hush(keep = null) {
 /** Adds something with a pause() to the things only one of which talks at a time. */
 export function addTalker(talker) { talkers.add(talker); }
 
-document.addEventListener('visibilitychange', () => { if (document.hidden) hush(); });
-
 /** Sizes a canvas showing a 320 x 180 picture so each of its pixels is a whole number of the screen's. */
 export function fitCanvas(canvas) {
   const wide = canvas.getBoundingClientRect().width * (window.devicePixelRatio || 1);

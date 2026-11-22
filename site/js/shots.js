@@ -12,7 +12,7 @@ const HOLD_MS = 1600;   // how long a looping picture rests, finished, before st
 
 function makeShot(canvas) {
   const shot = {
-    canvas, g: canvas.getContext('2d'), scene: null, span: 0, from: null, visible: false, over: false,
+    canvas, g: canvas.getContext('2d'), scene: null, span: 0, from: null, visible: false, over: false, rested: false,
     loop: 'loop' in canvas.dataset, hover: 'hover' in canvas.dataset
   };
   shot.px = createKit(shot.g);
@@ -41,18 +41,22 @@ function clock(shot, now) {
 export function startShots() {
   const shots = [...document.querySelectorAll('canvas.shot[data-reel]')].map(makeShot);
   let ticking = false;
-  const rest = (shot) => { fitCanvas(shot.canvas); draw(shot, shot.span); };
+  // a shot at rest shows its finished picture; `rested` says it has been drawn that way
+  const rest = (shot) => { fitCanvas(shot.canvas); draw(shot, shot.span); shot.rested = true; };
   const tick = () => {
     if (ticking) return;
     ticking = true;
     let last = 0;
     const frame = (now) => {
-      const live = shots.filter((s) => s.visible && s.scene && clock(s, now) !== null);
-      if (!live.length) { ticking = false; shots.forEach((s) => s.visible && rest(s)); return; }
+      const showing = shots.filter((s) => s.visible && s.scene);
+      const live = showing.filter((s) => clock(s, now) !== null);
+      // one that has just finished (or came back into view after finishing) settles on its finished picture
+      for (const shot of showing) if (!live.includes(shot) && !shot.rested) rest(shot);
+      if (!live.length) { ticking = false; return; }
       requestAnimationFrame(frame);
       if (now - last < FRAME_MS) return;
       last = now;
-      for (const shot of live) draw(shot, Math.min(shot.span, clock(shot, now)));
+      for (const shot of live) { shot.rested = false; draw(shot, Math.min(shot.span, clock(shot, now))); }
     };
     requestAnimationFrame(frame);
   };
@@ -91,7 +95,7 @@ export function startShots() {
     holder.addEventListener('focus', set(true));
     holder.addEventListener('blur', set(false));
   }
-  onComfortChange(() => { shots.forEach((s) => s.visible && rest(s)); tick(); });
+  onComfortChange(() => { shots.forEach((s) => { s.rested = false; }); tick(); });
 
   // how long each reel on show lasts, in words
   for (const el of document.querySelectorAll('[data-length]')) {
