@@ -137,8 +137,8 @@ async function handleReel(req, res, id, rest, context) {
     if (status.state === 'failed') play.error = status.error;
     // while the voice is being recorded: how many lines are done, of how many
     if (status.state === 'recording' && status.lines) Object.assign(play, { recorded: status.recorded, lines: status.lines });
-    // while it waits its turn: how many jobs are before it
-    if (status.state === 'queued') Object.assign(play, reels.progress(id));
+    // while it is written, how many scenes so far, and its name once it has one; while it waits its turn, how many jobs are before it
+    if (status.state === 'writing' || status.state === 'queued') Object.assign(play, reels.progress(id));
     if (status.state === 'ready') {
       play.reel = await reels.reel(id);
       play.clips = ((await reels.manifest(id))?.clips ?? []).map((c) => ({ text: c.text, file: `${baseUrl}/r/${id}/audio/${c.file}`, seconds: c.seconds }));
@@ -228,13 +228,14 @@ export const WRITING_TITLE = 'Your reel';
  * its page. Never throws.
  */
 async function writeReel({ reels, writer, limits, log }, id, source, caller) {
+  const onProgress = (so) => reels.note(id, so);   // for the reel's page to show while it waits
   try {
-    let reel = await writer(source);
+    let reel = await writer(source, { onProgress });
     try {
       await reels.write(id, reel);
     } catch (err) {
       if (!(err instanceof ReelError)) throw err;
-      reel = await writer(source, { before: reel, problems: err.problems });   // one chance to put it right
+      reel = await writer(source, { before: reel, problems: err.problems, onProgress });   // one chance to put it right
       await reels.write(id, reel);
     }
   } catch (err) {

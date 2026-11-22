@@ -193,8 +193,10 @@ way is easiest for them:
 The visitor is taken to the reel's own page straight away, and waits there with something to
 watch. The service asks Claude to write the scenes through the Claude API after it has
 answered, and the page says what is being done and how far along it is: a sign ("Writing",
-then "Recording"), a bar that fills, and one plain sentence ("Peter is recording scene 4 of
-6."). When the voice is recorded, the reel plays there. If it cannot be made, the page says
+then "Recording"), a bar that fills, and one plain sentence ("Claude is writing it: 3 scenes
+so far.", then "Peter is recording scene 4 of 6."). Claude's reply is read as it is written,
+so the page has the reel's name and a count of its scenes long before it is finished. When
+the voice is recorded, the reel plays there. If it cannot be made, the page says
 why in plain words, and "Try something else" leads back to the box, with the words that were
 asked about still in it. Giving the words to their own Claude is still there, behind "Use
 your own Claude instead".
@@ -205,7 +207,9 @@ many reels in the last hour.
 
 For a page that is waiting, `/r/<id>/play.json` gives the reel's `state` (`writing`, then
 `queued`, `recording` and `ready`, or `failed` with an `error`) and how far it has got:
-`ahead` (jobs before it) while it is queued, and `recorded` of `lines` while Peter records.
+`written` (scenes so far, with the reel's `title` once Claude has written it) while it is
+being written, `ahead` (jobs before it) while it is queued, and `recorded` of `lines` while
+Peter records. How far the writing has got is kept in memory only (`Reels.note`).
 A reel that was still being written when the service restarted is marked `failed`, since
 nothing would ever finish it.
 

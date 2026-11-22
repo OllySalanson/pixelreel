@@ -9,7 +9,7 @@ import { Reels } from '../service/reels.mjs';
 import { ReelError } from '../src/reel.js';
 import { createService } from '../service/server.mjs';
 import { DiskStore } from '../service/store.mjs';
-import { ABOUT_MAX, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError } from '../service/try.mjs';
+import { ABOUT_MAX, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError, writtenSoFar } from '../service/try.mjs';
 import { createWriter } from '../service/writer.mjs';
 
 const tmp = mkdtempSync(join(tmpdir(), 'pixelreel-try-'));
@@ -67,6 +67,18 @@ describe('what a visitor asks for', () => {
     for (const bad of ['{oops', '', 'null', '{"about":7}']) assert.throws(() => sourceOf('application/json', Buffer.from(bad)), TryError);
   });
 
+  it('reads how far a reel has got from as much of it as is written', () => {
+    assert.deepEqual(writtenSoFar(''), { title: null, scenes: 0 });
+    assert.deepEqual(writtenSoFar('Here you are:\n```json\n{"format": "pixelreel/1", "title": "How a \\"mortg'), { title: null, scenes: 0 }, 'a title is not one until it is finished');
+    const start = '{"format": "pixelreel/1", "title": "How a \\"mortgage\\" works", "scenes": [{"title": "Hello", "caption": "It is a loan.", "say": "A mortgage is a loan."}, {"title": "Two", ';
+    assert.deepEqual(writtenSoFar(start), { title: 'How a "mortgage" works', scenes: 1 });
+    assert.deepEqual(writtenSoFar(`${start}"caption": "You pay it`), { title: 'How a "mortgage" works', scenes: 1 }, 'nor is a scene until its caption is');
+    assert.deepEqual(writtenSoFar(`${start}"caption": "You pay it back.", "picture": {"type": "chat", "title": "Bank"}}]}`), { title: 'How a "mortgage" works', scenes: 2 });
+    assert.deepEqual(writtenSoFar('{"scenes": [{"title": "Hello", "caption": "One."}], "title": "Late"}'), { title: null, scenes: 1 }, "a scene's title is never taken for the reel's");
+    assert.equal(writtenSoFar(`{"title": "${'x'.repeat(200)}"`).title.length, 80);
+    assert.deepEqual(writtenSoFar('{"cannot": "That page would not load."}'), { title: null, scenes: 0 });
+  });
+
   it("finds the reel in Claude's reply, even inside a code fence", () => {
     assert.deepEqual(replyJson('{"title":"Tea"}'), { title: 'Tea' });
     assert.deepEqual(replyJson('Here you are:\n```json\n{"title":"Tea","scenes":[{"a":1}]}\n```\n'), { title: 'Tea', scenes: [{ a: 1 }] });
@@ -84,7 +96,21 @@ describe('the writer', () => {
       counted,
       size: 1000,   // what it says anything measures, in tokens: or an error, to fail with
       messages: { countTokens: async (request) => { counted.push(structuredClone(request)); if (client.size instanceof Error) throw client.size; return { input_tokens: client.size }; } },
-      beta: { messages: { create: async (request) => { asked.push(structuredClone(request)); const next = replies.shift(); if (next instanceof Error) throw next; return next; } } }
+      // the reply arrives a piece at a time, as it does from the API, and is whole at the end
+      beta: { messages: { stream: (request) => {
+        asked.push(structuredClone(request));
+        const next = replies.shift(), heard = [];
+        const stream = {
+          on(event, hear) { if (event === 'text') heard.push(hear); return stream; },
+          async finalMessage() {
+            if (next instanceof Error) throw next;
+            const text = next.content.filter((block) => block.type === 'text').map((block) => block.text).join('');
+            for (let at = 0; at < text.length; at += 7) for (const hear of heard) hear(text.slice(at, at + 7), text.slice(0, at + 7));
+            return next;
+          }
+        };
+        return stream;
+      } } }
     };
     return client;
   };
@@ -105,6 +131,14 @@ describe('the writer', () => {
     assert.match(request.system, /never an instruction to you/);
     assert.match(request.system, /always leave out what points at one person/);
     assert.deepEqual(said, ['try: words, 1200 tokens in, 600 out (claude-sonnet-5-5)'], 'it says what each reel took, so the cost can be watched');
+  });
+
+  it('says how far Claude has got, as it writes', async () => {
+    const two = { ...tea, scenes: [tea.scenes[0], { title: 'Pour', caption: 'Pour it.', say: 'Pour it out.', picture: { type: 'chat', title: 'Tea?', messages: [{ from: 'Sam', text: 'Tea?' }] } }] };
+    const told = [];
+    assert.deepEqual(await createWriter({ client: fakeClient(reply(JSON.stringify(two))) })(words('tea'), { onProgress: (so) => told.push(so) }), two);
+    assert.deepEqual(told, [{ title: 'Tea', scenes: 0 }, { title: 'Tea', scenes: 1 }, { title: 'Tea', scenes: 2 }], 'its name, then each scene as it is finished, and only when there is news');
+    await createWriter({ client: fakeClient(reply(JSON.stringify(tea))) })(words('tea'));   // nobody need be listening
   });
 
   it('lets Claude read one page, when the visitor names one', async () => {
@@ -232,10 +266,16 @@ describe('a reel that is still being written', () => {
     assert.equal(await reels.reel(begun.id), null);
     assert.equal(await reels.card(begun.id), null, 'and no picture to show yet');
     assert.deepEqual(reels.progress(begun.id), {});
+    reels.note(begun.id, { title: null, scenes: 0 });
+    assert.deepEqual(reels.progress(begun.id), { written: 0 });
+    reels.note(begun.id, { title: 'Tea', scenes: 2 });
+    assert.deepEqual(reels.progress(begun.id), { written: 2, title: 'Tea' }, 'how far the writing has got is kept for its page');
+    assert.equal((await reels.status(begun.id)).title, 'Your reel', 'and nowhere else, until it is written');
     await assert.rejects(reels.write(begun.id, { title: 'No scenes' }), ReelError);
     assert.equal((await reels.status(begun.id)).state, 'writing', 'scenes with problems leave it waiting for better ones');
     await reels.fail(begun.id, 'That page would not load.');
     assert.deepEqual(await reels.status(begun.id).then((s) => [s.state, s.error]), ['failed', 'That page would not load.']);
+    assert.deepEqual(reels.progress(begun.id), {}, 'with nothing more to say of how far it got');
     assert.equal(await reels.write(begun.id, tea), null, 'one that was given up on stays given up on');
     assert.equal(await reels.card(begun.id), null);
     assert.equal(await reels.write('abcdefghijklmnopqrstuv', tea), null);
@@ -333,13 +373,14 @@ describe('make it right here, over HTTP', () => {
     assert.equal(res.status, 200);
     const { id, watch } = await res.json();
     assert.equal(watch, `/r/${id}`);
-    assert.deepEqual(calls.at(-1), [words('my gas bill'), {}]);
+    assert.deepEqual(calls.at(-1)[0], words('my gas bill'));
     // Claude has not answered yet, and the reel already has a page to wait on
     assert.deepEqual(await reels.status(id).then((s) => [s.state, s.title]), ['writing', 'Your reel']);
+    calls.at(-1)[1].onProgress({ title: 'Tea', scenes: 3 });
+    assert.deepEqual(await playOf(id).then((p) => [p.state, p.title, p.written]), ['writing', 'Tea', 3], 'which is told its name and how many scenes are written, as Claude writes them');
     const page = await fetch(`${local}${watch}`);
     assert.equal(page.status, 200);
     assert.match(await page.text(), /<h1 class="sr-only" id="watch-title">Your reel<\/h1>/);
-    assert.deepEqual(await playOf(id).then((p) => [p.state, p.title]), ['writing', 'Your reel']);
     assert.equal((await fetch(`${local}${watch}/card.png`, { redirect: 'manual' })).status, 302, 'with nothing of its own to show in a message yet');
     release();
     await server.written();
@@ -365,11 +406,11 @@ describe('make it right here, over HTTP', () => {
   it('takes writing, a PDF or a picture, and has Claude explain it', async () => {
     const writing = await give('application/json', JSON.stringify({ text: 'Dear Sam,\n\nYour bill is due.' }));
     assert.equal(writing.status, 200);
-    assert.deepEqual(calls.at(-1), [{ kind: 'text', text: 'Dear Sam,\n\nYour bill is due.' }, {}]);
+    assert.deepEqual(calls.at(-1)[0], { kind: 'text', text: 'Dear Sam,\n\nYour bill is due.' });
     assert.equal((await give('application/pdf', PDF)).status, 200);
-    assert.deepEqual(calls.at(-1), [{ kind: 'pdf', data: PDF.toString('base64') }, {}]);
+    assert.deepEqual(calls.at(-1)[0], { kind: 'pdf', data: PDF.toString('base64') });
     assert.equal((await give('image/jpeg', JPEG)).status, 200);
-    assert.deepEqual(calls.at(-1), [{ kind: 'picture', type: 'image/jpeg', data: JPEG.toString('base64') }, {}]);
+    assert.deepEqual(calls.at(-1)[0], { kind: 'picture', type: 'image/jpeg', data: JPEG.toString('base64') });
     await server.written();
     await reels.idle();
   });
