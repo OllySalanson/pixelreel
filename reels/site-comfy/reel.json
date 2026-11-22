@@ -1,0 +1,112 @@
+{
+  "format": "pixelreel/1",
+  "title": "Make it comfy",
+  "transition": "slide",
+  "scenes": [
+    {
+      "title": "Make it comfy",
+      "caption": "This site changes to suit you.",
+      "say": "Reading is hard work for a lot of people. So this website changes to suit you. Look for Make it comfy, at the top of every page.",
+      "picture": {
+        "type": "big",
+        "text": "Aa",
+        "sub": "MAKE IT COMFY"
+      }
+    },
+    {
+      "title": "The letters",
+      "caption": "Bigger. Roomier. Or made for dyslexia.",
+      "say": "You can make the letters bigger, or give them more room. And there are letters made for dyslexia, too.",
+      "picture": {
+        "type": "list",
+        "items": [
+          "Bigger",
+          "More room",
+          "Made for dyslexia"
+        ],
+        "start": 0.8,
+        "every": 1.3
+      }
+    },
+    {
+      "title": "The paper",
+      "caption": "Cream, a soft tint, or dark.",
+      "say": "You can change the colour of the paper. Cream, a soft tint, or dark, if a bright page dazzles you.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "sun",
+            "label": "Cream"
+          },
+          {
+            "icon": "cloud",
+            "label": "A soft tint"
+          },
+          {
+            "icon": "moon",
+            "label": "Dark"
+          }
+        ],
+        "start": 2,
+        "every": 0.7
+      }
+    },
+    {
+      "title": "Keep your place",
+      "caption": "A ruler follows your finger.",
+      "say": "There is a ruler to keep your place. It follows your pointer, or your finger, and dims everything else.",
+      "picture": {
+        "type": "flow",
+        "items": [
+          {
+            "icon": "pencil",
+            "label": "Your finger"
+          },
+          {
+            "icon": "eye",
+            "label": "One line"
+          }
+        ],
+        "start": 3.2,
+        "every": 1.4
+      }
+    },
+    {
+      "title": "Hear any words",
+      "caption": "Press them, and they are read to you.",
+      "say": "And you can have any words on the site read out. Just press them. That voice is not me, mind. It is your own device's.",
+      "picture": {
+        "type": "flow",
+        "items": [
+          {
+            "icon": "document",
+            "label": "Press words"
+          },
+          {
+            "icon": "speech",
+            "label": "Hear them"
+          }
+        ],
+        "start": 0.9,
+        "every": 1.4
+      }
+    },
+    {
+      "title": "It stays with you",
+      "caption": "Remembered on your device. Nowhere else.",
+      "say": "Whatever you choose is remembered on your own device, and nowhere else. Go on. Get comfy.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "lock",
+            "label": "On your device"
+          }
+        ],
+        "start": 2,
+        "every": 1.4
+      }
+    }
+  ]
+}

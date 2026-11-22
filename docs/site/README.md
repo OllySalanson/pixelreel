@@ -25,7 +25,8 @@ People who find reading hard work. Every choice follows from that:
 - **Paper.** Dark ink on cream rather than black on white, which dazzles some readers.
   Words never sit on a pattern or a picture: even the stars keep clear of them.
 - **Buttons.** Every main thing to do is a big button that says what it does.
-- **Make it comfy.** A panel on every page changes the letters (Lexend, Atkinson
+- **Make it comfy.** On the home page, big buttons switch the main choices on in one
+  press, to show what the site can do. A panel on every page changes the letters (Lexend, Atkinson
   Hyperlegible Next or OpenDyslexic), their size and spacing, the colour of the paper (cream,
   five tints or dark),
   whether pictures move, how fast a reel is read, whether every word he says is written
@@ -238,7 +239,7 @@ connector (ready-made pictures only) and recorded by Peter with `npm run voices`
 | Reel | Where |
 | --- | --- |
 | `pixel-reel` | The player at the top of the home page. |
-| `site-what`, `site-how`, `site-who`, `site-peter`, `site-make`, `site-good`, `site-phone`, `site-questions` | "Make a pixel reel about this", one for each part of the home page. With `site-open`, they are also "Watch this whole page". |
+| `site-what`, `site-how`, `site-who`, `site-comfy`, `site-peter`, `site-make`, `site-good`, `site-phone`, `site-questions` | "Make a pixel reel about this", one for each part of the home page. With `site-open`, they are also "Watch this whole page". |
 | `site-make-here` | "Make a pixel reel about this" beside the make-one box where the box makes the reel itself (Make it right here): it takes `site-make`'s place there, and in "Watch this whole page". |
 | `site-open` | The reel for "It is all open", and the code typing out beside it. |
 | `voice-anna`, `voice-vera`, `voice-stuart`, `voice-charles`, `voice-paul` | Each narrator's hello, one line in their own voice, for "Hear Anna" and the rest ([Who reads](#who-reads)). |
@@ -1198,3 +1199,28 @@ The make page again, for what happens just before the big button and just after 
 
 Checked in a browser at 320 and 390 pixels wide with `scripts/site-fit.js`, on the reel's
 page with the new button showing: nothing cut in two or too wide at any of the 27 settings.
+
+### Version 52
+
+- **The site never said it was built for people who find reading hard.** Everything that
+  makes it so sat behind a button marked "Aa" in the bar, and nothing on the home page
+  mentioned it. The home page now has a part of its own for it, after "Who it's for":
+  "Hard on the eyes? Change it."
+- **Press one, and watch it change.** Six big buttons, each of which switches one choice
+  on with a press and puts it back with the next: bigger letters, letters made for
+  dyslexia, dark paper, a ruler to keep your place, hearing any words you press, and a
+  slower voice. The one in force is gold and says "On", so it is not told by colour alone.
+  "See every choice" opens the whole of Make it comfy.
+- **The buttons and the panel agree.** A choice made in the panel shows on the buttons,
+  and the other way about. A test holds every button to a choice the panel really has.
+- **It has its reel,** `site-comfy`, six scenes read by Peter, behind "Make a pixel reel
+  about this", and "Watch this whole page" plays it in its place.
+- Choosing to hear words, with the button or in the panel, says so aloud either way.
+
+The reel was recorded here with Pocket TTS and its pictures timed to the recording. Its
+six lines last 38 seconds between them, about what their words should take. Nobody has
+listened to it yet, and it was not checked by speech-to-text.
+
+| The new part of the home page, and on a phone with the ruler switched on |
+| --- |
+| ![Hard on the eyes? Change it. Six big buttons: Bigger letters, Letters made for dyslexia, Dark paper, A ruler to keep your place, Hear any words you press, A slower voice. Beside it, the same on a phone: the ruler's button is gold and says On, and a clear band lies across the page with the rest dimmed.](log/v52-comfy-section.jpg) |

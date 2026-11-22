@@ -107,9 +107,8 @@ export function createAloud({ speech, Utterance, lang = 'en-GB', rate = () => 1,
 
 export function startAloud() {
   const root = document.documentElement, speech = window.speechSynthesis, Utterance = window.SpeechSynthesisUtterance;
-  const choice = document.querySelector('[data-needs-speech]');
   if (!speech || !Utterance) return;   // a browser with no voice: the choice stays out of sight
-  if (choice) choice.hidden = false;
+  for (const choice of document.querySelectorAll('[data-needs-speech]')) choice.hidden = false;
   speech.getVoices();   // some browsers only start fetching their voices when first asked
   const on = () => root.dataset.aloud === 'on';
   const aloud = createAloud({
@@ -128,11 +127,13 @@ export function startAloud() {
     hush();   // any reel that is talking
     aloud.say(found.words, found.block);
   });
-  // Choosing it says so aloud, so it is plain at once that it works; switching it off stops it.
-  choice?.addEventListener('change', (e) => {
-    if (e.target.name !== 'aloud') return;
-    if (e.target.value === 'on') { hush(); aloud.say('On. Press any words to hear them.', 'the choice'); } else aloud.stop();
+  // Choosing it, in Make it comfy or with a button on the page, says so aloud, so it is plain
+  // at once that it works; switching it off stops it. (A choice is always a press.)
+  let was = on();
+  addEventListener('comfort', () => {
+    const now = on();
+    if (now && !was) { hush(); aloud.say('On. Press any words to hear them.', 'the choice'); } else if (!now) aloud.stop();
+    was = now;
   });
-  addEventListener('comfort', () => { if (!on()) aloud.stop(); });
   addEventListener('pagehide', () => speech.cancel());   // a voice left talking carries on into the next page
 }
