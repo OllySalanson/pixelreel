@@ -23,9 +23,10 @@
 // @napi-rs/canvas. The voice is loaded once, when the service starts, and kept ready
 // (service/voice.mjs); PIXELREEL_WARM_VOICE=0 loads it afresh for each reel instead.
 // PIXELREEL_LANGUAGES (such as french,spanish) lets reels be made in other languages Peter can read.
+// PIXELREEL_NARRATORS (such as anna,stuart) lets someone ask for a narrator other than Peter.
 import { join } from 'node:path';
 import { CLAUDE_ADDRESSES, RateLimit } from './limits.mjs';
-import { recordWith, Reels } from './reels.mjs';
+import { NARRATORS, recordWith, Reels } from './reels.mjs';
 import { createService } from './server.mjs';
 import { DiskStore, S3Store } from './store.mjs';
 import { POCKET_LANGUAGES } from '../scripts/voices.mjs';
@@ -47,7 +48,13 @@ const asked = (process.env.PIXELREEL_LANGUAGES ?? '').split(',').map((l) => l.tr
 const languages = asked.filter((l) => l !== 'english' && POCKET_LANGUAGES.includes(l));
 for (const l of asked) if (l !== 'english' && !languages.includes(l)) log(`PIXELREEL_LANGUAGES: Peter does not read "${l}"; he reads ${POCKET_LANGUAGES.join(', ')}`);
 if (languages.length) log(`Peter also reads ${languages.join(', ')} here`);
-const reels = new Reels({ store, log, languages, record: recordWith(voice ? (...job) => voice.speak(...job) : null) });
+// Peter narrates. PIXELREEL_NARRATORS names others who may be asked for here (anna, vera, stuart, charles,
+// paul): only ones whose voices are to hand (docs/deploy.md).
+const wanted = (process.env.PIXELREEL_NARRATORS ?? '').split(',').map((n) => n.trim().toLowerCase()).filter(Boolean);
+const narrators = wanted.filter((n) => NARRATORS[n]);
+for (const n of wanted) if (n !== 'peter' && !NARRATORS[n]) log(`PIXELREEL_NARRATORS: there is no narrator "${n}"; there are ${Object.keys(NARRATORS).join(', ')}`);
+if (narrators.length) log(`${narrators.join(', ')} can narrate here too`);
+const reels = new Reels({ store, log, languages, narrators, record: recordWith(voice ? (...job) => voice.speak(...job) : null) });
 await reels.resume();
 const sweep = async () => {
   const gone = await reels.sweep().catch((err) => { log(`sweep failed: ${err.message}`); return []; });

@@ -6,7 +6,7 @@ import { createServer } from 'node:http';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { ReelError } from '../src/reel.js';
 import { createMcpServer } from './mcp.mjs';
-import { BusyError, isId } from './reels.mjs';
+import { BusyError, isId, languageName } from './reels.mjs';
 import { addToClaudeLink, robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
 import { sendBytes, sendSqueezed, sendStatic, squeezed, tagOf } from './static.mjs';
 import { MAX_WORDS_BODY, PDF_MAX, sourceOf, TryError } from './try.mjs';
@@ -136,6 +136,7 @@ async function handleReel(req, res, id, rest, context) {
     const play = { state: status.state, title: status.title, watch: `${baseUrl}/r/${id}`, expires: status.expires };
     const clipAt = (c) => ({ text: c.text, file: `${baseUrl}/r/${id}/audio/${c.file}`, seconds: c.seconds });
     if (status.state === 'failed') play.error = status.error;
+    if (status.narrator) play.narrator = languageName(status.narrator);   // who reads it, when it is not Peter
     // while the voice is being recorded: how many lines are done, of how many
     if (status.state === 'recording' && status.lines) Object.assign(play, { recorded: status.recorded, lines: status.lines });
     // and what there is to play already: a player may start before the last line is recorded, once `playable` says it would stay behind the recorder

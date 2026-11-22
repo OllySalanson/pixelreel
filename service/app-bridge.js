@@ -72,8 +72,8 @@
 
   /** What to show while a reel is not ready yet: [heading, words]. */
   function waiting(state) {
-    if (state.state === 'queued') return ['Waiting its turn', 'Peter is recording another reel first. Yours plays here as soon as it is ready.'];
-    if (state.lines) return ['Recording the voice', `Peter has read ${state.recorded} of ${state.lines} lines. The reel plays here in a moment.`];
+    if (state.state === 'queued') return ['Waiting its turn', 'Another reel is being recorded first. Yours plays here as soon as it is ready.'];
+    if (state.lines) return ['Recording the voice', `${state.narrator ?? 'Peter'} has read ${state.recorded} of ${state.lines} lines. The reel plays here in a moment.`];
     return ['Recording the voice', 'The reel plays here as soon as it is ready.'];
   }
 

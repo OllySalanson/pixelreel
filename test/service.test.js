@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import { CLAUDE_ADDRESSES, inRanges, LIMITS, limitProblems, peterMs, RateLimit, reelMs } from '../service/limits.mjs';
 import { EXAMPLE_REEL, formatGuide, playerHtml } from '../service/mcp.mjs';
-import { BusyError, isId, KEEP_DAYS, languageName, newId, Reels } from '../service/reels.mjs';
+import { BusyError, isId, KEEP_DAYS, languageName, NARRATORS, newId, Reels } from '../service/reels.mjs';
 import { reelFromData } from '../src/format.js';
 import { ICON_NAMES } from '../src/pictures.js';
 import { markdownHtml, SITE_PAGES, SITE_POLICY } from '../service/site.mjs';
@@ -348,13 +348,36 @@ describe('the reels service', () => {
     const plain = await reels.create(tea, { language: 'english' });
     assert.equal(plain.language, undefined, 'English is what a reel is in unless it says otherwise');
     await reels.idle();
-    assert.deepEqual(asked, [{ language: 'french' }, { language: null }], 'the recorder is told which language to read in');
+    assert.deepEqual(asked.map((options) => options.language), ['french', null], 'the recorder is told which language to read in');
     assert.equal((await reels.status(made.id)).language, 'french');
     await assert.rejects(reels.create(french, { language: 'german' }),
       (err) => err instanceof ReelError && err.problems[0] === 'language: Peter reads English, French, Spanish here, not "german". Write the reel in English, and tell the person so.');
     const english = new Reels({ store: freshStore(), record, video: fakeVideo });
     await assert.rejects(english.create(french, { language: 'french' }), /Peter reads English here, not "french"/, 'with none switched on, English it is');
     assert.equal(languageName('portuguese'), 'Portuguese');
+  });
+
+  it('has another narrator read a reel when one is asked for, where that narrator is offered', async () => {
+    const asked = [], record = async (dir, log, onLine, options) => { asked.push(options); await thriftyRecord()(dir); };
+    const reels = new Reels({ store: freshStore(), record, video: fakeVideo, narrators: ['anna', 'stuart'] });
+    const made = await reels.create(tea, { narrator: 'stuart' });
+    assert.equal(made.narrator, 'stuart');
+    const usual = await reels.create(tea, { narrator: 'peter' });
+    assert.equal(usual.narrator, undefined, 'Peter reads unless someone else is asked for');
+    await reels.idle();
+    assert.deepEqual(asked, [{ language: null, voice: 'stuart_bell' }, { language: null, voice: null }], 'the recorder is told whose voice to use');
+    await assert.rejects(reels.create(tea, { narrator: 'vera' }),
+      (err) => err instanceof ReelError && err.problems[0] === 'narrator: the narrators here are Peter, Anna, Stuart, not "vera". Leave it out for Peter.');
+    await assert.rejects(new Reels({ store: freshStore(), record, video: fakeVideo }).create(tea, { narrator: 'anna' }), /the narrators here are Peter, not "anna"/, 'with none offered, Peter it is');
+    await assert.rejects(new Reels({ store: freshStore(), record, video: fakeVideo, narrators: ['nobody'] }).create(tea, { narrator: 'nobody' }), ReelError, 'a name that is no narrator cannot be asked for');
+    assert.deepEqual(Object.keys(NARRATORS), ['anna', 'vera', 'stuart', 'charles', 'paul']);
+
+    // a change to a reel in another voice keeps none of its recordings: they are not in the new voice
+    const changed = await reels.create(tea, { improves: made.id, narrator: 'anna' });
+    assert.equal(changed.kept, undefined);
+    const same = await reels.create(tea, { improves: made.id, narrator: 'stuart' });
+    assert.equal(same.kept, 2, 'in the same voice it keeps them');
+    await reels.idle();
   });
 
   it('refuses a reel with problems, saying every one, and keeps nothing', async () => {
@@ -657,7 +680,7 @@ describe('the service over HTTP', async () => {
     assert.equal(made.isError, undefined);
     const { id, watch } = made.structuredContent;
     assert.equal(watch, `https://reels.example/r/${id}`, 'links use the address people reach the service at');
-    assert.match(words(made), /^"Tea" is made \(2 scenes, about 0:10\) and (waiting its turn: Peter is recording another reel first|Peter is recording the voice now, which takes about as long as the reel lasts)\./);
+    assert.match(words(made), /^"Tea" is made \(2 scenes, about 0:10\) and (waiting its turn: another reel is being recorded first|Peter is recording the voice now, which takes about as long as the reel lasts)\./);
     assert.match(words(made), /answer in one or two short sentences, with the link on a line of its own\. Do not list the scenes\. There is no need to check on it\./);
     assert.equal(made.structuredContent.message, words(made), 'the same words for a client that shows Claude only the data');
 
@@ -827,6 +850,37 @@ describe('the service over HTTP', async () => {
     }
   });
 
+  it('offers a choice of narrator to Claude only where there is one', async () => {
+    const client = await connect();
+    assert.equal((await client.listTools()).tools.find((t) => t.name === 'make_reel').inputSchema.properties.narrator, undefined);
+    assert.doesNotMatch(words(await client.callTool({ name: 'reel_format', arguments: {} })), /different voice/);
+    await client.close();
+
+    const mine = new Reels({ store: freshStore(), video: fakeVideo, picture: fakePicture, narrators: ['anna', 'stuart'], record: () => new Promise(() => {}) });
+    const other = createService({ reels: mine, baseUrl: 'https://reels.example' });
+    await new Promise((ok) => other.listen(0, '127.0.0.1', ok));
+    const at = `http://127.0.0.1:${other.address().port}`;
+    const choosing = new Client({ name: 'test', version: '1' });
+    await choosing.connect(new StreamableHTTPClientTransport(new URL(`${at}/mcp`)));
+    try {
+      const tool = (await choosing.listTools()).tools.find((t) => t.name === 'make_reel');
+      assert.deepEqual(tool.inputSchema.properties.narrator.enum, ['peter', 'anna', 'stuart']);
+      assert.match(words(await choosing.callTool({ name: 'reel_format', arguments: {} })),
+        /- The narrator is Peter\. If the person asks for a different voice, they can have Anna, Stuart: set "narrator"\. Do not offer the choice unless they ask about the voice\./);
+      const made = await choosing.callTool({ name: 'make_reel', arguments: { ...tea, narrator: 'anna' } });
+      assert.equal(made.isError, undefined);
+      assert.match(words(made), /and Anna is recording the voice now/);
+      assert.equal(made.structuredContent.narrator, 'anna');
+      assert.equal((await (await fetch(`${at}/r/${made.structuredContent.id}/play.json`)).json()).narrator, 'Anna', 'the player is told who is reading');
+      const refused = await choosing.callTool({ name: 'make_reel', arguments: { ...tea, narrator: 'paul' } });
+      assert.match(words(refused), /narrator: the narrators here are Peter, Anna, Stuart, not "paul"/);
+      await choosing.close();
+    } finally {
+      other.close();
+      other.closeAllConnections();
+    }
+  });
+
   it('offers a player to show inside the chat, allowed to reach only the service', async () => {
     const client = await connect();
     const { tools } = await client.listTools();
@@ -948,7 +1002,7 @@ describe('the service over HTTP', async () => {
 
   it('shows the count in the player in the chat, and does not say a new reel is waiting when it is not', async () => {
     const bridge = readFileSync(new URL('../service/app-bridge.js', import.meta.url), 'utf8');
-    assert.match(bridge, /Peter has read \$\{state\.recorded\} of \$\{state\.lines\} lines/);
+    assert.match(bridge, /\$\{state\.narrator \?\? 'Peter'\} has read \$\{state\.recorded\} of \$\{state\.lines\} lines/, 'by whoever is reading it');
     assert.match(bridge, /waiting\(\{ state: 'recording' \}\)/, 'a reel just made is shown as being recorded until the service says otherwise');
     assert.match(bridge, /className: 'lines'/, 'with a square for each line');
     assert.match(playerHtml('https://reels.example'), /\.lines i\.on \{ background: var\(--gold\); \}/, 'which the page knows how to draw');
