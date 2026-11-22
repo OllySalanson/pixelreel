@@ -9,6 +9,7 @@ import { ReelPlayer } from './player.js';
 import { startRuler } from './ruler.js';
 import { startScenes } from './scenery.js';
 import { startSending } from './send.js';
+import { startShared } from './shared.js';
 import { startShots } from './shots.js';
 import { startSignal } from './signal.js';
 import { startHearing, startTheatre } from './theatre.js';
@@ -22,6 +23,7 @@ startShots();
 startTheatre();
 startHearing();
 startMaker();
+startShared();   // after the box, so that it hears what it is handed
 startCopying();
 startSending();
 startKept();   // before the page a reel is watched on asks for its reel, so it hears when that is ready

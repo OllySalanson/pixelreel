@@ -5,11 +5,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import { runInNewContext } from 'node:vm';
-import { manifest } from '../scripts/site-art.mjs';
-import { robotsTxt, SITE_PAGES, sitemapXml, sitePage } from '../service/site.mjs';
+import { appManifest, robotsTxt, SITE_PAGES, sitemapXml, sitePage } from '../service/site.mjs';
 import { staticFile } from '../service/static.mjs';
 import { deviceName, deviceOf, pagesAmong } from '../site/js/app.js';
 import { forgetReel, isKept, KEPT, keepReel, keptReels, keptWords } from '../site/js/kept.js';
+import { SHARED, sharedWords, takeShared } from '../site/js/shared.js';
 
 const root = (path) => new URL(`../${path}`, import.meta.url);
 const ORIGIN = 'https://reels.example';
@@ -97,11 +97,11 @@ function worker(site = {}) {
     await Promise.all(waits);
   };
   /** Asks the worker for an address, as a page would. Resolves to its answer, or null if it leaves the request alone. */
-  const ask = (path, { mode = 'no-cors', method = 'GET', headers = {}, preload = undefined } = {}) => {
+  const ask = (path, { mode = 'no-cors', method = 'GET', headers = {}, preload = undefined, request = null } = {}) => {
     let answer = null;
     const waits = [];
     handlers.fetch({
-      request: { url: path.startsWith('http') ? path : ORIGIN + path, method, mode, headers: new Headers(headers) },
+      request: request ?? { url: path.startsWith('http') ? path : ORIGIN + path, method, mode, headers: new Headers(headers) },
       preloadResponse: preload, respondWith: (given) => { answer = given; }, waitUntil: (work) => waits.push(work)
     });
     return answer && Object.assign(answer, { settled: () => Promise.all(waits) });
@@ -447,8 +447,89 @@ describe('a reel kept on the device', () => {
   });
 });
 
+describe('something shared to Pixel Reel from a phone', () => {
+  /** What a phone sends to /share: the words it has, and a file if one was shared. */
+  const sharing = (fields, file = null) => {
+    const form = new FormData();
+    for (const [name, value] of Object.entries(fields)) form.set(name, value);
+    if (file) form.set('file', file);
+    return new Request(`${ORIGIN}/share`, { method: 'POST', body: form });
+  };
+
+  it('is put by on the phone, and the home page brought up at the make-one box', async () => {
+    const { caches, asked, ask } = worker();
+    const res = await ask('/share', { request: sharing({ title: 'Council tax', text: 'Worth a read https://example.org/council-tax', url: '' }) });
+    assert.deepEqual([res.status, res.headers.get('location')], [303, `${ORIGIN}/?shared#make`]);
+    assert.deepEqual(caches.paths(SHARED), ['/shared/words']);
+    assert.deepEqual(asked, [], 'nothing of it is sent to the service');
+    assert.deepEqual(await takeShared({ store: caches }), { words: 'https://example.org/council-tax', file: null });
+    assert.equal(await takeShared({ store: caches }), null, 'and it is handed over once');
+  });
+
+  it('brings a file with it: a letter as a PDF, or a photo of one', async () => {
+    const { caches, ask } = worker();
+    await ask('/share', { request: sharing({ title: 'Scan' }, new File(['%PDF-1.7 a letter'], 'my pension letter.pdf', { type: 'application/pdf' })) });
+    assert.deepEqual(caches.paths(SHARED).sort(), ['/shared/file', '/shared/words']);
+    const { words, file } = await takeShared({ store: caches });
+    assert.deepEqual([words, file.name, file.type, await file.text()], ['Scan', 'my pension letter.pdf', 'application/pdf', '%PDF-1.7 a letter']);
+  });
+
+  it('keeps only the newest thing shared', async () => {
+    const { caches, ask } = worker();
+    await ask('/share', { request: sharing({ text: 'first' }, new File(['one'], 'one.txt', { type: 'text/plain' })) });
+    await ask('/share', { request: sharing({ text: 'second' }) });
+    assert.deepEqual(await takeShared({ store: caches }), { words: 'second', file: null });
+  });
+
+  it('still goes to the make-one box if it cannot be put by', async () => {
+    const { caches, ask } = worker();
+    caches.open = async () => { throw new Error('no room'); };
+    const res = await ask('/share', { request: sharing({ text: 'tea' }) });
+    assert.deepEqual([res.status, res.headers.get('location')], [303, `${ORIGIN}/#make`]);
+  });
+
+  it("is the only thing being sent that the worker takes, and only at the site's own /share", () => {
+    const { ask } = worker();
+    assert.equal(ask('/try', { method: 'POST' }), null);
+    assert.equal(ask('/mcp', { method: 'POST' }), null);
+    assert.equal(ask('https://elsewhere.example/share', { method: 'POST' }), null);
+    assert.equal(ask('/share', { method: 'PUT' }), null);
+  });
+
+  it('survives a newer version of the worker', async () => {
+    const { caches, tell, ask } = worker();
+    await ask('/share', { request: sharing({ text: 'tea' }) });
+    await tell('activate');
+    assert.deepEqual(await takeShared({ store: caches }), { words: 'tea', file: null });
+  });
+
+  it('goes in the box as its link, if it has one, or else as its words', () => {
+    assert.equal(sharedWords({ title: 'Council tax', text: '', url: 'https://example.org/council-tax' }), 'https://example.org/council-tax');
+    assert.equal(sharedWords({ title: 'Council tax', text: 'Worth a read: https://example.org/council-tax. Honest', url: '' }), 'https://example.org/council-tax', 'a browser shares a page as words with its link in among them, and a full stop after it is not part of it');
+    assert.equal(sharedWords({ title: 'A note', text: '  why is the sky blue  ' }), 'why is the sky blue');
+    assert.equal(sharedWords({ title: 'How a mortgage works' }), 'How a mortgage works');
+    assert.equal(sharedWords({}), '');
+    assert.equal(sharedWords(), '');
+  });
+
+  it('is told to a phone as something Pixel Reel takes: a link or words everywhere, a file only where it can make a reel of one', () => {
+    const plain = appManifest().share_target, withFiles = appManifest({ files: true }).share_target;
+    assert.deepEqual([plain.action, plain.method, plain.enctype], ['/share', 'POST', 'multipart/form-data']);
+    assert.deepEqual(plain.params, { title: 'title', text: 'text', url: 'url' }, 'or a phone would offer Pixel Reel for a photo it cannot take');
+    assert.deepEqual(withFiles.params.files.map((taken) => taken.name), ['file'], 'the name the worker looks for');
+    assert.ok(withFiles.params.files[0].accept.includes('application/pdf') && withFiles.params.files[0].accept.includes('image/*'));
+  });
+
+  it('is handed to the make-one box by the page, after the box has been woken', () => {
+    const main = readFileSync(root('site/js/main.js'), 'utf8');
+    assert.ok(main.indexOf('startMaker();') < main.indexOf('startShared();'), 'the box must be listening first');
+    const home = sitePage('home', ORIGIN);
+    for (const id of ['maker', 'maker-file', 'maker-said', 'here-said', 'ask-open']) assert.match(home, new RegExp(`id="${id}"`), `the page has the #${id} that shared.js looks for`);
+  });
+});
+
 describe('what a phone is told about Pixel Reel', () => {
-  const told = manifest();
+  const told = appManifest();
 
   it('says it opens on a screen of its own, from the top of the site', () => {
     assert.equal(told.display, 'standalone');

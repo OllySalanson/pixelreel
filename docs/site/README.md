@@ -82,8 +82,8 @@ listed: every `/r/` answer says `noindex`.
 Pixel Reel can be added to a phone's home screen, where it opens on a screen of its own like
 any other app (an installable web app). Three things make it one:
 
-- **What a phone is told** (`site/art/site.webmanifest`, written by `manifest()` in
-  `scripts/site-art.mjs`): its name and icons, that it opens on a screen of its own, and
+- **What a phone is told** (`site/art/site.webmanifest`, written by `appManifest()` in
+  `service/site.mjs`, and drawn into `site/art/` by `npm run site-art`): its name and icons, that it opens on a screen of its own, and
   what to offer when its icon is pressed and held. The `maskable` icons keep Reelie well
   inside the middle, as a phone may cut an icon into a circle.
 - **The service worker** (`site/js/sw.js`, served as `/sw.js`, because a browser lets a
@@ -110,6 +110,17 @@ any other app (an installable web app). Three things make it one:
   reached. The copy goes when the service's does: on the day `play.json` says the reel is
   kept until, or at once if the service says the reel has gone. The page shown when there
   is no internet lists the kept reels, as posters to press.
+- **Sharing to it** (`site/js/shared.js`). On Android, an app on the home screen is offered
+  in the phone's Share menu. The manifest's `share_target` has the phone send what was shared
+  to `/share`, where the worker puts it by, on the phone, and brings up the home page at the
+  make-one box. `shared.js` then hands it to the box the way a person would: a link or words
+  go in the box, a file goes to the box's own file chooser. Where the box makes reels itself
+  (Make it right here) it starts at once, as it does for a drop; where it does not, the
+  words for Claude are ready to copy. Only there does the manifest say a file may be shared
+  (the service writes it then, `appManifest({ files: true })`), or a phone would offer Pixel
+  Reel for a photo it cannot take. Nothing shared is sent to the service by the sharing
+  itself. If the worker is not there to take it, the service answers `/share` by sending the
+  browser on to the box, without reading what was sent.
 
 `test/app.test.js` runs the worker in Node with stand-ins for a browser's caches and network.
 To try it for real, open the site in a browser, stop the service, and reload: pages already
@@ -571,3 +582,22 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | Kept, on a laptop and on a phone | With no internet: the reels that still play |
 | --- | --- |
 | ![A reel's page with the button Remove it from this computer; and on a phone, Remove it from this phone, and the words Kept on this phone. It will play with no internet.](log/v24-kept.jpg) | ![Your reels still play: two posters, A proper cup of tea and How to read your gas meter, each marked Yours, with its length and the day it goes.](log/v24-yours.jpg) |
+
+### Version 25
+
+- **Share it to Pixel Reel.** On an Android phone with Pixel Reel on the home screen, Pixel
+  Reel is now in the Share menu. Reading something long? Press Share, then Pixel Reel. The
+  page opens at the make-one box with the link already in it, the words for Claude written,
+  and the button to press next in the middle of the screen: "Copy, and open Claude".
+- **Where Make it right here is on, there is nothing more to press.** What was shared is
+  made into a reel at once, as it is when something is dropped on the page: a link, some
+  words, a PDF or a photo of a letter. Only there does the phone offer Pixel Reel for files.
+- **Nothing is sent by the sharing itself.** What was shared stays on the phone until the
+  box sends it, and is handed over once.
+- The page that shows how to add Pixel Reel to a phone says so, under the Android steps.
+- Tried in a browser by sending to `/share` what a phone sends: a link landed in the box;
+  and with a stand-in for Claude, a PDF and a few words each went straight to a reel.
+
+| The Android steps, and a link shared from the phone, landed in the box |
+| --- |
+| ![On an Android phone: press the three dots, press Add to Home screen; after that Pixel Reel is in your phone's Share menu. And: Say this to Claude, make me a pixel reel about this page, with Copy, and open Claude ringed, and Here it is.](log/v25-shared.jpg) |

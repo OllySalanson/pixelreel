@@ -12,6 +12,7 @@
 const PAGES = 'pixelreel-pages-1';   // pages, and the files they load
 const SOUND = 'pixelreel-sound-1';   // recordings, which never change under the same name
 const REELS = 'pixelreel-reels-1';   // made reels someone chose to keep: the same name as KEPT in site/js/kept.js
+const SHARED = 'pixelreel-shared-1'; // what a phone has just shared to Pixel Reel, until the page takes it: the same name as in site/js/shared.js
 const OFFLINE = '/offline';          // the page shown in place of one that was never kept
 const WAIT_MS = 4000;                // how long a slow connection is given before a kept copy is shown instead
 const MOST_SOUND = 400;              // how many recordings are kept before the oldest are let go
@@ -174,6 +175,24 @@ async function keepPage(path, must = false) {
   if (must && got.some((one) => one.status === 'rejected')) throw new Error(`a file ${path} needs could not be kept`);
 }
 
+/**
+ * Something shared to Pixel Reel from a phone's Share menu, which the phone sends to /share
+ * (the manifest's share_target says so). It is put by, on this device, and the home page is
+ * brought up at the make-one box, where site/js/shared.js hands it over. Nothing of it is
+ * sent to the service by this.
+ */
+async function share(request) {
+  const cache = await caches.open(SHARED);
+  await Promise.all([cache.delete('/shared/words'), cache.delete('/shared/file')]);   // one thing at a time: the newest
+  const form = await request.formData(), file = form.get('file');
+  const said = Object.fromEntries(['title', 'text', 'url'].map((name) => [name, typeof form.get(name) === 'string' ? form.get(name) : '']));
+  await cache.put('/shared/words', new Response(JSON.stringify(said), { headers: { 'content-type': 'application/json' } }));
+  if (file && typeof file !== 'string' && file.size) {
+    await cache.put('/shared/file', new Response(file, { headers: { 'content-type': file.type || 'application/octet-stream', 'x-file-name': encodeURIComponent(file.name ?? '') } }));
+  }
+  return Response.redirect(new URL('/?shared#make', self.location.origin), 303);
+}
+
 self.addEventListener('install', (event) => {
   // the "not online" page, and with it everything every page shares: the styles, the scripts and the letters
   event.waitUntil(keepPage(OFFLINE, true).then(() => self.skipWaiting()));
@@ -182,7 +201,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     for (const name of await caches.keys()) {
-      if (name.startsWith('pixelreel-') && ![PAGES, SOUND, REELS].includes(name)) await caches.delete(name);   // what an older version of this kept
+      if (name.startsWith('pixelreel-') && ![PAGES, SOUND, REELS, SHARED].includes(name)) await caches.delete(name);   // what an older version of this kept
     }
     await self.registration.navigationPreload?.enable();
     await self.clients.claim();
@@ -191,7 +210,13 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const { request } = event, url = new URL(request.url), path = url.pathname;
-  if (request.method !== 'GET' || url.origin !== self.location.origin) return;   // not the site's to answer
+  if (url.origin !== self.location.origin) return;   // not the site's to answer
+  if (request.method === 'POST' && path === '/share') {
+    // if it cannot be put by, the make-one box is still the place to be
+    event.respondWith(share(request).catch(() => Response.redirect(new URL('/#make', self.location.origin), 303)));
+    return;
+  }
+  if (request.method !== 'GET') return;   // anything else being sent is the service's to take
   // whatever goes wrong in here, the request still goes to the service as if this were not there
   const safely = (answer) => event.respondWith(answer.catch(() => fetch(request)));
   const reel = reelFile(path);

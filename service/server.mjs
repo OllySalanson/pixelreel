@@ -7,7 +7,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { ReelError } from '../src/reel.js';
 import { createMcpServer } from './mcp.mjs';
 import { BusyError, isId, languageName } from './reels.mjs';
-import { addToClaudeLink, robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
+import { addToClaudeLink, appManifest, robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
 import { sendBytes, sendSqueezed, sendStatic, squeezed, tagOf } from './static.mjs';
 import { MAX_WORDS_BODY, PDF_MAX, sourceOf, TryError } from './try.mjs';
 
@@ -341,6 +341,21 @@ export function createService({ reels, baseUrl, log = () => {}, limits = null, t
       }
       if (reading && path === '/sitemap.xml' && listed) {
         res.writeHead(200, { ...SAFE, 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=3600' }).end(sitemapXml(context.baseUrl));
+        return;
+      }
+      // What a phone is told about Pixel Reel as an app is a file like any other, except where
+      // the service can write a reel itself: there it also says a file may be shared to it.
+      if (reading && path === '/site/art/site.webmanifest' && context.writer) {
+        sendSqueezed(req, res, 200, squeezed(`${JSON.stringify(appManifest({ files: true }), null, 2)}\n`),
+          { ...SAFE, 'content-type': 'application/manifest+json', 'cache-control': fresh ? 'no-cache' : 'public, max-age=86400' });
+        return;
+      }
+      // Something shared to Pixel Reel from a phone is taken by the page's own service worker
+      // (site/js/sw.js), on the phone. It reaches here only if that was not there to take it:
+      // nothing of it is read or kept, and the home page is brought up at the make-one box.
+      if (path === '/share') {
+        req.resume();
+        res.writeHead(303, { ...SAFE, location: '/#make', 'cache-control': 'no-store' }).end();
         return;
       }
       if (reading && sendStatic(req, res, path, SAFE, fresh)) return;

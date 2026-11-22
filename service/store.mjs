@@ -93,7 +93,9 @@ export class DiskStore {
 
   /** Deletes `prefix` and everything under it. */
   async remove(prefix) {
-    await rm(this.path(prefix), { recursive: true, force: true });
+    // Something may still be writing there (a reel deleted while it is being recorded): a file
+    // that lands while the folder is being emptied would stop it being removed, so try again.
+    await rm(this.path(prefix), { recursive: true, force: true, maxRetries: 10, retryDelay: 20 });
   }
 }
 

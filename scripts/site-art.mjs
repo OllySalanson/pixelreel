@@ -7,7 +7,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { spriteSvg } from '../service/site.mjs';
+import { appManifest, spriteSvg } from '../service/site.mjs';
 import { SCENES } from '../site/js/landscape.js';
 import { SPRITES } from '../site/js/sprites.js';
 import { createKit } from '../src/kit.js';
@@ -25,43 +25,13 @@ function squared(size) {
   });
 }
 
-/**
- * What a phone needs to know to keep Pixel Reel on its home screen as an app: its name and
- * icons, that it opens on a screen of its own, and the things to offer when its icon is
- * pressed and held. A "maskable" icon keeps Reelie well inside the middle, as a phone may
- * cut its icons into a circle or a rounded square.
- */
-export function manifest() {
-  const icon = (size, purpose) => ({ src: `/site/art/icon-${purpose === 'maskable' ? 'maskable-' : ''}${size}.png`, sizes: `${size}x${size}`, type: 'image/png', purpose });
-  return {
-    name: 'Pixel Reel',
-    short_name: 'Pixel Reel',
-    description: "Short cartoons with a warm voice, each explaining one thing. Watch it. Don't read it.",
-    id: '/',
-    start_url: '/',
-    scope: '/',
-    lang: 'en-GB',
-    dir: 'ltr',
-    display: 'standalone',
-    background_color: NIGHT,
-    theme_color: NIGHT,
-    categories: ['education', 'productivity'],
-    icons: [icon(192, 'any'), icon(512, 'any'), icon(192, 'maskable'), icon(512, 'maskable')],
-    shortcuts: [
-      { name: 'Make a pixel reel', short_name: 'Make a reel', url: '/#make' },
-      { name: 'Watch an example', short_name: 'Examples', url: '/#examples' },
-      { name: 'Add Pixel Reel to Claude', short_name: 'Add to Claude', url: '/claude' }
-    ]
-  };
-}
-
 /** The pictures that are plain text (SVG and the manifest), by file name: the same every time, so a test can check them. */
 export function textArt() {
   const svg = (rows, scale) => spriteSvg(rows, { colours: SPRITES.reelie.colours, scale }).replace('<svg class="px" ', '<svg xmlns="http://www.w3.org/2000/svg" ').replace(' aria-hidden="true" focusable="false"', '') + '\n';
   return {
     'favicon.svg': svg(squared(28), 1),
     'reelie.svg': svg(SPRITES.reelie.rows, 16),
-    'site.webmanifest': JSON.stringify(manifest(), null, 2) + '\n'
+    'site.webmanifest': JSON.stringify(appManifest(), null, 2) + '\n'
   };
 }
 

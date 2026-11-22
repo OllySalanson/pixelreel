@@ -48,6 +48,8 @@ seen by whoever might get the link.
 - A reel someone made is kept on your device only if you ask: with the Keep button on its
   page, or by adding Pixel Reel to your home screen, which keeps each reel you open there.
   The copy goes on the day the reel is deleted. The same button removes it sooner.
+- If you share something to Pixel Reel from your phone's Share menu, it goes into the box
+  on your phone. The sharing itself sends nothing to Pixel Reel.
 - The box that writes what to say to Claude does its work on your device. What you type in
   it is not sent to Pixel Reel.
 - Where the box says Make my reel, it makes the reel for you. Then what you give it (your

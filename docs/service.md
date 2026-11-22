@@ -15,7 +15,9 @@ code or install on their side. It is a small Node server with two faces:
 It also serves the website: what Pixel Reel is (`/`), how to add it to Claude (`/claude`, with
 its own address filled in), a page for each of its own example reels to be sent by
 (`/watch/<name>`), how to add it to a phone's home screen (`/app`), the press kit, and
-privacy, terms and credits. The site lives in
+privacy, terms and credits. Something shared to it from a phone's Share menu is sent to
+`/share`, which the site's own service worker takes on the phone; the service only sends
+the browser on to the make-one box. The site lives in
 [`site/`](../site) and is described in [docs/site/](site/README.md). The privacy and terms
 pages are drafts, still to be approved, and the privacy page still needs a contact address.
 
