@@ -2,8 +2,10 @@
 // model afresh each time, which takes longer than speaking several lines: a third of the
 // wait for a short reel was spent before a word was said. The service instead starts one
 // Python when it wakes (scripts/pocket_speak.py --serve), which loads the model once and
-// then speaks each reel's lines as they come. If it cannot start, or stops, recording falls
-// back to the usual way, so a reel is never lost to it.
+// then speaks each reel's lines as they come. Another language's model is loaded into the
+// same Python the first time a reel is in it, and kept for the next one, a few at a time.
+// If it cannot start, or stops, recording falls back to the usual way, so a reel is never
+// lost to it.
 import { spawn } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline';
@@ -21,14 +23,15 @@ export class WarmVoice {
    * @param {string[]} [o.command]   the program that speaks, and its arguments before --serve
    * @param {string} [o.voice]       the voice to have loaded
    * @param {number} [o.threads]     how many processor threads it may use
+   * @param {number} [o.keep]        how many languages besides English it holds loaded at once
    * @param {number} [o.patience]    how long to wait for the next line, in ms, before giving it up as stuck
    * @param {Function} [o.once]      speaks the usual way (scripts/voices.mjs), for when this cannot
    * @param {object} [o.env]         the environment the program runs in
    * @param {(line: string) => void} [o.log]
    */
   constructor({ command = [findPython(), join(ROOT, 'scripts', 'pocket_speak.py')], voice = ENGINES.pocket.voice,
-    threads = Number(process.env.THREADS) || DEFAULTS.threads, patience = 180_000, once = speakOnce, env = process.env, log = () => {} } = {}) {
-    Object.assign(this, { command, voice, threads, patience, once, env, log });
+    threads = Number(process.env.THREADS) || DEFAULTS.threads, keep = 2, patience = 180_000, once = speakOnce, env = process.env, log = () => {} } = {}) {
+    Object.assign(this, { command, voice, threads, keep, patience, once, env, log });
     this.jobs = 0;
     this.child = null;
     this.loading = null;   // resolves true once the voice is loaded, false if it could not be
@@ -39,7 +42,7 @@ export class WarmVoice {
   start() {
     this.loading ??= new Promise((ok) => {
       const began = Date.now();
-      const child = spawn(this.command[0], [...this.command.slice(1), '--serve', '--voice', this.voice, '--threads', String(this.threads)], { stdio: ['pipe', 'pipe', 'inherit'], env: this.env });
+      const child = spawn(this.command[0], [...this.command.slice(1), '--serve', '--voice', this.voice, '--threads', String(this.threads), '--keep', String(this.keep)], { stdio: ['pipe', 'pipe', 'inherit'], env: this.env });
       this.child = child;
       const gone = (why) => {
         if (this.child !== child) return;
@@ -60,6 +63,9 @@ export class WarmVoice {
         if (message.ready) {
           this.log(`voice: ${this.voice} is loaded and ready, after ${((Date.now() - began) / 1000).toFixed(1)} seconds`);
           ok(true);
+        } else if (message.full) {
+          // it stops itself after this, and the next reel starts it afresh (see gone)
+          this.log(`voice: holding ${message.holds} MB, more than it should: starting afresh`);
         } else {
           this.job?.on(message);
         }
@@ -74,12 +80,12 @@ export class WarmVoice {
    * the usual way.
    */
   async speak(lines, settings, threads, onDone) {
-    // the voice kept loaded is Pocket TTS's English one: any other engine or language is spoken the usual way
-    if (settings.engine !== 'pocket' || settings.lang) { await this.once(lines, settings, threads, onDone); return; }
+    // what is kept loaded is Pocket TTS: any other engine is spoken the usual way
+    if (settings.engine !== 'pocket') { await this.once(lines, settings, threads, onDone); return; }
     const left = new Map(lines.map((line) => [line.wav, line]));
     if (await this.start()) {
       try {
-        await this.ask({ voice: settings.voice, lines }, (wav, seconds) => { left.delete(wav); onDone(wav, seconds); });
+        await this.ask({ voice: settings.voice, ...(settings.lang ? { language: settings.lang } : {}), lines }, (wav, seconds) => { left.delete(wav); onDone(wav, seconds); });
         return;
       } catch (err) {
         if (err instanceof AfterSpeaking) throw err.cause;
@@ -112,7 +118,8 @@ export class WarmVoice {
           wait();
           if (message.wav) {
             try { onLine(message.wav, message.seconds); } catch (err) { settle(Object.assign(new AfterSpeaking(err.message), { cause: err })); }
-          } else if (message.done) settle();
+          } else if (message.loaded) this.log(`voice: the ${message.loaded} model is loaded, after ${message.seconds} seconds${message.holds ? ` (holding ${message.holds} MB)` : ''}`);
+          else if (message.done) settle();
           else if (message.error) settle(new Error(message.error));
         }
       };
