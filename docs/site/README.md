@@ -1536,3 +1536,17 @@ Found by the worker on the make page, who measured it and passed it on.
 | At the biggest, widest letters on the narrowest phone, and at the usual ones |
 | --- |
 | ![A reel over the page on a narrow phone with very big letters: Close above the reel's name, which runs to four lines. Beside it, at the usual letters: the name with Close beside it.](log/v68-theatre-head.jpg) |
+
+### Version 69
+
+Ran the layout checker, now that it looks inside the panels, on every page of the site at
+two phone widths: twenty runs.
+
+- **Two more words cut in two,** both at the biggest OpenDyslexic letters on a phone 320
+  pixels wide: "paragraph" in the heading "In a paragraph" on the press kit, and
+  "Homework." in a scene under the reel that explains Pixel Reel. Both fit now. Every
+  example reel's own page was run afterwards, since each has different words in its
+  scenes: all well.
+- **One left for its owner.** On the make page at the same setting "Paste" is cut in two
+  in "Paste a link here". That page is another worker's, so it is passed on, not changed.
+- At 390 pixels wide every page was already all well.
