@@ -393,3 +393,16 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | The box | Dragging something over the page, and after it lands |
 | --- | --- |
 | ![The make-one box: What do you want explained, a big Make my reel button, and a place to drop a link, a PDF, a photo or some writing.](log/v16-make-here.jpg) | ![A panel over the page says Drop it here. Then the box says Making your reel, names the file, and says Claude is reading it.](log/v16-drop.jpg) |
+
+### Version 17
+
+- **Reelie is alive.** Its eyes follow the pointer. Press it and it hops and says
+  something, a different thing each time ("Tea?", "You rang?"). Press the one asleep in
+  the footer and it wakes, says "Mmm?", then "Night night." and goes back to sleep. It
+  never speaks over words: its bubble goes beside its head when words are in the way
+  above. With pictures held still it does none of this. Reelie is only painted on a
+  canvas behind the page, so `scenery.js` watches the pointer for it.
+
+| Pressed at the top of the home page, and woken in the footer |
+| --- |
+| ![Reelie, off the ground mid-hop, says: Tea? And in the footer, eyes open: Night night.](log/v17-reelie.jpg) |

@@ -5,7 +5,7 @@ import { runInNewContext } from 'node:vm';
 import { textArt } from '../scripts/site-art.mjs';
 import { addToClaudeLink, EXAMPLES, pageFacts, playerHtml, robotsTxt, SITE_PAGES, siteModules, sitemapXml, sitePage, spriteSvg, WATCH, watchPage } from '../service/site.mjs';
 import { staticFile } from '../service/static.mjs';
-import { SCENES } from '../site/js/landscape.js';
+import { hopHeight, lookAt, REELIE, SAYINGS, SCENES } from '../site/js/landscape.js';
 import { askFor } from '../site/js/maker.js';
 import { PACES, pacedClock, rateOf } from '../site/js/pace.js';
 import { lengthWords, showOf } from '../site/js/reels.js';
@@ -209,6 +209,57 @@ describe('the site\'s own pictures', () => {
     assert.ok(!stars.some((r) => r.x >= 20 && r.x < 120 && r.y >= 10 && r.y < 70));
     // the strips are 5 units deep, 4 in from the top and the foot (.cinema in site.css)
     assert.ok(stars.every((r) => r.y > 9 && r.y < 100 - 10), 'no star in among the holes');
+  });
+
+  it('has Reelie look towards the pointer, and straight ahead when it is close', () => {
+    assert.deepEqual(lookAt(50, 50, 200, 50), [1, 0]);
+    assert.deepEqual(lookAt(50, 50, 0, 0), [-1, -1]);
+    assert.deepEqual(lookAt(50, 50, 55, 300), [0, 1]);
+    assert.deepEqual(lookAt(50, 50, 52, 47), [0, 0]);
+    // its eyes are drawn over where the pointer is, and left alone when pictures are held still
+    const eyes = (options) => {
+      const g = fakeContext();
+      const { reelie: [x, y] } = SCENES.hero(createKit(g), 360, 234, 30, { paper: '#faf3e1', ...options });
+      return g.rects.filter((r) => r.w === 1 && r.h === 2 && r.c === '#1a1a1a' && r.y >= y && r.y < y + REELIE.h).map((r) => r.x - x).sort((a, b) => a - b);
+    };
+    assert.deepEqual(eyes({ pointer: [300, 200] }), [11, 17], 'both eyes one pixel to the right');
+    assert.deepEqual(eyes({ pointer: [0, 200] }), [9, 15], 'and to the left');
+    assert.deepEqual(eyes({ pointer: [300, 200], still: true }), []);
+  });
+
+  it('has Reelie hop when it is pressed, and say something new each time', () => {
+    assert.equal(hopHeight(-1), 0);
+    assert.equal(hopHeight(0), 0);
+    assert.ok(hopHeight(0.25) >= 6, 'up');
+    assert.equal(hopHeight(0.5), 0, 'and down again in half a second');
+    const pressed = (options) => {
+      const g = fakeContext();
+      const spot = SCENES.hero(createKit(g), 360, 234, 30, { paper: '#faf3e1', ...options });
+      return { said: g.texts.map((text) => text.str).filter((str) => SAYINGS.includes(str)), spot };
+    };
+    assert.deepEqual(pressed({}).said, []);
+    assert.deepEqual(pressed({ poked: 0.3, pokes: 1 }).said, [SAYINGS[1]]);
+    assert.deepEqual(pressed({ poked: 0.3, pokes: 2 }).said, [SAYINGS[2]]);
+    assert.deepEqual(pressed({ poked: 0.3, pokes: SAYINGS.length }).said, [SAYINGS[0]], 'round again');
+    assert.deepEqual(pressed({ poked: 10, pokes: 1 }).said, [], 'not for long');
+    assert.deepEqual(pressed({ poked: 0.3, pokes: 1, still: true }).said, [], 'and not when pictures are held still');
+    assert.ok(SAYINGS.every((words) => words.length <= 12), 'each short enough to fit beside it on a phone');
+    const [x, y, w, h] = pressed({}).spot.reelie;
+    assert.deepEqual([w, h], [REELIE.w, REELIE.h]);
+    assert.ok(x >= 0 && x + w <= 360 && y >= 0 && y + h <= 234, 'the page is told where Reelie stands');
+  });
+
+  it('wakes sleeping Reelie for a moment when it is pressed', () => {
+    const footer = (options) => {
+      const g = fakeContext();
+      SCENES.footer(createKit(g), 200, 120, 3, options);
+      return g.texts.map((text) => text.str);
+    };
+    assert.ok(footer({}).includes('z'), 'asleep');
+    assert.deepEqual(footer({ poked: 0.5 }), ['Mmm?'], 'woken: no Zs');
+    assert.deepEqual(footer({ poked: 3 }), ['Night night.']);
+    assert.ok(footer({ poked: 5 }).includes('z') && !footer({ poked: 5 }).includes('Night night.'), 'asleep again');
+    assert.ok(footer({ poked: 0.5, still: true }).includes('z'), 'left to sleep when pictures are held still');
   });
 
   it('lets sleeping Reelie\'s Zs drift up only as far as the words in the footer', () => {
