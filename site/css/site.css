@@ -383,6 +383,10 @@ code.address { display: inline-block; max-width: 100%; padding: 0.55rem 0.9rem; 
 .sheet dd { margin: 0.25rem 0 0; color: var(--ink-soft); }
 .names { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem clamp(2rem, 5vw, 5rem); }
 .names .px { width: 3rem; height: auto; }
+.film { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 1.5rem clamp(1.5rem, 4vw, 3.5rem); align-items: center; }
+.film video { display: block; width: calc(100% - var(--u) * 2); height: auto; margin: var(--u); background: var(--night);
+  box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line), calc(var(--u) * 3) calc(var(--u) * 3) 0 0 rgba(20, 27, 45, 0.16); }
+.film-words .btn { margin-top: 1.25rem; }
 .downloads { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem clamp(1.5rem, 3vw, 2.5rem); }
 .downloads img { display: block; width: calc(100% - var(--u) * 2); height: auto; background: var(--night); }
 .downloads .on-night { aspect-ratio: 3 / 1; object-fit: contain; padding: 1.25rem; image-rendering: pixelated; }
@@ -448,7 +452,7 @@ dialog { color: var(--ink); }
 @media (max-width: 60rem) {
   .hero-in { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; grid-template-areas: 'words' 'reel' 'go'; row-gap: 1.75rem; }
   .hero-go { padding-top: 0; }
-  .anatomy, .duo, .brief, .two-ways { grid-template-columns: minmax(0, 1fr); }
+  .anatomy, .duo, .brief, .two-ways, .film { grid-template-columns: minmax(0, 1fr); }
   .letter { max-height: 19rem; }
   .walk-step { grid-template-columns: auto minmax(0, 1fr); }
   .walk-step > .shot, .walk-step > .box { grid-column: 2; width: min(100% - var(--u) * 2, 26rem); }
