@@ -600,6 +600,14 @@ describe('adding Pixel Reel to a phone', () => {
     assert.match(app, /<p class="said" role="status" data-install-says><\/p>/, 'somewhere to say it is done');
   });
 
+  it('offers a reel of itself, as every part of the site does', () => {
+    assert.match(app, /<button class="btn btn-reel" type="button" data-reel="site-phone">Make a pixel reel about this<\/button>/);
+  });
+
+  it('lets someone on a computer copy its address, to send to their phone', () => {
+    assert.match(app, /<button class="btn btn-paper btn-small" type="button" data-send="Add Pixel Reel to your phone" data-says="#app-sent" hidden>Copy the link to send to it<\/button>\s*<p class="said" id="app-sent" role="status"><\/p>/);
+  });
+
   it('can be reached from the foot of every page', () => {
     for (const name of ['home', 'claude', 'privacy', 'not-found']) assert.match(sitePage(name, ORIGIN), /<a href="\/app">Add to your phone<\/a>/, name);
   });

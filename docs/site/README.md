@@ -847,3 +847,12 @@ afternoon of three people changing it. One thing was off:
 | Mint, rose and lilac, and the choice in Make it comfy |
 | --- |
 | ![The same part of the home page on mint, on rose and on lilac paper; and Make it comfy, where Paper offers Cream, Blue, Peach, Mint, Rose, Lilac and Dark.](log/v38-more-paper.jpg) |
+
+### Version 39
+
+- **The page about the phone has its reel.** Every part of this site offers "Make a pixel
+  reel about this", and the page that shows how to add Pixel Reel to a phone did not. It
+  does now, and plays the reel made for the same part of the home page.
+- **From a computer to a phone in one press.** Someone reading that page on a computer was
+  told to open it on their phone, and left to work out how. The steps for a computer now
+  have a button that copies the page's link, to paste into a message to themselves.
