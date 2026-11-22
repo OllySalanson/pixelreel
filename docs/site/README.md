@@ -64,6 +64,7 @@ narrator ([Who reads](#who-reads)).
 | `site/pages/*.html`, `*.md` | A page each. The comment at the top holds its `title` and `description`. Plain pages are Markdown. `reel.html` is the page every shared reel is watched on (`/r/<id>`), and `watch.html` the page each of the site's own reels has to be sent by (`/watch/<name>`: the examples in `EXAMPLES`, in `service/site.mjs`, which also writes their posters). |
 | `site/css/site.css` | The whole look. |
 | `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` is Make it comfy; `boot.js` runs before the page is drawn, to put its settings back and to keep the bar across the top on one row; `signal.js` is the test card on a page that is not there; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `send.js` copies words and passes a reel on; `ruler.js` is the reading ruler; `pace.js` is the clock that lets Peter read slower or quicker; `sprites.js` is the site's own pixel art. |
+| `site/js/menu.js` | The menu a Menu button opens, where the bar across the top has no room for its links (`boot.js` decides): the same links as big rows, with Make it comfy and the way to add Pixel Reel to Claude. A link added to the bar goes in the menu too (a test says so). |
 | `site/js/app.js`, `site/js/sw.js` | Pixel Reel as an app on a phone: [below](#on-a-phones-home-screen). |
 | `site/js/sheet.js` | The whole reel on one page, under the player on a reel's page: every scene's finished picture with its few words, to glance over and to print. The print rules at the foot of `site.css` leave nothing else on the paper. |
 | `site/js/follow.js` | Following the words: splits a line into its sentences and works out which is being said, for the player to mark where every word is written. |
@@ -951,3 +952,30 @@ Went looking for the ways a link to a reel goes wrong before anyone sees the ree
 
 Tried in a real browser with the service worker in charge of the page, since it answers
 every page request first: each of eleven nearly-right addresses landed where it should.
+
+### Version 44
+
+Looked at the home page on a phone, where it is 18,000 pixels from top to foot.
+
+- **A phone had no menu.** The links across the top (Make a pixel reel, How it works,
+  Examples, Questions) go when the bar has no room for them, which is on every phone and
+  every tablet, and on a laptop with bigger letters. Nothing took their place: the only way
+  round a very long page was to scroll it. There is now a Menu button in the bar wherever
+  the links are not. It opens them as a list of big rows, a picture and a few words each,
+  with Home, Add to your phone, Make it comfy, and Add Pixel Reel to Claude at the foot.
+- **What the bar lets go of, and in what order.** On a phone the name beside Reelie goes,
+  to make room for Menu: Reelie still leads home, and so does the first row of the menu.
+  At the very biggest, widest letters on the narrowest phone the Aa button goes too, since
+  Make it comfy is in the menu by name.
+- **The rows never cut a word.** Each row's words sit beside its picture while the longest
+  of them has room there, and go under it when it has not.
+- Found on the way, at the biggest OpenDyslexic letters on a phone 320 pixels wide: "Watch"
+  in the heading at the top of the home page was cut in two, and Make it comfy's own panel
+  was wider than the screen when OpenDyslexic was the one chosen. Both fit now.
+
+`scripts/site-fit.js` does not look inside a dialog, so the menu and Make it comfy were
+measured by hand at that size: neither is wider than the screen.
+
+| The bar on a phone, and the menu it opens |
+| --- |
+| ![The top of the home page on a phone: Reelie, Aa, Menu and Add to Claude in the bar. Beside it, the menu: Home, Make a pixel reel, How it works, Examples, Questions, Add to your phone and Make it comfy as big rows with a picture each, and a gold button, Add Pixel Reel to Claude.](log/v44-menu.jpg) |

@@ -8,6 +8,7 @@ import { staticFile } from '../service/static.mjs';
 import { hopHeight, lookAt, REELIE, SAYINGS, SCENES } from '../site/js/landscape.js';
 import { sentenceAt, sentencesOf } from '../site/js/follow.js';
 import { askFor } from '../site/js/maker.js';
+import { startMenu } from '../site/js/menu.js';
 import { nowPlaying } from '../site/js/player.js';
 import { PACES, pacedClock, rateOf } from '../site/js/pace.js';
 import { lengthWords, showOf, waitingFor } from '../site/js/reels.js';
@@ -895,8 +896,8 @@ describe('before the page is drawn', () => {
 
   it('lets go of one thing at a time until the bar across the top is on one row', () => {
     assert.equal(boot().bar.dataset.tight, undefined, 'nothing goes when everything fits');
-    for (const step of [1, 2, 3, 4]) assert.equal(boot({ fitsFrom: step }).bar.dataset.tight, String(step));
-    assert.equal(boot({ fitsFrom: 9 }).bar.dataset.tight, '4', 'and stops at the last step');
+    for (const step of [1, 2, 3, 4, 5]) assert.equal(boot({ fitsFrom: step }).bar.dataset.tight, String(step));
+    assert.equal(boot({ fitsFrom: 9 }).bar.dataset.tight, '5', 'and stops at the last step');
   });
 
   it('fits the bar again when the room or the letters change', () => {
@@ -916,6 +917,72 @@ describe('before the page is drawn', () => {
     assert.ok(layout.indexOf('rel="stylesheet"') < layout.indexOf('/site/js/boot.js'), 'boot.js waits for the stylesheet only if it comes first');
     // one span round the words, so the button lays them out as one run of text with its usual spaces
     assert.match(layout, /class="[^"]*top-add"[^>]*><span>Add<span class="top-add-more"> to Claude<\/span><\/span><\/a>/);
+  });
+});
+
+describe('the menu, where the bar has no room for its links', () => {
+  const css = readFileSync(root('site/css/site.css'), 'utf8');
+  const SVG = '<svg class="px"[^>]*>[\\s\\S]*?</svg>';
+  const menuOf = (page) => /<dialog class="menu" id="menu"[^>]*>([\s\S]*?)<\/dialog>/.exec(page)?.[1] ?? '';
+
+  it('has a Menu button on every page, shown only when the links are not', () => {
+    for (const name of pages) assert.match(html[name], /<button class="top-menu" type="button" data-open="menu" aria-haspopup="dialog">Menu<\/button>/, name);
+    assert.match(css, /\n\.top-menu \{ display: none; \}/, 'out of sight while the links have room');
+    assert.match(css, /\.top-in\[data-tight\] \.top-menu \{ display: inline-flex; \}/, 'there when boot.js lets go of the links');
+    // every rule that hides the links for a width of screen shows the button in the same breath
+    const hidden = [...css.matchAll(/\n {2}\.top-nav \{ display: none; \}\n( {2}\.top-menu \{ display: inline-flex; \})?/g)];
+    assert.ok(hidden.length > 0);
+    for (const found of hidden) assert.ok(found[1], 'the links are hidden and nothing takes their place');
+  });
+
+  it('holds every link the bar has, and more, each with a picture and its words', () => {
+    for (const name of pages) {
+      const menu = menuOf(html[name]), bar = /<nav class="top-nav"[^>]*>([\s\S]*?)<\/nav>/.exec(html[name])[1];
+      const links = [...bar.matchAll(/<a href="([^"]+)">([^<]+)<\/a>/g)];
+      assert.ok(links.length >= 4, name);
+      for (const [, href, words] of links) assert.match(menu, new RegExp(`<a href="${href}">${SVG}<span>${words}</span></a>`), `${name}: ${words}`);
+      assert.match(menu, new RegExp(`<a href="/">${SVG}<span>Home</span></a>`), name);
+      assert.match(menu, new RegExp(`<a href="/app" data-not-app>${SVG}<span>Add to your phone</span></a>`), `${name}: not for someone who already has it there`);
+      assert.match(menu, /<a class="btn btn-gold btn-big" href="\/claude">Add Pixel Reel to Claude<\/a>/, name);
+    }
+  });
+
+  it('holds Make it comfy, since the bar lets go of that button last of all', () => {
+    assert.match(menuOf(html.home), /<button type="button" data-open="comfort"><span class="aa" aria-hidden="true">Aa<\/span><span>Make it comfy<\/span><\/button>/);
+    assert.ok(css.includes('.top-in[data-tight="5"] .top-comfort { display: none; }'));
+    assert.match(css, /:where\(\.menu-list > \*\) \{ display: flex; \}/, 'a row that is no use on a home screen can still be hidden');
+  });
+
+  // a pretend page: a Menu button, and a dialog with a link, a button and some words in it
+  const pretend = () => {
+    const heard = {}, dialog = { open: false, showModal() { this.open = true; }, close() { this.open = false; }, addEventListener: (name, run, onTheWayDown) => { heard[name] = run; heard.onTheWayDown = onTheWayDown; } };
+    const opener = { addEventListener: (name, run) => { opener.press = run; } };
+    startMenu({ getElementById: (id) => (id === 'menu' ? dialog : null), querySelectorAll: (selector) => (selector === '[data-open="menu"]' ? [opener] : []) });
+    const inside = (pressable) => ({ closest: (selector) => (selector === 'a, button' && pressable ? {} : null) });
+    return { dialog, opener, heard, inside };
+  };
+
+  it('opens on a press of the button', () => {
+    const { dialog, opener } = pretend();
+    opener.press();
+    assert.equal(dialog.open, true);
+  });
+
+  it('closes when anything in it is pressed, or the dimmed page beside it, and not for a press on its words', () => {
+    const { dialog, opener, heard, inside } = pretend();
+    opener.press();
+    heard.click({ target: inside(false) });
+    assert.equal(dialog.open, true, 'a press on the heading leaves it open');
+    heard.click({ target: inside(true) });
+    assert.equal(dialog.open, false, 'a link or a button');
+    opener.press();
+    heard.click({ target: dialog });
+    assert.equal(dialog.open, false, 'the dimmed page');
+    assert.equal(heard.onTheWayDown, true, 'and it has closed before Make it comfy hears the press and opens');
+  });
+
+  it('does nothing on a page with no menu', () => {
+    assert.doesNotThrow(() => startMenu({ getElementById: () => null, querySelectorAll: () => [] }));
   });
 });
 
