@@ -3,7 +3,6 @@
 // needs a folder (or store) for the reels, and the address people reach it at.
 import { createServer } from 'node:http';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { pageHtml } from '../scripts/page.mjs';
 import { createMcpServer } from './mcp.mjs';
 import { isId } from './reels.mjs';
 import { robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage } from './site.mjs';
@@ -14,9 +13,6 @@ export const MAX_BODY = 256 * 1024;
 
 const AUDIO_FILE = /^[A-Za-z0-9_-]{1,64}\.mp3$/;
 
-/** What a reel's page may load: its own script and styles, the font inside it, and its own recordings. Nothing from elsewhere. */
-const PAGE_POLICY = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src data:; img-src data:; media-src 'self'; base-uri 'none'; form-action 'none'";
-
 const SAFE = { 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer' };
 
 /** A reel is for whoever has its link, so search engines are asked to stay out of them all. */
@@ -24,14 +20,14 @@ const UNLISTED = { 'x-robots-tag': 'noindex, nofollow' };
 
 const escapeHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-/** A small page in the player's colours, for a reel that is not ready, or not there. */
-export function notice(heading, words, { refresh = 0 } = {}) {
+/** A small page that needs nothing else, for when something has gone wrong with the service itself. */
+export function notice(heading, words) {
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-${refresh ? `<meta http-equiv="refresh" content="${refresh}">\n` : ''}<title>${escapeHtml(heading)} - pixelreel</title>
+<title>${escapeHtml(heading)} - Pixel Reel</title>
 <style>
 body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0b1220; color: #f8f7dd; font: 20px/1.55 Verdana, Tahoma, sans-serif; }
 main { max-width: 34em; margin: 16px; padding: 22px 26px; background: #13203a; border: 4px solid #ebeac5; border-radius: 4px; }
@@ -90,34 +86,31 @@ async function handleMcp(req, res, { reels, baseUrl, log, limits, trustProxy }) 
   }
 }
 
-async function handleReel(req, res, id, rest, { reels, baseUrl }) {
+async function handleReel(req, res, id, rest, context) {
+  const { reels, baseUrl } = context;
   const status = await reels.status(id);
   if (!status) {
     if (rest === 'play.json') { res.writeHead(404, { ...SAFE, ...UNLISTED, 'content-type': 'application/json', 'access-control-allow-origin': '*' }).end('{"state":"gone"}'); return; }
-    sendPage(res, 404, notice('No reel here', 'This reel has been deleted, or kept past its 30 days, or the link is not quite right.'), UNLISTED);
+    sendSitePage(req, res, 404, 'reel-gone', context, UNLISTED);
     return;
   }
   if (rest === '') {
-    if (status.state === 'failed') { sendPage(res, 200, notice('This reel could not be made', status.error ?? 'Something went wrong.'), UNLISTED); return; }
-    if (status.state !== 'ready') {
-      sendPage(res, 200, notice('Nearly ready', `The voice for "${status.title}" is being recorded. This page will play the reel as soon as it is done.`, { refresh: 5 }), UNLISTED);
-      return;
-    }
-    const manifest = await reels.manifest(id);
-    const clips = (manifest?.clips ?? []).map((c) => ({ text: c.text, file: `/r/${id}/audio/${c.file}`, seconds: c.seconds }));
-    const page = pageHtml({ reelJson: JSON.stringify(await reels.reel(id)), manifest: { clips }, title: `${status.title} - Pixel Reel` });
-    // under the player, a way home: whoever is sent a reel can find out what made it
-    const made = `<p class="note made"><a href="${escapeHtml(baseUrl)}/">Made with Pixel Reel.</a> Free, for anything you would rather watch than read.</p>\n</main>`;
-    sendPage(res, 200, page.replace('</main>', () => made), { ...UNLISTED, 'content-security-policy': PAGE_POLICY });
+    // The site's own page with its player, which asks for play.json and waits with the
+    // watcher while the voice is still being recorded. It names the reel, so a link sent
+    // in a message shows what it is, but holds none of its words.
+    const page = sitePage('reel', baseUrl, { values: { reelid: id, reeltitle: escapeHtml(status.title) }, title: `${status.title} - Pixel Reel`, path: `/r/${id}` });
+    sendSqueezed(req, res, 200, squeezed(page), { ...SAFE, ...UNLISTED, 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': SITE_POLICY });
     return;
   }
   if (rest === 'play.json') {
-    // what the player inside a chat needs, asked for from another origin (the chat's frame)
-    const play = { state: status.state, title: status.title, watch: `${baseUrl}/r/${id}` };
+    // what a player needs: the reel's own page asks for it, and so does the player inside a
+    // chat, from another origin (the chat's frame)
+    const play = { state: status.state, title: status.title, watch: `${baseUrl}/r/${id}`, expires: status.expires };
     if (status.state === 'failed') play.error = status.error;
     if (status.state === 'ready') {
       play.reel = await reels.reel(id);
       play.clips = ((await reels.manifest(id))?.clips ?? []).map((c) => ({ text: c.text, file: `${baseUrl}/r/${id}/audio/${c.file}`, seconds: c.seconds }));
+      if (status.video === 'ready') play.video = `${baseUrl}/r/${id}/video.mp4`;
     }
     res.writeHead(200, { ...SAFE, ...UNLISTED, 'content-type': 'application/json', 'cache-control': 'no-store', 'access-control-allow-origin': '*' }).end(JSON.stringify(play));
     return;
@@ -125,7 +118,7 @@ async function handleReel(req, res, id, rest, { reels, baseUrl }) {
   const audio = /^audio\/(.+)$/.exec(rest);
   const key = audio && AUDIO_FILE.test(audio[1]) ? `reels/${id}/audio/${audio[1]}` : rest === 'video.mp4' ? `reels/${id}/video.mp4` : null;
   const bytes = key && (await reels.store.get(key));
-  if (!bytes) { sendPage(res, 404, notice('Not here', 'There is nothing at this address.'), UNLISTED); return; }
+  if (!bytes) { sendSitePage(req, res, 404, 'not-found', context, UNLISTED); return; }
   sendBytes(req, res, bytes, { ...SAFE, ...UNLISTED, 'content-type': key.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg', 'cache-control': 'private, max-age=3600' });
 }
 
@@ -134,7 +127,7 @@ async function handleReel(req, res, id, rest, { reels, baseUrl }) {
  * once and kept, compressed (unless `fresh`, when it is made again each time, for working on
  * the site), and a browser that already has it is told so.
  */
-function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages }) {
+function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages }, extra = {}) {
   let page = fresh ? null : pages.get(name);
   if (!page) {
     page = squeezed(sitePage(name, baseUrl, { listed }));
@@ -142,7 +135,7 @@ function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages })
     if (!fresh) pages.set(name, page);
   }
   const keep = status !== 200 ? 'no-store' : fresh ? 'no-cache' : 'public, max-age=300';
-  const headers = { ...SAFE, 'content-type': 'text/html; charset=utf-8', 'cache-control': keep, 'content-security-policy': SITE_POLICY, etag: page.tag };
+  const headers = { ...SAFE, ...extra, 'content-type': 'text/html; charset=utf-8', 'cache-control': keep, 'content-security-policy': SITE_POLICY, etag: page.tag };
   if (status === 200 && req.headers['if-none-match'] === page.tag) { res.writeHead(304, headers).end(); return; }
   sendSqueezed(req, res, status, page, headers);
 }

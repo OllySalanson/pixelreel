@@ -39,9 +39,9 @@ The voice is Peter's: warm, plain, British, a little cheeky. Plain dashes only.
 | File | Does |
 | --- | --- |
 | `site/layout.html` | The shell every page shares: the bar across the top, the foot, Make it comfy and the theatre. |
-| `site/pages/*.html`, `*.md` | A page each. The comment at the top holds its `title` and `description`. Plain pages are Markdown. |
+| `site/pages/*.html`, `*.md` | A page each. The comment at the top holds its `title` and `description`. Plain pages are Markdown. `reel.html` is the page every shared reel is watched on (`/r/<id>`). |
 | `site/css/site.css` | The whole look. |
-| `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` and `boot.js` are Make it comfy; `maker.js` writes what to say to Claude; `sprites.js` is the site's own pixel art. |
+| `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` and `boot.js` are Make it comfy; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `sprites.js` is the site's own pixel art. |
 | `site/fonts/`, `site/art/` | The fonts (with their licences), and the icons, logos and share picture. |
 | `service/site.mjs` | Puts a page together: the layout, the page, and the `{{names}}` in them. |
 | `service/static.mjs` | Serves the files a page loads, and only those. |
@@ -83,7 +83,9 @@ connector (ready-made pictures only) and recorded by Peter with `npm run voices`
 | Reel | Where |
 | --- | --- |
 | `pixel-reel` | The player at the top of the home page. |
-| `site-what`, `site-how`, `site-who`, `site-peter`, `site-make`, `site-good`, `site-questions` | "Make a pixel reel about this", one for each part of the home page. |
+| `site-what`, `site-how`, `site-who`, `site-peter`, `site-make`, `site-good`, `site-questions` | "Make a pixel reel about this", one for each part of the home page. With `site-open`, they are also "Watch this whole page". |
+| `site-open` | The reel for "It is all open", and the code typing out beside it. |
+| `site-privacy`, `site-terms` | "Make a pixel reel about this" on the privacy and terms pages. A plain page gets the button by naming a reel in the comment at its top (`reel: site-privacy`). |
 | `gas-meter`, `pension-letter`, `volcano`, `cup-of-tea` | The examples under Now showing. `pension-letter` also plays beside the letter in "Same letter, two ways". |
 
 Change a reel's words and it needs recording again (`npm run voices <name>`); a test fails
@@ -164,3 +166,29 @@ difference, and the middle of the page was all cream cards.
 | The top, with Watch this whole page | Same letter, two ways | Who it is for |
 | --- | --- | --- |
 | ![Version 3: the top of the page with a Watch this whole page button.](log/v3-hero.jpg) | ![A dense letter beside a reel of the same letter.](log/v3-ways.jpg) | ![Cards with coloured tiles behind their icons.](log/v3-who.jpg) |
+
+### Version 4
+
+The page a shared reel lands on is where most people will meet Pixel Reel, and it still
+looked like the old site.
+
+- **A shared reel's page** (`/r/<id>`) is now the website's own: the same player, Make it
+  comfy, a night sky, and "Want one of your own?" underneath. It says how long the reel is
+  kept, and offers the video once one has been made.
+- **Waiting is a scene of its own.** The page used to say "Nearly ready" and reload itself
+  every five seconds. Now it is there at once, Reelie waits on screen under a RECORDING
+  sign, and the reel appears the moment Peter has finished.
+- **A link sent in a message** shows a card ("A pixel reel for you") and the reel's title.
+  The page itself holds none of the reel's words.
+- **Privacy and terms, as reels.** Both pages have "Make a pixel reel about this" straight
+  under the heading. Nobody reads the terms; now they can watch them.
+- **It is all open.** A part of the home page for the curious, with a reel of its own, and
+  code typing itself out beside it.
+- **Looked at with Make it comfy turned up,** which found two faults: at the biggest
+  letters on a phone the bar across the top and the player's buttons ran off the side of
+  the screen. Both now wrap. Pictures drawn on a canvas no longer take on the page's letter
+  spacing.
+
+| A shared reel | Waiting for the voice | It is all open |
+| --- | --- | --- |
+| ![A shared reel's page: the player under a night sky.](log/v4-reel.jpg) | ![Reelie waits under a RECORDING sign.](log/v4-waiting.jpg) | ![The open-source part of the home page, with code typing out.](log/v4-open.jpg) |

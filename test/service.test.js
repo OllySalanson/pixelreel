@@ -302,15 +302,20 @@ describe('the service over HTTP', async () => {
     await reels.idle();
     const ready = await client.callTool({ name: 'get_reel', arguments: { id } });
     assert.match(words(ready), /^"Tea" is ready: 2 scenes, 0:14\. Watch it at https:\/\/reels\.example\/r\//);
-    assert.match(await waiting.text(), /Nearly ready|<canvas/);
+    assert.match(await waiting.text(), /<h1 id="watch-title">Tea<\/h1>/, 'the page is there at once, and waits for the voice itself');
 
     const page = await fetch(`${local}/r/${id}`);
     const html = await page.text();
     assert.equal(page.status, 200);
-    assert.match(page.headers.get('content-security-policy'), /default-src 'none'.*media-src 'self'/);
+    assert.equal(page.headers.get('content-security-policy'), SITE_POLICY, "a reel's page loads only the service's own files");
+    assert.equal(page.headers.get('cache-control'), 'no-store');
     assert.match(html, /<title>Tea - Pixel Reel<\/title>/);
-    assert.match(html, /<p class="note made"><a href="https:\/\/reels\.example\/">Made with Pixel Reel\.<\/a>[^<]+<\/p>\n<\/main>/, 'whoever is sent a reel can find out what made it');
-    assert.match(html, new RegExp(`"file":"/r/${id}/audio/clip0\\.mp3"`), 'the page plays the recordings from the service');
+    assert.match(html, new RegExp(`<div class="wrap watch-in" id="watch" data-watch="${id}">`), 'the player on the page asks the service for this reel');
+    assert.match(html, /<meta property="og:image" content="https:\/\/reels\.example\/site\/art\/reel-card\.png">/, 'a link sent in a message shows a card');
+    assert.match(html, new RegExp(`<link rel="canonical" href="https://reels\\.example/r/${id}">`));
+    assert.match(html, /<meta name="robots" content="noindex, nofollow">/);
+    assert.doesNotMatch(html, /Boil the kettle|Boil it\./, 'the page names the reel, but holds none of its words');
+    assert.match(html, /<h2 id="own-title">Want one of your own\?<\/h2>/, 'whoever is sent a reel can find out what made it');
     const audio = await fetch(`${local}/r/${id}/audio/clip0.mp3`, { headers: { range: 'bytes=1-2' } });
     assert.equal(audio.status, 206);
     assert.equal(await audio.text(), 'D3');
@@ -363,6 +368,11 @@ describe('the service over HTTP', async () => {
     assert.equal(ready.watch, `https://reels.example/r/${id}`);
     assert.deepEqual(ready.reel, tea);
     assert.deepEqual(ready.clips.map((c) => c.file), [`https://reels.example/r/${id}/audio/clip0.mp3`, `https://reels.example/r/${id}/audio/clip1.mp3`]);
+    assert.ok(Date.parse(ready.expires) > Date.now(), 'it says how long the reel is kept');
+    assert.equal(ready.video, undefined, 'no video has been asked for');
+    await reels.requestVideo(id);
+    await reels.idle();
+    assert.equal((await (await fetch(`${local}/r/${id}/play.json`)).json()).video, `https://reels.example/r/${id}/video.mp4`);
     const gone = await fetch(`${local}/r/${newId()}/play.json`);
     assert.equal(gone.status, 404);
     assert.deepEqual(await gone.json(), { state: 'gone' });
@@ -383,6 +393,22 @@ describe('the service over HTTP', async () => {
     await Promise.all([one.close(), two.close()]);
     limits.reels = new RateLimit({ perHour: 1000, perDay: 1000 });
     await reels.idle();
+  });
+
+  it("keeps a reel's title as words, whatever is in it", async () => {
+    const { id } = await reels.create({ ...tea, title: 'Tea & <b>cake</b> "now"' });
+    await reels.idle();
+    const html = await (await fetch(`${local}/r/${id}`)).text();
+    assert.match(html, /<h1 id="watch-title">Tea &amp; &lt;b&gt;cake&lt;\/b&gt; &quot;now&quot;<\/h1>/);
+    assert.match(html, /<title>Tea &amp; &lt;b&gt;cake&lt;\/b&gt; &quot;now&quot; - Pixel Reel<\/title>/);
+    assert.doesNotMatch(html, /<b>cake/);
+  });
+
+  it('says so, on its own page, when a reel is not there', async () => {
+    const res = await fetch(`${local}/r/${newId()}`);
+    assert.equal(res.status, 404);
+    assert.equal(res.headers.get('x-robots-tag'), 'noindex, nofollow');
+    assert.match(await res.text(), /<h1 id="lost-title">No reel here<\/h1>/);
   });
 
   it('answers odd requests plainly, and serves nothing it should not', async () => {

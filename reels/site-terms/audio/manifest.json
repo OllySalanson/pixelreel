@@ -1,0 +1,36 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "These are the terms. There are five, and they are short.",
+      "file": "ed53daf707c95854.mp3",
+      "seconds": 3.36
+    },
+    {
+      "text": "One. Use it for good. No reels that break the law, trick people, or bully anyone. And no pretending to be a real person or organisation.",
+      "file": "6dd9dc090137c51e.mp3",
+      "seconds": 7.68
+    },
+    {
+      "text": "Two. Your reels are yours. Pixel Reel does not claim them. But what is in them is down to you.",
+      "file": "3bbbfa4be85a1f82.mp3",
+      "seconds": 6.64
+    },
+    {
+      "text": "Three. Check what matters. A reel keeps things simple. For money, health, legal or safety matters, check the details with whoever sent you the original.",
+      "file": "5e4269f321331f80.mp3",
+      "seconds": 9.28
+    },
+    {
+      "text": "Four. No promises. Pixel Reel may be slow, or down. It keeps reels for thirty days at most, and may delete one early if it breaks these terms.",
+      "file": "5c6416563878eba5.mp3",
+      "seconds": 10
+    },
+    {
+      "text": "Five. Fair use. There is a limit on how many reels anyone can make in an hour. That way, it stays free for everyone.",
+      "file": "b6365bda37d9f7ec.mp3",
+      "seconds": 7.6
+    }
+  ]
+}

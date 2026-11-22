@@ -1,0 +1,126 @@
+{
+  "format": "pixelreel/1",
+  "title": "Privacy, in plain words",
+  "transition": "dissolve",
+  "scenes": [
+    {
+      "title": "Privacy",
+      "caption": "What Pixel Reel keeps. It is not much.",
+      "say": "Here is what Pixel Reel keeps, in plain words. It won't take long, because it isn't much.",
+      "picture": {
+        "type": "title",
+        "text": "PRIVACY",
+        "sub": "In plain words"
+      }
+    },
+    {
+      "title": "Your reel",
+      "caption": "The scenes, the recordings, and the video if you ask.",
+      "say": "It keeps your reel. That is the scenes Claude sends, the recordings of my voice, and the video, if you ask for one.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "document",
+            "label": "Scenes"
+          },
+          {
+            "icon": "heart",
+            "label": "Recordings"
+          },
+          {
+            "icon": "computer",
+            "label": "Video"
+          }
+        ],
+        "start": 1.9,
+        "every": 1.5
+      }
+    },
+    {
+      "title": "Nothing about you",
+      "caption": "No accounts. No names. No email addresses.",
+      "say": "It keeps nothing about you. There are no accounts, so there are no names, and no email addresses.",
+      "picture": {
+        "type": "list",
+        "items": [
+          "No accounts",
+          "No names",
+          "No email addresses"
+        ],
+        "start": 2.2,
+        "every": 1.1
+      }
+    },
+    {
+      "title": "One small count",
+      "caption": "It counts requests by internet address, for a day at most.",
+      "say": "One small thing. To stop anyone making too many reels, it counts requests by internet address. That count is never written down, and it is gone within a day.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "clock",
+            "label": "Gone within a day"
+          }
+        ],
+        "heading": "ONE SMALL COUNT",
+        "start": 3.8
+      }
+    },
+    {
+      "title": "For 30 days",
+      "caption": "Then it is deleted. Or sooner, if you ask.",
+      "say": "Reels are deleted after thirty days. Or ask Claude to delete one, and it is gone at once.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "calendar",
+            "label": "30 days"
+          },
+          {
+            "icon": "cross",
+            "label": "Then gone"
+          }
+        ],
+        "start": 1.2,
+        "every": 3.3
+      }
+    },
+    {
+      "title": "Who can see it",
+      "caption": "Anyone with the link. So mind who you send it to.",
+      "say": "Anyone with the link can watch a reel. Links are long and random, so nobody can guess one. But do mind who you send it to.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "lock",
+            "label": "Only with the link"
+          }
+        ]
+      }
+    },
+    {
+      "title": "Nobody else",
+      "caption": "Your words are not sent to a voice company.",
+      "say": "And the voice is made by Pixel Reel itself. Your words are not sent to a voice company.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "house",
+            "label": "Made in house"
+          },
+          {
+            "icon": "cross",
+            "label": "No voice company"
+          }
+        ],
+        "start": 0.9,
+        "every": 2.4
+      }
+    }
+  ]
+}

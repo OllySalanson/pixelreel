@@ -1,0 +1,26 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "Everything behind Pixel Reel is open. A reel is just a small file. A title, and a list of scenes.",
+      "file": "942b4c1ed93b27f9.mp3",
+      "seconds": 6.56
+    },
+    {
+      "text": "If you like to tinker, the tools are all there. Make a reel of your own, and draw its pictures in code.",
+      "file": "723af9e9cb53412a.mp3",
+      "seconds": 5.92
+    },
+    {
+      "text": "It is free to use, to change, and to share. The licence is called MIT, and it is about as easygoing as licences get.",
+      "file": "449a0bc83f58b8f6.mp3",
+      "seconds": 8
+    },
+    {
+      "text": "So come and have a look. The code is on GitHub, under the name pixel reel.",
+      "file": "26b8039ee9a1ffa0.mp3",
+      "seconds": 4.72
+    }
+  ]
+}

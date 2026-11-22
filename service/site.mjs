@@ -160,28 +160,33 @@ export const addToClaudeLink = (baseUrl) =>
 
 /**
  * One of the site's pages, for a service at `baseUrl`. `listed` says whether search engines
- * may list the site: until Pixel Reel is open to everyone, every page asks them not to.
+ * may list it: until Pixel Reel is open to everyone, every page asks them not to. `values`
+ * fills names of the page's own (already safe to put in HTML); `title` and `path` replace
+ * the page's own title and address, for a page that stands for many, such as a reel's.
  */
-export function sitePage(name, baseUrl, { listed = false } = {}) {
-  const path = Object.keys(SITE_PAGES).find((p) => SITE_PAGES[p] === name) ?? '/';
+export function sitePage(name, baseUrl, { listed = false, values = {}, title = null, path = null } = {}) {
+  path ??= Object.keys(SITE_PAGES).find((p) => SITE_PAGES[p] === name) ?? '/';
   const markdown = !existsSync(siteFile(`pages/${name}.html`));
   const { facts, body } = pageFacts(readFileSync(siteFile(`pages/${name}.${markdown ? 'md' : 'html'}`), 'utf8'));
-  const links = { url: escapeHtml(baseUrl), mcp: escapeHtml(`${baseUrl}/mcp`), add: escapeHtml(addToClaudeLink(baseUrl)) };
+  const links = { url: escapeHtml(baseUrl), mcp: escapeHtml(`${baseUrl}/mcp`), add: escapeHtml(addToClaudeLink(baseUrl)), ...values };
   const heading = /^# (.+)$/m.exec(body)?.[1];
-  const title = facts.title ?? (heading && heading !== 'Pixel Reel' ? `${heading} - Pixel Reel` : 'Pixel Reel');
+  title ??= facts.title ?? (heading && heading !== 'Pixel Reel' ? `${heading} - Pixel Reel` : 'Pixel Reel');
+  // a plain page that has a reel of itself offers it straight under its heading
+  const watch = facts.reel ? `\n<p class="doc-reel"><button class="btn btn-reel" type="button" data-reel="${escapeHtml(facts.reel)}">Make a pixel reel about this</button></p>` : '';
   const main = markdown
-    ? `<article class="doc${facts.reel ? ' has-reel' : ''}">\n${markdownHtml(fill(body, { url: baseUrl, mcp: `${baseUrl}/mcp` }))}\n${
-      facts.reel ? `<p class="doc-reel"><button class="btn btn-reel" type="button" data-reel="${escapeHtml(facts.reel)}">Make a pixel reel about this</button></p>\n` : ''}</article>`
+    ? `<article class="doc">\n${markdownHtml(fill(body, { url: baseUrl, mcp: `${baseUrl}/mcp` })).replace('</h1>', () => `</h1>${watch}`)}\n</article>`
     : fill(dropComments(body), links);
   const ahead = [
-    ...siteModules().map((path) => `<link rel="modulepreload" href="${path}">`),
-    ...(facts.fetch ?? '').split(/\s+/).filter(Boolean).map((path) => `<link rel="preload" as="fetch" crossorigin href="${escapeHtml(path)}">`)
+    ...siteModules().map((module) => `<link rel="modulepreload" href="${module}">`),
+    ...(facts.fetch ?? '').split(/\s+/).filter(Boolean).map((file) => `<link rel="preload" as="fetch" crossorigin href="${escapeHtml(file)}">`)
   ];
   return fill(dropComments(readFileSync(siteFile('layout.html'), 'utf8')), {
     ...links,
     ahead: ahead.join('\n'),
     title: escapeHtml(title),
     description: escapeHtml(facts.description ?? 'Pixel Reel turns anything wordy into a short cartoon, read to you in a warm voice. Free, and made for anyone who would rather watch than read.'),
+    image: escapeHtml(facts.image ?? 'share.png'),
+    imagealt: escapeHtml(facts.imagealt ?? "Pixel Reel. Watch it. Don't read it. A pixel-art film reel with a smiling face stands under a night sky."),
     page: escapeHtml(name),
     canonical: escapeHtml(`${baseUrl}${path}`),
     robots: listed ? 'index, follow' : 'noindex, nofollow',

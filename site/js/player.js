@@ -146,10 +146,15 @@ export class ReelPlayer {
       if (this.loading === name) { this.title.textContent = 'This reel will not play'; this.setWords([err.message], 0); }
       throw err;
     }
-    if (this.loading !== name) return;   // another reel was asked for while this one loaded
+    if (this.loading === name) this.open(show);   // unless another reel was asked for while this one loaded
+  }
+
+  /** Shows a reel that is already loaded (see showOf in reels.js), ready to play. */
+  open(show) {
+    this.stop();
     this.show = show;
     const { reel, clipFor, durations, line } = show;
-    this.root.dataset.reel = name;
+    this.root.dataset.reel = show.name;
     this.root.dataset.opens = show.opens;
     this.canvas.setAttribute('aria-label', `Pictures for: ${reel.title}`);
     this.narrator = createNarrator({ scenes: reel.scenes, clipFor, audio: this.audio, speech: window.speechSynthesis, Utterance: window.SpeechSynthesisUtterance });

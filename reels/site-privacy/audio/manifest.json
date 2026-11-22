@@ -1,0 +1,41 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "Here is what Pixel Reel keeps, in plain words. It won't take long, because it isn't much.",
+      "file": "30b5358df4887db5.mp3",
+      "seconds": 5.68
+    },
+    {
+      "text": "It keeps your reel. That is the scenes Claude sends, the recordings of my voice, and the video, if you ask for one.",
+      "file": "52a302a2dd245a11.mp3",
+      "seconds": 6.64
+    },
+    {
+      "text": "It keeps nothing about you. There are no accounts, so there are no names, and no email addresses.",
+      "file": "aa77d0f6171cbd3e.mp3",
+      "seconds": 5.76
+    },
+    {
+      "text": "One small thing. To stop anyone making too many reels, it counts requests by internet address. That count is never written down, and it is gone within a day.",
+      "file": "13c2081ebefd2e3b.mp3",
+      "seconds": 9.76
+    },
+    {
+      "text": "Reels are deleted after thirty days. Or ask Claude to delete one, and it is gone at once.",
+      "file": "a46c7714c7e89e43.mp3",
+      "seconds": 5.6
+    },
+    {
+      "text": "Anyone with the link can watch a reel. Links are long and random, so nobody can guess one. But do mind who you send it to.",
+      "file": "cd04f9b2e432ce6f.mp3",
+      "seconds": 8.88
+    },
+    {
+      "text": "And the voice is made by Pixel Reel itself. Your words are not sent to a voice company.",
+      "file": "cc1a390c28954c79.mp3",
+      "seconds": 5.04
+    }
+  ]
+}
