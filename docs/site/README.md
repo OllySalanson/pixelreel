@@ -1442,3 +1442,25 @@ top and bottom, and that has not been tried.
 | A phone on its side: the player at the top of the home page, and after Play |
 | --- |
 | ![The home page on a phone held on its side: the player's whole picture with its Play button, under the bar. Beside it, after Play: the reel fills the screen, with its words and its buttons along the bottom.](log/v63-on-its-side.jpg) |
+
+### Version 64
+
+Small things, and a check.
+
+- **The foot's links in three rows of three.** There are nine, and they sat four across:
+  two rows and one left over, with "Make a pixel reel" and "Add to your phone" each running
+  to two lines. Three across, none is left over and none runs on.
+- **A voice not told to stop when it is not talking.** Reading aloud told the browser's
+  voice to stop before every new thing it gave it, talking or not. It is now told only
+  when it is talking or has more waiting. This is a precaution, from a memory of browsers
+  losing what they are handed straight after being told to stop. I have not been able to
+  check that here, where no sound can be made, and no fault was seen.
+- The press kit's video is left off paper, like the players.
+- **Checked with Lighthouse** (Chrome's own audit), on a phone's screen: the home page, the
+  page that adds Pixel Reel to Claude, a reel's page, the privacy page, the make page and
+  the page about the phone each scored 100 for accessibility and 100 for best practices.
+  Its one complaint is that search engines are asked to keep out, which is meant.
+
+| The foot of every page |
+| --- |
+| ![The foot of a page: Pixel Reel and its line, and nine links in three rows of three: Add to Claude, Make a pixel reel, Examples; Add to your phone, Press kit, Privacy; Terms, Credits, The code.](log/v64-foot.jpg) |

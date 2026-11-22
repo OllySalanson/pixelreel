@@ -100,10 +100,13 @@ export function createAloud({ speech, Utterance, lang = 'en-GB', rate = () => 1,
     saying = [];
     onChange(null);
   };
+  // Told to stop only when it is talking, or has more to say. A precaution: a browser may
+  // lose the next thing it is given if it is told to stop just before it (not checked here).
+  const hushVoice = () => { if (speech.speaking !== false || speech.pending) speech.cancel(); };
   const stop = () => {
     if (about === null) return;
     const mine = turn;
-    speech.cancel();
+    hushVoice();
     over(mine);
   };
   const sayAll = (parts) => {
@@ -114,7 +117,7 @@ export function createAloud({ speech, Utterance, lang = 'en-GB', rate = () => 1,
     if (!lines.length) return;
     about = lines[0].what;
     onChange(about);
-    speech.cancel();   // anything else the browser's voice was saying
+    hushVoice();   // anything else the browser's voice was saying
     saying = lines.map(({ sentence, what, first }, i) => {
       const u = new Utterance(sentence);
       if (voice) u.voice = voice;
