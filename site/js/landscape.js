@@ -113,12 +113,16 @@ function shootingStar(px, w, h, t, still, every = 11) {
 }
 
 /**
- * Each scene: draw(px, w, h, t, { quiet, paper, still }) paints it w x h pixels big at time t.
- * `quiet` is where words sit (no stars there), `paper` the page's colour, `still` holds it calm.
+ * Each scene: draw(px, w, h, t, { quiet, paper, still, met }) paints it w x h pixels big at
+ * time t. `quiet` is where words sit (no stars there), `paper` the page's colour, `still`
+ * holds it calm, and `met` is how many seconds ago its foot first came into view (null: not yet).
  */
+const HELLO = [0.5, 5];   // when Reelie's hello shows, in seconds after you first see it
+const FILM = 11;          // how far in from the top and the foot of the cinema its strips of film reach (.cinema in site.css)
+
 export const SCENES = {
   // the top of the home page: night, with dawn on its way, and the page itself as the nearest hill
-  hero(px, w, h, t, { quiet = [], paper = PAPER, still = false } = {}) {
+  hero(px, w, h, t, { quiet = [], paper = PAPER, still = false, met = null } = {}) {
     // the sky is plain behind the words, and glows only below them, low down behind the hills
     const horizon = h - 32, words = Math.max(0, ...quiet.map(([, y, , qh]) => y + qh));
     const glow = Math.max(14, Math.min(44, horizon - words));
@@ -137,14 +141,17 @@ export const SCENES = {
     pines(px, near, '#0d1930', 8, 37);
     const front = ridge(w, h - 2, 12, 6);
     ground(px, front, paper, h);
-    const at = Math.round(Math.min(w - 40, Math.max(12, w * 0.06)));
-    reelie(px, at, front[at + 13] - 27, t, { still });
+    const at = Math.round(Math.min(w - 40, Math.max(12, w * 0.06))), top = front[at + 13] - 27;
+    reelie(px, at, top, t, { still });
+    // Reelie says hello, once, when you first reach it (it stands below the first screenful);
+    // over its head, clear of the cottage, and never when pictures are held still
+    if (!still && met !== null && met > HELLO[0] && met < HELLO[1]) px.bubble('Hello!', at - 2, top - 19, 12, at + 13);
   },
 
   // now showing: just the night sky
   cinema(px, w, h, t, { quiet = [], still = false } = {}) {
     px.rect(NIGHT, 0, 0, w, h);
-    stars(px, w, h, t, 7, quiet);
+    stars(px, w, h - 2 * FILM, t, 7, quiet, FILM);   // between the strips of film, not in among their holes
     shootingStar(px, w, h, t + 5, still, 14);
   },
 

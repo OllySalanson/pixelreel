@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
+import { runInNewContext } from 'node:vm';
 import { textArt } from '../scripts/site-art.mjs';
 import { addToClaudeLink, pageFacts, playerHtml, robotsTxt, SITE_PAGES, siteModules, sitePage, spriteSvg } from '../service/site.mjs';
 import { staticFile } from '../service/static.mjs';
@@ -181,18 +182,90 @@ describe('the site\'s own pictures', () => {
     }
   });
 
-  it('keeps stars away from where the words are', () => {
+  it('has Reelie say hello once, when first seen, and never when held still', () => {
+    const said = (options) => {
+      const g = fakeContext();
+      SCENES.hero(createKit(g), 360, 234, 30, { paper: '#faf3e1', ...options });
+      return g.texts.some((text) => text.str === 'Hello!');
+    };
+    assert.equal(said({}), false, 'not before it has been seen');
+    assert.equal(said({ met: 0.1 }), false, 'not the instant it is seen');
+    assert.equal(said({ met: 2 }), true, 'soon after it is seen');
+    assert.equal(said({ met: 2, still: true }), false, 'never when pictures are held still');
+    assert.equal(said({ met: 60 }), false, 'and not for ever');
+  });
+
+  it('keeps stars away from where the words are, and out of the strips of film', () => {
     const g = fakeContext();
     SCENES.cinema(createKit(g), 200, 100, 3, { quiet: [[20, 10, 100, 60]] });
     const stars = g.rects.filter((r) => r.w === 1 && r.h === 1);
     assert.ok(stars.length > 10);
     assert.ok(!stars.some((r) => r.x >= 20 && r.x < 120 && r.y >= 10 && r.y < 70));
+    // the strips are 5 units deep, 4 in from the top and the foot (.cinema in site.css)
+    assert.ok(stars.every((r) => r.y > 9 && r.y < 100 - 10), 'no star in among the holes');
   });
 
   it('has its icons and manifest drawn from the sprites as they are now (npm run site-art)', () => {
     for (const [name, text] of Object.entries(textArt())) {
       assert.equal(readFileSync(root(`site/art/${name}`), 'utf8'), text, `site/art/${name} is out of date: run npm run site-art`);
     }
+  });
+});
+
+describe('before the page is drawn', () => {
+  // Runs site/js/boot.js on a pretend page. Its bar holds a name, some links that are not
+  // shown, and a button that drops to a second row until the bar is at step `fitsFrom`.
+  const boot = ({ saved = null, fitsFrom = 0 } = {}) => {
+    const bar = {
+      dataset: {},
+      get children() {
+        const wrapped = Number(this.dataset.tight ?? 0) < fitsFrom;
+        return [{ offsetWidth: 120, offsetTop: 10, offsetHeight: 30 }, { offsetWidth: 0, offsetTop: 0, offsetHeight: 0 }, { offsetWidth: 130, offsetTop: wrapped ? 58 : 4, offsetHeight: 44 }];
+      }
+    };
+    const page = {
+      watchers: [], heard: {}, html: { dataset: {} },
+      localStorage: { getItem: () => saved },
+      MutationObserver: class { constructor(run) { this.run = run; page.watchers.push(this); } observe() {} disconnect() {} },
+      addEventListener: (name, run) => { page.heard[name] = run; }
+    };
+    page.document = {
+      documentElement: page.html, querySelector: (selector) => (selector === '.top-in' ? bar : null), getElementById: () => ({}),
+      fonts: { addEventListener: (name, run) => { page.heard[name] = run; } }
+    };
+    runInNewContext(readFileSync(root('site/js/boot.js'), 'utf8'), page);
+    page.watchers[0].run();   // the page has been read as far as the bar
+    return { bar, page };
+  };
+
+  it('puts back the comfort settings chosen last time, and nothing odd', () => {
+    assert.deepEqual(boot({ saved: '{"font":"opendyslexic","size":"3","paper":"<b>","colour":"red"}' }).page.html.dataset, { font: 'opendyslexic', size: '3' });
+    assert.deepEqual(boot({ saved: 'not json' }).page.html.dataset, {});
+  });
+
+  it('lets go of one thing at a time until the bar across the top is on one row', () => {
+    assert.equal(boot().bar.dataset.tight, undefined, 'nothing goes when everything fits');
+    for (const step of [1, 2, 3, 4]) assert.equal(boot({ fitsFrom: step }).bar.dataset.tight, String(step));
+    assert.equal(boot({ fitsFrom: 9 }).bar.dataset.tight, '4', 'and stops at the last step');
+  });
+
+  it('fits the bar again when the room or the letters change', () => {
+    const { bar, page } = boot({ fitsFrom: 2 });
+    for (const again of [page.heard.resize, page.heard.loadingdone, page.watchers[1].run]) {
+      bar.dataset.tight = '4';
+      again();
+      assert.equal(bar.dataset.tight, '2');
+    }
+  });
+
+  it('has a rule in the stylesheet for every step, and the stylesheet in before it measures', () => {
+    const css = readFileSync(root('site/css/site.css'), 'utf8'), layout = readFileSync(root('site/layout.html'), 'utf8');
+    const steps = Number(/const STEPS = (\d+);/.exec(readFileSync(root('site/js/boot.js'), 'utf8'))[1]);
+    for (let step = 2; step <= steps; step++) assert.ok(css.includes(`[data-tight="${step}"]`), `step ${step}`);
+    assert.ok(css.includes('.top-in[data-tight] .top-nav'));
+    assert.ok(layout.indexOf('rel="stylesheet"') < layout.indexOf('/site/js/boot.js'), 'boot.js waits for the stylesheet only if it comes first');
+    // one span round the words, so the button lays them out as one run of text with its usual spaces
+    assert.match(layout, /class="[^"]*top-add"[^>]*><span>Add<span class="top-add-more"> to Claude<\/span><\/span><\/a>/);
   });
 });
 

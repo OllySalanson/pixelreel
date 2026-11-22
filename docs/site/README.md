@@ -41,7 +41,7 @@ The voice is Peter's: warm, plain, British, a little cheeky. Plain dashes only.
 | `site/layout.html` | The shell every page shares: the bar across the top, the foot, Make it comfy and the theatre. |
 | `site/pages/*.html`, `*.md` | A page each. The comment at the top holds its `title` and `description`. Plain pages are Markdown. `reel.html` is the page every shared reel is watched on (`/r/<id>`). |
 | `site/css/site.css` | The whole look. |
-| `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` and `boot.js` are Make it comfy; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `sprites.js` is the site's own pixel art. |
+| `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` is Make it comfy; `boot.js` runs before the page is drawn, to put its settings back and to keep the bar across the top on one row; `signal.js` is the test card on a page that is not there; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `sprites.js` is the site's own pixel art. |
 | `site/fonts/`, `site/art/` | The fonts (with their licences), and the icons, logos and share picture. |
 | `service/site.mjs` | Puts a page together: the layout, the page, and the `{{names}}` in them. |
 | `service/static.mjs` | Serves the files a page loads, and only those. |
@@ -74,7 +74,9 @@ npm run site-art         # after changing Reelie or the landscape
 ```
 
 Look at every change at three sizes (1440 x 900, 1280 x 720 and 390 x 844), and with
-Make it comfy set to Dark, to Biggest and to Still.
+Make it comfy set to Dark, to Biggest, to OpenDyslexic (a third wider than Lexend, so it
+finds what does not fit) and to Still. On a phone, check by eye that the player's four
+buttons are on one row: they have slipped onto two before without any test failing.
 
 ## The reels it plays
 
@@ -224,3 +226,30 @@ looked like the old site.
 - **A film for the press kit.** The reel at the top of the home page, drawn frame by frame
   into an MP4 with `npm run video pixel-reel -- --scale 3`, words on screen, to drop into a
   post or a piece (`site/art/what-is-pixel-reel.mp4`; make it again if that reel changes).
+
+### Version 8
+
+- **The bar across the top stays on one row.** It had been wrapping onto two: on most phones,
+  and on a laptop for anyone who chose OpenDyslexic or bigger letters, which is who the site
+  is for. Fixed rules could not know how wide the letters would be, so now `boot.js`
+  measures, before the page is drawn, and lets go of one thing at a time until the rest
+  fits: the links, the words on the comfort button, the name beside Reelie, and last the end
+  of "Add to Claude". Checked at fifteen widths, three typefaces and three sizes.
+- **Nothing on this channel.** A page that is not there, and a reel that has gone, now show
+  the player's own "no signal" test card, flickering (and still, when asked).
+- **Reelie says hello**, once, when you first scroll down to it. The scenery is now drawn
+  at the page's full resolution, so words in it are as crisp as the page's.
+- The focus ring in the bar across the top was dark blue on dark blue. It is white now.
+- The player's four buttons fit on one row on a phone again.
+
+| Biggest OpenDyslexic letters on a laptop: before, after |
+| --- |
+| ![The bar across the top on two rows, then on one.](log/v8-top-bar.jpg) |
+
+| On a phone: before, after, and the same with the biggest OpenDyslexic letters |
+| --- |
+| ![Four phone screens: the bar on two rows, then one; with big letters on two rows, then one.](log/v8-phone-top.jpg) |
+
+| A page that is not there | Hello |
+| --- | --- |
+| ![Nothing on this channel, beside a television test card that says no signal.](log/v8-no-signal.jpg) | ![Reelie, standing in front of the hills at night, says hello.](log/v8-hello.jpg) |
