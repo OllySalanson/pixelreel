@@ -1,0 +1,17 @@
+{
+  "name": "pixel-reel",
+  "description": "Makes a pixel reel - a short pixel-art explainer, one idea per scene with big plain captions - as a single web page to open and watch.",
+  "version": "0.1.0",
+  "author": {
+    "name": "pixelreel"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/OllySalanson/pixelreel",
+  "repository": "https://github.com/OllySalanson/pixelreel",
+  "keywords": [
+    "explainer",
+    "accessibility",
+    "dyslexia",
+    "pixel-art"
+  ]
+}

@@ -7,7 +7,7 @@ import { runInNewContext } from 'node:vm';
 import { after, describe, it } from 'node:test';
 import { bundle } from '../scripts/bundle.mjs';
 import { onePage, pageHtml } from '../scripts/page.mjs';
-import { GAP, SKILL_ZIP, skillFiles, skillZip } from '../scripts/skill.mjs';
+import { GAP, PLUGIN_SKILL, SKILL_ZIP, skillFiles, skillZip } from '../scripts/skill.mjs';
 import { unzip, zip } from '../scripts/zip.mjs';
 import { REEL_FORMAT } from '../src/format.js';
 import { PICTURES } from '../src/pictures.js';
@@ -108,6 +108,19 @@ describe('the Claude skill', () => {
 
   it('is up to date: run npm run skill after changing the player or the skill', () => {
     assert.ok(readFileSync(SKILL_ZIP).equals(skillZip()), 'skill/pixel-reel.zip is out of date');
+  });
+
+  it('comes as a Claude Code plugin too, the same files unzipped', () => {
+    for (const [name, data] of Object.entries(files)) {
+      if (name.endsWith('/')) continue;
+      assert.equal(readFileSync(join(PLUGIN_SKILL, name), 'utf8'), data, `${name} is out of date: run npm run skill`);
+    }
+    const root = new URL('../', import.meta.url).pathname;
+    const market = JSON.parse(readFileSync(join(root, '.claude-plugin', 'marketplace.json'), 'utf8'));
+    const plugin = JSON.parse(readFileSync(join(root, 'plugins', 'pixel-reel', '.claude-plugin', 'plugin.json'), 'utf8'));
+    assert.deepEqual(market.plugins.map((p) => [p.name, p.source]), [['pixel-reel', './plugins/pixel-reel']]);
+    assert.equal(plugin.name, 'pixel-reel');
+    assert.equal(market.plugins[0].description, plugin.description);
   });
 
   it('is a skill Claude can load', () => {

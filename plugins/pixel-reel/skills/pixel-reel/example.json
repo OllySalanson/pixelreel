@@ -1,0 +1,45 @@
+{
+  "format": "pixelreel/1",
+  "title": "How to make a cup of tea",
+  "intro": "Press Play, or use Next and Back to go at your own pace.",
+  "transition": "dissolve",
+  "scenes": [
+    {
+      "title": "A cup of tea",
+      "caption": "Five easy steps to a good cup of tea.",
+      "say": "Here's how to make a good cup of tea. It only takes five easy steps, and a few minutes.",
+      "picture": { "type": "title", "text": "TEA", "sub": "in five easy steps" }
+    },
+    {
+      "title": "You need",
+      "caption": "A kettle, a mug, a tea bag and milk if you like it.",
+      "say": "First, get your things ready. A kettle, a mug, a tea bag, and some milk if you like it.",
+      "picture": { "type": "list", "heading": "YOU NEED", "items": ["A kettle", "A mug", "A tea bag", "Milk, if you like"], "every": 1.4, "start": 1.5 }
+    },
+    {
+      "title": "Boil",
+      "caption": "Boil fresh water in the kettle.",
+      "say": "Fill the kettle with fresh water and boil it. Fresh water makes the tea taste better.",
+      "picture": { "type": "big", "text": "BOIL", "sub": "fresh water" }
+    },
+    {
+      "title": "Brew",
+      "caption": "Pour the water on the tea bag. Wait three minutes.",
+      "say": "Put the tea bag in the mug and pour on the hot water. Then wait. Three minutes is about right.",
+      "picture": { "type": "flow", "items": [{ "icon": "cup", "label": "Pour" }, { "icon": "clock", "label": "Wait 3 min" }, { "icon": "tick", "label": "Bag out" }], "every": 1.6, "start": 1 }
+    },
+    {
+      "title": "Milk?",
+      "caption": "Take the bag out. Add milk if you like it.",
+      "say": "Take the tea bag out. Add a splash of milk if you like it, and give it a stir.",
+      "picture": { "type": "chat", "title": "Kitchen", "messages": [{ "from": "You", "text": "Milk?" }, { "from": "Friend", "text": "Just a splash, please." }], "every": 1.6 }
+    },
+    {
+      "title": "Enjoy",
+      "caption": "That's it. Sit down and enjoy it.",
+      "say": "And that's it. Sit down, take a sip, and enjoy your cup of tea.",
+      "picture": { "type": "title", "text": "CHEERS", "sub": "you made a cup of tea" },
+      "transition": "iris"
+    }
+  ]
+}

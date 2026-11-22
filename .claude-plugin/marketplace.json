@@ -1,0 +1,14 @@
+{
+  "name": "pixelreel",
+  "owner": { "name": "pixelreel" },
+  "metadata": {
+    "description": "Pixel Reel for Claude Code: short pixel-art explainers to watch instead of read."
+  },
+  "plugins": [
+    {
+      "name": "pixel-reel",
+      "source": "./plugins/pixel-reel",
+      "description": "Makes a pixel reel - a short pixel-art explainer, one idea per scene with big plain captions - as a single web page to open and watch."
+    }
+  ]
+}
