@@ -48,14 +48,14 @@ export const phoneShare = () => (navigator.share && matchMedia('(pointer: coarse
 
 /**
  * Wakes every <button data-send="A reel's name" data-says="#where-to-say-so">: pressed, it
- * passes on the page it is on.
+ * passes on the page it is on, or the page at data-path.
  */
 export function startSending() {
   for (const button of document.querySelectorAll('button[data-send]')) {
     const says = document.querySelector(button.dataset.says);
     button.hidden = false;
     button.addEventListener('click', async () => {
-      const url = location.origin + location.pathname;
+      const url = location.origin + (button.dataset.path ?? location.pathname);
       says.textContent = sentWords(await sendReel(button.dataset.send, url, { share: phoneShare() }), url);
     });
   }

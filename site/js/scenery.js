@@ -3,7 +3,7 @@
 // is UNIT of the page's), a few times a second, and only while it is on screen.
 // When calm, each is drawn once and holds still.
 import { calm, onComfortChange } from './calm.js';
-import { SCENES } from './landscape.js';
+import { ROOM, SCENES } from './landscape.js';
 import { createKit } from '../../src/kit.js';
 
 const UNIT = 4;         // page pixels to one pixel of scenery, the same as --u in site.css
@@ -19,8 +19,16 @@ export function startScenes() {
   for (const scene of scenes) scene.px = createKit(scene.g);
   const born = performance.now();
 
+  // where the words are, in the scene's own pixels, with room round them: enough for the
+  // tall letters of OpenDyslexic, which reach well above and below their own line
+  const quietZones = (scene, box) => [...scene.canvas.parentElement.querySelectorAll('[data-quiet]')].map((el) => {
+    const r = el.getBoundingClientRect();
+    return [Math.floor((r.left - box.left) / UNIT) - ROOM, Math.floor((r.top - box.top) / UNIT) - ROOM, Math.ceil(r.width / UNIT) + ROOM * 2, Math.ceil(r.height / UNIT) + ROOM * 2];
+  });
   const paint = (scene, now) => {
     if (!scene.w) return;
+    // where the words are now: they move when the letters change, without the scene changing size
+    scene.quiet = quietZones(scene, scene.canvas.getBoundingClientRect());
     scene.g.setTransform(UNIT, 0, 0, UNIT, 0, 0);   // drawn at the page's own resolution, so its words are crisp
     scene.g.imageSmoothingEnabled = false;
     const still = calm();
@@ -29,15 +37,9 @@ export function startScenes() {
     const met = scene.met === null ? null : (now - scene.met) / 1000;
     scene.draw(scene.px, scene.w, scene.h, still ? 6.5 : (now - born) / 1000, { quiet: scene.quiet, paper: paper(), still, met });
   };
-  // where the words are, in the scene's own pixels, with a little room round them
-  const quietZones = (scene, box) => [...scene.canvas.parentElement.querySelectorAll('[data-quiet]')].map((el) => {
-    const r = el.getBoundingClientRect();
-    return [Math.floor((r.left - box.left) / UNIT) - 3, Math.floor((r.top - box.top) / UNIT) - 3, Math.ceil(r.width / UNIT) + 6, Math.ceil(r.height / UNIT) + 6];
-  });
   const size = (scene) => {
     const box = scene.canvas.getBoundingClientRect();
     const width = Math.round(box.width), height = Math.round(box.height);
-    scene.quiet = quietZones(scene, box);
     if (width === scene.canvas.width && height === scene.canvas.height && scene.w) return;
     // the canvas holds exactly the pixels it shows, so nothing is squeezed; the scene is
     // drawn in whole units, and what hangs over the edge of the last one is cut off

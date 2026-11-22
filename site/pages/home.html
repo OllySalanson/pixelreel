@@ -352,5 +352,11 @@ fetch: /reels/pixel-reel/reel.json /reels/pixel-reel/audio/manifest.json
       <a class="btn btn-gold btn-big" href="/claude">Add Pixel Reel to Claude</a>
       <a class="btn btn-paper btn-big" href="#make">Make a pixel reel now</a>
     </div>
+    <!-- passes on the page of the reel that explains Pixel Reel; its script wakes it, so it is not seen without -->
+    <div class="row finale-send">
+      <p>Know someone who would rather watch?</p>
+      <button class="btn btn-teal" type="button" data-send="What is Pixel Reel?" data-path="/watch/pixel-reel" data-says="#finale-sent">Send it to them</button>
+      <p class="watch-sent" id="finale-sent" role="status"></p>
+    </div>
   </div>
 </section>

@@ -197,6 +197,7 @@ describe('the site\'s own pictures', () => {
     assert.equal(said({ met: 2 }), true, 'soon after it is seen');
     assert.equal(said({ met: 2, still: true }), false, 'never when pictures are held still');
     assert.equal(said({ met: 60 }), false, 'and not for ever');
+    assert.equal(said({ met: 2, quiet: [[0, 0, 360, 234]] }), false, 'nor on top of any words');
   });
 
   it('keeps stars away from where the words are, and out of the strips of film', () => {
@@ -207,6 +208,35 @@ describe('the site\'s own pictures', () => {
     assert.ok(!stars.some((r) => r.x >= 20 && r.x < 120 && r.y >= 10 && r.y < 70));
     // the strips are 5 units deep, 4 in from the top and the foot (.cinema in site.css)
     assert.ok(stars.every((r) => r.y > 9 && r.y < 100 - 10), 'no star in among the holes');
+  });
+
+  it('lets sleeping Reelie\'s Zs drift up only as far as the words in the footer', () => {
+    const zs = (quiet) => {
+      const found = [];
+      for (let t = 0; t < 8; t += 0.25) {
+        const g = fakeContext();
+        SCENES.footer(createKit(g), 100, 120, t, { quiet });
+        found.push(...g.texts.filter((text) => text.str === 'z'));
+      }
+      return found;
+    };
+    const free = zs([]);
+    assert.ok(free.length > 20 && Math.min(...free.map((z) => z.y)) < 70, 'they rise well above Reelie when nothing is in the way');
+    const words = [0, 0, 100, 80];   // the footer's words reach down to row 80
+    assert.ok(zs([words]).length > 0, 'the low ones are still drawn');
+    assert.ok(zs([words]).every((z) => z.y >= 80), 'and none over the words');
+  });
+
+  it('ends the dusk at the foot of the page above the words, so they never sit on its pattern', () => {
+    const NIGHT = '#0b1220';
+    // the lowest row with anything in it but night sky and stars
+    const duskEnds = (quiet) => {
+      const g = fakeContext();
+      SCENES.finale(createKit(g), 100, 200, 3, { quiet, paper: '#faf3e1' });
+      return Math.max(...g.rects.filter((r) => r.c.toLowerCase() !== NIGHT && !(r.w === 1 && r.h === 1) && !(r.h === 1 && r.w === 3) && !(r.w === 1 && r.h === 3)).map((r) => r.y + r.h));
+    };
+    assert.equal(duskEnds([]), 52, 'as deep as it likes when nothing is in its way');
+    assert.ok(duskEnds([[4, 30, 80, 60]]) <= 30, 'and no deeper than where the words begin');
   });
 
   it('sends its shooting stars behind the words and clear of the film, never across them', () => {

@@ -89,8 +89,8 @@ function cottage(px, x, y, t, wall, still) {
   }
 }
 
-/** Reelie, the film reel, bobbing gently. With `asleep`, eyes shut and a few Zs. */
-export function reelie(px, x, y, t, { asleep = false, still = false } = {}) {
+/** Reelie, the film reel, bobbing gently. With `asleep`, eyes shut and a few Zs, which fade out before they reach any words (`quiet`). */
+export function reelie(px, x, y, t, { asleep = false, still = false, quiet = [] } = {}) {
   const bob = still || asleep ? 0 : Math.round(Math.sin(t * 2.2) * 1), cx = x + 13, cy = y + 13 + bob;
   px.sprite(SPRITES.reelie.rows, x, y + bob, 1, false, SPRITES.reelie.colours);
   if (asleep || (!still && t % 4.1 > 3.95)) {
@@ -100,8 +100,9 @@ export function reelie(px, x, y, t, { asleep = false, still = false } = {}) {
   if (asleep) {
     px.rect(GOLD, cx - 2, cy + 2, 5, 2); px.rect(INK, cx - 1, cy + 3, 2, 1);
     for (let k = 0; k < 3; k++) {
-      const age = still ? k / 3 : (t * 0.25 + k / 3) % 1;
-      px.text('z', cx + 12 + Math.round(age * 9), cy - 12 - Math.round(age * 16), 10 + k * 2, STAR);
+      const age = still ? k / 3 : (t * 0.25 + k / 3) % 1, size = 10 + k * 2;
+      const zx = cx + 12 + Math.round(age * 9), zy = cy - 12 - Math.round(age * 16);
+      if (!amongWords(quiet, zx, zy, size)) px.text('z', zx, zy, size, STAR);
     }
   }
 }
@@ -126,6 +127,13 @@ function shootingStar(px, w, h, t, { still = false, every = 11, quiet = [], top 
  * time t. `quiet` is where words sit (no stars there), `paper` the page's colour, `still`
  * holds it calm, and `met` is how many seconds ago its foot first came into view (null: not yet).
  */
+/**
+ * How far round the words a scene is kept plain, in its own pixels: scenery.js makes each
+ * `quiet` zone this much bigger than the words in it. The tallest OpenDyslexic heading
+ * reaches 34 page pixels past its own line.
+ */
+export const ROOM = 9;
+
 const HELLO = [0.5, 5];   // when Reelie's hello shows, in seconds after you first see it
 const FILM = 11;          // how far in from the top and the foot of the cinema its strips of film reach (.cinema in site.css)
 
@@ -154,7 +162,8 @@ export const SCENES = {
     reelie(px, at, top, t, { still });
     // Reelie says hello, once, when you first reach it (it stands below the first screenful);
     // over its head, clear of the cottage, and never when pictures are held still
-    if (!still && met !== null && met > HELLO[0] && met < HELLO[1]) px.bubble('Hello!', at - 2, top - 19, 12, at + 13);
+    // (it has a ground of its own, so it may stand in the room round the words, but not on them)
+    if (!still && met !== null && met > HELLO[0] && met < HELLO[1] && !amongWords(quiet, at - 2, top - 19 + ROOM, 44)) px.bubble('Hello!', at - 2, top - 19, 12, at + 13);
   },
 
   // now showing: just the night sky
@@ -166,7 +175,8 @@ export const SCENES = {
 
   // the last word: day gives way to night
   finale(px, w, h, t, { quiet = [], paper = PAPER } = {}) {
-    const dusk = Math.min(h, 52);
+    // the dusk fades out above the words, however close to the top a narrow screen puts them
+    const dusk = Math.max(8, Math.min(h, 52, ...quiet.map(([, y]) => y)));
     sky(px, w, 0, dusk, [[0, paper], [0.2, '#ffd98a'], [0.4, '#f29b62'], [0.58, '#b55c7c'], [0.76, '#5a4b8b'], [0.9, '#1f2f58'], [1, NIGHT]]);
     px.rect(NIGHT, 0, dusk, w, h - dusk);
     stars(px, w, h - dusk + 8, t, 13, quiet, dusk - 8);
@@ -176,12 +186,12 @@ export const SCENES = {
   footer(px, w, h, t, { quiet = [], still = false } = {}) {
     px.rect(NIGHT, 0, 0, w, h);
     stars(px, w, h - 30, t, 21, quiet);
-    moon(px, w - Math.max(22, Math.round(w * 0.08)), 20, 9);
+    moon(px, w - Math.max(14, Math.round(w * 0.08)), 6, 5);   // small, above the footer's rule (3rem down), so the line never crosses it
     const far = ridge(w, h - 12, 18, 14), near = ridge(w, h - 2, 14, 17);
     ground(px, far, '#17294a', h);
     pines(px, far, '#17294a', 3);
     ground(px, near, '#0d1930', h);
     const at = Math.round(Math.min(w - 44, Math.max(12, w * 0.07)));
-    reelie(px, at, near[at + 13] - 27, t, { asleep: true, still });
+    reelie(px, at, near[at + 13] - 27, t, { asleep: true, still, quiet });
   }
 };
