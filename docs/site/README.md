@@ -24,8 +24,8 @@ People who find reading hard work. Every choice follows from that:
   Words never sit on a pattern or a picture: even the stars keep clear of them.
 - **Buttons.** Every main thing to do is a big button that says what it does.
 - **Make it comfy.** A panel on every page changes the letters (Lexend, Atkinson
-  Hyperlegible Next or OpenDyslexic), their size and spacing, the colour of the paper, and
-  whether pictures move. It is kept on the reader's device only.
+  Hyperlegible Next or OpenDyslexic), their size and spacing, the colour of the paper,
+  whether pictures move, and how fast Peter reads. It is kept on the reader's device only.
 - **Watch instead.** Every part of the home page has a "Make a pixel reel about this" button
   that plays a reel of that part, made earlier. "Watch this whole page" plays them all.
 - **Calm.** Sound only ever starts on a press. Pictures hold still for anyone whose device
@@ -43,7 +43,7 @@ The voice is Peter's: warm, plain, British, a little cheeky. Plain dashes only.
 | `site/layout.html` | The shell every page shares: the bar across the top, the foot, Make it comfy and the theatre. |
 | `site/pages/*.html`, `*.md` | A page each. The comment at the top holds its `title` and `description`. Plain pages are Markdown. `reel.html` is the page every shared reel is watched on (`/r/<id>`), and `watch.html` the page each of the site's own reels has to be sent by (`/watch/<name>`: the examples in `EXAMPLES`, in `service/site.mjs`, which also writes their posters). |
 | `site/css/site.css` | The whole look. |
-| `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` is Make it comfy; `boot.js` runs before the page is drawn, to put its settings back and to keep the bar across the top on one row; `signal.js` is the test card on a page that is not there; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `send.js` copies words and passes a reel on; `sprites.js` is the site's own pixel art. |
+| `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` is Make it comfy; `boot.js` runs before the page is drawn, to put its settings back and to keep the bar across the top on one row; `signal.js` is the test card on a page that is not there; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `send.js` copies words and passes a reel on; `pace.js` is the clock that lets Peter read slower or quicker; `sprites.js` is the site's own pixel art. |
 | `site/fonts/`, `site/art/` | The fonts (with their licences), and the icons, logos and share picture. |
 | `service/site.mjs` | Puts a page together: the layout, the page, and the `{{names}}` in them. |
 | `service/static.mjs` | Serves the files a page loads, and only those. |
@@ -345,3 +345,15 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | On a phone: the foot of the home page, and the footer, before and after |
 | --- |
 | ![Before: a heading on a dithered sunset, and Zs across small print. After: both on plain night sky.](log/v13-off-the-pattern.jpg) |
+
+### Version 14
+
+- **Peter reads at your pace.** Make it comfy has a new choice, How fast Peter reads:
+  Slower, Usual or Quicker. Some people need longer to take a sentence in, and some want to
+  get on with it. Every player on the site obeys it, at once, even in the middle of a line,
+  and the pictures stay in step with the words: each player keeps time on a clock of its
+  own (`site/js/pace.js`), which a slower pace stretches along with the voice.
+
+| The new choice in Make it comfy |
+| --- |
+| ![How fast Peter reads: Slower, Usual, Quicker, with Slower chosen.](log/v14-pace.jpg) |

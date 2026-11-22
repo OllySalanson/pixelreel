@@ -7,6 +7,7 @@ import { addToClaudeLink, EXAMPLES, pageFacts, playerHtml, robotsTxt, SITE_PAGES
 import { staticFile } from '../service/static.mjs';
 import { SCENES } from '../site/js/landscape.js';
 import { askFor } from '../site/js/maker.js';
+import { PACES, pacedClock, rateOf } from '../site/js/pace.js';
 import { lengthWords, showOf } from '../site/js/reels.js';
 import { sendReel, sentWords } from '../site/js/send.js';
 import { SPRITES } from '../site/js/sprites.js';
@@ -340,6 +341,52 @@ describe('passing a reel on', () => {
   });
 });
 
+describe("Peter's pace", () => {
+  it('has a slower and a quicker rate either side of the usual one', () => {
+    assert.ok(PACES.slow < 1 && PACES.usual === 1 && PACES.quick > 1);
+    assert.equal(rateOf('slow'), PACES.slow);
+    assert.equal(rateOf(undefined), 1);
+    assert.equal(rateOf('ludicrous'), 1, 'an odd name is the usual pace');
+  });
+
+  it("runs the reel's clock slower or quicker than the wall's, without a jump when the rate changes", () => {
+    let wall = 1000;
+    const clock = pacedClock({ now: () => wall });
+    assert.equal(clock.now(), 0);
+    wall += 2000;
+    assert.equal(clock.now(), 2000, 'at the usual pace a second is a second');
+    clock.setRate(0.5);
+    assert.equal(clock.now(), 2000, 'changing the rate does not move the clock');
+    wall += 2000;
+    assert.equal(clock.now(), 3000, 'read at half the pace, two seconds on the wall is one of the reel');
+    clock.setRate(2);
+    wall += 1000;
+    assert.equal(clock.now(), 5000);
+    assert.equal(clock.rate, 2);
+  });
+
+  it("waits a timer's time on the reel's clock", () => {
+    const waits = [], cleared = [];
+    const clock = pacedClock({ now: () => 0, set: (fn, ms) => { waits.push(ms); return waits.length; }, clear: (id) => cleared.push(id) });
+    clock.timer.set(() => {}, 1000);
+    clock.setRate(0.8);
+    const id = clock.timer.set(() => {}, 1000);
+    clock.setRate(1.25);
+    clock.timer.set(() => {}, 1000);
+    assert.deepEqual(waits, [1000, 1250, 800]);
+    clock.timer.clear(id);
+    assert.deepEqual(cleared, [2]);
+  });
+
+  it('is chosen in Make it comfy, on every page, and starts as usual', () => {
+    for (const name of pages) {
+      const picks = [...html[name].matchAll(/<input type="radio" name="pace" value="([a-z]+)"( checked)?>/g)].map((found) => [found[1], Boolean(found[2])]);
+      assert.deepEqual(picks, [['slow', false], ['usual', true], ['quick', false]], name);
+      for (const [value] of picks) assert.ok(value in PACES, `${value} is a pace the players know`);
+    }
+  });
+});
+
 describe('before the page is drawn', () => {
   // Runs site/js/boot.js on a pretend page. Its bar holds a name, some links that are not
   // shown, and a button that drops to a second row until the bar is at step `fitsFrom`.
@@ -367,7 +414,7 @@ describe('before the page is drawn', () => {
   };
 
   it('puts back the comfort settings chosen last time, and nothing odd', () => {
-    assert.deepEqual(boot({ saved: '{"font":"opendyslexic","size":"3","paper":"<b>","colour":"red"}' }).page.html.dataset, { font: 'opendyslexic', size: '3' });
+    assert.deepEqual(boot({ saved: '{"font":"opendyslexic","size":"3","paper":"<b>","colour":"red","pace":"slow"}' }).page.html.dataset, { font: 'opendyslexic', size: '3', pace: 'slow' });
     assert.deepEqual(boot({ saved: 'not json' }).page.html.dataset, {});
   });
 
