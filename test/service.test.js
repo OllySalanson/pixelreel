@@ -1064,7 +1064,7 @@ describe('the service over HTTP', async () => {
     assert.match(page, /"french":\{"recording":"Enregistrement de la voix"/);
     assert.match(page, /window\.pixelreelLangCodes = \{"english":"en","french":"fr"/, 'and the code of each language, which it tells a screen reader');
     assert.match(page, /if \(code\) document\.documentElement\.lang = code;/);
-    assert.match(page, /const language = document\.body\.dataset\.language, words = wordsFor\(language\);/);
+    assert.match(page, /const language = reel\.language \?\? document\.body\.dataset\.language, words = wordsFor\(language\);/, 'a reel that names its own language comes first');
     const speaking = new Reels({ store: freshStore(), record: () => new Promise(() => {}), video: fakeVideo, picture: fakePicture, languages: ['french'] });
     const other = createService({ reels: speaking, baseUrl: 'https://reels.example' });
     await new Promise((ok) => other.listen(0, '127.0.0.1', ok));

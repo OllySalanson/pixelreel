@@ -100,6 +100,8 @@ function reelInput(languages = [], narrators = []) {
       enum: ['english', ...languages],
       description: 'The language every word of the reel is written in, for Peter to read it in. Leave it out for English.'
     };
+  } else {
+    delete reel.properties.language;   // the format lets a reel name its language, but here only English can be read
   }
   if (narrators.length) {
     reel.properties.narrator = {
