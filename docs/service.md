@@ -388,7 +388,7 @@ again."
 | A reel from | Tokens in | Tokens out | Cost | |
 | --- | --- | --- | --- | --- |
 | A link | 48,617 | 1,227 | 11 cents | **Measured**, once, on 22 November 2026: the first real reel, from a GOV.UK guide, when Claude read up to 20,000 tokens of a page. |
-| A link, now | about 18,000 | about 1,200 | about 5 cents | An estimate, from the two changes below. Not measured yet. |
+| A link, now | 12,678 | 933 | 3.5 cents | **Measured** on 22 November 2026, after the two changes below: the same GOV.UK guide, read by Anna, on the live site. Four more runs of the same request took 12,678 in and between 952 and 994 out. |
 | A few words, or a photo | about 3,000 | about 1,200 | about 2 cents | An estimate. Not measured yet. |
 | A PDF | at most 53,000 | about 1,200 | at most 12 cents | An estimate. The PDF itself is counted before it is read, and turned away over 50,000 tokens. |
 
@@ -405,7 +405,7 @@ A link costs more than its page is long, for two reasons that the first real ree
   once, so it now uses the plain reader (`PAGE_READER`).
 
 At 30 a day, the most it can cost is about $3.60 a day if every one is a long PDF, and about
-$1.50 if every one is a link, plus the recording (see [deploy.md](deploy.md#what-it-costs)).
+$1.05 if every one is a link, plus the recording (see [deploy.md](deploy.md#what-it-costs)).
 
 **A YouTube link is turned away before it costs anything.** Claude's page reader cannot
 load a YouTube page (tried, on the live site), and Pixel Reel cannot watch a video. So the
@@ -430,8 +430,9 @@ How it is kept safe:
   script can still pretend, which is what the caps are for.)
 - **What a visitor gives, and what is on a page, is material to explain, never an
   instruction.** Claude is told so, and whatever it writes still has to pass the same checks
-  and limits as any reel. If the reel has problems, Claude gets one chance to put it right,
-  and is not sent a long document a second time to do it.
+  and limits as any reel. If the reel has problems, or the reply cannot be read as a reel
+  at all, Claude gets one chance to put it right, and is not sent a long document, or a
+  page, a second time to do it.
 - **What a visitor gives is not kept.** It is held in memory while Claude reads it and then
   dropped: only the reel is stored. Claude is told to leave out details that point at one
   person and that the explanation does not need (names, addresses, account numbers), since

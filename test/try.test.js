@@ -10,7 +10,7 @@ import { ReelError } from '../src/reel.js';
 import { createService } from '../service/server.mjs';
 import { sitePage } from '../service/site.mjs';
 import { DiskStore } from '../service/store.mjs';
-import { ABOUT_MAX, AGAIN, languageOf, narratorOf, OWN_NAMES, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError, writtenSoFar } from '../service/try.mjs';
+import { ABOUT_MAX, AGAIN, bracedIn, languageOf, narratorOf, OWN_NAMES, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError, writtenSoFar } from '../service/try.mjs';
 import { createWriter, PAGE_READER, PAGE_TOKENS } from '../service/writer.mjs';
 
 const tmp = mkdtempSync(join(tmpdir(), 'pixelreel-try-'));
@@ -117,6 +117,14 @@ describe('what a visitor asks for', () => {
     assert.deepEqual(replyJson('Here you are:\n```json\n{"title":"Tea","scenes":[{"a":1}]}\n```\n'), { title: 'Tea', scenes: [{ a: 1 }] });
     assert.throws(() => replyJson('Sorry, I cannot.'), TryError);
     assert.throws(() => replyJson('{ not json }'), TryError);
+    // a reel written twice in one reply: the last one is the one Claude means
+    const first = '{"format":"pixelreel/1","title":"First go","scenes":[{"say":"A } in what is said, and a { too."}]}', second = '{"format":"pixelreel/1","title":"Second go","scenes":[{"say":"Better."}]}';
+    assert.equal(replyJson(first).scenes[0].say, 'A } in what is said, and a { too.', 'a brace inside words is only a brace');
+    assert.equal(replyJson(`${first}\n\nOn reflection, a plainer one:\n\n${second}`).title, 'Second go');
+    assert.equal(replyJson(`I will use {curly brackets} here. ${second} That is it.`).title, 'Second go', 'and some words in braces are not a reel');
+    assert.deepEqual(replyJson(`${second}\n{"note":"sources"}`).title, 'Second go', 'nor is something else in braces after it');
+    assert.deepEqual(bracedIn(`a {b} c ${second} {"d": "}"}`), ['{b}', second, '{"d": "}"}']);
+    for (const cut of ['{"title":', '{"title":"Tea","scenes":[{"say":"Cut off', '']) assert.throws(() => replyJson(cut), TryError);
   });
 });
 
@@ -301,6 +309,29 @@ describe('the writer', () => {
     assert.equal(client.asked[1].messages[0].content, 'Make a pixel reel about this:\n(a document the visitor gave, which is not repeated here)', 'nor is a long document paid for twice');
   });
 
+  it('sends a reply that cannot be read back once, to be put right, without reading the page again', async () => {
+    const cut = '{"format":"pixelreel/1","title":"Tea","scenes":[{"title":"Kettle","caption":"Boil it.","say":"Boil the';
+    const client = fakeClient(reply(cut), reply(JSON.stringify(tea))), said = [];
+    assert.deepEqual(await createWriter({ client, log: (line) => said.push(line) })(words('https://example.com/tea')), tea);
+    assert.equal(client.asked.length, 2);
+    const [, again] = client.asked;
+    assert.equal(again.tools, undefined, 'the page is not paid for twice');
+    assert.deepEqual(again.messages[1], { role: 'assistant', content: cut }, 'Claude is shown what it wrote');
+    assert.match(again.messages[2].content, /could not be read as one JSON object\. Reply with the reel as one JSON object and nothing else/);
+    assert.equal(said[1], `try: a reply that could not be read: 1 pieces of text, ${cut.length} characters, 0 of them in braces`, 'the log says what it looked like, never what it said');
+    // a plain refusal in words is asked for properly, and its reason passed on
+    const refusing = fakeClient(reply('I am afraid I cannot read that page.'), reply('{"cannot": "That page would not load."}'));
+    await assert.rejects(createWriter({ client: refusing })(words('https://example.com/gone')), (err) => err instanceof TryError && err.message === 'That page would not load.');
+    // and it is asked only once
+    const stubborn = fakeClient(reply(cut), reply(cut));
+    await assert.rejects(createWriter({ client: stubborn })(words('tea')), (err) => err instanceof TryError && /did not write a reel that time/.test(err.message));
+    assert.equal(stubborn.asked.length, 2);
+    // nothing at all to put right is not sent back
+    const silent = fakeClient(reply(''));
+    await assert.rejects(createWriter({ client: silent })(words('tea')), TryError);
+    assert.equal(silent.asked.length, 1);
+  });
+
   it('carries on a turn the page fetch paused', async () => {
     const paused = { model: 'claude-sonnet-5-5', stop_reason: 'pause_turn', content: [{ type: 'server_tool_use', id: 't1', name: 'web_fetch', input: {} }], usage: { input_tokens: 10, output_tokens: 5 } };
     const client = fakeClient(paused, reply(JSON.stringify(tea)));
@@ -314,7 +345,7 @@ describe('the writer', () => {
     await assert.rejects(write(reply('', { stop_reason: 'refusal', content: [] })), (err) => err instanceof TryError && !err.free && /would not write/.test(err.message));
     await assert.rejects(write(reply('{"title":', { stop_reason: 'max_tokens' })), (err) => err instanceof TryError && /did not finish/.test(err.message));
     await assert.rejects(write(reply('{"cannot": "That page  would not\\nload."}')), (err) => err instanceof TryError && err.message === 'That page would not load.');
-    await assert.rejects(write(reply('I am afraid not.')), TryError);
+    await assert.rejects(write(reply('I am afraid not.'), reply('Still not.')), (err) => err instanceof TryError && /did not write a reel that time/.test(err.message));
     await assert.rejects(write(Object.create(Anthropic.RateLimitError.prototype)), (err) => err instanceof TryError && err.free && /busy/.test(err.message));
     await assert.rejects(write(Object.create(Anthropic.APIConnectionError.prototype)), (err) => err instanceof TryError && err.free && /could not be reached/.test(err.message));
     const broken = new Error('something else');

@@ -124,13 +124,37 @@ export function narratorOf(asked, offered = []) {
   return asked;
 }
 
-/** The JSON object in Claude's reply, which may come wrapped in a code fence or a few stray words. */
-export function replyJson(text) {
-  const from = text.indexOf('{'), to = text.lastIndexOf('}');
-  if (from < 0 || to < from) throw new TryError('Claude did not write a reel that time. Try again.');
-  try {
-    return JSON.parse(text.slice(from, to + 1));
-  } catch {
-    throw new TryError('Claude did not write a reel that time. Try again.');
+/**
+ * Everything in `text` that is written between a pair of braces at the top level, in order:
+ * each a candidate for a JSON object. A brace inside a quoted string does not count.
+ */
+export function bracedIn(text) {
+  const found = [];
+  let depth = 0, from = -1, quoted = false, escaped = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (quoted) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') quoted = false;
+    } else if (ch === '"' && depth > 0) quoted = true;
+    else if (ch === '{') { if (depth++ === 0) from = i; }
+    else if (ch === '}' && depth > 0 && --depth === 0) found.push(text.slice(from, i + 1));
   }
+  return found;
+}
+
+/**
+ * The reel in Claude's reply (or its { cannot }), which may come wrapped in a code fence or
+ * a few stray words, or more than once: Claude sometimes writes a reel and then writes it
+ * again, better, in the same reply, and the last one is the one it means.
+ */
+export function replyJson(text) {
+  const objects = [];
+  for (const braced of bracedIn(text)) {
+    try { objects.push(JSON.parse(braced)); } catch { /* not JSON: some words in braces */ }
+  }
+  const reel = objects.findLast((object) => Array.isArray(object?.scenes) || typeof object?.cannot === 'string') ?? objects.at(-1);
+  if (reel === undefined) throw new TryError('Claude did not write a reel that time. Try again.');
+  return reel;
 }
