@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { reelFromData } from '../src/format.js';
 import { clipLookup, ReelError } from '../src/reel.js';
 import { staysAhead } from './ahead.mjs';
-import { limitProblems, peterMs, reelMs } from './limits.mjs';
+import { limitProblems, peterMs, reelMs, slipProblems } from './limits.mjs';
 import { paceReel } from './pacing.mjs';
 import { narrationMs, timeline } from '../src/timing.js';
 
@@ -89,10 +89,13 @@ export class Reels {
     this.notes = new Map();   // how far each reel that is still being written has got: note()
   }
 
-  /** A reel (parsed reel.json) checked: the reel, or a ReelError if it has problems or is past the service's limits. */
-  check(raw) {
+  /**
+   * A reel (parsed reel.json) checked: the reel, or a ReelError if it has problems or is past
+   * the service's limits. With `slips`, a slip in one of its drawings is a problem too.
+   */
+  check(raw, { slips = false } = {}) {
     const reel = reelFromData(raw);
-    const over = limitProblems(reel, raw);
+    const over = [...limitProblems(reel, raw), ...(slips ? slipProblems(raw) : [])];
     if (over.length) throw new ReelError(over);
     return reel;
   }
@@ -127,7 +130,7 @@ export class Reels {
    * `narrator` is who reads it, by first name: one of `narrators`, or Peter.
    */
   async create(raw, { improves = null, language = null, narrator = null } = {}) {
-    const reel = this.check(raw);
+    const reel = this.check(raw, { slips: true });   // whoever sent it can mend it and send it again, at no cost
     const who = narrator && narrator !== 'peter' ? narrator : null;
     if (who && !(this.narrators.includes(who) && NARRATORS[who])) {
       throw new ReelError([`narrator: the narrators here are ${['Peter', ...this.narrators.map(languageName)].join(', ')}, not ${JSON.stringify(narrator)}. Leave it out for Peter.`]);

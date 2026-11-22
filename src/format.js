@@ -142,7 +142,7 @@ const KIND_SCHEMAS = {
     minItems: 1,
     maxItems: SPRITE_MAX.rows,
     items: { type: 'string', maxLength: SPRITE_MAX.cols },
-    description: `Rows of pixels, one letter each: ${Object.keys(PALETTE).join(' ')} from the palette, a letter of your own from colours, or "." for see-through.`
+    description: `Rows of pixels, one letter each: ${Object.keys(PALETTE).join(' ')} from the palette, a letter of your own from colours, or "." for see-through. Every row the same length.`
   },
   colours: {
     type: 'object',

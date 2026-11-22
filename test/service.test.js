@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
-import { CLAUDE_ADDRESSES, inRanges, LIMITS, limitProblems, peterMs, RateLimit, reelMs } from '../service/limits.mjs';
+import { CLAUDE_ADDRESSES, inRanges, LIMITS, limitProblems, peterMs, RateLimit, reelMs, slipProblems } from '../service/limits.mjs';
 import { EXAMPLE_REEL, formatGuide, playerHtml, reelId } from '../service/mcp.mjs';
 import { promptList, promptMessages } from '../service/prompts.mjs';
 import { BusyError, isId, KEEP_DAYS, languageName, NARRATORS, newId, Reels } from '../service/reels.mjs';
@@ -576,6 +576,27 @@ describe('the service limits', () => {
     assert.equal(limit.hit('153.61.209.1'), null, 'room again once the hour has moved on');
   });
 
+  it('sends back a drawing with a row of the wrong length, before anything is recorded', async () => {
+    const drawn = (rows) => ({ ...tea, scenes: [scene(), scene({ picture: { type: 'sprite', rows } })] });
+    assert.deepEqual(slipProblems(tea), []);
+    assert.deepEqual(slipProblems(drawn(['.kk.', 'kyyk', '.kk.'])), []);
+    // the slip a real session made: a space typed into two rows of a rainbow, each pushing the rest of its row along
+    assert.deepEqual(slipProblems(drawn(['..rrrr..', '.rroo rr.', 'rroyyorr', 'rroy yorr', 'rroyyorr'])),
+      ['scene 2: picture.rows must all be the same length, or the drawing breaks where one is not: rows[1] has 9, rows[3] has 9, where the others have 8. A space counts as a pixel. Mend each row where it went wrong, so the drawing lines up: adding "." to its end only hides it.']);
+    assert.match(slipProblems(drawn(['k', 'kk', 'kkk', 'kkkk']))[0], /they run from 1 to 4\./, 'with no usual length to name, it says how far they run');
+    assert.deepEqual(limitProblems(reelFromData(drawn(['kk', 'k'])), drawn(['kk', 'k'])), [], 'it is not a limit, and not part of the format: the player draws such a sprite as given');
+
+    let recorded = 0;
+    const reels = new Reels({ store: freshStore(), record: async () => { recorded++; return {}; }, video: fakeVideo });
+    await assert.rejects(reels.create(drawn(['kk', 'kk', 'k'])), (err) => err instanceof ReelError && /rows\[2\] has 1, where the others have 2/.test(err.problems[0]));
+    assert.equal(recorded, 0);
+    // a reel written for a visitor to the site is not sent back for it: a second go there costs money and their time
+    const begun = await reels.begin();
+    assert.ok(await reels.write(begun.id, drawn(['kk', 'kk', 'k'])));
+    await reels.idle();
+    assert.equal(recorded, 1);
+  });
+
   it('refuses a reel past the limits, and when too many are waiting', async () => {
     const reels = new Reels({ store: freshStore(), record: () => new Promise(() => {}), video: fakeVideo, maxQueue: 1 });
     await assert.rejects(reels.create({ ...tea, scenes: Array.from({ length: 13 }, () => scene()) }), (err) => err instanceof ReelError && /too many/.test(err.problems[0]));
@@ -653,6 +674,7 @@ describe('the service over HTTP', async () => {
     const client = await connect();
     const make = (await client.listTools()).tools.find((t) => t.name === 'make_reel');
     assert.match(make.description, /5 to 7 scenes, about 40 seconds/);
+    assert.match(make.description, /or the number or length the person asked for/, 'and what the person asked for comes first');
     assert.match(make.description, /a letter, a bill, a document, a web page, how something works, or the chat so far/);
     assert.ok(make.description.length < 2000, 'short enough for clients that cut a long description off');
     const { properties, $defs } = make.inputSchema;
@@ -695,6 +717,7 @@ describe('the service over HTTP', async () => {
     assert.match(guide, /"rows" is 1 to 5 rows, each a list of 2 to 4 short cells, every row the same length, such as \[\["High Street", "9:05"\], \["Station", "9:20"\]\]/);
     assert.match(guide, /Do not make icons stand for days, times or amounts: put them in a table\./);
     // the big word is for once in a reel, not the usual second scene (Olly, 22 November 2026)
+    assert.match(guide, /If the person asks for a number of scenes or a length \("three scenes", "under half a minute"\), give them that, not more\./);
     assert.match(guide, /A big picture is for the one number or word the whole reel turns on \(the amount to pay, the date\): use it once at most, where that number is said, and not as the usual second scene\./);
     assert.equal(example.scenes.filter((s) => s.picture.type === 'big').length, 1, 'and the example does as it says');
     assert.doesNotMatch(guide, /a big word or a sprite instead/, 'nor is it the thing to fall back on when no icon fits');
@@ -797,6 +820,10 @@ describe('the service over HTTP', async () => {
     const result = await client.callTool({ name: 'make_reel', arguments: { ...tea, scenes: [{ title: 'A', picture: { type: 'icons', items: [] } }] } });
     assert.equal(result.isError, true);
     assert.match(words(result), /^This reel has problems\. Fix them all, then call make_reel again:\n- scene 1: needs a caption\n- scene 1: picture\.items must be/);
+    // a slip in a drawing is sent back the same way, and costs none of the caller's reels
+    const slipped = await client.callTool({ name: 'make_reel', arguments: { ...tea, scenes: [{ ...tea.scenes[0], picture: { type: 'sprite', rows: ['.kk.', 'k yyk', '.kk.'] } }] } });
+    assert.equal(slipped.isError, true);
+    assert.match(words(slipped), /^This reel has problems\. Fix them all, then call make_reel again:\n- scene 1: picture\.rows must all be the same length, or the drawing breaks where one is not: rows\[1\] has 5, where the others have 4\./);
     await client.close();
   });
 

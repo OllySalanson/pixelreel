@@ -197,7 +197,8 @@ better than an icon that does not fit. `every` and `start` set their timing, as 
 
 **sprite**: pixel art of your own, from rows of [sprite letters](#sprite-letters), scaled up to
 fill the picture and dropped in, with an optional `label`. `colours` adds letters of your own.
-Up to 40 rows of up to 64 letters; `.` is see-through.
+Up to 40 rows of up to 64 letters; `.` is see-through. Keep every row the same length: a
+stray space or letter pushes the rest of that row sideways.
 
 ```js
 picture: { type: 'sprite', label: 'MY CAT', colours: { h: '#6b3e2e' }, rows: ['.h....h.', 'hhh..hhh', 'hkhhhhkh', 'hhhyyhhh', '.hhhhhh.'] }

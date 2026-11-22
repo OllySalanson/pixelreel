@@ -472,6 +472,11 @@ So a reel stays short enough to watch, and nobody (or no runaway agent) can use 
   in a list, terminal, code or chat picture, and runs under 4 minutes. It cannot carry images
   from elsewhere (they could track whoever watches); icons and sprites cover most needs.
   `reel_format` tells Claude these up front, and `make_reel` says exactly what is over.
+- `make_reel` also sends back a sprite whose rows are not all the same length, naming the
+  rows, before anything is recorded: a stray space or letter pushes the rest of that row
+  sideways, and Claude, seeing it afterwards, would make the whole reel a second time. The
+  player still draws such a sprite as it is given, and a reel written for a visitor to the
+  site (`/try`) is not sent back for it, as a second go there costs money and their time.
 - Each caller (by address) can make 10 reels and 10 videos an hour, and the service 300 reels
   a day in all. Set them with `PIXELREEL_REELS_PER_HOUR`, `PIXELREEL_VIDEOS_PER_HOUR` and
   `PIXELREEL_REELS_PER_DAY`. Only a reel that is made counts: one sent back to Claude to be
