@@ -745,6 +745,7 @@ dialog { color: var(--ink); }
 @media (max-width: 23.5rem) {
   .reel-keys button { font-size: 0.875rem; }
   .maker > label { font-size: 1.125rem; }   /* so "explained?" fits the box at the biggest, widest letters */
+  h1 { font-size: 2.25rem; }   /* so "Credits" fits the page at the biggest, widest letters */
   h3 { font-size: 1.3125rem; }   /* so "explaining" fits its card at the biggest, widest letters */
   /* and so "anything?" fits beside its + in the first question, which was pushing the page wider than the screen */
   .faq summary { gap: 0.5rem; padding-inline: 0.75rem; font-size: 1.125rem; }

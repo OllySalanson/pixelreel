@@ -166,8 +166,13 @@ man's voice or a woman's, a button to hear them say hello, and one to choose the
   reel in French, read by Anna, about this: my gas bill".
 - A reel's own page names whoever is reading while it waits ("Anna is recording scene 3 of
   6"), from what the service says of the reel.
-- The site never says a voice can copy anyone: all are computer voices made from public
-  domain readings, and none can be made to sound like a real person.
+- **Where each voice comes from is on the credits page, and has to be.** Peter's and
+  Stuart's are modelled on public domain readings (Voice-Zero, CC0). Anna's, Vera's,
+  Charles's and Paul's are modelled on recordings from the CSTR VCTK Corpus, whose licence
+  (CC BY 4.0) asks for credit. `NARRATORS` says which (`from`), and a test fails if the
+  credits page leaves one out. Every narrator is modelled on a real person's recording, so
+  the site never says otherwise: what it says is that Pixel Reel cannot be made to copy
+  anyone else's voice.
 
 ## Changing it
 
@@ -867,3 +872,30 @@ Make it shorter, and the whole reel on one page. It holds together. One thing re
   the small print said "It is kept until 22 December", meaning something else: how long
   the service holds the reel. The small print now says what happens on that day: "It is
   deleted on 22 December". Kept is left to mean the copy on the device.
+
+### Version 41
+
+Went back over what the site says about the narrators, and found it wrong in two ways.
+Both were mine, from Version 28.
+
+- **The credits credited one voice of six.** They named Peter's. Stuart's comes from the
+  same public domain readings. Anna's, Vera's, Charles's and Paul's are modelled on
+  recordings from the CSTR VCTK Corpus, made at the University of Edinburgh, and its
+  licence (CC BY 4.0) asks for credit. The credits page now names the corpus, the people
+  who made it and the licence, and says the four names are made up: the corpus does not
+  name the people who were recorded.
+- **The press kit said something untrue.** It said every narrator is "built from public
+  domain audiobook readings". Only two are. It now says they are modelled on recordings
+  that are free for anyone to use, and points to the credits.
+- **"Cannot copy a real person" was the wrong way to put it,** in the question on the home
+  page and in the terms. Every narrator is modelled on a real person's recording. What is
+  true, and what they now say, is that Pixel Reel cannot be made to copy anyone else's
+  voice.
+- **A test now holds the credits to it.** Each narrator says where their voice comes from,
+  and the test fails if the credits page leaves out that source or its licence, so a
+  narrator cannot be added without one.
+- On the narrowest phones the heading "Credits" was cut in two at the biggest, widest
+  letters (it was before today). Page headings are a little smaller on phones that narrow.
+
+Where each voice comes from was read from the voice model's own table of voices, and the
+licences from Kyutai's page for them, not from memory.

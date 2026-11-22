@@ -6,14 +6,21 @@ description: The people and projects Pixel Reel is built on.
 
 Pixel Reel stands on the shoulders of some generous people.
 
-## The voice
+## The voices
 
 - **[Pocket TTS](https://github.com/kyutai-labs/pocket-tts)** by Kyutai is the speech model
-  that records Peter. Its code is released under the MIT licence, and its model under
-  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-- **Peter's voice**, `peter_yearsley`, comes from
+  that records every narrator. Its code is released under the MIT licence, and its model
+  under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- **Peter's voice and Stuart's**, `peter_yearsley` and `stuart_bell`, come from
   [Voice-Zero](https://github.com/OwenTyme/voice-zero)'s selection of public domain LibriVox
   readings (CC0).
+- **Anna's, Vera's, Charles's and Paul's voices** are modelled on recordings from the
+  [CSTR VCTK Corpus](https://doi.org/10.7488/ds/2645) (version 0.92), by Junichi Yamagishi,
+  Christophe Veaux and Kirsten MacDonald of the Centre for Speech Technology Research at
+  the University of Edinburgh, used under
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Kyutai chose and cleaned up the
+  recordings ([tts-voices](https://huggingface.co/kyutai/tts-voices)). The four names are
+  made up: the corpus does not name the people who were recorded.
 
 ## The letters
 

@@ -3,7 +3,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { textArt } from '../scripts/site-art.mjs';
-import { addToClaudeLink, EXAMPLES, NARRATORS, narratorsHtml, pageFacts, playerHtml, robotsTxt, SITE_PAGES, siteModules, sitemapXml, sitePage, spriteSvg, WATCH, watchPage } from '../service/site.mjs';
+import { addToClaudeLink, EXAMPLES, NARRATORS, narratorsHtml, pageFacts, VOICE_SOURCES, playerHtml, robotsTxt, SITE_PAGES, siteModules, sitemapXml, sitePage, spriteSvg, WATCH, watchPage } from '../service/site.mjs';
 import { staticFile } from '../service/static.mjs';
 import { hopHeight, lookAt, REELIE, SAYINGS, SCENES } from '../site/js/landscape.js';
 import { sentenceAt, sentencesOf } from '../site/js/follow.js';
@@ -718,14 +718,38 @@ describe('who reads', () => {
     assert.deepEqual([...two.matchAll(/value="([a-z]+)"/g)].map(([, value]) => value), ['peter', 'stuart', 'anna']);
   });
 
-  it('no longer says there is only Peter, but still says no voice can copy a real person', () => {
-    assert.match(home, /<summary>Can someone else read it\?<\/summary>\s*<p>Yes\. Peter reads it unless you choose Anna, Vera, Stuart, Charles or Paul\. None of them can copy a real person's voice\.<\/p>/);
-    assert.match(sitePage('home', 'https://reels.example', { narrators: ['anna'] }), /unless you choose Anna\. None/);
-    assert.match(plain, /<summary>Can someone else read it\?<\/summary>\s*<p>Not here, yet\. Peter reads every reel\. He cannot copy a real person's voice\.<\/p>/);
+  it('no longer says there is only Peter, but still says Pixel Reel cannot copy anybody else', () => {
+    assert.match(home, /<summary>Can someone else read it\?<\/summary>\s*<p>Yes\. Peter reads it unless you choose Anna, Vera, Stuart, Charles or Paul\. Pixel Reel cannot copy anybody else's voice\.<\/p>/);
+    assert.match(sitePage('home', 'https://reels.example', { narrators: ['anna'] }), /unless you choose Anna\. Pixel Reel/);
+    assert.match(plain, /<summary>Can someone else read it\?<\/summary>\s*<p>Not here, yet\. Peter reads every reel\. Pixel Reel cannot copy anybody's voice\.<\/p>/);
     for (const page of [home, plain, html.press, html.terms]) assert.doesNotMatch(page, /one voice|only me|always the same voice/i);
     assert.match(home, /Peter reads your pixel reel, unless you would rather hear someone else\./);
     const peter = parseReelJson(readFileSync(root('reels/site-peter/reel.json'), 'utf8'));
     assert.doesNotMatch(peter.scenes.map((scene) => `${scene.title} ${scene.caption} ${scene.say}`).join(' '), /there's only me|one voice|every pixel reel/i);
+  });
+
+  it('credits where every narrator\'s voice comes from, with the licence it is used under', () => {
+    const credits = html.credits;
+    for (const [narrator, { from }] of Object.entries(NARRATORS)) {
+      const source = VOICE_SOURCES[from];
+      assert.ok(source, `${narrator} says where their voice comes from`);
+      assert.ok(credits.includes(narratorName(narrator)), `the credits name ${narratorName(narrator)}`);
+      assert.ok(credits.includes(source.name), `the credits name ${source.name}, where ${narratorName(narrator)}'s voice comes from`);
+      assert.ok(credits.includes(source.licence), `and its licence, ${source.licence}`);
+    }
+    // the VCTK corpus's licence asks for credit: who made it, and a way to find it
+    assert.match(credits, /Junichi Yamagishi,\s+Christophe Veaux and Kirsten MacDonald/);
+    assert.match(credits, /<a href="https:\/\/doi\.org\/10\.7488\/ds\/2645">CSTR VCTK Corpus<\/a>/);
+    assert.match(credits, /<a href="https:\/\/creativecommons\.org\/licenses\/by\/4\.0\/">CC BY 4\.0<\/a>/);
+    assert.deepEqual(Object.entries(NARRATORS).filter(([, { from }]) => from === 'vctk').map(([narrator]) => narrator), ['anna', 'vera', 'charles', 'paul']);
+  });
+
+  it('never says of every narrator what is true only of some, or that a voice is not modelled on a real person', () => {
+    const everywhere = [home, plain, html.press, html.terms, html.credits, html.privacy, html.claude, html.app].join(' ');
+    assert.doesNotMatch(everywhere, /All are computer voices built from public domain/i, 'only Peter\'s and Stuart\'s are from public domain readings');
+    assert.doesNotMatch(everywhere, /copy a real person|sound like a real person/i, 'every narrator is modelled on a real person\'s recording: what Pixel Reel cannot do is copy anyone else');
+    assert.match(html.press, /All are computer voices, modelled on recordings that are free for anyone to use: <a href="\/credits">the credits<\/a> say whose\. Pixel Reel cannot be made to copy anyone else's voice\./);
+    assert.match(html.terms, /The narrators are computer voices, and\s+Pixel Reel cannot be made to copy anyone else's voice\./);
   });
 
   it('keeps the choice on the device, and takes nothing odd from it', () => {
