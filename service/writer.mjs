@@ -7,7 +7,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { isLink } from '../site/js/given.js';
 import { formatGuide } from './mcp.mjs';
-import { replyJson, TryError } from './try.mjs';
+import { replyJson, TryError, writtenSoFar } from './try.mjs';
 
 const instructions = () => `You write pixel reels for the Pixel Reel website: short pixel-art explainers, one idea a scene, read aloud by a warm British narrator called Peter. A visitor has given one thing to explain: a few words, a web address, some writing, a document or a picture. Write the reel.
 
@@ -50,7 +50,9 @@ const askAgain = (source) => (source.kind === 'words' ? ask(source) : `Make a pi
  * A writer: write(source, { before, problems }) asks Claude for a reel about what the visitor
  * gave (`source`, from sourceOf in service/try.mjs) and gives back the reel as data, not yet
  * checked. With `before` (its last answer) and `problems` (what the checks said was wrong
- * with it), it asks for a corrected one. write.fits(source) is asked first: it measures a
+ * with it), it asks for a corrected one. `onProgress({ title, scenes })` is told how far
+ * Claude has got as it writes: the reel's name, and how many scenes so far (writtenSoFar in
+ * service/try.mjs). write.fits(source) is asked first: it measures a
  * PDF, for nothing, and turns it away if reading it would take more than `maxInputTokens`,
  * which is what bounds the cost of one reel. `log` is told how many tokens each reel took,
  * so its cost can be watched.
@@ -76,16 +78,17 @@ export function createWriter({ client = new Anthropic({ timeout: 120_000, maxRet
     }
   };
 
-  async function write(source, { before = null, problems = null } = {}) {
+  async function write(source, { before = null, problems = null, onProgress = () => {} } = {}) {
     const system = instructions();
     const messages = [{ role: 'user', content: before ? askAgain(source) : ask(source) }];
     if (before && problems) {
       messages.push({ role: 'assistant', content: JSON.stringify(before) });
       messages.push({ role: 'user', content: `That reel has problems. Fix every one, and reply with the whole corrected reel as JSON:\n- ${problems.join('\n- ')}` });
     }
-    let response;
+    let response, told = '0 null';   // what whoever is waiting was last told: no scenes, and no name
     for (let turn = 0; ; turn++) {
-      response = await call(() => client.beta.messages.create({
+      // the reply is read as it is written, so that whoever is waiting can be told how far it has got
+      response = await call(() => client.beta.messages.stream({
         model,
         max_tokens: 16000,
         // a request Claude declines on safety grounds is offered to a fallback model before it is given up on
@@ -98,7 +101,10 @@ export function createWriter({ client = new Anthropic({ timeout: 120_000, maxRet
         // Mending a reel needs no page: what was wrong was its shape, not what it said.
         ...(!before && hasLink(source) ? { tools: [{ type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 1, max_content_tokens: 20000 }] } : {}),
         messages
-      }));
+      }).on('text', (_more, text) => {
+        const so = writtenSoFar(text), now = `${so.scenes} ${so.title}`;
+        if (now !== told) { told = now; onProgress(so); }   // only when there is news
+      }).finalMessage());
       log(`try: ${source.kind}, ${response.usage.input_tokens} tokens in, ${response.usage.output_tokens} out (${response.model})`);
       // the page fetch can pause a turn part of the way through: send it back and it carries on
       if (response.stop_reason !== 'pause_turn' || turn >= 3) break;

@@ -383,6 +383,9 @@ describe('when a reel ends', () => {
 describe('waiting for a reel that is being made', () => {
   it('says which of the two jobs is being done, in a word for the screen and a plain sentence', () => {
     assert.deepEqual(waitingFor({ state: 'writing' }), { sign: 'WRITING', words: 'Claude is reading it and writing the scenes. This takes about half a minute.', part: 0 });
+    assert.deepEqual(waitingFor({ state: 'writing', written: 0 }), waitingFor({ state: 'writing' }));
+    assert.equal(waitingFor({ state: 'writing', written: 1 }).words, 'Claude is writing it: one scene so far.');
+    assert.equal(waitingFor({ state: 'writing', written: 4 }).words, 'Claude is writing it: 4 scenes so far.');
     assert.deepEqual(waitingFor({ state: 'queued', ahead: 0 }), { sign: 'WRITTEN', words: 'It is written. Peter is about to record it.', part: 0.5 });
     assert.equal(waitingFor({ state: 'queued', ahead: 1 }).words, 'It is written. Peter has one reel to record first.');
     assert.equal(waitingFor({ state: 'queued', ahead: 3 }).words, 'It is written. Peter has 3 reels to record first.');
@@ -398,6 +401,11 @@ describe('waiting for a reel that is being made', () => {
     parts.forEach((part, i) => assert.ok(i === 0 || part > parts[i - 1], 'it only ever moves on'));
     assert.ok(parts[3] > 0.35 && parts.at(-1) < 0.5, `about ${parts[3].toFixed(2)} of the way after half a minute`);
     assert.equal(waitingFor({ state: 'writing' }, -3).part, 0);
+    // each scene Claude has written moves it on for certain, however short the wait has been
+    const scenes = [1, 2, 4, 6, 9].map((written) => waitingFor({ state: 'writing', written }, 1).part);
+    scenes.forEach((part, i) => assert.ok(i === 0 || part >= scenes[i - 1]));
+    assert.ok(scenes[0] > 0.1 && scenes[2] > 0.3 && scenes.at(-1) < 0.5, 'and still never past half way: the recording is the other half');
+    assert.ok(waitingFor({ state: 'writing', written: 1 }, 600).part >= waitingFor({ state: 'writing', written: 1 }, 1).part, 'nor does it go back when the wait has been long');
   });
 
   it('offers a way back from a reel that could not be made', () => {

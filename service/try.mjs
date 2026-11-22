@@ -64,6 +64,25 @@ export function sourceOf(type, bytes) {
   return { kind: 'picture', type: kind, data: bytes.toString('base64') };
 }
 
+/**
+ * How far Claude has got with a reel, from as much of its reply as has arrived: { title,
+ * scenes }. `title` is the reel's own (null until it is written whole), and `scenes` is how
+ * many scenes are written so far: one for each caption that is finished, since every scene
+ * has one, and nothing else in a reel is called a caption.
+ */
+export function writtenSoFar(text) {
+  const quoted = '"((?:[^"\\\\]|\\\\.)*)"';
+  // only a title that comes before the scenes is the reel's: a scene has one too, and so have some pictures
+  const named = new RegExp(`"title"\\s*:\\s*${quoted}`).exec(text.split(/"scenes"\s*:/)[0]);
+  let title = null;
+  try {
+    if (named) title = String(JSON.parse(`"${named[1]}"`)).replace(/\s+/g, ' ').trim().slice(0, 80) || null;
+  } catch {
+    // an escape Claude has only half written: the title is not there yet
+  }
+  return { title, scenes: (text.match(new RegExp(`"caption"\\s*:\\s*${quoted}`, 'g')) ?? []).length };
+}
+
 /** The JSON object in Claude's reply, which may come wrapped in a code fence or a few stray words. */
 export function replyJson(text) {
   const from = text.indexOf('{'), to = text.lastIndexOf('}');

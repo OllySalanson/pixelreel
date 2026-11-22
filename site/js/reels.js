@@ -61,9 +61,16 @@ export function lengthWords(ms) {
  */
 export function waitingFor(play, waited = 0) {
   switch (play.state) {
-    case 'writing':
-      // it creeps towards half way, quickly at first, and never gets there by itself
-      return { sign: 'WRITING', words: 'Claude is reading it and writing the scenes. This takes about half a minute.', part: 0.45 * (1 - Math.exp(-Math.max(0, waited) / 14)) };
+    case 'writing': {
+      // with no news the bar creeps towards half way, quickly at first, and never gets there by itself;
+      // each scene Claude has written moves it on for certain (a reel has six or so)
+      const creep = 0.45 * (1 - Math.exp(-Math.max(0, waited) / 14)), scenes = play.written > 0 ? play.written : 0;
+      return {
+        sign: 'WRITING',
+        words: scenes ? `Claude is writing it: ${scenes === 1 ? 'one scene' : `${scenes} scenes`} so far.` : 'Claude is reading it and writing the scenes. This takes about half a minute.',
+        part: scenes ? Math.max(creep, 0.05 + 0.4 * Math.min(scenes, 6) / 6) : creep
+      };
+    }
     case 'queued':
       return { sign: 'WRITTEN', words: play.ahead > 0 ? `It is written. Peter has ${play.ahead === 1 ? 'one reel' : `${play.ahead} reels`} to record first.` : 'It is written. Peter is about to record it.', part: 0.5 };
     case 'recording': {

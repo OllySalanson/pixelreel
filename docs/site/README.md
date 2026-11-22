@@ -462,3 +462,12 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | Being written, and being recorded | A reel that could not be made, and a notice in the box |
 | --- | --- |
 | ![The reel's page: Reelie under a sign that says Writing, then Recording, with a bar that fills, and the words Peter is recording scene 4 of 7.](log/v20-being-made.jpg) | ![The reel's page says No reel this time, and why, with a Try something else button. And the box's notice, with a red mark: Say what you want explained.](log/v20-no-reel.jpg) |
+
+### Version 21
+
+- **The wait says how far Claude has got.** While a reel made here was being written, its
+  page could only say that it was: the bar crept along on a guess. Now Claude's reply is
+  read as it is written, so the reel has its own name within a few seconds, the sentence
+  under the screen counts the scenes as they are finished ("Claude is writing it: 3 scenes
+  so far."), and each one moves the bar on for certain. Writing still fills only the first
+  half of the bar; Peter's recording is the other half.

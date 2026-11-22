@@ -68,6 +68,7 @@ export class Reels {
     Object.assign(this, { store, record, video, picture, now, keepDays, maxQueue, log });
     this.queue = [];
     this.running = null;
+    this.notes = new Map();   // how far each reel that is still being written has got: note()
   }
 
   /** A reel (parsed reel.json) checked: the reel, or a ReelError if it has problems or is past the service's limits. */
@@ -167,6 +168,7 @@ export class Reels {
     const reel = this.check(raw);
     const status = await this.status(id);
     if (status?.state !== 'writing') return null;
+    this.notes.delete(id);
     const written = { ...status, ...this.measure(reel), state: 'queued' };
     await this.store.put(`reels/${id}/reel.json`, JSON.stringify(raw));
     await this.save(written);
@@ -176,15 +178,30 @@ export class Reels {
 
   /** Gives up on a reel started with begin(), saying why in words for whoever is waiting on its page. */
   async fail(id, error) {
+    this.notes.delete(id);
     if ((await this.status(id))?.state === 'writing') await this.update(id, { state: 'failed', error });
   }
 
   /**
-   * How long a reel that is waiting to be recorded has to wait, for its page to show:
-   * { ahead } (how many jobs are before it), or nothing if it is not waiting. How far the
-   * recording itself has got is kept in the reel's status (`recorded`, of `lines`).
+   * Notes how far the writing of a reel started with begin() has got: { title, scenes }, its
+   * name once it has one and how many scenes are written. Kept in memory only, for its page
+   * to show while it waits (progress()): it changes many times a second, and matters to
+   * nobody once the reel is written.
+   */
+  note(id, { title = null, scenes = 0 }) {
+    this.notes.set(id, { title, scenes });
+  }
+
+  /**
+   * How far a reel that is not ready has got, for its page to show: { written, title } (how
+   * many scenes Claude has written so far, and the reel's name once it has one) while it is
+   * being written; { ahead } (how many jobs are before it) while it waits to be recorded;
+   * or nothing. How far the recording itself has got is kept in the reel's status
+   * (`recorded`, of `lines`).
    */
   progress(id) {
+    const note = this.notes.get(id);
+    if (note) return { written: note.scenes, ...(note.title ? { title: note.title } : {}) };
     const place = this.queue.findIndex((job) => job.id === id && job.kind === 'voice');
     return place < 0 ? {} : { ahead: place + (this.running ? 1 : 0) };
   }
