@@ -1078,7 +1078,9 @@ describe('a phone held on its side', () => {
 
   it('keeps a player in the page no taller than the screen there, so its picture and its Play button can be seen', () => {
     const css = readFileSync(root('site/css/site.css'), 'utf8');
-    assert.match(css, /@media \(orientation: landscape\) and \(max-height: 500px\) \{\n {2}\.hero-reel \.reel, \.way-watch \.reel \{ width: min\(100%, calc\(\(100svh - 6\.5rem\) \* 16 \/ 9\)\); margin-inline: auto; \}\n\}/);
+    const side = /@media \(orientation: landscape\) and \(max-height: 500px\) \{([^@]*?)\n\}/.exec(css)?.[1] ?? '';
+    assert.match(side, /\n {2}\.hero-reel \.reel, \.way-watch \.reel \{ width: min\(100%, calc\(\(100svh - 2\.5rem\) \* 16 \/ 9\)\); margin-inline: auto; \}/);
+    assert.match(side, /\n {2}\.top \{ position: static; \}/, 'and the bar across the top goes up with the page, not stuck over a fifth of the screen');
   });
 });
 
