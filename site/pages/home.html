@@ -253,13 +253,13 @@ fetch: /reels/pixel-reel/reel.json /reels/pixel-reel/audio/manifest.json
         <li><button type="button" data-try="the offside rule">The offside rule</button></li>
         <li><button type="button" data-try="why the sky is blue">Why the sky is blue</button></li>
       </ul>
+      <!-- the language the reel is read in: shown by maker.js, and only where more than English can be read here -->
+      <fieldset class="pick maker-language" id="maker-language" hidden>
+        <legend>Read it to me in</legend>
+        {{languages}}
+      </fieldset>
       <!-- Make it right here: shown by maker.js, and only where the service can write a reel itself -->
       <div class="maker-here" id="maker-here" hidden>
-        <!-- the language Peter reads the reel in: shown only where he can read more than English -->
-        <fieldset class="pick maker-language" id="maker-language" hidden>
-          <legend>Read it to me in</legend>
-          {{languages}}
-        </fieldset>
         <p class="said" id="here-said" role="status"></p>
         <button class="btn btn-gold btn-big" id="maker-go" type="submit">Make my reel</button>
         <div class="maker-drop">

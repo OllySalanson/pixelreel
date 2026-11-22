@@ -321,7 +321,9 @@ few words.
 ([Other languages](#other-languages)), the box asks "Read it to me in" and offers English and
 each of those languages, called what its speakers call it (Français, Español). It starts on
 the language the browser says its reader prefers, if that is one on offer, and remembers the
-last one chosen on the device. Claude is told to write every word of the reel in that
+last one chosen on the device. The choice is there whether or not Make it right here is on:
+where it is off, the words the box writes for someone's own Claude name the language ("Make
+me a pixel reel in French about this: ..."). Where it is on, Claude is told to write every word of the reel in that
 language, whatever language what was given is in, so a letter in English can be explained in
 Spanish; the reel is recorded with that language's model. A reel made simpler or shorter
 stays in the language it is in. With no other language switched on, there is no choice and

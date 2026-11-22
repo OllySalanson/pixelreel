@@ -8,6 +8,7 @@ import { RateLimit } from '../service/limits.mjs';
 import { Reels } from '../service/reels.mjs';
 import { ReelError } from '../src/reel.js';
 import { createService } from '../service/server.mjs';
+import { sitePage } from '../service/site.mjs';
 import { DiskStore } from '../service/store.mjs';
 import { ABOUT_MAX, AGAIN, languageOf, narratorOf, OWN_NAMES, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError, writtenSoFar } from '../service/try.mjs';
 import { createWriter, PAGE_READER, PAGE_TOKENS } from '../service/writer.mjs';
@@ -601,8 +602,9 @@ describe('make it right here, over HTTP', () => {
   it('makes a reel in the language that is asked for, and offers only the languages Peter reads here', async () => {
     const page = await (await fetch(`${local}/`)).text(), without = await (await fetch(`${localOff}/`)).text();
     assert.match(page, /<fieldset class="pick maker-language" id="maker-language" hidden>\s*<legend>Read it to me in<\/legend>\s*<label><input type="radio" name="language" value="english" checked><span lang="en">English<\/span><\/label>\s*<label><input type="radio" name="language" value="french"><span lang="fr">Français<\/span><\/label>\s*<label><input type="radio" name="language" value="spanish"><span lang="es">Español<\/span><\/label>\s*<\/fieldset>/);
-    assert.doesNotMatch(without, /name="language"/, 'none where the service makes no reels');
+    assert.match(without, /name="language" value="french"/, 'and the same where the service makes no reels itself: there the words for Claude say which language');
     assert.doesNotMatch(without, /\{\{languages\}\}/);
+    assert.doesNotMatch(sitePage('home', 'https://reels.example'), /name="language"|\{\{languages\}\}/, 'none where Peter reads only English');
     // words, with the language in the JSON
     let status = await outcome(await give('application/json', JSON.stringify({ about: 'le thé', language: 'french' })));
     assert.deepEqual(calls.at(-1)[0], { ...words('le thé'), language: 'french', narrator: null });
