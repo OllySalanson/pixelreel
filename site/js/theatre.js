@@ -7,41 +7,59 @@ import { loadReel } from './reels.js';
 export function startTheatre() {
   const dialog = document.getElementById('theatre');
   if (!dialog) return;
-  const player = new ReelPlayer(dialog.querySelector('.reel'));
   const title = document.getElementById('theatre-title'), kicker = document.getElementById('theatre-kicker');
+  let run = null;   // what is showing: { queue: [reel names], at }
+  const more = () => dialog.open && run && run.at < run.queue.length - 1;
+  const player = new ReelPlayer(dialog.querySelector('.reel'), {
+    onEnd() { if (more()) play(run, run.at + 1); },
+    // in a run of reels, Next on a reel's last scene goes on to the next reel
+    onPast() {
+      if (!more()) return false;
+      play(run, run.at + 1);
+      return true;
+    }
+  });
 
-  async function open(button) {
-    const name = button.dataset.reel;
-    player.unlock();   // in the press itself, so a phone lets the voice start once the reel has loaded
-    hush(player);
-    kicker.textContent = button.dataset.kicker ?? "Here's one we made earlier";
+  /** Plays reel `at` of a run: one reel, or one after another for "Watch this whole page". */
+  async function play(mine, at) {
+    mine.at = at;
+    const name = mine.queue[at];
     title.textContent = 'One moment';
-    dialog.showModal();
-    player.playKey.focus();   // so Space pauses, and Tab moves on to Next and Sound
     try {
       await player.load(name);
-      if (!dialog.open || player.show?.name !== name) return;
-      title.textContent = player.show.reel.title;
+      if (!dialog.open || run !== mine || mine.at !== at) return;   // closed, or moved on, while it loaded
+      title.textContent = mine.queue.length > 1 ? `${at + 1} of ${mine.queue.length}: ${player.show.reel.title}` : player.show.reel.title;
       player.start();
     } catch {
       title.textContent = 'Sorry, that one will not play';
     }
   }
 
+  function open(button) {
+    player.unlock();   // in the press itself, so a phone lets the voice start once the reel has loaded
+    hush(player);
+    kicker.textContent = button.dataset.kicker ?? "Here's one we made earlier";
+    run = { queue: (button.dataset.reels ?? button.dataset.reel).split(/\s+/).filter(Boolean), at: 0 };
+    dialog.showModal();
+    player.playKey.focus();   // so Space pauses, and Tab moves on to Next and Sound
+    play(run, 0);
+  }
+
+  const opener = (target) => target instanceof Element && target.closest('button[data-reel], button[data-reels]');
   document.addEventListener('click', (e) => {
-    const button = e.target.closest('button[data-reel]');
+    const button = opener(e.target);
     if (button) open(button);
   });
   // fetch a reel as soon as its button is pointed at or reached, so it plays the moment it is pressed
   for (const kind of ['pointerenter', 'focusin']) {
     document.addEventListener(kind, (e) => {
-      const button = e.target instanceof Element && e.target.closest('button[data-reel]');
-      if (button) loadReel(button.dataset.reel).catch(() => {});
+      const button = opener(e.target);
+      if (button) loadReel((button.dataset.reels ?? button.dataset.reel).split(/\s+/)[0]).catch(() => {});
     }, true);
   }
   dialog.querySelector('[data-close]').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
-  dialog.addEventListener('close', () => player.stop());
+  dialog.addEventListener('close', () => { run = null; player.stop(); });
 }
 
 /** <button data-hear="reel-name">: plays that reel's first line, and stops it if pressed again. */

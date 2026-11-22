@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import { textArt } from '../scripts/site-art.mjs';
-import { addToClaudeLink, pageFacts, playerHtml, robotsTxt, SITE_PAGES, sitePage, spriteSvg } from '../service/site.mjs';
+import { addToClaudeLink, pageFacts, playerHtml, robotsTxt, SITE_PAGES, siteModules, sitePage, spriteSvg } from '../service/site.mjs';
 import { staticFile } from '../service/static.mjs';
 import { SCENES } from '../site/js/landscape.js';
 import { askFor } from '../site/js/maker.js';
@@ -44,6 +44,23 @@ describe('putting a page together', () => {
     }
     assert.match(html.home, /<link rel="canonical" href="https:\/\/reels\.example\/">/);
     assert.match(html.press, /<link rel="canonical" href="https:\/\/reels\.example\/press">/);
+  });
+
+  it('asks for every script at once, and the first reel with them', () => {
+    const modules = siteModules();
+    assert.ok(modules.includes('/site/js/main.js') && modules.includes('/site/js/player.js') && modules.includes('/src/kit.js') && modules.includes('/src/icons.js'));
+    for (const path of modules) assert.ok(html.home.includes(`<link rel="modulepreload" href="${path}">`), path);
+    assert.match(html.home, /<link rel="preload" as="fetch" crossorigin href="\/reels\/pixel-reel\/reel\.json">/);
+    assert.doesNotMatch(html.press, /rel="preload" as="fetch"/, 'a page with no player fetches no reel ahead');
+  });
+
+  it('gives every button a name a screen reader can say', () => {
+    for (const name of pages) {
+      for (const [button, inside] of html[name].matchAll(/<button[^>]*>([\s\S]*?)<\/button>/g)) {
+        const words = inside.replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/<[^>]*aria-hidden="true"[^>]*>[^<]*<\/[a-z]+>/g, '').replace(/<[^>]+>/g, '').trim();
+        assert.ok(words || /aria-label="[^"]+"/.test(button), `${name}: a button has no name: ${button.slice(0, 80)}`);
+      }
+    }
   });
 
   it('says when a page asks for a picture that does not exist', () => {

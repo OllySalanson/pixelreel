@@ -68,7 +68,8 @@
           "Tea bag in",
           "Water on top"
         ],
-        "every": 2
+        "every": 2.2,
+        "start": 0.6
       }
     },
     {
@@ -97,7 +98,8 @@
             "label": "Bin it"
           }
         ],
-        "every": 2
+        "every": 1.7,
+        "start": 1.8
       }
     },
     {
@@ -113,7 +115,9 @@
         "good": {
           "icon": "cup",
           "label": "Milk last"
-        }
+        },
+        "start": 0.5,
+        "every": 1.4
       }
     },
     {
@@ -130,7 +134,8 @@
             "icon": "heart"
           }
         ],
-        "every": 1.2
+        "every": 2,
+        "start": 1.4
       }
     }
   ]

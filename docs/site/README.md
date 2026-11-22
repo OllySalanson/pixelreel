@@ -25,7 +25,7 @@ People who find reading hard work. Every choice follows from that:
   Hyperlegible Next or OpenDyslexic), their size and spacing, the colour of the paper, and
   whether pictures move. It is kept on the reader's device only.
 - **Watch instead.** Every part of the home page has a "Make a pixel reel about this" button
-  that plays a reel of that part, made earlier.
+  that plays a reel of that part, made earlier. "Watch this whole page" plays them all.
 - **Calm.** Sound only ever starts on a press. Pictures hold still for anyone whose device
   asks for less motion, or who chooses Still.
 
@@ -84,10 +84,11 @@ connector (ready-made pictures only) and recorded by Peter with `npm run voices`
 | --- | --- |
 | `pixel-reel` | The player at the top of the home page. |
 | `site-what`, `site-how`, `site-who`, `site-peter`, `site-make`, `site-good`, `site-questions` | "Make a pixel reel about this", one for each part of the home page. |
-| `gas-meter`, `pension-letter`, `volcano`, `cup-of-tea` | The examples under Now showing. |
+| `gas-meter`, `pension-letter`, `volcano`, `cup-of-tea` | The examples under Now showing. `pension-letter` also plays beside the letter in "Same letter, two ways". |
 
 Change a reel's words and it needs recording again (`npm run voices <name>`); a test fails
-until it is. Change what a part of the page says, and change its reel to match.
+until it is. Change what a part of the page says, and change its reel to match. A picture's
+`start` and `every` are set to when Peter says the words, so check them after re-recording.
 
 ## Design log
 
@@ -135,3 +136,31 @@ reading. What was wrong with it, looked at hard:
 | Now showing | A reel about a part of the page | Phone |
 | --- | --- | --- |
 | ![Four example reels as posters on a strip of film.](log/v2-gallery.jpg) | ![The theatre playing the reel about who Pixel Reel is for.](log/v2-theatre.jpg) | ![Version 2 on a phone.](log/v2-phone.jpg) |
+
+### Version 3
+
+Looked at again, version 2 explained Pixel Reel well but never let anyone feel the
+difference, and the middle of the page was all cream cards.
+
+- **Same letter, two ways.** Straight after the top, a dense pension letter (small, grey,
+  justified: everything this site is not) sits beside the reel of the same letter. The
+  letter is a picture of a letter, hidden from screen readers, who are told what it is.
+- **Watch this whole page.** A button at the top plays the reel for each part of the page,
+  one after another: the whole site, as a reel. Next on a reel's last scene skips on.
+- **Pictures on the word.** Every clip was run through speech-to-text to find when each word
+  is said, and each list, row of icons and chat now arrives as Peter says it. An answer no
+  longer shows before its question has been asked.
+- **Colour.** The "who it is for" cards have a coloured tile behind each icon.
+- **The big Play button** keeps off the picture's own words: under a title, in the middle
+  of anything else.
+- **A way home.** Every shared reel's page now says "Made with Pixel Reel" under the player.
+- **Checked by machine as well as by eye:** Lighthouse gives accessibility 100 and best
+  practices 100 on the home, Claude, press and privacy pages at phone size. It found one
+  real fault: on a phone the Make it comfy button had no name for a screen reader. Fixed,
+  and a test now checks every button has one.
+- **Faster:** a page now asks for all its scripts at once, and the first reel with them,
+  rather than finding out about each from the one before.
+
+| The top, with Watch this whole page | Same letter, two ways | Who it is for |
+| --- | --- | --- |
+| ![Version 3: the top of the page with a Watch this whole page button.](log/v3-hero.jpg) | ![A dense letter beside a reel of the same letter.](log/v3-ways.jpg) | ![Cards with coloured tiles behind their icons.](log/v3-who.jpg) |

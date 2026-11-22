@@ -116,16 +116,19 @@ h1 { font-size: clamp(2.6rem, 4.2vw + 1rem, 4.75rem); line-height: 1.06; letter-
 .hero h1 span { display: block; color: var(--gold); }
 .hero-lead { margin-top: 1.25rem; font-size: clamp(1.25rem, 0.5vw + 1.1rem, 1.5rem); line-height: 1.45; max-width: 24em; color: var(--cream); }
 .hero-small { flex-basis: 100%; font-size: 1.0625rem; color: var(--mist); max-width: none; }
+.hero-watch { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1rem; margin-top: 1.25rem; max-width: none; font-weight: 500; color: var(--cream); }
 
 /* ---------------------------------------------------------------- the player */
 .reel { position: relative; margin: calc(var(--u) * 2) calc(var(--u) * 4) calc(var(--u) * 4) calc(var(--u) * 2); background: var(--navy); color: var(--cream);
   box-shadow: 0 0 0 var(--u) var(--frame), 0 0 0 calc(var(--u) * 2) var(--deep), calc(var(--u) * 4) calc(var(--u) * 4) 0 0 rgba(3, 6, 12, 0.55); }
 .reel-screen { position: relative; background: #000; }
 .reel canvas { width: 100%; height: auto; aspect-ratio: 16 / 9; image-rendering: pixelated; cursor: pointer; }
-.reel-big { position: absolute; left: 50%; top: 72%; transform: translate(-50%, -50%); display: inline-flex; align-items: center; gap: 0.9rem; padding: 0.7rem 1.75rem 0.7rem 1.5rem; min-height: 4.5rem;
+.reel-big { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: inline-flex; align-items: center; gap: 0.9rem; padding: 0.7rem 1.75rem 0.7rem 1.5rem; min-height: 4.5rem;
   font: 800 1.75rem/1 var(--font); color: #141b2d; background: var(--gold); border: 0; cursor: pointer; white-space: nowrap;
   box-shadow: 0 calc(var(--u) * -1) 0 0 #05080f, calc(var(--u) * -1) 0 0 0 #05080f, var(--u) 0 0 0 #05080f, 0 var(--u) 0 0 var(--gold-lip), calc(var(--u) * -1) var(--u) 0 0 #05080f, var(--u) var(--u) 0 0 #05080f, 0 calc(var(--u) * 2) 0 0 #05080f,
     0 0 0 calc(var(--u) * 5) rgba(11, 18, 32, 0.45); }
+/* a reel that opens on a title has its words in the middle, so Play sits below them */
+.reel[data-opens="title"] .reel-big, .reel:not([data-opens]) .reel-big { top: 72%; }
 .reel-big:hover { filter: brightness(1.06); }
 .reel-big[hidden] { display: none; }
 .reel-big .ico { width: 1.4rem; height: 1.6rem; fill: currentColor; }
@@ -199,10 +202,35 @@ h1 { font-size: clamp(2.6rem, 4.2vw + 1rem, 4.75rem); line-height: 1.06; letter-
 .step .step-n { position: absolute; margin: 0; top: calc(var(--u) * -4); left: calc(var(--u) * -4); width: 3.25rem; height: 3.25rem; display: grid; place-items: center; font: 2.75rem/1 var(--pixel); color: #141b2d; background: var(--gold);
   box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line); }
 
+/* same letter, two ways */
+.two-ways { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(2rem, 5vw, 5rem); align-items: start; }
+.way h3 { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.25rem; font-size: 1.75rem; }
+.way-n { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; margin: var(--u); font: 2.25rem/1 var(--pixel); color: #141b2d; background: var(--gold);
+  box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line); }
+.way-note { margin-top: 1.25rem; font-size: 1.125rem; color: var(--ink-soft); }
+/* the letter is everything this site is not: small, grey, justified, endless. It is a picture of a letter, not for reading. */
+.letter { position: relative; max-height: 27rem; margin: var(--u) calc(var(--u) * 4) calc(var(--u) * 4) var(--u); padding: 1.6rem 1.75rem 0; overflow: hidden; background: #fffefa; color: #5b5f66;
+  font: 0.8125rem/1.42 Georgia, 'Times New Roman', serif; letter-spacing: 0; word-spacing: 0; text-align: justify; user-select: none;
+  box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line),
+    calc(var(--u) * 2) calc(var(--u) * 2) 0 0 #e9e4cf, calc(var(--u) * 2) calc(var(--u) * 2) 0 var(--u) var(--line), calc(var(--u) * 4) calc(var(--u) * 4) 0 0 #e9e4cf, calc(var(--u) * 4) calc(var(--u) * 4) 0 var(--u) var(--line); }
+.letter p { max-width: none; margin-bottom: 0.7rem; text-wrap: wrap; }
+.letter-ref { font-size: 0.75rem; text-align: right; }
+.letter-title { font-weight: 700; text-align: left; color: #3d4047; }
+.letter::after { content: ''; position: absolute; inset: auto 0 0; height: 7rem; background: linear-gradient(rgba(255, 254, 250, 0), #fffefa 85%); }
+.ways .reel { margin-right: calc(var(--u) * 4); }
+
 /* who it is for */
+.tile { display: grid; place-items: center; width: 5.5rem; height: 5.5rem; margin: var(--u) var(--u) 1.1rem;
+  box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line); }
+.tile .px { margin: 0; }
+.tile-gold { background: #ffd871; }
+.tile-teal { background: #8be5d3; }
+.tile-pink { background: #ffb3c5; }
+.tile-sky { background: #a8dcff; }
+.tile-lilac { background: #cdb9f7; }
+.tile-peach { background: #ffc08f; }
 .people { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(1.25rem, 2.5vw, 2rem); }
 .person { padding: 1.5rem 1.5rem 1.6rem; }
-.person .px { margin-bottom: 1rem; }
 .person p { margin-top: 0.4rem; font-size: 1.125rem; color: var(--ink-soft); }
 
 /* now showing: a strip of film */
@@ -247,7 +275,7 @@ h1 { font-size: clamp(2.6rem, 4.2vw + 1rem, 4.75rem); line-height: 1.06; letter-
 .maker input { display: block; width: 100%; margin-top: 0.75rem; padding: 0.9rem 1rem; font: 500 1.25rem/1.4 var(--font); letter-spacing: var(--tracking); color: var(--ink); background: var(--paper); border: var(--u) solid var(--line); border-radius: 0; }
 .maker input::placeholder { color: var(--ink-soft); opacity: 1; }
 .tries { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 3); margin-top: 1rem; }
-.tries button { padding: 0.35rem 0.8rem; font-size: 1.0625rem; font-weight: 500; color: var(--ink); background: var(--tint); border: 0; cursor: pointer;
+.tries button { min-height: 2.75rem; padding: 0.35rem 0.8rem; font-size: 1.0625rem; font-weight: 500; color: var(--ink); background: var(--tint); border: 0; cursor: pointer;
   box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line); margin: var(--u); }
 .tries button:hover { background: var(--gold); color: #141b2d; }
 .ask { margin: 1.75rem var(--u) 1.25rem; padding: 1rem 1.25rem 1.2rem; background: var(--navy); color: var(--cream);
@@ -403,7 +431,8 @@ dialog { color: var(--ink); }
 @media (max-width: 60rem) {
   .hero-in { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; grid-template-areas: 'words' 'reel' 'go'; row-gap: 1.75rem; }
   .hero-go { padding-top: 0; }
-  .anatomy, .duo, .brief { grid-template-columns: minmax(0, 1fr); }
+  .anatomy, .duo, .brief, .two-ways { grid-template-columns: minmax(0, 1fr); }
+  .letter { max-height: 19rem; }
   .walk-step { grid-template-columns: auto minmax(0, 1fr); }
   .walk-step > .shot, .walk-step > .box { grid-column: 2; width: min(100% - var(--u) * 2, 26rem); }
   .steps { grid-template-columns: minmax(0, 1fr); max-width: 30rem; gap: 2.5rem; }
@@ -421,8 +450,8 @@ dialog { color: var(--ink); }
   .logo { font-size: 1.25rem; gap: 0.45rem; }
   .logo .px { width: 2rem; }
   .top-comfort-words { display: none; }
-  .top-comfort { padding-inline: 0.6rem; min-height: 2.5rem; }
-  .top .top-add { min-height: 2.5rem; padding: 0.3rem 0.7rem; font-size: 1rem; white-space: nowrap; }
+  .top-comfort { padding-inline: 0.6rem; min-height: 2.75rem; }
+  .top .top-add { min-height: 2.75rem; padding: 0.3rem 0.7rem; font-size: 1rem; white-space: nowrap; }
   .btn { width: calc(100% - var(--u) * 2); font-size: 1.125rem; padding-inline: 1rem; }
   .btn-big { font-size: 1.25rem; min-height: 4rem; }
   .btn-small, .top-add { width: auto; }
@@ -434,7 +463,10 @@ dialog { color: var(--ink); }
   .walk-n { width: 3rem; height: 3rem; font-size: 2.5rem; }
   .person, .point, .facts li { display: grid; grid-template-columns: auto 1fr; column-gap: 1.1rem; align-items: start; }
   .person { padding: 1.25rem; }
-  .person .px, .point .px, .facts .px { grid-row: 1 / span 2; width: 3rem; height: auto; margin: 0.15rem 0 0; }
+  .point .px, .facts .px { grid-row: 1 / span 2; width: 3rem; height: auto; margin: 0.15rem 0 0; }
+  .tile { grid-row: 1 / span 2; width: 4rem; height: 4rem; margin: var(--u); }
+  .tile .px { width: 3rem; height: auto; }
+  .hero-watch { margin-top: 0.75rem; }
   .reel-cap { padding: 0.7rem 0.9rem 0.8rem; }
   .reel-title { font-size: 1.75rem; }
   .reel-time { font-size: 1.25rem; }

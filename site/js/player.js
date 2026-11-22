@@ -34,12 +34,15 @@ export function fitCanvas(canvas) {
 export class ReelPlayer {
   /**
    * @param {HTMLElement} root   the .reel element playerHtml wrote
-   * @param {{ onEnd?: () => void }} [options]   onEnd is called when a reel has played to its end
+   * @param {{ onEnd?: () => void, onPast?: () => boolean }} [options]   onEnd is called when a reel
+   *   has played to its end; onPast when Next is pressed on its last scene, and returns true
+   *   if it has dealt with it (by moving on to another reel, say)
    */
-  constructor(root, { onEnd = () => {} } = {}) {
+  constructor(root, { onEnd = () => {}, onPast = () => false } = {}) {
     const find = (cls) => root.querySelector(`.${cls}`);
     this.root = root;
     this.onEnd = onEnd;
+    this.onPast = onPast;
     this.canvas = root.querySelector('canvas');
     this.g = this.canvas.getContext('2d');
     this.px = createKit(this.g);
@@ -54,7 +57,7 @@ export class ReelPlayer {
     this.soundKey = find('reel-sound');
     this.audio = new Audio();
     this.audio.preload = 'auto';
-    this.show = null;          // what is loaded: { reel, clipFor, durations, line }
+    this.show = null;          // what is loaded: see loadReel
     this.player = null;
     this.intro = true;         // nobody has pressed anything yet
     this.visible = false;
@@ -73,14 +76,18 @@ export class ReelPlayer {
     this.big.onclick = () => this.start();
     this.canvas.onclick = () => this.toggle();
     this.playKey.onclick = () => this.toggle();
+    const onward = act(() => {
+      if (this.player.index === this.player.count - 1 && this.onPast()) return;
+      this.player.next();
+    });
     back.onclick = act(() => this.player.back());
-    next.onclick = act(() => this.player.next());
+    next.onclick = onward;
     this.soundKey.onclick = () => this.player?.toggleMuted();
     this.root.addEventListener('keydown', (e) => {
       if (!this.player || e.altKey || e.ctrlKey || e.metaKey || e.target === this.seek) return;
       const onButton = e.target instanceof HTMLButtonElement;
       if (e.key === ' ' && !onButton) { e.preventDefault(); this.toggle(); }
-      else if (e.key === 'ArrowRight') { e.preventDefault(); act(() => this.player.next())(); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); onward(); }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); act(() => this.player.back())(); }
       else if (e.key.toLowerCase() === 'm') this.player.toggleMuted();
     });
@@ -143,6 +150,7 @@ export class ReelPlayer {
     this.show = show;
     const { reel, clipFor, durations, line } = show;
     this.root.dataset.reel = name;
+    this.root.dataset.opens = show.opens;
     this.canvas.setAttribute('aria-label', `Pictures for: ${reel.title}`);
     this.narrator = createNarrator({ scenes: reel.scenes, clipFor, audio: this.audio, speech: window.speechSynthesis, Utterance: window.SpeechSynthesisUtterance });
     this.player = new Player({ count: reel.scenes.length, narrator: this.narrator, durations, onChange: (state) => this.changed(state) });

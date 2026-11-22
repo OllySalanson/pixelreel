@@ -137,6 +137,23 @@ const fill = (text, values) => text.replace(/\{\{([a-z]+)(?::([A-Za-z0-9-]+))?(?
 
 const dropComments = (html) => html.replace(/<!--[\s\S]*?-->\n?/g, '');
 
+/**
+ * Every script the site's pages load, as addresses: site/js/main.js and all it imports, and
+ * all they import. The layout asks for them all at once, so a browser does not have to
+ * fetch one to learn about the next.
+ */
+export function siteModules(entry = '/site/js/main.js') {
+  const found = new Set();
+  const visit = (path) => {
+    if (found.has(path)) return;
+    found.add(path);
+    const code = readFileSync(new URL(`..${path}`, import.meta.url), 'utf8');
+    for (const [, from] of code.matchAll(/^import [^'\n]*'(\.[^']+)';$/gm)) visit(new URL(from, `http://site${path}`).pathname);
+  };
+  visit(entry);
+  return [...found].sort();
+}
+
 /** The link that opens Claude's own "add a connector" box with Pixel Reel's name and address filled in. */
 export const addToClaudeLink = (baseUrl) =>
   `https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=${encodeURIComponent('Pixel Reel')}&connectorUrl=${encodeURIComponent(`${baseUrl}/mcp`)}`;
@@ -156,8 +173,13 @@ export function sitePage(name, baseUrl, { listed = false } = {}) {
     ? `<article class="doc${facts.reel ? ' has-reel' : ''}">\n${markdownHtml(fill(body, { url: baseUrl, mcp: `${baseUrl}/mcp` }))}\n${
       facts.reel ? `<p class="doc-reel"><button class="btn btn-reel" type="button" data-reel="${escapeHtml(facts.reel)}">Make a pixel reel about this</button></p>\n` : ''}</article>`
     : fill(dropComments(body), links);
+  const ahead = [
+    ...siteModules().map((path) => `<link rel="modulepreload" href="${path}">`),
+    ...(facts.fetch ?? '').split(/\s+/).filter(Boolean).map((path) => `<link rel="preload" as="fetch" crossorigin href="${escapeHtml(path)}">`)
+  ];
   return fill(dropComments(readFileSync(siteFile('layout.html'), 'utf8')), {
     ...links,
+    ahead: ahead.join('\n'),
     title: escapeHtml(title),
     description: escapeHtml(facts.description ?? 'Pixel Reel turns anything wordy into a short cartoon, read to you in a warm voice. Free, and made for anyone who would rather watch than read.'),
     page: escapeHtml(name),

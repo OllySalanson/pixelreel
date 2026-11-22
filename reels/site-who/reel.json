@@ -20,7 +20,8 @@
             "icon": "people"
           }
         ],
-        "every": 0.7
+        "every": 0.5,
+        "start": 1
       }
     },
     {
@@ -36,7 +37,9 @@
         "good": {
           "icon": "heart",
           "label": "Have it read"
-        }
+        },
+        "start": 0.5,
+        "every": 3.8
       }
     },
     {
@@ -59,7 +62,8 @@
             "icon": "tick"
           }
         ],
-        "every": 0.9
+        "every": 0.9,
+        "start": 1.8
       }
     },
     {
@@ -78,7 +82,8 @@
             "label": "One cuppa"
           }
         ],
-        "every": 1.8
+        "every": 1.7,
+        "start": 2.1
       }
     },
     {

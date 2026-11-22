@@ -24,8 +24,8 @@
           "No account",
           "No email"
         ],
-        "every": 1.1,
-        "start": 1.6
+        "every": 1.5,
+        "start": 1.2
       }
     },
     {
@@ -58,7 +58,8 @@
             "label": "Then gone"
           }
         ],
-        "every": 1.8
+        "every": 0.9,
+        "start": 0.5
       }
     },
     {
