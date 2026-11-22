@@ -153,14 +153,16 @@ h1 { font-size: clamp(2.6rem, 4.2vw + 1rem, 4.75rem); line-height: 1.06; letter-
 .reel-words > p { grid-area: 1 / 1; max-width: none; color: var(--cream); visibility: hidden; }
 .reel-words > p.on { visibility: visible; }
 .reel-keys { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 3); padding: var(--u) calc(1.25rem + var(--u)) calc(1.25rem + var(--u)); }
-.reel-keys button { display: inline-grid; justify-items: center; align-items: center; min-height: 3rem; padding: 0.4rem 1rem; font-weight: 700; font-size: 1.125rem; line-height: 1.2; color: var(--cream); background: var(--dusk); border: 0; cursor: pointer;
+/* the buttons share out each row between them, so they are big, and tidy on one row or
+   (with large letters in a narrow player) on three */
+.reel-keys button { flex: 1 0 auto; display: inline-grid; justify-items: center; align-items: center; min-height: 3rem; padding: 0.4rem 1rem; font-weight: 700; font-size: 1.125rem; line-height: 1.2; color: var(--cream); background: var(--dusk); border: 0; cursor: pointer;
   box-shadow: 0 calc(var(--u) * -1) 0 0 var(--frame), 0 var(--u) 0 0 var(--frame), calc(var(--u) * -1) 0 0 0 var(--frame), var(--u) 0 0 0 var(--frame); }
 .reel-keys button:hover { background: #2f5d8a; }
 .reel-keys button > span { grid-area: 1 / 1; }
 .reel-keys button > span:not(.on) { visibility: hidden; }
 .reel-keys .reel-play { color: #141b2d; background: var(--gold); min-width: 6.5rem; }
 .reel-keys .reel-play:hover { background: #ffd970; }
-.reel-keys .reel-sound { margin-left: auto; }
+
 .reel-off { padding: 0 1.25rem 1rem; }
 
 /* ---------------------------------------------------------------- sections */
@@ -192,10 +194,9 @@ h1 { font-size: clamp(2.6rem, 4.2vw + 1rem, 4.75rem); line-height: 1.06; letter-
 .specimen-title { font: 1.875rem/1.1 var(--pixel); color: var(--gold); }
 .specimen-words { margin-top: 0.2rem; font-size: 1.1875rem; line-height: 1.4; }
 .specimen-keys { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 3); padding: var(--u) calc(1.1rem + var(--u)) calc(1.1rem + var(--u)); }
-.specimen-keys span { padding: 0.3rem 0.8rem; font-size: 1rem; font-weight: 700; background: var(--dusk);
+.specimen-keys span { flex: 1 0 auto; text-align: center; padding: 0.3rem 0.8rem; font-size: 1rem; font-weight: 700; background: var(--dusk);
   box-shadow: 0 calc(var(--u) * -1) 0 0 var(--frame), 0 var(--u) 0 0 var(--frame), calc(var(--u) * -1) 0 0 0 var(--frame), var(--u) 0 0 0 var(--frame); }
 .specimen-keys span.on { color: #141b2d; background: var(--gold); }
-.specimen-keys span:last-child { margin-left: auto; }
 .points { display: grid; grid-template-columns: 1fr 1fr; gap: 2.25rem 2rem; }
 .point .px { margin-bottom: 0.75rem; }
 .point p { margin-top: 0.35rem; font-size: 1.125rem; color: var(--ink-soft); }
@@ -350,13 +351,14 @@ h1 { font-size: clamp(2.6rem, 4.2vw + 1rem, 4.75rem); line-height: 1.06; letter-
 
 /* ---------------------------------------------------------------- the page a shared reel is watched on */
 .watch { padding-block: clamp(1.75rem, 3.5vw, 3rem) clamp(2.5rem, 5vw, 4rem); overflow: hidden; }
-.watch-in { width: min(100% - 2 * var(--gutter), 60rem, max(24rem, (100svh - 33rem) * 16 / 9)); }
-.watch-head { display: grid; justify-items: start; }
-.watch .eyebrow { margin-bottom: 0.9rem; }
-.watch h1 { margin-bottom: 1.1rem; max-width: none; font-size: clamp(1.75rem, 1.8vw + 1.1rem, 2.625rem); line-height: 1.15; letter-spacing: -0.015em; color: var(--cream); overflow-wrap: anywhere; }
+/* as big as will leave the whole player on the screen: its picture, its words and its buttons */
+.watch-in { width: min(100% - 2 * var(--gutter), 60rem, max(30rem, (100svh - 25rem) * 16 / 9)); }
 .watch .reel { margin: calc(var(--u) * 2) calc(var(--u) * 4) calc(var(--u) * 4) calc(var(--u) * 2); }
-.watch-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1.5rem; min-height: 3.5rem; margin-top: 1rem; font-size: 1.0625rem; color: var(--mist); }
+/* what to do with the reel, then the small print; room is kept for both, so nothing below jumps when they arrive */
+.watch-foot { display: grid; align-content: start; gap: 0.6rem; min-height: 6.25rem; margin-top: 1rem; font-size: 1.0625rem; color: var(--mist); }
 .watch-foot p { max-width: none; }
+.watch-sent { font-weight: 700; color: var(--gold); }
+.watch-sent:empty { display: none; }
 
 /* ---------------------------------------------------------------- adding it to Claude, step by step */
 .walk { display: grid; gap: clamp(2.75rem, 5vw, 4.5rem); }
@@ -514,15 +516,11 @@ dialog { color: var(--ink); }
   .reel { margin: calc(var(--u) * 2) calc(var(--u) * 3) calc(var(--u) * 3) calc(var(--u) * 2);
     box-shadow: 0 0 0 var(--u) var(--frame), 0 0 0 calc(var(--u) * 2) var(--deep), calc(var(--u) * 3) calc(var(--u) * 3) 0 0 rgba(3, 6, 12, 0.55); }
   .reel-keys { gap: calc(var(--u) * 3) calc(var(--u) * 2); padding: var(--u) calc(0.9rem + var(--u)) calc(0.9rem + var(--u)); }
-  /* the buttons share out each row between them, so they stay tidy on one row or on three */
-  .reel-keys button { flex: 1 0 auto; padding: 0.3rem 0.35rem; font-size: 0.9375rem; min-height: 2.75rem; white-space: nowrap; }
+  .reel-keys button { padding: 0.3rem 0.35rem; font-size: 0.9375rem; min-height: 2.75rem; white-space: nowrap; }
   .reel-keys .reel-play { min-width: 3.75rem; }
-  .reel-keys .reel-sound { margin-left: 0; }
   .reel-big { font-size: 1.375rem; min-height: 3.5rem; padding: 0.5rem 1.25rem 0.5rem 1.1rem; }
   .reel-big .ico { width: 1.05rem; height: 1.2rem; }
   .specimen-keys { gap: calc(var(--u) * 2.5); padding-inline: calc(0.9rem + var(--u)); }
-  .specimen-keys span { flex: 1 0 auto; text-align: center; }
-  .specimen-keys span:last-child { margin-left: 0; }
   .specimen-keys span { padding: 0.3rem 0.5rem; font-size: 0.9375rem; }
   .specimen-cap { padding-inline: 0.9rem; }
   .theatre-in { padding: 1rem; }

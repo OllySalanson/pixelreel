@@ -8,15 +8,17 @@ imagealt: A pixel reel for you. Press Play. Reelie the film reel stands under a 
 <section class="watch night" aria-labelledby="watch-title">
   <canvas class="scene" data-scene="cinema" aria-hidden="true"></canvas>
   <div class="wrap watch-in" id="watch" data-watch="{{reelid}}">
-    <div class="watch-head" data-quiet>
-      <p class="eyebrow">A pixel reel</p>
-      <h1 id="watch-title">{{reeltitle}}</h1>
-    </div>
+    <!-- the player says the reel's name, large, under its picture: said twice it only pushed the reel down the screen -->
+    <h1 class="sr-only" id="watch-title">{{reeltitle}}</h1>
     {{player:empty}}
     <p class="sr-only" id="watch-says" role="status"></p>
     <div class="watch-foot" data-quiet>
+      <div class="row">
+        <button class="btn btn-gold" type="button" id="watch-send" hidden>Send it to someone</button>
+        <a class="btn btn-paper" id="watch-video" href="/r/{{reelid}}/video.mp4" download hidden>Save the video</a>
+        <p class="watch-sent" id="watch-sent" role="status"></p>
+      </div>
       <p id="watch-kept" hidden>Only people with this link can watch. It is kept until <span id="watch-until"></span>.</p>
-      <a class="btn btn-paper" id="watch-video" href="/r/{{reelid}}/video.mp4" download hidden>Save the video</a>
     </div>
   </div>
 </section>
