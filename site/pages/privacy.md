@@ -1,6 +1,7 @@
 <!--
 title: Privacy - Pixel Reel
 description: What Pixel Reel keeps, for how long, and who can see it. In plain words.
+reel: site-privacy
 -->
 <!-- Draft: for Olly to approve before Pixel Reel is public. The contact address is still to choose. -->
 # Privacy

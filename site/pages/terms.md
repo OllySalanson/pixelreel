@@ -1,6 +1,7 @@
 <!--
 title: Terms - Pixel Reel
 description: The terms for using Pixel Reel. Short, and in plain words.
+reel: site-terms
 -->
 <!-- Draft: for Olly to approve before Pixel Reel is public. -->
 # Terms

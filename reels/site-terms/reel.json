@@ -1,0 +1,99 @@
+{
+  "format": "pixelreel/1",
+  "title": "The terms, in plain words",
+  "transition": "slide",
+  "scenes": [
+    {
+      "title": "The terms",
+      "caption": "Five short rules.",
+      "say": "These are the terms. There are five, and they are short.",
+      "picture": {
+        "type": "big",
+        "text": "5 RULES",
+        "sub": "and they are short"
+      }
+    },
+    {
+      "title": "Use it for good",
+      "caption": "Nothing against the law. No tricking or bullying people.",
+      "say": "One. Use it for good. No reels that break the law, trick people, or bully anyone. And no pretending to be a real person or organisation.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "heart",
+            "label": "Use it for good"
+          }
+        ],
+        "start": 0.8
+      }
+    },
+    {
+      "title": "Your reels are yours",
+      "caption": "Pixel Reel does not claim them. What is in them is down to you.",
+      "say": "Two. Your reels are yours. Pixel Reel does not claim them. But what is in them is down to you.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "person",
+            "label": "Yours"
+          }
+        ],
+        "start": 1.2
+      }
+    },
+    {
+      "title": "Check what matters",
+      "caption": "For money, health or the law, check with whoever sent it.",
+      "say": "Three. Check what matters. A reel keeps things simple. For money, health, legal or safety matters, check the details with whoever sent you the original.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "warning",
+            "label": "Check what matters"
+          }
+        ],
+        "start": 1
+      }
+    },
+    {
+      "title": "No promises",
+      "caption": "It may be slow, or down. Reels last 30 days at most.",
+      "say": "Four. No promises. Pixel Reel may be slow, or down. It keeps reels for thirty days at most, and may delete one early if it breaks these terms.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "clock",
+            "label": "Slow, sometimes"
+          },
+          {
+            "icon": "calendar",
+            "label": "30 days at most"
+          }
+        ],
+        "heading": "NO PROMISES",
+        "start": 3.3,
+        "every": 2.8
+      }
+    },
+    {
+      "title": "Fair use",
+      "caption": "There are limits, so it stays free for everyone.",
+      "say": "Five. Fair use. There is a limit on how many reels anyone can make in an hour. That way, it stays free for everyone.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "people",
+            "label": "Free for everyone"
+          }
+        ],
+        "heading": "FAIR USE",
+        "start": 2.2
+      }
+    }
+  ]
+}

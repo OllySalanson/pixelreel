@@ -6,7 +6,7 @@ import { addToClaudeLink, pageFacts, playerHtml, robotsTxt, SITE_PAGES, siteModu
 import { staticFile } from '../service/static.mjs';
 import { SCENES } from '../site/js/landscape.js';
 import { askFor } from '../site/js/maker.js';
-import { lengthWords } from '../site/js/reels.js';
+import { lengthWords, showOf } from '../site/js/reels.js';
 import { SPRITES } from '../site/js/sprites.js';
 import { parseReelJson } from '../src/format.js';
 import { createKit } from '../src/kit.js';
@@ -14,8 +14,9 @@ import { PALETTE } from '../src/palette.js';
 import { fakeContext } from './fake-canvas.js';
 
 const root = (path) => new URL(`../${path}`, import.meta.url);
-const pages = [...Object.values(SITE_PAGES), 'not-found'];
-const html = Object.fromEntries(pages.map((name) => [name, sitePage(name, 'https://reels.example')]));
+const pages = [...Object.values(SITE_PAGES), 'not-found', 'reel-gone', 'reel'];
+const forReel = { values: { reelid: 'abcdefghijklmnopqrstuv', reeltitle: 'Tea' }, title: 'Tea - Pixel Reel', path: '/r/abcdefghijklmnopqrstuv' };
+const html = Object.fromEntries(pages.map((name) => [name, sitePage(name, 'https://reels.example', name === 'reel' ? forReel : {})]));
 
 describe('putting a page together', () => {
   it('reads the facts in the comment at the top of a page', () => {
@@ -42,6 +43,8 @@ describe('putting a page together', () => {
       assert.match(html[name], /<dialog class="comfort" id="comfort"/, `${name} has Make it comfy`);
       assert.doesNotMatch(html[name], /\sstyle="/, `${name} has no inline styles: the site's policy would block them`);
     }
+    assert.match(html.reel, /<h1 id="watch-title">Tea<\/h1>/);
+    assert.doesNotMatch(html.reel, /\{\{/, 'a reel page has every name filled in');
     assert.match(html.home, /<link rel="canonical" href="https:\/\/reels\.example\/">/);
     assert.match(html.press, /<link rel="canonical" href="https:\/\/reels\.example\/press">/);
   });
@@ -61,6 +64,12 @@ describe('putting a page together', () => {
         assert.ok(words || /aria-label="[^"]+"/.test(button), `${name}: a button has no name: ${button.slice(0, 80)}`);
       }
     }
+  });
+
+  it('offers a plain page as a reel, straight under its heading, when it has one', () => {
+    assert.match(html.privacy, /<h1>Privacy<\/h1>\n<p class="doc-reel"><button class="btn btn-reel" type="button" data-reel="site-privacy">Make a pixel reel about this<\/button><\/p>/);
+    assert.match(html.terms, /data-reel="site-terms"/);
+    assert.doesNotMatch(html.credits, /doc-reel/);
   });
 
   it('says when a page asks for a picture that does not exist', () => {
@@ -93,9 +102,9 @@ describe('what the pages point at', () => {
   it('plays only reels that exist, are plain data, and are fully recorded', () => {
     const named = new Set();
     for (const name of pages) {
-      for (const [, reel] of html[name].matchAll(/data-(?:reel|hear|length)="([^"]+)"/g)) named.add(reel);
+      for (const [, reels] of html[name].matchAll(/data-(?:reels?|hear|length)="([^"]+)"/g)) reels.split(' ').forEach((reel) => named.add(reel));
     }
-    assert.ok(named.size >= 12, 'the site plays a reel for each part of the page, and the examples');
+    assert.ok(named.size >= 15, 'the site plays a reel for each part of the page, the examples, and the privacy and terms pages');
     for (const reel of named) {
       assert.ok(reelNames.includes(reel), `there is no reel called ${reel}`);
       const scenes = parseReelJson(readFileSync(root(`reels/${reel}/reel.json`), 'utf8')).scenes;
@@ -194,6 +203,17 @@ describe('the words for Claude', () => {
     assert.equal(askFor('www.example.com/a'), 'Make me a pixel reel about this page: www.example.com/a');
     assert.equal(askFor('how https://example.com works'), 'Make me a pixel reel about this: how https://example.com works');
     assert.equal(askFor(''), 'Make me a pixel reel about this: my gas bill', 'with nothing typed, it shows an example');
+  });
+
+  it('gets a reel ready to play from its data and its recordings', () => {
+    const reel = { format: 'pixelreel/1', title: 'Tea', scenes: [{ title: 'Kettle', caption: 'Boil it.', picture: { type: 'title', text: 'TEA' } }, { title: 'Cup', caption: 'Pour it.', say: 'Pour away.' }] };
+    const show = showOf('tea', reel, { clips: [{ text: 'Pour away.', file: 'b.mp3', seconds: 7.5 }] }, '/r/x/audio/');
+    assert.equal(show.reel.title, 'Tea');
+    assert.equal(show.opens, 'title', 'it says what kind of picture it opens on');
+    assert.deepEqual(show.durations, [4000, 7500], 'a recorded scene lasts as long as its clip; the other is a guess');
+    assert.equal(show.clipFor(show.reel.scenes[1]).url, '/r/x/audio/b.mp3');
+    assert.equal(showOf('tea', JSON.stringify(reel), null).clipFor(show.reel.scenes[1]), null, 'it takes the JSON as text too');
+    assert.throws(() => showOf('bad', { title: 'No scenes' }, null), /problems/);
   });
 
   it('says how long a reel lasts in words', () => {

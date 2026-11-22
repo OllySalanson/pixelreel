@@ -1,0 +1,69 @@
+{
+  "format": "pixelreel/1",
+  "title": "It is all open",
+  "transition": "wipe",
+  "scenes": [
+    {
+      "title": "All open",
+      "caption": "A reel is just a small file. Anyone can read it.",
+      "say": "Everything behind Pixel Reel is open. A reel is just a small file. A title, and a list of scenes.",
+      "picture": {
+        "type": "code",
+        "title": "reel.json",
+        "lines": [
+          "{",
+          "  \"title\": \"Tea\",",
+          "  \"scenes\": [",
+          "    { \"title\": \"Kettle\",",
+          "      \"caption\": \"Boil it.\" }",
+          "  ]",
+          "}"
+        ]
+      }
+    },
+    {
+      "title": "Draw your own",
+      "caption": "The tools are there for anyone who likes to tinker.",
+      "say": "If you like to tinker, the tools are all there. Make a reel of your own, and draw its pictures in code.",
+      "picture": {
+        "type": "terminal",
+        "title": "your computer",
+        "lines": [
+          "$ npm run new my-reel",
+          "$ npm start",
+          "Playing at localhost:8000"
+        ]
+      }
+    },
+    {
+      "title": "Free to use",
+      "caption": "Free to use, to change, and to share.",
+      "say": "It is free to use, to change, and to share. The licence is called MIT, and it is about as easygoing as licences get.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "heart",
+            "label": "Free to use"
+          },
+          {
+            "icon": "people",
+            "label": "Free to share"
+          }
+        ],
+        "every": 1.9,
+        "start": 0.4
+      }
+    },
+    {
+      "title": "Come and look",
+      "caption": "The code is on GitHub.",
+      "say": "So come and have a look. The code is on GitHub, under the name pixel reel.",
+      "picture": {
+        "type": "big",
+        "text": "OPEN",
+        "sub": "the code is on GitHub"
+      }
+    }
+  ]
+}

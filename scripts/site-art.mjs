@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Draws the website's own pictures into site/art/: npm run site-art
-// The tab icon, the home-screen icons, the picture shown when a link to the site is shared,
-// and the logos for the press kit. All are drawn from the site's own sprites and landscape
+// The tab icon, the home-screen icons, the pictures shown when a link to the site or to a
+// reel is shared, and the logos for the press kit. All are drawn from the site's own sprites and landscape
 // (site/js/), so they match the pages. Run it again after changing Reelie or the landscape.
 // Needs @napi-rs/canvas (npm install).
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -130,6 +130,22 @@ async function main() {
   g.fillStyle = CREAM;
   g.fillText('Pixel Reel. Short cartoons with a warm voice.', 80, 398);
   save('share.png', share.canvas.toBuffer('image/png'));
+
+  // the picture for a link to someone's reel, sent in a message: it says what it is, and nothing of what is in it
+  const card = board(1200, 630, 4);
+  SCENES.hero(card.px, 300, 158, 6.5, { paper: PAPER, still: true, quiet: [[0, 0, 262, 106]] });
+  const c = card.g;
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.textBaseline = 'alphabetic';
+  c.font = '800 124px Lexend';
+  c.fillStyle = CREAM;
+  c.fillText('A pixel reel', 76, 196);
+  c.fillStyle = GOLD;
+  c.fillText('for you.', 76, 328);
+  c.font = '500 40px Lexend';
+  c.fillStyle = CREAM;
+  c.fillText('Press Play, and Peter will read it to you.', 80, 398);
+  save('reel-card.png', card.canvas.toBuffer('image/png'));
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
