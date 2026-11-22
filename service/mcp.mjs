@@ -318,9 +318,9 @@ export function createMcpServer({ reels, baseUrl, client = 'local', limits = nul
   );
   const languages = reels.languages ?? [], narrators = reels.narrators ?? [];
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: toolList(languages, narrators) }));
-  server.setRequestHandler(ListPromptsRequestSchema, async () => ({ prompts: promptList() }));
+  server.setRequestHandler(ListPromptsRequestSchema, async () => ({ prompts: promptList({ narrators, languages }) }));
   server.setRequestHandler(GetPromptRequestSchema, async ({ params }) => {
-    const prompt = promptMessages(params.name, params.arguments);
+    const prompt = promptMessages(params.name, params.arguments, { narrators, languages });
     if (!prompt) throw new Error(`There is no prompt called ${params.name}`);
     return prompt;
   });

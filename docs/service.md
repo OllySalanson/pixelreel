@@ -154,6 +154,11 @@ working out what to type:
 | A reel of a document or web page | The few things that matter most in something long: an attached document, or a web page by its address. |
 | A reel of this chat | What the conversation worked out, what was decided, and what happens next. |
 
+Where the service has other narrators or languages to offer, every prompt also has a
+**voice** box and a **language** box, each of which can be left empty (Peter, English). That
+is where someone finds out there is a choice: Claude itself only mentions other voices when
+asked.
+
 Each is the words a person would say, with what makes a good reel of that kind of thing.
 The same advice is in the guide, for someone who asks in their own words.
 

@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import { CLAUDE_ADDRESSES, inRanges, LIMITS, limitProblems, peterMs, RateLimit, reelMs } from '../service/limits.mjs';
 import { EXAMPLE_REEL, formatGuide, playerHtml, reelId } from '../service/mcp.mjs';
+import { promptList, promptMessages } from '../service/prompts.mjs';
 import { BusyError, isId, KEEP_DAYS, languageName, NARRATORS, newId, Reels } from '../service/reels.mjs';
 import { reelFromData } from '../src/format.js';
 import { ICON_NAMES } from '../src/pictures.js';
@@ -993,6 +994,40 @@ describe('the service over HTTP', async () => {
     const guide = words(await client.callTool({ name: 'reel_format', arguments: {} }));
     assert.match(guide, /What to put in, by what you are given:\n- A letter, bill or form: who it is from/, 'the same advice is in the guide, for someone who asks in their own words');
     await client.close();
+  });
+
+  it('offers the voice and the language on every ready-made prompt, where there is a choice', async () => {
+    const offered = { narrators: ['anna', 'stuart'], languages: ['french'] };
+    const about = promptList(offered).find((p) => p.name === 'reel_about');
+    assert.deepEqual(about.arguments.map((a) => [a.name, a.required]), [['about', true], ['voice', false], ['language', false]]);
+    assert.equal(about.arguments[1].description, 'Who reads it aloud: Peter, Anna or Stuart. Leave it empty for Peter.');
+    assert.equal(about.arguments[2].description, 'The language to make it in: English or French. Leave it empty for English.');
+    for (const prompt of promptList(offered)) assert.deepEqual(prompt.arguments.slice(-2).map((a) => a.name), ['voice', 'language'], prompt.name);
+    const text = (name, given, on = offered) => promptMessages(name, given, on).messages[0].content.text;
+    assert.equal(text('reel_about', { about: 'how tides work', voice: ' Anna ', language: 'French' }), 'Make me a pixel reel about this: how tides work\nHave it read by Anna. Make it in French.');
+    assert.equal(text('reel_about', { about: 'how tides work' }), 'Make me a pixel reel about this: how tides work', 'left empty, nothing is said of either');
+    assert.match(text('reel_of_this_chat', { voice: 'Stuart' }), /can watch\.\nHave it read by Stuart\.$/);
+    assert.equal(text('reel_about', { about: 'x', voice: 'v'.repeat(500) }).length, 'Make me a pixel reel about this: x\nHave it read by .'.length + 40, 'what is typed is kept short');
+    assert.equal(text('reel_about', { about: 'x', voice: 'Anna', language: 'French' }, {}), 'Make me a pixel reel about this: x', 'where there is no choice, none is passed on');
+    assert.deepEqual(promptList({ narrators: ['anna'] })[0].arguments.map((a) => a.name), ['about', 'voice']);
+    assert.deepEqual(promptList()[0].arguments.map((a) => a.name), ['about']);
+
+    // over the connector, a service with narrators and languages offers them
+    const mine = new Reels({ store: freshStore(), record: fakeRecord, video: fakeVideo, picture: fakePicture, narrators: ['anna'], languages: ['french'] });
+    const other = createService({ reels: mine, baseUrl: 'https://reels.example' });
+    await new Promise((ok) => other.listen(0, '127.0.0.1', ok));
+    const client = new Client({ name: 'test', version: '1' });
+    await client.connect(new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${other.address().port}/mcp`)));
+    try {
+      const letter = (await client.listPrompts()).prompts.find((p) => p.name === 'reel_of_a_letter');
+      assert.deepEqual(letter.arguments.map((a) => a.name), ['voice', 'language']);
+      const { messages } = await client.getPrompt({ name: 'reel_of_a_letter', arguments: { voice: 'Anna' } });
+      assert.match(messages[0].content.text, /do not guess\.\nHave it read by Anna\.$/);
+      await client.close();
+    } finally {
+      other.close();
+      other.closeAllConnections();
+    }
   });
 
   it('tells whoever is waiting how many lines are recorded so far', async () => {

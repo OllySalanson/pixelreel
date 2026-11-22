@@ -52,22 +52,53 @@ export const PROMPTS = [
   }
 ];
 
-/** The prompts without their words, for prompts/list. */
-export const promptList = () => PROMPTS.map(({ words: _words, ...listed }) => listed);
+const named = (word) => word[0].toUpperCase() + word.slice(1);
+const listed = (words) => (words.length > 1 ? `${words.slice(0, -1).join(', ')} or ${words.at(-1)}` : words[0]);
+
+/**
+ * The choices every prompt offers besides its own, where the service has them to offer:
+ * who reads the reel (`narrators`, besides Peter) and the language it is in (`languages`,
+ * besides English). A person picking a prompt sees them as boxes to fill in or leave empty.
+ */
+function choices({ narrators = [], languages = [] } = {}) {
+  return [
+    ...(narrators.length ? [{
+      name: 'voice',
+      description: `Who reads it aloud: ${listed(['Peter', ...narrators.map(named)])}. Leave it empty for Peter.`,
+      required: false,
+      words: (voice) => ` Have it read by ${voice}.`
+    }] : []),
+    ...(languages.length ? [{
+      name: 'language',
+      description: `The language to make it in: ${listed(['English', ...languages.map(named)])}. Leave it empty for English.`,
+      required: false,
+      words: (language) => ` Make it in ${language}.`
+    }] : [])
+  ];
+}
+
+/** The prompts without their words, for prompts/list. `offered` is { narrators, languages }: what the service can do besides Peter and English. */
+export function promptList(offered) {
+  const extra = choices(offered).map(({ words: _words, ...choice }) => choice);
+  return PROMPTS.map(({ words: _words, ...prompt }) => ({ ...prompt, arguments: [...prompt.arguments, ...extra] }));
+}
 
 /**
  * What choosing the prompt `name` asks, as prompts/get answers: one message from the person.
  * What they typed is kept to one line of a sensible length. Null if there is no such prompt;
- * throws if something it needs was not given.
+ * throws if something it needs was not given. `offered` as for promptList: a voice or a
+ * language that was asked for is added to the words, for Claude to set on the reel.
  */
-export function promptMessages(name, given = {}) {
+export function promptMessages(name, given = {}, offered = {}) {
   const prompt = PROMPTS.find((p) => p.name === name);
   if (!prompt) return null;
+  const tidy = (key, most = 600) => String(given?.[key] ?? '').replace(/\s+/g, ' ').trim().slice(0, most);
   const args = {};
   for (const { name: key, required } of prompt.arguments) {
-    const value = String(given?.[key] ?? '').replace(/\s+/g, ' ').trim().slice(0, 600);
-    if (required && !value) throw new Error(`"${prompt.title}" needs ${key}.`);
-    args[key] = value;
+    args[key] = tidy(key);
+    if (required && !args[key]) throw new Error(`"${prompt.title}" needs ${key}.`);
   }
-  return { description: prompt.description, messages: [{ role: 'user', content: { type: 'text', text: prompt.words(args) } }] };
+  const asked = choices(offered).map((choice) => [choice, tidy(choice.name, 40)]).filter(([, value]) => value).map(([choice, value]) => choice.words(value)).join('');
+  const text = asked ? `${prompt.words(args)}\n${asked.trim()}` : prompt.words(args);
+  return { description: prompt.description, messages: [{ role: 'user', content: { type: 'text', text } }] };
 }
