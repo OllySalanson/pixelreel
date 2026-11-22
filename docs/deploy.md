@@ -91,5 +91,41 @@ Why these:
 - `--max-instances 1`: the queue is in memory, so one copy (see above).
 - `--memory 4Gi`: the voice model needs about 1.3 GB, and a Cloud Run copy's `/tmp`, where
   jobs work, is in memory too.
-- The custom domain is a Cloud Run domain mapping (`gcloud beta run domain-mappings`), which
-  needs the domain verified for the Google account first (`gcloud domains verify`).
+- `PIXELREEL_URL` starts as the service's own `run.app` address, and changes to
+  `https://pixelreel.pro` once that answers (`gcloud run services update pixelreel --region
+  europe-west1 --update-env-vars PIXELREEL_URL=https://pixelreel.pro`).
+
+Callers' addresses are kept out of the logs: the project's `_Default` log sink excludes Cloud
+Run's request logs (`pixelreel-request-logs`), as the privacy page says. The image repository
+keeps the latest two images.
+
+### The address
+
+`pixelreel.pro` and `www.pixelreel.pro` are Cloud Run domain mappings, which need the domain
+verified for the Google account that makes them:
+
+1. In [Search Console](https://search.google.com/search-console), add a **Domain** property for
+   `pixelreel.pro`. It gives a TXT record (`google-site-verification=...`); add it at the
+   domain's DNS host, then press Verify.
+2. Make the mappings: `gcloud beta run domain-mappings create --service pixelreel --domain
+   pixelreel.pro --region europe-west1` (and again for `www.pixelreel.pro`).
+3. At the DNS host, point the names at Google, replacing any records already there for them:
+
+   | Name | Type | Value |
+   | --- | --- | --- |
+   | `@` | A | `216.239.32.21`, `216.239.34.21`, `216.239.36.21`, `216.239.38.21` (four records) |
+   | `@` | AAAA | `2001:4860:4802:32::15`, `2001:4860:4802:34::15`, `2001:4860:4802:36::15`, `2001:4860:4802:38::15` (four records) |
+   | `www` | CNAME | `ghs.googlehosted.com.` |
+
+   `gcloud beta run domain-mappings describe --domain pixelreel.pro --region europe-west1`
+   lists the records Google wants, if they ever differ.
+4. Google issues the certificate once the records are seen, usually within an hour.
+
+### What it costs
+
+Cloud Run bills an awake copy by the second, from the first request until it sleeps about
+15 minutes after the last: about 2,000 vCPU-seconds a visit. The free allowance (240,000
+vCPU-seconds and 450,000 GiB-seconds a month) covers about a hundred visits; each one after
+that is about 4 US cents. The bucket, the image repository (about 25p) and the rest come to
+well under a pound. A copy kept awake all month by steady traffic would cost about $110,
+so watch the budget alert if it ever becomes popular: `--max-instances 1` caps it there.
