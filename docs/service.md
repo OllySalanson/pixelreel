@@ -174,9 +174,24 @@ way is easiest for them:
   "Drop it here" while it is dragged, and the reel is started as soon as it lands.
 - **Choose a file**, or on a phone **take a photo** of a letter or a bill.
 
-The service asks Claude to write the scenes through the Claude API, and the visitor is taken
-to the reel's page, which plays it once the voice is recorded. Giving the words to their own
-Claude is still there, behind "Use your own Claude instead".
+The visitor is taken to the reel's own page straight away, and waits there with something to
+watch. The service asks Claude to write the scenes through the Claude API after it has
+answered, and the page says what is being done and how far along it is: a sign ("Writing",
+then "Recording"), a bar that fills, and one plain sentence ("Peter is recording scene 4 of
+6."). When the voice is recorded, the reel plays there. If it cannot be made, the page says
+why in plain words, and "Try something else" leads back to the box, with the words that were
+asked about still in it. Giving the words to their own Claude is still there, behind "Use
+your own Claude instead".
+
+What can be known before Claude is asked is said in the box, before the visitor leaves it:
+nothing typed, a file Pixel Reel cannot read, too much of it, a PDF too long to read, too
+many reels in the last hour.
+
+For a page that is waiting, `/r/<id>/play.json` gives the reel's `state` (`writing`, then
+`queued`, `recording` and `ready`, or `failed` with an `error`) and how far it has got:
+`ahead` (jobs before it) while it is queued, and `recorded` of `lines` while Peter records.
+A reel that was still being written when the service restarted is marked `failed`, since
+nothing would ever finish it.
 
 | Setting | Default | |
 | --- | --- | --- |

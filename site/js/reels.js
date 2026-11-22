@@ -50,3 +50,32 @@ export function lengthWords(ms) {
   if (s < 60) return `${s} seconds`;
   return `${Math.floor(s / 60)} minute${s >= 120 ? 's' : ''}${s % 60 ? ` ${s % 60}` : ''}`;
 }
+
+/**
+ * What a reel's page shows while the reel is not ready: { sign, words, part }. `play` is
+ * what the service says of it (its state, and how far it has got); `waited` is how many
+ * seconds the page has been waiting. `sign` is a word or two for the screen, `words` a
+ * plain sentence, and `part` how much of the making is done, from 0 to 1 (null when it
+ * cannot be known). Making a reel is two jobs, each about half of the wait: Claude writes
+ * it, which gives no sign of how far along it is, then Peter records it, a scene at a time.
+ */
+export function waitingFor(play, waited = 0) {
+  switch (play.state) {
+    case 'writing':
+      // it creeps towards half way, quickly at first, and never gets there by itself
+      return { sign: 'WRITING', words: 'Claude is reading it and writing the scenes. This takes about half a minute.', part: 0.45 * (1 - Math.exp(-Math.max(0, waited) / 14)) };
+    case 'queued':
+      return { sign: 'WRITTEN', words: play.ahead > 0 ? `It is written. Peter has ${play.ahead === 1 ? 'one reel' : `${play.ahead} reels`} to record first.` : 'It is written. Peter is about to record it.', part: 0.5 };
+    case 'recording': {
+      // the service counts the lines Peter has said, of how many: one a scene, as a rule
+      const known = play.lines > 0 && Number.isInteger(play.recorded);
+      const done = known ? Math.min(play.recorded, play.lines) : 0;
+      return known
+        ? { sign: 'RECORDING', words: `Peter is recording scene ${Math.min(done + 1, play.lines)} of ${play.lines}.`, part: 0.5 + 0.5 * done / play.lines }
+        : { sign: 'RECORDING', words: 'Peter is recording it. It will play here in a moment.', part: 0.75 };
+    }
+    default:
+      return { sign: 'ONE MOMENT', words: 'Trying to reach Pixel Reel. One moment.', part: null };
+  }
+}
+

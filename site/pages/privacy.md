@@ -46,7 +46,9 @@ seen by whoever might get the link.
   it is not sent to Pixel Reel.
 - Where the box says Make my reel, it makes the reel for you. Then what you give it (your
   words, a link, a file or a photo) is sent to Pixel Reel, and on to Claude, to write the
-  reel. Pixel Reel does not keep what you gave it: only the reel.
+  reel. Pixel Reel does not keep what you gave it: only the reel. Your browser remembers
+  the words you asked about until you close the tab, so they are still in the box if you
+  come back.
 
 ## Questions
 

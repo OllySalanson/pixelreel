@@ -8,7 +8,7 @@ import { staticFile } from '../service/static.mjs';
 import { hopHeight, lookAt, REELIE, SAYINGS, SCENES } from '../site/js/landscape.js';
 import { askFor } from '../site/js/maker.js';
 import { PACES, pacedClock, rateOf } from '../site/js/pace.js';
-import { lengthWords, showOf } from '../site/js/reels.js';
+import { lengthWords, showOf, waitingFor } from '../site/js/reels.js';
 import { rulerTop } from '../site/js/ruler.js';
 import { sendReel, sentWords } from '../site/js/send.js';
 import { SPRITES } from '../site/js/sprites.js';
@@ -377,6 +377,31 @@ describe('when a reel ends', () => {
       assert.notEqual(next, name);
       assert.ok((offer(watchPage(name, 'https://reels.example')) ?? '').includes(`<a class="btn btn-gold" href="/watch/${next}">${title(next)}</a>`), `${name} leads on to ${next}`);
     });
+  });
+});
+
+describe('waiting for a reel that is being made', () => {
+  it('says which of the two jobs is being done, in a word for the screen and a plain sentence', () => {
+    assert.deepEqual(waitingFor({ state: 'writing' }), { sign: 'WRITING', words: 'Claude is reading it and writing the scenes. This takes about half a minute.', part: 0 });
+    assert.deepEqual(waitingFor({ state: 'queued', ahead: 0 }), { sign: 'WRITTEN', words: 'It is written. Peter is about to record it.', part: 0.5 });
+    assert.equal(waitingFor({ state: 'queued', ahead: 1 }).words, 'It is written. Peter has one reel to record first.');
+    assert.equal(waitingFor({ state: 'queued', ahead: 3 }).words, 'It is written. Peter has 3 reels to record first.');
+    assert.deepEqual(waitingFor({ state: 'recording', lines: 6, recorded: 0 }), { sign: 'RECORDING', words: 'Peter is recording scene 1 of 6.', part: 0.5 });
+    assert.deepEqual(waitingFor({ state: 'recording', lines: 6, recorded: 3 }), { sign: 'RECORDING', words: 'Peter is recording scene 4 of 6.', part: 0.75 });
+    assert.deepEqual(waitingFor({ state: 'recording', lines: 6, recorded: 9 }), { sign: 'RECORDING', words: 'Peter is recording scene 6 of 6.', part: 1 }, 'never past the last scene');
+    assert.deepEqual(waitingFor({ state: 'recording' }), { sign: 'RECORDING', words: 'Peter is recording it. It will play here in a moment.', part: 0.75 }, 'a recorder that does not say how far it has got');
+    assert.deepEqual(waitingFor({ state: 'unreachable' }), { sign: 'ONE MOMENT', words: 'Trying to reach Pixel Reel. One moment.', part: null });
+  });
+
+  it('fills the bar towards half way while Claude writes, and never reaches it by waiting', () => {
+    const parts = [0, 5, 15, 30, 60, 600].map((waited) => waitingFor({ state: 'writing' }, waited).part);
+    parts.forEach((part, i) => assert.ok(i === 0 || part > parts[i - 1], 'it only ever moves on'));
+    assert.ok(parts[3] > 0.35 && parts.at(-1) < 0.5, `about ${parts[3].toFixed(2)} of the way after half a minute`);
+    assert.equal(waitingFor({ state: 'writing' }, -3).part, 0);
+  });
+
+  it('offers a way back from a reel that could not be made', () => {
+    assert.match(html.reel, /<a class="btn btn-gold" id="watch-retry" href="\/#make" hidden>Try something else<\/a>/);
   });
 });
 

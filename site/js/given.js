@@ -24,7 +24,7 @@ const SAYS = {
   nothing: 'Say what you want explained.',
   long: 'That is too much for one reel. Give it less: a few pages at most.',
   other: 'Pixel Reel can read a PDF, a photo, or plain writing. Save that as a PDF, then give it again.',
-  bigPdf: 'That PDF is too big. Pixel Reel takes up to 10 MB.',
+  bigPdf: 'That PDF is too big. Give it a shorter one, or only the pages that matter.',
   bigPicture: 'That picture is too big. Try a smaller one, or a screenshot.'
 };
 

@@ -2,12 +2,16 @@
 // Claude, to copy across. Nothing is sent anywhere; Claude and the connector do the making.
 // Where the service has Make it right here switched on, the box makes the reel itself
 // instead: from what is typed or pasted in it, a file that is chosen, or anything dropped
-// anywhere on the page (given.js works out what was given, and what to send for it).
+// anywhere on the page (given.js works out what was given, and what to send for it). The
+// service answers at once with the reel's own page, which shows it being made (watch.js).
 import { calm } from './calm.js';
 import { canTake, GivenError, givenFrom, isLink, nameOf, PICTURE_SIDE, requestFor } from './given.js';
 import { copyText } from './send.js';
 
 const EXAMPLE = 'my gas bill';
+
+/** Where the words last asked about are kept, in this tab only, for the way back from a reel that could not be made. */
+const ASKED = 'pixelreel-asked';
 
 /** The most the box takes when its words are for copying across to Claude. */
 const ASK_MAX = 2000;
@@ -83,7 +87,7 @@ async function shrinkPicture(file) {
 /**
  * Make it right here, shown only when the service says it can write a reel itself. Gives
  * back make(given), which asks the service for a reel about { words } or { file }, then goes
- * to the reel's page, which waits for the voice. It also takes anything dropped on the page,
+ * to the reel's page, which shows it being written and recorded. It also takes anything dropped on the page,
  * a file that is chosen, and what is pasted when the pointer is not in a box.
  */
 function makeHere(form, box, update) {
@@ -105,6 +109,21 @@ function makeHere(form, box, update) {
     said.textContent = words;
     said.classList.toggle('sorry', sorry);
   };
+  // The words last asked about are kept, on this device and only until the tab is closed, so
+  // that someone sent back here from a reel that could not be made finds them in the box.
+  const keep = (asked) => {
+    try {
+      if (asked) sessionStorage.setItem(ASKED, asked); else sessionStorage.removeItem(ASKED);
+    } catch {
+      // nowhere to keep them: the box starts empty, as it always did
+    }
+  };
+  try {
+    const asked = sessionStorage.getItem(ASKED);
+    if (asked && !box.value) { box.value = asked; update(); }
+  } catch {
+    // as above
+  }
   let busy = false;
   const setBusy = (on) => {
     busy = on;
@@ -136,10 +155,11 @@ function makeHere(form, box, update) {
       const res = await fetch('/try', { method: 'POST', ...request });
       const answer = await res.json().catch(() => ({}));
       if (!res.ok || !answer.watch) throw new GivenError(answer.error || 'That did not work. Try again in a minute.');
-      location.assign(answer.watch);
+      keep(given.file ? '' : given.words);
+      location.assign(answer.watch);   // the reel's own page, which shows it being written and recorded
     } catch (err) {
       setBusy(false);
-      say(err instanceof GivenError ? err.message : 'That did not work. Try again in a minute.', true);
+      say(err instanceof GivenError ? err.message : navigator.onLine === false ? 'You are not online. Check your internet, then try again.' : 'That did not work. Try again in a minute.', true);
       if (form.contains(from)) from.focus({ preventScroll: true });
       show(said);
     }

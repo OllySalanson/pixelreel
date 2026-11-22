@@ -76,7 +76,7 @@ describe('what the page sends for it', () => {
   it('sends a PDF as it is, whatever it is called', async () => {
     const letter = file('letter', '', PDF);
     assert.deepEqual(await sent({ file: letter }), { type: 'application/pdf', body: letter });
-    await assert.rejects(requestFor({ file: file('big.pdf', 'application/pdf', PDF, PDF_MAX + 1) }), (err) => err instanceof GivenError && /up to 10 MB/.test(err.message));
+    await assert.rejects(requestFor({ file: file('big.pdf', 'application/pdf', PDF, PDF_MAX + 1) }), (err) => err instanceof GivenError && /too big\. Give it a shorter one/.test(err.message));
   });
 
   it('sends a small picture as it is, and makes a big one smaller first', async () => {
