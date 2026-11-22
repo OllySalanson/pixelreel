@@ -773,11 +773,33 @@ html[data-aloud="on"] :is(h1, h2, h3, p, li, summary, dt, dd, figcaption):not(:i
 .sheet-scan h3 { font-size: 1.375rem; }
 .sheet-made { display: none; }
 .storyboard .step p:not(.step-n) { font-size: 1.1875rem; color: var(--ink); }
-/* On paper it is the only thing: black on white, three scenes across, none cut in two by the end of a sheet. */
+/* Any page on paper: its words, black on white, with nothing that only works on a screen
+   (the bar, the foot, the players, the buttons) and nothing cut in two by the end of a sheet. */
 @media print {
-  .top, .foot, .skip, dialog, .scene, main > :not(.sheet-part), #sheet-print { display: none !important; }
+  .top, .foot, .skip, dialog, .scene, .reel, .reel-end, button, .doc-reel, .scan:not(.sheet-scan), .wireless, .handset { display: none !important; }
+  /* and the parts of the home page that are only things to press or to watch */
+  #ways, #examples, #comfy, .voices, .specimen, .hero-watch, .finale-send { display: none !important; }
+  :root:root { --paper: #fff; --tint: #fff; --card: #fff; --ink: #000; --ink-soft: #222; --line: #000; color-scheme: light; }
   html { font-size: 75%; }
   body { background: #fff; color: #000; }
+  .section { padding-block: 1.25rem; }
+  .night { background: #fff; color: #000; }
+  .night h1, .night h1 span, .night h2, .night h3, .night p, .night .lead { color: #000; }
+  h1, h2, h3, summary { break-after: avoid; }
+  li, .box, .person, .walk-step, .step, details { break-inside: avoid; }
+  .btn { box-shadow: 0 0 0 1px #000; background: #fff; color: #000; }
+  /* a picture nobody has scrolled to has not been drawn yet (shots.js): leave it out, not an empty frame.
+     (The scenes under a reel are drawn by sheet.js as soon as the reel is ready, and are not these.) */
+  canvas.shot[data-reel]:not([data-drawn]) { display: none !important; }
+  /* a step whose picture is left out keeps its number above its heading, not on top of it */
+  .step:has(canvas[data-reel]:not([data-drawn])) { padding-top: 1rem; }
+  .step:has(canvas[data-reel]:not([data-drawn])) .step-n { position: static; margin: 0 0 0.5rem 1.25rem; box-shadow: 0 0 0 1px #000; }
+  /* a link on paper cannot be pressed: where it leads off the site, say where */
+  .doc a[href^="http"]::after { content: ' (' attr(href) ')'; font-weight: 400; overflow-wrap: anywhere; }
+}
+/* The page a reel is watched on prints only the reel on one page: three scenes across. */
+@media print {
+  .page-reel main > :not(.sheet-part), .page-watch main > :not(.sheet-part), #sheet-print { display: none !important; }
   .sheet-part { padding: 0; }
   .sheet-part .head { margin-bottom: 1.5rem; }
   .sheet-part .eyebrow, .sheet-part .lead { display: none; }

@@ -43,7 +43,8 @@ export function startShots(scope = document) {
   const shots = [...scope.querySelectorAll('canvas.shot[data-reel]')].map(makeShot);
   let ticking = false;
   // a shot at rest shows its finished picture; `rested` says it has been drawn that way
-  const rest = (shot) => { fitCanvas(shot.canvas); draw(shot, shot.span); shot.rested = true; };
+  // (and the page knows it has a picture in it, which a sheet of paper should not be given an empty frame for)
+  const rest = (shot) => { fitCanvas(shot.canvas); draw(shot, shot.span); shot.rested = true; if (shot.scene) shot.canvas.dataset.drawn = ''; };
   const tick = () => {
     if (ticking) return;
     ticking = true;
@@ -97,6 +98,8 @@ export function startShots(scope = document) {
     holder.addEventListener('blur', set(false));
   }
   onComfortChange(() => { shots.forEach((s) => { s.rested = false; }); tick(); });
+  // on paper each picture is its finished one, not wherever it had got to
+  addEventListener('beforeprint', () => { for (const shot of shots) if (shot.scene) rest(shot); });
 
   // how long each reel on show lasts, in words
   for (const el of scope.querySelectorAll('[data-length]')) {

@@ -43,4 +43,11 @@ startSignal();
 for (const root of document.querySelectorAll('main .reel[data-reel]')) {
   new ReelPlayer(root).load(root.dataset.reel).catch((err) => console.error(err));
 }
+// On paper a closed question has no answer: open them all for the printing, and close again the ones that were.
+addEventListener('beforeprint', () => {
+  for (const closed of document.querySelectorAll('details:not([open])')) { closed.open = true; closed.dataset.forPaper = ''; }
+});
+addEventListener('afterprint', () => {
+  for (const opened of document.querySelectorAll('details[data-for-paper]')) { opened.open = false; delete opened.dataset.forPaper; }
+});
 document.documentElement.dataset.ready = 'true';
