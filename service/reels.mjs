@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { reelFromData } from '../src/format.js';
 import { clipLookup, ReelError } from '../src/reel.js';
 import { limitProblems } from './limits.mjs';
+import { paceReel } from './pacing.mjs';
 import { narrationMs, timeline } from '../src/timing.js';
 
 /** How long a reel is kept before it is deleted, unless someone deletes it sooner. */
@@ -234,7 +235,9 @@ export class Reels {
           for (const name of await readdir(join(dir, 'audio'))) {
             await this.store.put(`reels/${id}/audio/${name}`, await readFile(join(dir, 'audio', name)));
           }
-          const raw = await this.reel(id), manifest = await this.manifest(id);
+          // now the voice has a length, the pictures are timed to it: the page, the player in the chat and the video all play this
+          const manifest = await this.manifest(id), raw = paceReel(await this.reel(id), manifest);
+          await this.store.put(`reels/${id}/reel.json`, JSON.stringify(raw));
           const reel = reelFromData(raw), clipFor = clipLookup(manifest);
           const seconds = Math.round(timeline(reel.scenes.map((s) => narrationMs(s, clipFor(s)))).total / 1000);
           await this.update(id, { state: 'ready', seconds });

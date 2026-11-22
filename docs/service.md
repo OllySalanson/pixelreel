@@ -21,6 +21,8 @@ pages are drafts, still to be approved, and the privacy page still needs a conta
 - [Run it](#run-it)
 - [Add it to Claude](#add-it-to-claude)
 - [The tools](#the-tools)
+  - [What Claude is told](#what-claude-is-told)
+  - [Pictures timed to the voice](#pictures-timed-to-the-voice)
 - [The player in the chat](#the-player-in-the-chat)
 - [Make it right here](#make-it-right-here)
 - [Limits](#limits)
@@ -58,22 +60,69 @@ Then in Claude, open **Customize > Connectors**, add a custom connector, and pas
 with `/mcp` on the end. It needs no sign-in. Custom connectors work on every Claude plan (the
 Free plan allows one).
 
-Ask for something like *"Make me a pixel reel explaining how to read my gas meter."* Claude
-reads the format, writes the scenes, and gives you a link to the reel, which plays as soon as
-the voice is recorded: about as long as the reel itself.
+Ask for something like *"Make me a pixel reel explaining how to read my gas meter."*, or
+paste in a letter and ask for a reel of it. Claude writes the scenes and gives you a link to
+the reel, which plays as soon as the voice is recorded: about as long as the reel itself.
 
 ## The tools
 
 | Tool | Does | Hint |
 | --- | --- | --- |
-| `reel_format` | Explains how to write a reel: the fields, every picture and icon, and writing for people who find reading hard. | read-only |
+| `reel_format` | The full guide to writing a reel: what makes a good one, every picture and icon, how to draw a sprite, and a finished reel to learn from. | read-only |
 | `make_reel` | Checks a reel and starts recording it. Its input is the [reel.json format](scenes.md#a-reel-as-data-reeljson) as a JSON Schema. A reel with problems comes back as a tool error listing every one, for Claude to fix. | |
 | `get_reel` | Says whether a reel is waiting, being recorded, ready or failed, with its links. | read-only |
 | `get_reel_video` | Asks for a ready reel's MP4 and gives its link once it is made. | |
 | `delete_reel` | Deletes a reel, its recordings and its video at once. | destructive |
 
 Results come as plain words for Claude to pass on, and as `structuredContent` (`id`, `state`,
-`watch`, `video`, ...) for any other client.
+`watch`, `video`, ...) for any other client. Some clients show Claude only the
+`structuredContent`, so the plain words are in it too, as `message`.
+
+### What Claude is told
+
+Claude writes a reel from what the connector tells it, so the words are chosen with care, and
+tried with real Claude sessions. To try a change, run the service and ask a real Claude:
+
+```sh
+echo '{"mcpServers":{"pixelreel":{"type":"http","url":"http://localhost:8787/mcp"}}}' > mcp.json
+claude -p "Make me a pixel reel about how to read my gas meter." --mcp-config mcp.json --strict-mcp-config \
+  --allowedTools "mcp__pixelreel__reel_format,mcp__pixelreel__make_reel" --output-format stream-json --verbose
+```
+
+Read what it wrote, how many tries it took, and what it said to the person afterwards:
+
+- **A reel like the site's own.** `make_reel`'s description, its schema and the guide all ask
+  for what the [examples on the site](site/README.md#the-reels-it-plays) are: 5 to 7 scenes,
+  about 40 seconds, 12 to 25 spoken words a scene in Peter's voice, a title picture first,
+  the pictures mixed. Left to itself Claude wrote reels twice as long.
+- **One press where it can be.** The essentials are in `make_reel` itself, so Claude can write
+  a good reel without calling `reel_format` first, and a first-timer has one fewer thing to
+  allow. A reel that leaves out `"format"` is taken as `pixelreel/1` rather than sent back.
+- **A short answer.** People who ask for a reel often find reading hard work, so the result
+  asks Claude to answer in a line or two with the link, not to list the scenes, and not to
+  keep checking: the player and the page wait by themselves.
+- **Private things stay private.** A reel of someone's letter leaves out names, addresses and
+  account numbers unless they ask, since anyone with the link can watch.
+- **No timing to guess.** `make_reel` does not offer the pictures' `start` and `every`: see below.
+
+### Pictures timed to the voice
+
+A list, a row of icons, a flow, a compare or a chat brings its items in one at a time.
+Whoever writes the reel cannot know how long Peter will take over a line, so on a guess the
+items bunch at the start of a long line, or are still waiting when a short one ends. Once the
+voice is recorded, `service/pacing.mjs` sets each such picture's `start` and `every` itself:
+
+- An item whose label Peter says ("Outside", "Under the stairs") arrives just as he says it.
+  When he says it is worked out from the words: how far through the line they come, with a
+  pause for each comma and full stop. Against the timings set by hand on the site's own reels
+  (from the recordings' real word timings) it lands about half a second away on average.
+- Items he does not name fall in step with the ones he does; with none named they keep an
+  even pace.
+- The first item never waits more than a few seconds, and the last is always in before the
+  line ends.
+
+The timed reel replaces the one that was sent, so the page, the player in the chat, the
+video and the picture for link previews all play the same thing.
 
 ## The player in the chat
 
@@ -149,7 +198,7 @@ The local tools (`npm run voices`, `page`, `video`) have no such limits.
 
 ## What it keeps, and for how long
 
-- The reel as it was sent, its recordings and, if asked for, its video. Nothing else: no
+- The reel as it was sent (with its pictures timed to the voice), its recordings and, if asked for, its video. Nothing else: no
   accounts, no names, no addresses.
 - Each reel has a random 22-character id, so only people with its link can watch it.
 - Reels are deleted after 30 days, or at once with `delete_reel`.
@@ -169,6 +218,7 @@ The local tools (`npm run voices`, `page`, `video`) have no such limits.
 | `service/mcp.mjs` | The connector's tools, and the player shown in the chat. |
 | `service/app-bridge.js` | The in-chat player's side of the MCP Apps protocol. |
 | `service/reels.mjs` | Making, recording, videos, expiry and deleting: one job at a time. |
+| `service/pacing.mjs` | Times a recorded reel's pictures to its voice. |
 | `service/limits.mjs` | How big a reel may be, and how many each caller may make. |
 | `service/try.mjs`, `service/writer.mjs` | Make it right here: a visitor's request, and Claude asked to write it. Off by default. |
 | `service/site.mjs` | Puts the website's pages together, from `site/`. |
