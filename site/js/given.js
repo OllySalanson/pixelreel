@@ -24,12 +24,23 @@ const SAYS = {
   nothing: 'Say what you want explained.',
   long: 'That is too much for one reel. Give it less: a few pages at most.',
   other: 'Pixel Reel can read a PDF, a photo, or plain writing. Save that as a PDF, then give it again.',
+  video: 'Pixel Reel cannot watch a video. If it has a transcript, copy that and paste it here.',
   bigPdf: 'That PDF is too big. Give it a shorter one, or only the pages that matter.',
   bigPicture: 'That picture is too big. Try a smaller one, or a screenshot.'
 };
 
 /** Something the person can be told, in plain words: what they gave cannot be made into a reel. */
 export class GivenError extends Error {}
+
+/**
+ * True for words that are the address of a YouTube video and nothing else. Claude's page
+ * reader cannot load one (tried, on the live site: it cost 5 cents and came to nothing), so
+ * such a link is turned away before it costs anything, with what to do instead.
+ */
+export const isVideoLink = (words) => /^(https?:\/\/)?((www|m|music)\.)?(youtube\.com\/(watch|shorts|live|embed)|youtu\.be\/)\S*$/i.test(words.trim());
+
+/** What to say of a link that is a video. */
+export const VIDEO_SAYS = SAYS.video;
 
 /** True for words that are a web address and nothing else. */
 export const isLink = (words) => /^(https?:\/\/|www\.)\S+$/i.test(words.trim());
@@ -83,6 +94,7 @@ function wordsRequest(words, language) {
   const tidy = words.replace(/\r\n?/g, '\n').trim();
   if (!tidy) throw new GivenError(SAYS.nothing);
   if (tidy.length > TEXT_MAX) throw new GivenError(SAYS.long);
+  if (isVideoLink(tidy)) throw new GivenError(SAYS.video);
   const more = language ? { language } : {};
   return tidy.length <= ABOUT_MAX && !tidy.includes('\n') ? json({ about: tidy, ...more }) : json({ text: tidy, ...more });
 }

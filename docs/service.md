@@ -280,7 +280,8 @@ last line: it can use the same `play.json` fields.
 
 ## Make it right here
 
-**Off unless you switch it on, because every reel it makes is paid for.**
+**Off unless you switch it on, because every reel it makes is paid for.** (It is on at
+pixelreel.pro.)
 
 Someone without Claude cannot use the connector. With this on, the website's "Make a pixel
 reel now" box makes the reel itself. The visitor gives it one thing to explain, in whichever
@@ -352,7 +353,7 @@ What a visitor may give, and how much of it:
 
 | | The most | |
 | --- | --- | --- |
-| A link or a few words | 600 letters | A link is read by Claude, once, up to 20,000 tokens of the page. |
+| A link or a few words | 600 letters | A link is read by Claude, once, up to 10,000 tokens of the page: about 7,000 words. |
 | Writing | 60,000 letters | About 10,000 words: a long article. |
 | A PDF | 10 MB, and 50,000 tokens | Counted with the Claude API's token counter, which is free, before Claude reads a page of it. That is about 25 pages. |
 | A picture | 5 MB | JPEG, PNG, GIF or WebP. The page makes a phone's photo smaller before sending it (2,000 pixels along its longest side). |
@@ -361,15 +362,38 @@ A file is known by how it begins, never by its name or what the browser says it 
 else (a Word document, say) is turned away in plain words: "Save that as a PDF, then give it
 again."
 
-What it costs is an estimate from the published prices, not yet measured. With
-`claude-sonnet-5-5` ($2 and $10 a million tokens in and out) a reel is about 2,000 tokens out
-(2 cents) plus what Claude reads: about 3,000 tokens for a few words or a photo (under 1
-cent), up to about 22,000 for a link (4 cents), and at most 50,000 for a PDF (10 cents). So
-about 3 cents for a few words, and 12 cents at the very most. At 30 a day, the most it can
-cost is about $3.60 a day, and more likely under $1, plus the recording (see
-[deploy.md](deploy.md#what-it-costs)). The service logs what each reel was made from and the
-tokens it took (`try: pdf, 21000 tokens in, 1900 out (claude-sonnet-5-5)`), so the real
-figure can be read from the logs.
+**What it costs.** With `claude-sonnet-5-5` ($2 and $10 a million tokens in and out):
+
+| A reel from | Tokens in | Tokens out | Cost | |
+| --- | --- | --- | --- | --- |
+| A link | 48,617 | 1,227 | 11 cents | **Measured**, once, on 22 November 2026: the first real reel, from a GOV.UK guide, when Claude read up to 20,000 tokens of a page. |
+| A link, now | about 18,000 | about 1,200 | about 5 cents | An estimate, from the two changes below. Not measured yet. |
+| A few words, or a photo | about 3,000 | about 1,200 | about 2 cents | An estimate. Not measured yet. |
+| A PDF | at most 53,000 | about 1,200 | at most 12 cents | An estimate. The PDF itself is counted before it is read, and turned away over 50,000 tokens. |
+
+A link costs more than its page is long, for two reasons that the first real reels showed:
+
+- **The page is paid for more than once.** Claude reads it, then reads it again each time
+  it carries on after fetching it. So Claude now reads up to 10,000 tokens of a page, not
+  20,000 (`PAGE_TOKENS` in `service/writer.mjs`).
+- **The page reader itself costs tokens on every pass.** Counted with the token counter,
+  which is free: a request with no page reader is 2,868 tokens; with the plain reader
+  (`web_fetch_20250910`) it is 3,914; with the newer one that has Claude write code to sift
+  the page (`web_fetch_20260209`), 7,411, and it takes a pass more. A link whose page would
+  not load took 23,939 tokens, about 5 cents, and came to nothing. A reel reads one page
+  once, so it now uses the plain reader (`PAGE_READER`).
+
+At 30 a day, the most it can cost is about $3.60 a day if every one is a long PDF, and about
+$1.50 if every one is a link, plus the recording (see [deploy.md](deploy.md#what-it-costs)).
+
+**A YouTube link is turned away before it costs anything.** Claude's page reader cannot
+load a YouTube page (tried, on the live site), and Pixel Reel cannot watch a video. So the
+box says so at once, with what to do instead: "If it has a transcript, copy that and paste
+it here."
+
+The service logs what each reel was made from and every kind of token it took (`try: words,
+48617 tokens in, 1227 out, 1 page fetched (claude-sonnet-5-5)`), so the real figure can be
+worked out from the logs: look for lines that start `try:`.
 
 A go that cost nothing is not counted against the visitor: a file turned away before Claude
 saw it, a PDF that was too long, or Claude being busy.
@@ -377,7 +401,7 @@ saw it, a PDF that was too long, or Claude being busy.
 How it is kept safe:
 
 - **The service never fetches an address a visitor gives it.** A link is read by Claude's
-  own web fetch tool, on Anthropic's side, once, and no more than 20,000 tokens of it.
+  own web fetch tool, on Anthropic's side, once, and no more than 10,000 tokens of it.
 - **Only a request that names a page may read one.** Writing, a PDF or a picture is given to
   Claude with no way to fetch anything, so a link hidden inside a document goes nowhere.
 - **Only the website's own page may ask.** A request from another site, or one that does not

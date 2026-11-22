@@ -2,7 +2,7 @@
 // or not it has been given a writer to write one (service/writer.mjs, which needs the Claude
 // API and so is only loaded when the feature is switched on). A visitor gives one thing to
 // explain: a link or a few words, some writing, a PDF or a picture.
-import { ABOUT_MAX, fileKind, PDF_MAX, PICTURE_MAX, TEXT_MAX } from '../site/js/given.js';
+import { ABOUT_MAX, fileKind, isVideoLink, PDF_MAX, PICTURE_MAX, TEXT_MAX, VIDEO_SAYS } from '../site/js/given.js';
 
 export { ABOUT_MAX, PDF_MAX, PICTURE_MAX, TEXT_MAX };
 
@@ -31,6 +31,7 @@ export function tidyAbout(about) {
   const words = plain(about).replace(/\s+/g, ' ').trim();
   if (!words) throw new TryError('Say what you want explained.');
   if (words.length > ABOUT_MAX) throw new TryError(`Keep it to a link, or a few words: ${ABOUT_MAX} letters at most.`);
+  if (isVideoLink(words)) throw new TryError(VIDEO_SAYS);   // Claude cannot load one: said now, it costs nothing
   return words;
 }
 

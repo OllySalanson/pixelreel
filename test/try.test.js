@@ -10,7 +10,7 @@ import { ReelError } from '../src/reel.js';
 import { createService } from '../service/server.mjs';
 import { DiskStore } from '../service/store.mjs';
 import { ABOUT_MAX, AGAIN, languageOf, OWN_NAMES, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError, writtenSoFar } from '../service/try.mjs';
-import { createWriter } from '../service/writer.mjs';
+import { createWriter, PAGE_READER, PAGE_TOKENS } from '../service/writer.mjs';
 
 const tmp = mkdtempSync(join(tmpdir(), 'pixelreel-try-'));
 after(() => rmSync(tmp, { recursive: true, force: true }));
@@ -43,6 +43,11 @@ describe('what a visitor asks for', () => {
     assert.equal(tidyAbout('https://example.com/a?b=1'), 'https://example.com/a?b=1');
     for (const bad of [undefined, 7, '', '   ', '\n\t']) assert.throws(() => tidyAbout(bad), TryError);
     assert.throws(() => tidyAbout('x'.repeat(ABOUT_MAX + 1)), /at most/);
+    // a video cannot be watched, and Claude cannot load its page: said before it costs anything
+    for (const video of ['https://www.youtube.com/watch?v=jNQXAC9IVRw', 'youtu.be/jNQXAC9IVRw', 'https://m.youtube.com/shorts/abc123']) {
+      assert.throws(() => tidyAbout(video), (err) => err instanceof TryError && /cannot watch a video.*transcript.*paste it here/.test(err.message), video);
+    }
+    assert.equal(tidyAbout('what is youtube.com/watch about'), 'what is youtube.com/watch about', 'words about a video are still words');
     assert.equal(tidyAbout('x'.repeat(ABOUT_MAX)).length, ABOUT_MAX);
   });
 
@@ -159,8 +164,24 @@ describe('the writer', () => {
     await createWriter({ client: fakeClient(reply(JSON.stringify(tea))) })(words('tea'));   // nobody need be listening
   });
 
+  it('logs every kind of token a reel took, so that its cost can be worked out from the line', async () => {
+    const said = [];
+    const usage = { input_tokens: 48617, output_tokens: 1227, cache_creation_input_tokens: 0, cache_read_input_tokens: 0, server_tool_use: { web_fetch_requests: 1 } };
+    const cached = { input_tokens: 900, output_tokens: 1100, cache_creation_input_tokens: 12000, cache_read_input_tokens: 24000 };
+    const client = fakeClient(reply(JSON.stringify(tea), { usage }), reply(JSON.stringify(tea), { usage: cached }));
+    const write = createWriter({ client, log: (line) => said.push(line) });
+    await write(words('https://example.com/story'));
+    await write(words('tea'));
+    assert.deepEqual(said, [
+      'try: words, 48617 tokens in, 1227 out, 1 page fetched (claude-sonnet-5-5)',
+      'try: words, 900 tokens in, 1100 out, 12000 written to the cache, 24000 read from it (claude-sonnet-5-5)'
+    ]);
+  });
+
   it('lets Claude read one page, when the visitor names one', async () => {
-    const page = [{ type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 1, max_content_tokens: 20000 }];
+    const page = [{ type: 'web_fetch_20250910', name: 'web_fetch', max_uses: 1, max_content_tokens: PAGE_TOKENS }];
+    assert.equal(PAGE_TOKENS, 10000);
+    assert.equal(PAGE_READER, 'web_fetch_20250910', 'the plain page reader: the newer one costs far more for a page that is only read once');
     const client = fakeClient(reply(JSON.stringify(tea)), reply(JSON.stringify(tea)), reply(JSON.stringify(tea)));
     const write = createWriter({ client });
     await write(words('https://example.com/story'));
@@ -657,6 +678,9 @@ describe('make it right here, over HTTP', () => {
     assert.equal((await fetch(`${local}/try`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"about":"tea"}' })).status, 403, 'nor one that does not say where it is from');
     assert.equal((await ask('tea', { 'sec-fetch-site': 'cross-site' })).status, 403);
     assert.equal((await ask('')).status, 400);
+    const video = await ask('https://www.youtube.com/watch?v=jNQXAC9IVRw');
+    assert.equal(video.status, 400);
+    assert.match((await video.json()).error, /cannot watch a video/);
     assert.equal((await ask('x'.repeat(ABOUT_MAX + 1))).status, 400);
     assert.equal((await ask('x'.repeat(5000))).status, 400);
     assert.equal((await fetch(`${local}/try`, { method: 'POST', headers: { origin: 'https://reels.example' }, body: '{oops' })).status, 400);

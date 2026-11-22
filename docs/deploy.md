@@ -175,7 +175,9 @@ while its model loads.
 
 ### Switching on Make it right here
 
-It is off. To let visitors without Claude have the service write a reel for them from what
+It has been on at pixelreel.pro since 22 November 2026, with the key in the secret
+`pixelreel-claude-key`. This is how it was switched on, and how to do it anywhere else. To
+let visitors without Claude have the service write a reel for them from what
 they type, paste, drop or photograph (see [service.md](service.md#make-it-right-here) for
 what that costs and how it is kept safe), put a Claude API key in Secret Manager and switch
 it on. With the key in a file (here `~/.config/pixelreel/claude-key`), so that it is never
