@@ -30,7 +30,7 @@ docker run -p 8787:8787 -e PIXELREEL_URL=https://reels.example -v pixelreel-data
 | Processor | 2 vCPUs. Pocket TTS records about 2.5 times faster than real time on 4; one job runs at a time. |
 | Memory | 2 GB. The voice model and PyTorch take about 1 GB, which the service keeps loaded so reels start at once; a video job about 300 MB more. |
 | Disk for `/data` | About 1 MB a reel (recordings), plus about 1.7 MB a minute for any video. 10 GB is thousands of reels. |
-| Image | About 2 GB, mostly PyTorch and the model. |
+| Image | About 3 GB: PyTorch, the English voice model, and six more languages' models at about 190 MB each. |
 | HTTPS | Claude only connects to `https://` addresses. |
 
 ## Choosing a host
@@ -130,31 +130,25 @@ must be verified for the Google account that makes them:
    lists the records Google wants, if they ever differ.
 4. Google issues the certificate once the records are seen, usually within an hour.
 
-### Other languages
+### Other languages and narrators
 
-Off. To let Peter read reels in other languages (see
-[service.md](service.md#other-languages) for what has and has not been checked), the image
-must hold each language's voice model, and the service must be told:
+On in the image. It is built with the voice models for French, German, Spanish, Italian,
+Portuguese and Dutch (`ARG VOICE_LANGUAGES` in the `Dockerfile`, about 190 MB each) and
+with five more narrators' voices beside Peter's: Anna, Vera, Stuart, Charles and Paul
+(`ARG VOICE_NAMES`, small files), and it switches them on itself (`ENV PIXELREEL_LANGUAGES`
+and `PIXELREEL_NARRATORS`, at the end of the `Dockerfile`). See
+[service.md](service.md#other-languages) for what has and has not been checked about how
+they sound.
 
-1. In the `Dockerfile`, set `ARG VOICE_LANGUAGES="french spanish"` (any of french, german,
-   spanish, italian, portuguese, dutch). Each adds about 190 MB to the image. With Docker
-   itself, `--build-arg VOICE_LANGUAGES="french spanish"` does the same without the edit.
-2. Deploy, and add `--update-env-vars PIXELREEL_LANGUAGES=french,spanish`.
-
-A language switched on without its model in the image cannot be recorded: the image's model
-folder is not writable, so nothing is downloaded when the service runs, and such a reel
-fails with "The voice could not be recorded".
-
-### Other narrators
-
-Off. To let people ask for a narrator other than Peter (see
-[service.md](service.md#other-narrators) for why that is a decision and not just a setting):
-
-1. In the `Dockerfile`, set `ARG VOICE_NAMES="anna stuart_bell"`: the Pocket TTS voices to
-   build in (`anna`, `vera`, `stuart_bell`, `charles`, `paul`).
-2. Deploy, and add `--update-env-vars PIXELREEL_NARRATORS=anna,stuart` (first names).
-
-A narrator switched on without the voice in the image cannot record.
+- To offer fewer, change both lines for it in the `Dockerfile` (what is built in, and what
+  is switched on) and deploy. Keep the two in step: a language or narrator switched on
+  without its model in the image cannot be recorded, as the image's model folder is not
+  writable and nothing is downloaded when the service runs.
+- To switch them off without a new image:
+  `gcloud run services update pixelreel --region europe-west1 --project pixelreel-515501 --update-env-vars PIXELREEL_LANGUAGES=,PIXELREEL_NARRATORS=`.
+- The voice kept loaded is the English one. A reel in another language loads that
+  language's model for the reel, in a second process, so for its length the service holds
+  two models (about 2 GB of the copy's 4 GB).
 
 ### Switching on Make it right here
 

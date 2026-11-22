@@ -53,8 +53,8 @@ npm run service
 | `PIXELREEL_S3_BUCKET` | none | A bucket to keep reels in instead, with the settings in [deploy.md](deploy.md#keeping-reels-in-a-bucket). |
 | `PIXELREEL_PYTHON` | `.venv/bin/python` | The Python with Pocket TTS installed, as for `npm run voices`. |
 | `PIXELREEL_LISTED` | off | `1` lets search engines list the website. Off, every page asks them not to. Reels are never listed. |
-| `PIXELREEL_LANGUAGES` | none | Other languages Peter may read, such as `french,spanish`. Off, every reel is in English. See [Other languages](#other-languages). |
-| `PIXELREEL_NARRATORS` | none | Narrators besides Peter that may be asked for, such as `anna,stuart`. Off, Peter reads every reel. See [Other narrators](#other-narrators). |
+| `PIXELREEL_LANGUAGES` | none (all six in the image) | Other languages Peter may read, such as `french,spanish`. Off, every reel is in English. See [Other languages](#other-languages). |
+| `PIXELREEL_NARRATORS` | none (all five in the image) | Narrators besides Peter that may be asked for, such as `anna,stuart`. Off, Peter reads every reel. See [Other narrators](#other-narrators). |
 | `PIXELREEL_WARM_VOICE` | on | `0` loads the voice afresh for each reel, instead of once when the service starts. Saves about 1 GB of memory, and makes every reel wait longer. |
 
 It records one reel at a time, and carries on with any waiting after a restart. Stopping it
@@ -200,7 +200,7 @@ video and the picture for link previews all play the same thing.
 
 ## Other languages
 
-**Off unless you switch it on, and worth a listen by someone who speaks the language first.**
+**On in the image that runs pixelreel.pro; off from a checkout unless you set it. Still worth a listen by someone who speaks each language.**
 
 Peter's voice comes from Pocket TTS, which also has models for French, German, Spanish,
 Italian, Portuguese and Dutch. With `PIXELREEL_LANGUAGES=french,spanish` (say), `make_reel`
@@ -211,7 +211,7 @@ another language.
 
 - Each language is a model of its own, about 190 MB, and it must be to hand: on your
   machine it downloads itself the first time; in the image it has to be built in
-  ([deploy.md](deploy.md#other-languages)).
+  ([deploy.md](deploy.md#other-languages-and-narrators)).
 - The voice kept loaded is the English one, so a reel in another language loads its model
   each time and takes ten seconds or so longer to start.
 - **What has been checked, and what has not.** A line in each of the six languages was
@@ -228,7 +228,7 @@ another language.
 
 ## Other narrators
 
-**Off unless you switch it on. The site says, in Peter's own words, "there's only me".**
+**On in the image that runs pixelreel.pro; off from a checkout unless you set it. Peter is always the narrator unless someone asks for another.**
 
 Pocket TTS has other British voices. With `PIXELREEL_NARRATORS=anna,stuart` (any of `anna`,
 `vera`, `stuart`, `charles`, `paul`), `make_reel` gains a `narrator` field, and Claude is
@@ -237,10 +237,10 @@ to offer the choice unprompted: Peter stays the narrator unless someone asks.
 
 - Why it might be wanted: some people follow one voice more easily than another, and some
   would simply rather hear a woman's voice.
-- Why it is off: the website promises one narrator, and the reel that says so would need
-  changing first. That is a decision about what Pixel Reel is, not a setting to flip.
+- The website still says, in Peter's own words, "there's only me" (the reel under Meet
+  Peter). Now that other narrators can be asked for, that reel wants changing.
 - Each voice is a small file that must be to hand, like a language's model
-  ([deploy.md](deploy.md#other-narrators)).
+  ([deploy.md](deploy.md#other-languages-and-narrators)).
 - A line was recorded in each of the six voices and written down again by a speech-to-text
   model: every one came back word for word. Nobody has listened to judge how they sound.
 - A change to a reel (`improves`) keeps its recordings only when the narrator and the
