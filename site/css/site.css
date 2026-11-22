@@ -708,6 +708,7 @@ dialog { color: var(--ink); }
 .pick .p-lilac { background: #efe9f9; color: #141b2d; }
 .pick .p-night { background: #101a2e; color: #f4f1dc; }
 .pick-paper input:checked + span { box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line), 0 calc(var(--u) * 3) 0 0 var(--gold-lip); font-weight: 700; }
+.pick-note { flex-basis: 100%; margin-top: 0.25rem; font-size: 1.0625rem; color: var(--ink-soft); }
 .comfort-reset { justify-self: start; padding: 0.25rem 0; font-weight: 500; background: none; border: 0; text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; }
 
 /* ---------------------------------------------------------------- the menu */
@@ -727,6 +728,14 @@ dialog { color: var(--ink); }
 .menu-list .px { flex: none; width: 2.25rem; height: auto; }
 .menu-list .aa { flex: none; width: 2.25rem; text-align: center; font-weight: 800; font-size: 1.5rem; letter-spacing: 0; }
 .menu .btn-big { width: calc(100% - var(--u) * 2); }
+
+/* ---------------------------------------------------------------- press words to hear them */
+/* With it on (Make it comfy), words that a press reads show a hand to a mouse, which is also
+   what has a phone send the press at all. What is being read has an edge round it until
+   the voice has finished. */
+html[data-aloud="on"] :is(h1, h2, h3, p, li, summary, dt, dd, figcaption):not(:is(a, button, label, .reel, dialog, .letter, [aria-hidden="true"]) *, [aria-hidden="true"]) { cursor: pointer; }
+.is-aloud { outline: var(--u) solid var(--gold-lip); outline-offset: calc(var(--u) * 2); }
+.night .is-aloud, html[data-paper="night"] .is-aloud { outline-color: var(--gold); }
 
 /* ---------------------------------------------------------------- the reading ruler */
 /* A clear band about two and a half lines deep, edged like a ruler, with everything round it

@@ -127,6 +127,14 @@
       <label><input type="radio" name="ruler" value="on"><span>On</span></label>
     </fieldset>
 
+    <!-- out of sight unless the browser has a voice to read with (aloud.js) -->
+    <fieldset class="pick" data-needs-speech hidden>
+      <legend>Press words to hear them</legend>
+      <label><input type="radio" name="aloud" value="off" checked><span>Off</span></label>
+      <label><input type="radio" name="aloud" value="on"><span>On</span></label>
+      <p class="pick-note">Press any words on the site, and they are read to you. In your device's own voice, not Peter's.</p>
+    </fieldset>
+
     <fieldset class="pick">
       <legend>Moving pictures</legend>
       <label><input type="radio" name="motion" value="on" checked><span>Moving</span></label>

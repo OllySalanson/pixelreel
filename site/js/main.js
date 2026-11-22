@@ -1,6 +1,7 @@
 // Wakes the website up: the players, the theatre, the scenery and pictures, Make it comfy, the menu,
 // the box that writes what to say to Claude (or makes the reel), the list of reels made here,
 // the page a shared reel is watched on, and what makes it an app on a phone. Without it the pages still read and link.
+import { startAloud } from './aloud.js';
 import { startApp } from './app.js';
 import { startComfort } from './comfort.js';
 import { startKept } from './kept.js';
@@ -23,6 +24,7 @@ startComfort();
 startMenu();
 startApp();
 startRuler();
+startAloud();
 startScenes();
 startShots();
 startTheatre();
