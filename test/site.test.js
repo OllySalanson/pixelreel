@@ -7,7 +7,7 @@ import { addressMeant, addToClaudeLink, EXAMPLES, NARRATORS, narratorsHtml, page
 import { staticFile } from '../service/static.mjs';
 import { hopHeight, lookAt, REELIE, SAYINGS, SCENES } from '../site/js/landscape.js';
 import { sentenceAt, sentencesOf } from '../site/js/follow.js';
-import { createAloud, NOT_READ, pressed, READABLE, voiceFor, wordsOf } from '../site/js/aloud.js';
+import { createAloud, NOT_READ, placedWords, pressed, READABLE, sentenceSpans, voiceFor, wordsOf } from '../site/js/aloud.js';
 import { tried } from '../site/js/comfort.js';
 import { askFor } from '../site/js/maker.js';
 import { leadsHere, startMenu } from '../site/js/menu.js';
@@ -1345,7 +1345,9 @@ describe('press words to hear them', () => {
     aloud.sayAll([{ words: 'Privacy', about: 'the heading' }, { words: 'It keeps little. For a short time.', about: 'a paragraph' }, { words: '  ', about: 'nothing' }, { words: 'Questions', about: 'the last' }]);
     assert.deepEqual(speech.said.map((u) => u.text), ['Privacy', 'It keeps little.', 'For a short time.', 'Questions'], 'a browser may refuse a voice that starts later than the press');
     assert.deepEqual(changes, ['the heading']);
-    assert.deepEqual(speech.said.map((u) => typeof u.onstart), ['undefined', 'function', 'undefined', 'function'], 'only the first sentence of a later part says so');
+    assert.ok(speech.said.every((u) => typeof u.onstart === 'function'), 'every sentence says when it begins');
+    speech.said[2].onstart();
+    assert.deepEqual(changes, ['the heading'], 'but a sentence that is not the first of its part does not change what is being read');
     speech.said[1].onstart();
     assert.deepEqual([changes.at(-1), aloud.about], ['a paragraph', 'a paragraph']);
     speech.said[3].onstart();
@@ -1353,6 +1355,47 @@ describe('press words to hear them', () => {
     assert.equal(speech.said[2].onend, undefined, 'it is not over until the last of them');
     speech.said[3].onend();
     assert.deepEqual(changes, ['the heading', 'a paragraph', 'the last', null]);
+  });
+
+  it('says which sentence of what it is reading has begun, for the page to mark, and that none has at the end', () => {
+    const { speech } = voice(), begun = [];
+    const aloud = createAloud({ speech, Utterance: class { constructor(words) { this.text = words; } }, onSentence: (about, nth) => begun.push([about, nth]) });
+    aloud.sayAll([{ words: 'One. Two.', about: 'first' }, { words: 'Three.', about: 'second' }]);
+    for (const u of speech.said) u.onstart();
+    assert.deepEqual(begun, [['first', 0], ['first', 1], ['second', 0]]);
+    speech.said[2].onend();
+    assert.deepEqual(begun.at(-1), [null, -1]);
+    const late = speech.said[0];
+    aloud.say('Four.', 'third');
+    late.onstart();
+    assert.deepEqual(begun.at(-1), [null, -1], 'a sentence of something already stopped says nothing');
+  });
+
+  it('knows where in the page each letter of the words came from, so that a sentence can be marked there', () => {
+    const heading = text('Reading is hard work'), words = text('Dyslexia,  or tired eyes.\n Let the reel read.');
+    const card = el('LI', [el('H3', [heading]), el('P', [words])]);
+    const { words: all, at } = placedWords(card);
+    assert.equal(all, 'Reading is hard work. Dyslexia, or tired eyes. Let the reel read.');
+    assert.equal(at.length, all.length, 'a place, or none, for every letter');
+    assert.deepEqual(at[0], { node: heading, offset: 0 });
+    assert.equal(at[all.indexOf('.')], null, 'the full stop put in after the heading came from nowhere');
+    assert.deepEqual(at[all.indexOf('Dyslexia')], { node: words, offset: 0 });
+    assert.deepEqual(at[all.indexOf('or tired')], { node: words, offset: 11 }, 'two spaces in the page are one in the words, and the place is still right');
+    assert.deepEqual(at[all.indexOf('Let')], { node: words, offset: 27 });
+    // each sentence, as it is said, and the letters it runs between
+    const spans = sentenceSpans(all);
+    assert.deepEqual(spans.map(([from, to]) => all.slice(from, to)), ['Reading is hard work.', 'Dyslexia, or tired eyes.', 'Let the reel read.']);
+    assert.deepEqual(sentenceSpans('  '), []);
+    // the second sentence, found again in the page
+    const [from, to] = spans[1], letters = at.slice(from, to).filter(Boolean);
+    assert.equal(words.data.slice(letters[0].offset, letters.at(-1).offset + 1), 'Dyslexia,  or tired eyes.');
+  });
+
+  it('marks the sentence being said in gold, where the browser can mark words without changing the page', () => {
+    const aloud = readFileSync(root('site/js/aloud.js'), 'utf8'), css = readFileSync(root('site/css/site.css'), 'utf8');
+    assert.match(css, /\n::highlight\(aloud\) \{ background-color: var\(--gold\); color: #141b2d; \}/);
+    assert.match(aloud, /const marks = window\.CSS\?\.highlights && window\.Highlight \? window\.CSS\.highlights : null;/, 'and does without where it cannot');
+    assert.match(aloud, /marks\.set\('aloud', new window\.Highlight\(range\)\);/);
   });
 
   it('takes no notice of a part starting once it has been stopped, or once something else is being read', () => {

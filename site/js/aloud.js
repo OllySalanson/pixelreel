@@ -24,21 +24,53 @@ const UNSEEN = new Set(['SCRIPT', 'STYLE', 'SVG', 'CANVAS', 'NOSCRIPT', 'BUTTON'
 /**
  * The words of a part of the page as they are read aloud: what someone looking at it can
  * see, in order, with a full stop after a heading or a line that has none, so that the
- * voice stops there for breath. Takes a node of the page, or anything shaped like one.
+ * voice stops there for breath. With them, where each letter came from: `at[i]` is the
+ * text node and the place in it of letter i, or null for one that was put in (that full
+ * stop). Takes a node of the page, or anything shaped like one.
  */
-export function wordsOf(node) {
-  let words = '';
+export function placedWords(node) {
+  const letters = [], at = [];
+  const put = (letter, from) => { letters.push(letter); at.push(from); };
+  const untrail = () => { while (letters.at(-1) === ' ') { letters.pop(); at.pop(); } };
   const walk = (part) => {
-    if (part.nodeType === 3) { words += part.data; return; }
+    if (part.nodeType === 3) {
+      for (let i = 0; i < part.data.length; i++) {
+        const from = { node: part, offset: i };
+        if (!/\s/.test(part.data[i])) put(part.data[i], from);
+        else if (letters.length && letters.at(-1) !== ' ') put(' ', from);   // any run of space is one space, and none leads
+      }
+      return;
+    }
     if (part.nodeType !== 1) return;
     const tag = String(part.tagName).toUpperCase();
     if (UNSEEN.has(tag) || part.hidden || part.getAttribute?.('aria-hidden') === 'true' || part.classList?.contains('sr-only')) return;
     for (const child of part.childNodes ?? []) walk(child);
-    if (BLOCKS.has(tag) && /[^\s.!?:;,]\s*$/.test(words)) words = `${words.trimEnd()}. `;
-    else if (BLOCKS.has(tag)) words += ' ';
+    if (!BLOCKS.has(tag) || !letters.length) return;
+    untrail();
+    if (!/[.!?:;,]/.test(letters.at(-1))) put('.', null);
+    put(' ', null);
   };
   walk(node);
-  return words.replace(/\s+/g, ' ').trim();
+  untrail();
+  return { words: letters.join(''), at };
+}
+
+/** The words of a part of the page as they are read aloud (see placedWords). */
+export const wordsOf = (node) => placedWords(node).words;
+
+/**
+ * Where each sentence of some words begins and ends among their letters, as [from, to)
+ * pairs: the sentences as they are said one by one, with the blank ones left out.
+ */
+export function sentenceSpans(words) {
+  const spans = [];
+  let from = 0;
+  for (const sentence of sentencesOf(words)) {
+    const lead = sentence.length - sentence.trimStart().length, body = sentence.trim().length;
+    if (body) spans.push([from + lead, from + lead + body]);
+    from += sentence.length;
+  }
+  return spans;
 }
 
 /**
@@ -85,12 +117,13 @@ export function voiceFor(voices, lang) {
  * starts, and calls `onChange(about)` then, and `onChange(null)` when it is over or
  * stopped; `about` is what it is reading now, and `sentences` how many it is holding.
  * `sayAll(parts)` reads several things one after another, each with its `words` and what
- * it is `about`, and calls `onChange` as it comes to each. The words go a sentence at a
+ * it is `about`, and calls `onChange` as it comes to each, and `onSentence(about, n)` as
+ * it begins sentence n of one (then `onSentence(null, -1)` at the end). The words go a sentence at a
  * time, since some browsers cut a long speech short, and all of them are handed over at
  * once, in the press that asked: a browser may refuse a voice that starts later.
  * `speech` is speechSynthesis, `Utterance` SpeechSynthesisUtterance, `rate()` the pace chosen.
  */
-export function createAloud({ speech, Utterance, lang = 'en-GB', rate = () => 1, onChange = () => {}, timer = { set: (fn, ms) => setTimeout(fn, ms), clear: (id) => clearTimeout(id) } }) {
+export function createAloud({ speech, Utterance, lang = 'en-GB', rate = () => 1, onChange = () => {}, onSentence = () => {}, timer = { set: (fn, ms) => setTimeout(fn, ms), clear: (id) => clearTimeout(id) } }) {
   let turn = 0, about = null, watchdog = null;
   let saying = [];   // kept until they are said: a browser may throw away what nothing holds on to, and never say it has finished
   const over = (mine) => {
@@ -98,6 +131,7 @@ export function createAloud({ speech, Utterance, lang = 'en-GB', rate = () => 1,
     timer.clear(watchdog);
     about = null;
     saying = [];
+    onSentence(null, -1);
     onChange(null);
   };
   // Told to stop only when it is talking, or has more to say. A precaution: a browser may
@@ -113,18 +147,22 @@ export function createAloud({ speech, Utterance, lang = 'en-GB', rate = () => 1,
     stop();
     const mine = ++turn, pace = rate(), voice = voiceFor(speech.getVoices?.() ?? [], lang);
     // each sentence, what it is part of, and whether it is the first of that part
-    const lines = parts.flatMap(({ words, about: what }) => sentencesOf(words).map((sentence) => sentence.trim()).filter(Boolean).map((sentence, i) => ({ sentence, what, first: i === 0 })));
+    const lines = parts.flatMap(({ words, about: what }) => sentencesOf(words).map((sentence) => sentence.trim()).filter(Boolean).map((sentence, nth) => ({ sentence, what, nth, first: nth === 0 })));
     if (!lines.length) return;
     about = lines[0].what;
     onChange(about);
     hushVoice();   // anything else the browser's voice was saying
-    saying = lines.map(({ sentence, what, first }, i) => {
+    saying = lines.map(({ sentence, what, nth, first }, i) => {
       const u = new Utterance(sentence);
       if (voice) u.voice = voice;
       u.lang = voice?.lang ?? lang;
       u.rate = 0.95 * pace;
-      // as the voice comes to the next part, that is what it is reading
-      if (first && i > 0) u.onstart = () => { if (mine === turn && about !== null) { about = what; onChange(what); } };
+      // as the voice comes to the next part, that is what it is reading; and it says which sentence of it
+      u.onstart = () => {
+        if (mine !== turn || about === null) return;
+        if (first && i > 0) { about = what; onChange(what); }
+        onSentence(what, nth);
+      };
       u.onerror = () => over(mine);   // a voice that fails says no more
       if (i === lines.length - 1) u.onend = () => over(mine);
       speech.speak(u);
@@ -147,8 +185,26 @@ export function startAloud() {
   const readers = [...document.querySelectorAll('button[data-read-page]')];
   let wholePage = false;
   const label = () => { for (const button of readers) button.textContent = wholePage ? 'Stop reading' : 'Read this page to me'; };
+  // The sentence being said is marked in the words themselves, as a reel marks it in its
+  // captions, where the browser can mark a run of words without the page being changed.
+  const marks = window.CSS?.highlights && window.Highlight ? window.CSS.highlights : null;
+  let placed = null;   // the part being read: where its letters are, and where its sentences begin and end
+  const mark = (block, nth) => {
+    if (!marks) return;
+    if (!(block instanceof Element)) { marks.delete('aloud'); placed = null; return; }
+    if (placed?.block !== block) {
+      const { words, at } = placedWords(block);
+      placed = { block, at, spans: sentenceSpans(words) };
+    }
+    const letters = placed.spans[nth] ? placed.at.slice(...placed.spans[nth]).filter(Boolean) : [];
+    if (!letters.length) { marks.delete('aloud'); return; }
+    const range = document.createRange();
+    range.setStart(letters[0].node, letters[0].offset);
+    range.setEnd(letters.at(-1).node, letters.at(-1).offset + 1);
+    marks.set('aloud', new window.Highlight(range));
+  };
   const aloud = createAloud({
-    speech, Utterance, lang: root.lang || 'en-GB', rate: () => rateOf(root.dataset.pace),
+    speech, Utterance, lang: root.lang || 'en-GB', rate: () => rateOf(root.dataset.pace), onSentence: mark,
     onChange: (block) => {
       for (const was of document.querySelectorAll('.is-aloud')) was.classList.remove('is-aloud');
       if (block === null && wholePage) { wholePage = false; label(); }

@@ -775,6 +775,8 @@ dialog { color: var(--ink); }
 html[data-aloud="on"] :is(h1, h2, h3, p, li, summary, dt, dd, figcaption):not(:is(a, button, label, .reel, dialog, .letter, [aria-hidden="true"]) *, [aria-hidden="true"]) { cursor: pointer; }
 .is-aloud { outline: var(--u) solid var(--gold-lip); outline-offset: calc(var(--u) * 2); }
 .night .is-aloud, html[data-paper="night"] .is-aloud { outline-color: var(--gold); }
+/* and the sentence being said is gold, as it is in a reel's own words */
+::highlight(aloud) { background-color: var(--gold); color: #141b2d; }
 
 /* ---------------------------------------------------------------- the reading ruler */
 /* A clear band about two and a half lines deep, edged like a ruler, with everything round it
