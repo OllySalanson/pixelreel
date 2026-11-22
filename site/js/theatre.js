@@ -51,6 +51,7 @@ export function startTheatre() {
     run = { queue: (button.dataset.reels ?? button.dataset.reel).split(/\s+/).filter(Boolean), at: 0 };
     dialog.showModal();
     player.playKey.focus();   // so Space pauses, and Tab moves on to Next and Sound
+    player.fillOnItsSide();   // in the press itself: on a phone held on its side the reel fills the screen
     play(run, 0);
   }
 
@@ -77,7 +78,11 @@ export function startTheatre() {
   });
   dialog.querySelector('[data-close]').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
-  dialog.addEventListener('close', () => { run = null; player.stop(); });
+  dialog.addEventListener('close', () => {
+    run = null;
+    player.stop();
+    if (player.root.classList.contains('is-full')) player.toggleFull();   // closed while it filled the screen: the page comes back
+  });
 }
 
 /** <button data-hear="reel-name">: plays that reel's first line, and stops it if pressed again. */

@@ -29,6 +29,13 @@ export const nowPlaying = (reel, index) => ({
   artwork: [192, 512].map((size) => ({ src: `/site/art/icon-${size}.png`, sizes: `${size}x${size}`, type: 'image/png' }))
 });
 
+/**
+ * Whether a screen is a phone held on its side: wider than it is tall, too short for a reel
+ * with its words and buttons under it, and with no mouse (`mouse` is whether it has one: a
+ * small window on a computer is not a phone). There a reel fills the screen when it is played.
+ */
+export const onItsSide = ({ width, height, mouse = false }) => !mouse && width > height && height <= 500;
+
 /** Quietens everything on the page that is talking, except `keep`. */
 export function hush(keep = null) {
   for (const talker of talkers) if (talker !== keep) talker.pause();
@@ -122,7 +129,7 @@ export class ReelPlayer {
 
   wire(back, next) {
     const act = (fn) => () => { if (!this.player) return; this.intro = false; fn(); };
-    this.big.onclick = () => this.start();
+    this.big.onclick = () => { this.start(); this.fillOnItsSide(); };
     this.canvas.onclick = () => this.toggle();
     this.playKey.onclick = () => this.toggle();
     const onward = act(() => {
@@ -194,6 +201,15 @@ export class ReelPlayer {
     if (!this.root.requestFullscreen) { over(); return; }
     // a reel is wider than it is tall: a phone that will turn its screen on its side for it, does
     this.root.requestFullscreen().then(() => screen.orientation?.lock?.('landscape')?.catch(() => {}), over);
+  }
+
+  /**
+   * On a phone held on its side there is no room for a reel with its words under it, so the
+   * press that plays it also fills the screen with it, as the button in the corner would.
+   * Call it in that press: a browser fills the screen only when asked by one.
+   */
+  fillOnItsSide() {
+    if (this.fullKey && !this.root.classList.contains('is-full') && onItsSide({ width: innerWidth, height: innerHeight, mouse: matchMedia('(pointer: fine)').matches })) this.toggleFull();
   }
 
   /** Marks the reel as filling the screen or not: `over` when it is laid over the page because the browser would not do it. */

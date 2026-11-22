@@ -11,7 +11,7 @@ import { createAloud, NOT_READ, pressed, READABLE, voiceFor, wordsOf } from '../
 import { tried } from '../site/js/comfort.js';
 import { askFor } from '../site/js/maker.js';
 import { startMenu } from '../site/js/menu.js';
-import { nowPlaying } from '../site/js/player.js';
+import { nowPlaying, onItsSide } from '../site/js/player.js';
 import { PACES, pacedClock, rateOf } from '../site/js/pace.js';
 import { qrSvg } from '../site/js/qr.js';
 import { lengthWords, showOf, waitingFor } from '../site/js/reels.js';
@@ -1039,6 +1039,30 @@ describe('on a phone, posters and narrators two across', () => {
     assert.match(phone, /\n {2}\.voice \{ display: grid; grid-template-rows: auto 1fr auto auto;/);
     // the rows are a card's four parts, in this order
     assert.match(narratorsHtml(['anna']), /<li class="voice">\s*<p class="voice-name">[^<]+<\/p>\s*<p class="voice-kind">[^<]+<\/p>\s*<button [^>]*>[^<]+<\/button>\s*<label class="voice-pick">/);
+  });
+});
+
+describe('a phone held on its side', () => {
+  it('is a screen wider than it is tall, too short for a reel with its words under it, and with no mouse', () => {
+    assert.equal(onItsSide({ width: 844, height: 390 }), true, 'a phone on its side');
+    assert.equal(onItsSide({ width: 667, height: 375 }), true, 'a small one');
+    assert.equal(onItsSide({ width: 390, height: 844 }), false, 'a phone held upright');
+    assert.equal(onItsSide({ width: 1024, height: 768 }), false, 'a tablet has room');
+    assert.equal(onItsSide({ width: 1280, height: 720 }), false, 'so has a computer');
+    assert.equal(onItsSide({ width: 900, height: 400, mouse: true }), false, 'a small window on a computer is not a phone');
+  });
+
+  it('fills the screen with a reel in the press that plays it: the big Play button, and a reel opened over the page', () => {
+    const player = readFileSync(root('site/js/player.js'), 'utf8'), theatre = readFileSync(root('site/js/theatre.js'), 'utf8');
+    assert.match(player, /this\.big\.onclick = \(\) => \{ this\.start\(\); this\.fillOnItsSide\(\); \};/);
+    assert.match(player, /fillOnItsSide\(\) \{\s*if \(this\.fullKey && !this\.root\.classList\.contains\('is-full'\) && onItsSide\(/, 'only where it can fill the screen, and has not already');
+    assert.match(theatre, /dialog\.showModal\(\);[\s\S]*?player\.fillOnItsSide\(\);[^\n]*\n\s*play\(run, 0\);/, 'before the reel is fetched, while the press still counts');
+    assert.match(theatre, /if \(player\.root\.classList\.contains\('is-full'\)\) player\.toggleFull\(\);/, 'and closing it gives the page back');
+  });
+
+  it('keeps a player in the page no taller than the screen there, so its picture and its Play button can be seen', () => {
+    const css = readFileSync(root('site/css/site.css'), 'utf8');
+    assert.match(css, /@media \(orientation: landscape\) and \(max-height: 500px\) \{\n {2}\.hero-reel \.reel, \.way-watch \.reel \{ width: min\(100%, calc\(\(100svh - 6\.5rem\) \* 16 \/ 9\)\); margin-inline: auto; \}\n\}/);
   });
 });
 
