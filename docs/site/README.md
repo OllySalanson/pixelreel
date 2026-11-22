@@ -296,3 +296,16 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | A shared reel on a 1280 x 800 laptop: before, after |
 | --- |
 | ![Before: a small player under a large title, a button cut off. After: a large player, all of it in view, and Send it to someone.](log/v10-reel-page.jpg) |
+
+### Version 11
+
+- **A reel's link shows the reel.** Sent in a message, every reel's link used to show the
+  same card. Now it shows that reel's own first picture, in a frame, over a band with a
+  play button, the reel's name and Reelie: "GAS METER", not "A pixel reel for you". The
+  service draws it (`service/card.mjs`) the first time a message asks, which can be before
+  the voice is recorded, and keeps it with the reel. The old card still stands in if a
+  picture cannot be drawn.
+
+| What a message showed for every reel | What it shows now, for two of them |
+| --- | --- |
+| ![A pixel reel for you. Press Play, and Peter will read it to you.](../../site/art/reel-card.png) | ![Two cards: GAS METER, and a pension letter, each with a play button and its reel's name.](log/v11-cards.jpg) |

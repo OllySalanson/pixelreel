@@ -7,7 +7,10 @@ code or install on their side. It is a small Node server with two faces:
   service records the voice and gives back a link to watch it.
 - **A page for each reel** at `/r/<id>`, which plays it with its recordings in the website's
   own player, and `/r/<id>/video.mp4` once a video has been asked for. The page is there at
-  once, and waits with the watcher while the voice is still being recorded.
+  once, and waits with the watcher while the voice is still being recorded. When its link
+  is sent in a message, the message shows the reel's own picture (`/r/<id>/card.png`: its
+  first picture, its name and a play button, drawn by `service/card.mjs` the first time it
+  is asked for).
 
 It also serves the website: what Pixel Reel is (`/`), how to add it to Claude (`/claude`, with
 its own address filled in), the press kit, and privacy, terms and credits. The site lives in
@@ -152,8 +155,8 @@ The local tools (`npm run voices`, `page`, `video`) have no such limits.
 - The voice is recorded on the service's own machine. The words are never sent to another
   company.
 - A reel's page loads nothing from anywhere else: its content security policy allows only the
-  service's own files. The page names the reel (so a link sent in a message shows what it
-  is) but holds none of its words: the player fetches those.
+  service's own files. The page names the reel and points at its first picture (so a link
+  sent in a message shows what it is) but holds none of its words: the player fetches those.
 - Search engines are asked not to list any reel, its recordings or its video.
 
 ## How it fits together

@@ -7,6 +7,7 @@ import { LIMITS, limitProblems, RateLimit } from '../service/limits.mjs';
 import { BusyError, isId, KEEP_DAYS, newId, Reels } from '../service/reels.mjs';
 import { reelFromData } from '../src/format.js';
 import { markdownHtml, SITE_PAGES, SITE_POLICY } from '../service/site.mjs';
+import { staticFile } from '../service/static.mjs';
 import { checkKey, DiskStore, S3Store, signRequest } from '../service/store.mjs';
 import { fakeS3 } from './fake-s3.js';
 import { ReelError } from '../src/reel.js';
@@ -35,6 +36,9 @@ async function fakeRecord(dir) {
 }
 
 const fakeVideo = async (dir, out) => writeFileSync(out, `video of ${JSON.parse(readFileSync(join(dir, 'reel.json'), 'utf8')).title}`);
+
+/** Stands in for the card drawer (service/card.mjs, which test/card.test.js tries for real). */
+const fakePicture = async (raw) => Buffer.from(`picture of ${raw.title}`);
 
 
 describe('the store', () => {
@@ -155,6 +159,28 @@ describe('the reels service', () => {
     assert.equal(made, 1, 'a made video is not made again');
   });
 
+  it('draws a reel\'s own picture the first time it is asked for, and keeps it with the reel', async () => {
+    let drawn = 0;
+    const reels = new Reels({ store: freshStore(), record: () => new Promise(() => {}), video: fakeVideo, picture: async (raw) => { drawn++; return fakePicture(raw); } });
+    const { id } = await reels.create(tea);
+    assert.equal(String(await reels.card(id)), 'picture of Tea', 'before the voice is recorded: a link is often sent at once');
+    assert.equal(String(await reels.card(id)), 'picture of Tea');
+    assert.equal(drawn, 1, 'a drawn picture is not drawn again');
+    assert.equal(await reels.card('AAAAAAAAAAAAAAAAAAAAAA'), null, 'no reel, no picture');
+    await reels.remove(id);
+    assert.equal(await reels.store.get(`reels/${id}/card.png`), null, 'it goes when the reel does');
+    assert.equal(await reels.card(id), null);
+  });
+
+  it('says so, and gives nothing, when a picture cannot be drawn', async () => {
+    const said = [];
+    const reels = new Reels({ store: freshStore(), record: () => new Promise(() => {}), video: fakeVideo, picture: async () => { throw new Error('no canvas'); }, log: (l) => said.push(l) });
+    const { id } = await reels.create(tea);
+    assert.equal(await reels.card(id), null);
+    assert.match(said.join('\n'), /its picture could not be drawn: Error: no canvas/);
+    assert.equal(await reels.store.get(`reels/${id}/card.png`), null);
+  });
+
   it('waits for the voice before making a video', async () => {
     const reels = new Reels({ store: freshStore(), record: fakeRecord, video: fakeVideo });
     const { id } = await reels.create(tea);
@@ -257,7 +283,7 @@ describe('the service over HTTP', async () => {
   const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
   const { StreamableHTTPClientTransport } = await import('@modelcontextprotocol/sdk/client/streamableHttp.js');
   const { createService, MAX_BODY } = await import('../service/server.mjs');
-  const reels = new Reels({ store: freshStore(), record: fakeRecord, video: fakeVideo });
+  const reels = new Reels({ store: freshStore(), record: fakeRecord, video: fakeVideo, picture: fakePicture });
   const limits = { reels: new RateLimit({ perHour: 1000, perDay: 1000 }), videos: new RateLimit({ perHour: 1000, perDay: 1000 }) };
   const server = createService({ reels, baseUrl: 'https://reels.example/', limits, trustProxy: true });
   let local;
@@ -311,7 +337,13 @@ describe('the service over HTTP', async () => {
     assert.equal(page.headers.get('cache-control'), 'no-store');
     assert.match(html, /<title>Tea - Pixel Reel<\/title>/);
     assert.match(html, new RegExp(`<div class="wrap watch-in" id="watch" data-watch="${id}">`), 'the player on the page asks the service for this reel');
-    assert.match(html, /<meta property="og:image" content="https:\/\/reels\.example\/site\/art\/reel-card\.png">/, 'a link sent in a message shows a card');
+    assert.match(html, new RegExp(`<meta property="og:image" content="https://reels\\.example/r/${id}/card\\.png">`), 'a link sent in a message shows the reel\'s own picture');
+    assert.match(html, /<meta property="og:image:alt" content="Tea: a pixel reel\. Press Play\.">/);
+    const card = await fetch(`${local}/r/${id}/card.png`);
+    assert.equal(card.status, 200);
+    assert.equal(card.headers.get('content-type'), 'image/png');
+    assert.equal(card.headers.get('x-robots-tag'), 'noindex, nofollow');
+    assert.equal(await card.text(), 'picture of Tea');
     assert.match(html, new RegExp(`<link rel="canonical" href="https://reels\\.example/r/${id}">`));
     assert.match(html, /<meta name="robots" content="noindex, nofollow">/);
     assert.doesNotMatch(html, /Boil the kettle|Boil it\./, 'the page names the reel, but holds none of its words');
@@ -328,8 +360,25 @@ describe('the service over HTTP', async () => {
 
     assert.match(words(await client.callTool({ name: 'delete_reel', arguments: { id } })), /^Deleted\./);
     assert.equal((await fetch(`${local}/r/${id}`)).status, 404);
+    assert.equal((await fetch(`${local}/r/${id}/card.png`)).status, 404, 'its picture goes with it');
     assert.equal((await client.callTool({ name: 'get_reel', arguments: { id } })).isError, true);
     await client.close();
+  });
+
+  it('shows the card every reel can share when a reel\'s own picture cannot be drawn', async () => {
+    const plain = new Reels({ store: freshStore(), record: () => new Promise(() => {}), video: fakeVideo, picture: async () => { throw new Error('no canvas'); } });
+    const other = createService({ reels: plain, baseUrl: 'https://reels.example' });
+    await new Promise((ok) => other.listen(0, '127.0.0.1', ok));
+    try {
+      const { id } = await plain.create(tea);
+      const card = await fetch(`http://127.0.0.1:${other.address().port}/r/${id}/card.png`, { redirect: 'manual' });
+      assert.equal(card.status, 302);
+      assert.equal(card.headers.get('location'), '/site/art/reel-card.png');
+      assert.ok(staticFile('/site/art/reel-card.png'), 'which is there to be shown');
+    } finally {
+      other.close();
+      other.closeAllConnections();
+    }
   });
 
   it('gives Claude every problem in a reel at once, as a tool error to fix', async () => {
