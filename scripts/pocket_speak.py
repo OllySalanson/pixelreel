@@ -5,7 +5,7 @@ Reads one JSON job from stdin:
    "lines": [{"text": "Hello!", "wav": "/tmp/x.wav"}, ...]}
 and prints one JSON line per finished WAV: {"wav": "...", "seconds": 3.4}. A job may name
 the "language" its words are in (french, german, spanish, italian, portuguese, dutch): each
-is a model of its own, which downloads itself the first time, about 190 MB.
+is a model of its own, which downloads itself the first time, about 220 MB.
 
 With --serve it stays running, for the service (service/voice.mjs): it loads the model and
 the voice named by --voice once, prints {"ready": true}, then takes a job a line for as

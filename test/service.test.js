@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import { CLAUDE_ADDRESSES, inRanges, LIMITS, limitProblems, peterMs, RateLimit, reelMs } from '../service/limits.mjs';
-import { EXAMPLE_REEL, formatGuide, playerHtml } from '../service/mcp.mjs';
+import { EXAMPLE_REEL, formatGuide, playerHtml, reelId } from '../service/mcp.mjs';
 import { BusyError, isId, KEEP_DAYS, languageName, NARRATORS, newId, Reels } from '../service/reels.mjs';
 import { reelFromData } from '../src/format.js';
 import { ICON_NAMES } from '../src/pictures.js';
@@ -807,7 +807,7 @@ describe('the service over HTTP', async () => {
     await client.connect(new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${other.address().port}/mcp`)));
     try {
       const make = (await client.listTools()).tools.find((t) => t.name === 'make_reel');
-      assert.match(make.inputSchema.properties.improves.description, /^To change a reel you made: the id of that reel\./);
+      assert.match(make.inputSchema.properties.improves.description, /^To change a reel: the id of that reel, or its link\./);
       assert.match(make.description, /send the whole reel again with "improves" set to its id/);
       assert.ok(make.description.length < 2000);
       const first = await client.callTool({ name: 'make_reel', arguments: tea });
@@ -891,6 +891,53 @@ describe('the service over HTTP', async () => {
       const refused = await choosing.callTool({ name: 'make_reel', arguments: { ...tea, narrator: 'paul' } });
       assert.match(words(refused), /narrator: the narrators here are Peter, Anna, Stuart, not "paul"/);
       await choosing.close();
+    } finally {
+      other.close();
+      other.closeAllConnections();
+    }
+  });
+
+  it('takes a reel by its link as well as its id, and gives its scenes, so it can be changed from another chat', async () => {
+    const id = 'AbCdEfGhIjKlMnOpQrStUv';
+    for (const given of [id, `https://reels.example/r/${id}`, `  https://pixelreel.pro/r/${id}/video.mp4 `, `http://localhost:8787/r/${id}?x=1`, `/r/${id}#top`]) {
+      assert.equal(reelId(given), id, given);
+    }
+    assert.equal(reelId(`https://reels.example/r/${id}x`), `https://reels.example/r/${id}x`, 'something that only looks like a link is left as it is, to be found not to be a reel');
+    assert.equal(reelId(undefined), '');
+
+    const mine = new Reels({ store: freshStore(), record: thriftyRecord(), video: fakeVideo, picture: fakePicture });
+    const other = createService({ reels: mine, baseUrl: 'https://reels.example' });
+    await new Promise((ok) => other.listen(0, '127.0.0.1', ok));
+    const client = new Client({ name: 'test', version: '1' });
+    await client.connect(new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${other.address().port}/mcp`)));
+    try {
+      const first = (await client.callTool({ name: 'make_reel', arguments: tea })).structuredContent;
+      await mine.idle();
+      assert.equal((await mine.reel(first.id)).scenes[1].picture.start, 0.6, 'the kept reel has its pictures timed');
+
+      // another chat: all there is to go on is the link
+      const got = await client.callTool({ name: 'get_reel', arguments: { id: first.watch } });
+      assert.equal(got.isError, undefined);
+      assert.deepEqual(got.structuredContent.reel, tea, 'its scenes come back as they were written, without the timings the service gave them');
+      assert.match(words(got), new RegExp(`\\nTo change it, send these scenes to make_reel with your changes and "improves": "${first.id}":\\n\\{"format":"pixelreel/1","title":"Tea"`));
+      assert.equal(got.structuredContent.message, words(got));
+
+      const changed = { ...got.structuredContent.reel, scenes: [got.structuredContent.reel.scenes[0], { title: 'Cup', caption: 'Pour it out.' }] };
+      const second = await client.callTool({ name: 'make_reel', arguments: { ...changed, improves: first.watch } });
+      assert.equal(second.structuredContent.kept, 1, 'and the change keeps the line that was left alone, found by the link');
+      await mine.idle();
+
+      assert.match(words(await client.callTool({ name: 'get_reel_video', arguments: { id: `${first.watch}/video.mp4` } })), /being made/);
+      await mine.idle();
+      assert.match(words(await client.callTool({ name: 'delete_reel', arguments: { id: first.watch } })), /^Deleted\./);
+      const gone = await client.callTool({ name: 'get_reel', arguments: { id: first.watch } });
+      assert.equal(gone.isError, true);
+      assert.match(words(gone), new RegExp(`^There is no reel with the id "${first.id}"`));
+
+      const writing = await mine.begin('Being written');
+      const early = await client.callTool({ name: 'get_reel', arguments: { id: writing.id } });
+      assert.equal(early.structuredContent.reel, undefined, 'a reel with no scenes yet has none to give');
+      await client.close();
     } finally {
       other.close();
       other.closeAllConnections();

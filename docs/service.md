@@ -97,7 +97,7 @@ the reel, which plays as soon as the voice is recorded: about as long as the ree
 | --- | --- | --- |
 | `reel_format` | The full guide to writing a reel: what makes a good one, every picture and icon, how to draw a sprite, and a finished reel to learn from. | read-only |
 | `make_reel` | Checks a reel and starts recording it. Its input is the [reel.json format](scenes.md#a-reel-as-data-reeljson) as a JSON Schema. A reel with problems comes back as a tool error listing every one, for Claude to fix. | |
-| `get_reel` | Says whether a reel is waiting, being recorded, ready or failed, with its links. | read-only |
+| `get_reel` | Says whether a reel is waiting, being recorded, ready or failed, with its links and its scenes. | read-only |
 | `get_reel_video` | Asks for a ready reel's MP4 and gives its link once it is made. | |
 | `delete_reel` | Deletes a reel, its recordings and its video at once. | destructive |
 
@@ -137,6 +137,9 @@ Read what it wrote, how many tries it took, and what it said to the person after
   lines are read again. It is a new reel with a link of its own; the earlier one stays
   until it is deleted, as someone may have been sent its link. It works even when the
   change is asked for before the first reel has finished recording.
+- **A reel can be changed from another chat.** There, Claude has only the reel's link.
+  Every tool that takes a reel takes its id or its link, and `get_reel` gives the reel's
+  scenes as they were written, so Claude can change them and send them back.
 
 ### Ready-made things to ask for
 
@@ -209,18 +212,19 @@ language, and the service records it with that language's model and the same voi
 it off, Claude is told Peter reads English only, and to say so to someone who asked in
 another language.
 
-- Each language is a model of its own, about 190 MB, and it must be to hand: on your
+- Each language is a model of its own, about 220 MB, and it must be to hand: on your
   machine it downloads itself the first time; in the image it has to be built in
   ([deploy.md](deploy.md#other-languages-and-narrators)).
 - The voice kept loaded is the English one, so a reel in another language loads its model
-  each time and takes ten seconds or so longer to start.
+  each time: on Cloud Run its first line comes about 12 seconds later than an English reel's.
 - **What has been checked, and what has not.** A line in each of the six languages was
   recorded with Peter's voice and written down again by a speech-to-text model: each was
-  heard in the right language, word for word. A whole French reel that a real Claude
-  wrote was recorded too: six of its seven lines came back word for word, and one had
-  two words misheard. That shows the words can be made out. It does not show how natural
-  it sounds, or whether a British voice reading Spanish is one a Spanish speaker would
-  want to listen to. Nobody who speaks these languages has listened.
+  heard in the right language, word for word. Two whole French reels that a real Claude
+  wrote were recorded too, one of them through the live service: eleven of their thirteen
+  lines came back word for word but for a word or two, and none was unintelligible. That
+  shows the words can be made out. It does not show how natural it sounds, or whether a
+  British voice reading Spanish is one a Spanish speaker would want to listen to. Nobody
+  who speaks these languages has listened.
 - Words in the pictures use the pixel lettering, which has the accented letters of all six.
 - The pictures are timed to the voice by looking for each label's words in the line, which
   works in any of these languages; numbers written in digits are only matched to English

@@ -57,7 +57,7 @@ Kokoro. Choosing another voice or engine records every clip again.
 | --- | --- | --- |
 | `--engine` | `pocket` | `pocket` for Pocket TTS or `kokoro` for [Kokoro](#record-with-kokoro). |
 | `--voice` | `peter_yearsley` | A Pocket TTS voice, or a Kokoro one such as `bm_george`, which picks Kokoro by itself. |
-| `--lang` | `english` | The language the reel's words are in, for Pocket TTS: `french`, `german`, `spanish`, `italian`, `portuguese` or `dutch`. Each is a model of its own, about 190 MB, fetched the first time. A reel keeps its language, like its narrator. |
+| `--lang` | `english` | The language the reel's words are in, for Pocket TTS: `french`, `german`, `spanish`, `italian`, `portuguese` or `dutch`. Each is a model of its own, about 220 MB, fetched the first time. A reel keeps its language, like its narrator. |
 | `--bitrate` | `48k` | Mono MP3 bitrate: about 350 KB a minute of speech. |
 | `--all` | | Record every clip again. |
 | `--command` | | Record with [another speech engine](#use-another-speech-engine). |
