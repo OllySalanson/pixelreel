@@ -192,6 +192,11 @@ video and the picture for link previews all play the same thing.
   protocol to Claude over `postMessage`: it takes `make_reel`'s result, asks the service at
   `/r/<id>/play.json` until the voice is recorded, then starts the player, and tells Claude
   how tall it is.
+- Its own words (the buttons, "Press Play", "Recording the voice") are in the reel's
+  language: `src/words.js` holds them for each language a reel can be in, `play.json` and
+  `make_reel`'s result name the language, and the page is marked as that language for a
+  screen reader. They were written without anyone who speaks the languages reading them
+  over. A reel's own page (`site/`) has its own words, in English.
 - What it is doing is said aloud to someone using a screen reader, once for each thing
   that happens (recording, waiting its turn, could not be made), not again for every line.
 - While it waits it says how far Peter has got ("Peter has read 3 of 7 lines"), with a

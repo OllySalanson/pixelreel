@@ -5,8 +5,9 @@ import { inlineReel, loadReel } from './load.js';
 import { createNarrator } from './narrator.js';
 import { noSignal } from './pictures.js';
 import { Player } from './player.js';
-import { INTRO, QUIET_INTRO } from './reel.js';
+import { INTRO } from './reel.js';
 import { clockTime, narrationMs, typedLength } from './timing.js';
+import { filled, LANG_CODES, wordsFor } from './words.js';
 import { transitionMs } from './transitions.js';
 
 const FRAME_MS = 50;   // about 20 frames a second: plenty for pixel art, and easy on the machine
@@ -44,9 +45,6 @@ function showError(message) {
   (document.fonts ? document.fonts.load("12px 'Orange Kid'").catch(() => {}) : Promise.resolve()).then(() => requestAnimationFrame(card));
 }
 
-/** What the caption says at a scene whose recording has not come yet, in a reel that plays while it is being recorded. */
-const STILL_RECORDING = 'This line is still being recorded. It plays in a moment.';
-
 async function start() {
   if (params.has('embed')) document.body.classList.add('embed');
   // A one-file reel carries its reel (and any recordings) in the page; any other loads by name.
@@ -69,10 +67,21 @@ async function start() {
   const px = createKit(g, images);
   const dots = $('dots'), playBtn = $('play'), muteBtn = $('mute'), bigPlay = $('bigplay'), seek = $('seek');
   document.title = reel.title + ' - pixelreel';
+  // The player's own words, in the reel's language where whoever frames the player says which
+  // (data-language on the body, as a reel names it: french); otherwise in English.
+  const language = document.body.dataset.language, words = wordsFor(language);
+  // told to a screen reader, so that it reads the words as that language; and to the browser's own voice, if it has to read a line
+  const code = LANG_CODES[language];
+  if (code) document.documentElement.lang = code;
+  seek.setAttribute('aria-label', words.position);
+  $('back').textContent = words.back;
+  $('next').textContent = words.next;
+  [words.play, words.pause, words.replay].forEach((label, i) => { playBtn.children[i].textContent = label; });
+  [words.soundOn, words.soundOff].forEach((label, i) => { muteBtn.children[i].textContent = label; });
   document.body.dataset.opens = reel.opens;
   $('heading').textContent = reel.title;
   $('note').textContent = reel.note;
-  canvas.setAttribute('aria-label', 'Pictures for: ' + reel.title);
+  canvas.setAttribute('aria-label', filled(words.pictures, { title: reel.title }));
 
   const narrator = createNarrator({
     scenes,
@@ -80,6 +89,7 @@ async function start() {
     audio: new Audio(),
     speech: window.speechSynthesis,
     Utterance: window.SpeechSynthesisUtterance,
+    ...(code && code !== 'en' ? { lang: code } : {}),   // English keeps the narrator's own choice of a British voice
     expecting: (scene) => coming && !clipNow(scene),
     onArrive: () => player.resync()
   });
@@ -124,7 +134,7 @@ async function start() {
     const d = document.createElement('button');
     d.className = 'dot';
     d.title = `${i + 1}. ${s.title}`;
-    d.setAttribute('aria-label', `Scene ${i + 1}: ${s.title}`);
+    d.setAttribute('aria-label', filled(words.dot, { n: i + 1, title: s.title }));
     d.onclick = () => { leaveIntro(); player.goTo(i); };
     dots.appendChild(d);
   });
@@ -143,7 +153,8 @@ async function start() {
   // What is said before Play is pressed. With the sound off (as a page with no recordings
   // starts) the usual words would promise sound that does not come, so they say how to get it.
   function introWords() {
-    return reel.intro === INTRO && player.muted ? QUIET_INTRO : reel.intro;
+    if (reel.intro !== INTRO) return reel.intro;   // the reel's own words for before Play
+    return player.muted ? words.quiet : words.intro;
   }
 
   // The picture's clock: the narration's while playing or paused part-way; a preview that
@@ -162,7 +173,7 @@ async function start() {
       previewStart = now;
       typedText = null;
       const s = scenes[state.index];
-      $('cap-live').textContent = `Scene ${state.index + 1} of ${scenes.length}: ${s.title}. ${s.caption}`;
+      $('cap-live').textContent = `${filled(words.scene, { n: state.index + 1, of: scenes.length })}: ${s.title}. ${s.caption}`;
       const next = scenes[state.index + 1], nextClip = next && clipNow(next);
       if (nextClip && !warmed.has(nextClip.url)) { warmed.add(nextClip.url); new Audio().src = nextClip.url; }   // so it starts at once
     }
@@ -171,11 +182,11 @@ async function start() {
       d.classList.toggle('on', j === state.index);
       if (j === state.index) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current');
     });
-    showLabel(playBtn, state.playing ? 'Pause' : state.ended ? 'Replay' : 'Play');
-    showLabel(muteBtn, state.muted ? 'Sound: off' : 'Sound: on');
+    showLabel(playBtn, state.playing ? words.pause : state.ended ? words.replay : words.play);
+    showLabel(muteBtn, state.muted ? words.soundOff : words.soundOn);
     muteBtn.setAttribute('aria-pressed', String(!state.muted));
     bigPlay.hidden = !(intro || state.ended);
-    $('bigplay-label').textContent = state.ended ? 'Play again' : 'Play';
+    $('bigplay-label').textContent = state.ended ? words.again : words.play;
     paintCaption();
   }
 
@@ -183,9 +194,9 @@ async function start() {
   // un-types, and shows in full whenever the reel is not playing, so it can be read.
   function paintCaption() {
     const s = scenes[player.index];
-    const title = intro ? 'Press Play' : `${player.index + 1}. ${s.title}`;
+    const title = intro ? words.press : `${player.index + 1}. ${s.title}`;
     // a scene skipped to before its recording has come: say why it is quiet, until the voice begins
-    const text = intro ? introWords() : player.playing && narrator.lastSource === 'waiting' ? STILL_RECORDING : s.caption;
+    const text = intro ? introWords() : player.playing && narrator.lastSource === 'waiting' ? words.still : s.caption;
     if (text !== typedText) { typedText = text; typed = 0; }
     let n = text.length;
     if (!intro && s.captions === 'typewriter' && !calm.matches && player.playing) {
@@ -211,7 +222,8 @@ async function start() {
     const cap = $('cap'), main = document.querySelector('main'), page = document.documentElement;
     cap.style.minHeight = '';
     const least = parseFloat(getComputedStyle(cap).minHeight) || 0;
-    const all = [['Press Play', reel.intro], ...(reel.intro === INTRO ? [['Press Play', QUIET_INTRO]] : []), ...(coming ? [['Press Play', STILL_RECORDING]] : []), ...scenes.map((s, i) => [`${i + 1}. ${s.title}`, s.caption])];
+    const before = reel.intro === INTRO ? [words.intro, words.quiet] : [reel.intro];
+    const all = [...before.map((text) => [words.press, text]), ...(coming ? [[words.press, words.still]] : []), ...scenes.map((s, i) => [`${i + 1}. ${s.title}`, s.caption])];
     cap.classList.remove('typing');
     $('cap-rest').textContent = '';
     // Sizes the caption for the player as wide as it can be with `more` pixels taken off the
@@ -260,7 +272,7 @@ async function start() {
     shownSecond = second;
     $('time').textContent = `${clockTime(at)} / ${clockTime(total)}`;
     seek.setAttribute('aria-valuenow', String(second));
-    seek.setAttribute('aria-valuetext', `${clockTime(at)} of ${clockTime(total)}, scene ${player.index + 1}: ${scenes[player.index].title}`);
+    seek.setAttribute('aria-valuetext', filled(words.where, { at: clockTime(at), total: clockTime(total), n: player.index + 1, title: scenes[player.index].title }));
   }
 
   function seekToPointer(e) {

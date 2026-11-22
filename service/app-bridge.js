@@ -26,6 +26,17 @@
 
   let announced = '';
 
+  // What this page says itself, in the reel's language once that is known (window.pixelreelAppWords,
+  // put in by the service from src/words.js); English until then, and for a language it has no words for.
+  const WORDS = window.pixelreelAppWords ?? {};
+  let language = 'english';
+  const t = (key, values = {}) => String((WORDS[language] ?? WORDS.english ?? {})[key] ?? key).replace(/\{(\w+)\}/g, (all, name) => (name in values ? values[name] : all));
+  const speaks = (spoken) => {
+    if (typeof spoken !== 'string' || !WORDS[spoken]) return;
+    language = spoken;
+    document.documentElement.lang = (window.pixelreelLangCodes ?? {})[spoken] ?? 'en';   // so a screen reader reads the words as that language
+  };
+
   /** Shows words in the caption box, with the picture and buttons put away; and `done` of `of` squares lit, if there is a count. */
   function say(heading, words, done = 0, of = 0) {
     document.querySelector('.stage').hidden = true;
@@ -43,7 +54,6 @@
     lines.replaceChildren(...Array.from({ length: of }, (_, i) => Object.assign(document.createElement('i'), { className: i < done ? 'on' : '' })));
   }
 
-  /** Puts the reel in the page as the player expects it, and starts the player. */
   /**
    * Hands the player the recordings there are so far. `more` is true while Peter is still
    * recording the rest: the player then waits for a line it has not got yet, rather than
@@ -55,7 +65,9 @@
     document.dispatchEvent(new CustomEvent('pixelreel:clips'));
   }
 
+  /** Puts the reel in the page as the player expects it, and starts the player. */
   function play({ reel, clips, watch, guesses }, more = false) {
+    document.body.dataset.language = language;   // the player's own buttons and words are in the reel's language too
     lines.hidden = true;
     document.querySelector('.stage').hidden = false;
     for (const el of [$('seek'), document.querySelector('.controls')]) el.hidden = false;
@@ -71,7 +83,7 @@
     startPixelreel();
     const link = document.createElement('p');
     link.className = 'note open-page';
-    const a = Object.assign(document.createElement('a'), { href: watch, textContent: 'Open it in its own page', target: '_blank', rel: 'noopener' });
+    const a = Object.assign(document.createElement('a'), { href: watch, textContent: t('open'), target: '_blank', rel: 'noopener' });
     a.onclick = (e) => { e.preventDefault(); request('ui/open-link', { url: watch }).catch(() => window.open(watch, '_blank', 'noopener')); };
     link.appendChild(a);
     document.querySelector('main').appendChild(link);
@@ -79,9 +91,9 @@
 
   /** What to show while a reel is not ready yet: [heading, words]. */
   function waiting(state) {
-    if (state.state === 'queued') return ['Waiting its turn', 'Another reel is being recorded first. Yours plays here as soon as it is ready.'];
-    if (state.lines) return ['Recording the voice', `${state.narrator ?? 'Peter'} has read ${state.recorded} of ${state.lines} lines. The reel plays here in a moment.`];
-    return ['Recording the voice', 'The reel plays here as soon as it is ready.'];
+    if (state.state === 'queued') return [t('turn'), t('turnWords')];
+    if (state.lines) return [t('recording'), t('read', { who: state.narrator ?? 'Peter', done: state.recorded, of: state.lines })];
+    return [t('recording'), t('soon')];
   }
 
   /**
@@ -105,8 +117,9 @@
         if (started) hand(state.clips, false); else play(state);
         return;
       }
-      if (state.state === 'failed') { say(state.title, ['This reel could not be made', state.error]); return; }
-      if (state.state === 'gone') { say('No reel here', ['It has been deleted, or kept past its 30 days.']); return; }
+      speaks(state.language);
+      if (state.state === 'failed') { say(state.title, [t('failed'), state.error]); return; }
+      if (state.state === 'gone') { say(t('gone'), [t('goneWords')]); return; }
       if (started) {
         if (state.clips) hand(state.clips, true, state.guesses);
       } else if (state.playable && state.reel && state.clips) {
@@ -127,6 +140,7 @@
     }
     if (shown === id) return;
     shown = id;
+    speaks(result.structuredContent.language);
     say(result.structuredContent.title ?? 'Pixel Reel', waiting({ state: 'recording' }));
     follow(id);
   }
