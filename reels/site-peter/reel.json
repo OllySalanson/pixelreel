@@ -1,0 +1,102 @@
+{
+  "format": "pixelreel/1",
+  "title": "Meet Peter",
+  "transition": "dissolve",
+  "scenes": [
+    {
+      "title": "Hello",
+      "caption": "Hello. I'm Peter.",
+      "say": "Hello. I'm Peter. I read every pixel reel out loud, so you don't have to.",
+      "picture": {
+        "type": "sprite",
+        "label": "PETER",
+        "rows": [
+          "....................................rrr...",
+          "....................................rrr...",
+          "....................................rrr...",
+          "...................................e......",
+          "..................................e.......",
+          "..................................e.......",
+          ".................................e........",
+          "................................e.........",
+          "..kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk..",
+          ".knLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLnk.",
+          ".knnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnk.",
+          ".knnnkkkkkkkkkkkkkkkknnnkkkkkkkkkkkkknnnk.",
+          ".knnnkccccccccccccccknnnkyyyyyyryyyyknnnk.",
+          ".knnnkcNcNcNcNcNcNcNknnnkyyyyyyryyyyknnnk.",
+          ".knnnkccccccccccccccknnnkyyyyyyryyyyknnnk.",
+          ".knnnkccNcNcNcNcNcNcNnnnkyNyNyyryNyNknnnk.",
+          ".knnnkccccccccccccccknnnkkkkkkkkkkkkknnnk.",
+          ".knnnkcNcNcNcNcNcNcNknnnnnnnnnnnnnnnnnnnk.",
+          ".knnnkccccccccccccccknnnnnnnnnnnnnnnnnnnk.",
+          ".knnnkccNcNcNcNcNcNcNnnnnnkkknnnnkkknnnnk.",
+          ".knnnkccccccccccccccknnnnkkekknnkkekknnnk.",
+          ".knnnkcNcNcNcNcNcNcNknnnnkkkkknnkkkkknnnk.",
+          ".knnnkkkkkkkkkkkkkkkknnnnkkkkknnkkkkknnnk.",
+          ".kNNNNNNNNNNNNNNNNNNNNNNNNkkkNNNNkkkNNNNk.",
+          ".kNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNk.",
+          ".kNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNk.",
+          "..kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk..",
+          ".....kkkkk......................kkkkk.....",
+          ".....kkkkk......................kkkkk.....",
+          ".........................................."
+        ],
+        "colours": {
+          "L": "#9a6234"
+        }
+      }
+    },
+    {
+      "title": "What I am",
+      "caption": "A computer voice, made from old audiobook readings.",
+      "say": "I should be honest with you. I'm a computer voice, built from old audiobook readings that belong to everyone.",
+      "picture": {
+        "type": "flow",
+        "items": [
+          {
+            "icon": "document",
+            "label": "Old readings"
+          },
+          {
+            "icon": "computer",
+            "label": "A computer"
+          },
+          {
+            "icon": "heart",
+            "label": "Me"
+          }
+        ],
+        "every": 1.6
+      }
+    },
+    {
+      "title": "Why that's good",
+      "caption": "Never tired. Never in a rush.",
+      "say": "It means I never get tired, and I'm never in a rush. Play me again as often as you like.",
+      "picture": {
+        "type": "list",
+        "items": [
+          "Never tired",
+          "Never in a rush",
+          "Never sighs"
+        ],
+        "every": 1.4
+      }
+    },
+    {
+      "title": "Only me",
+      "caption": "One voice. It can't copy anyone else.",
+      "say": "And there's only me. Pixel Reel can't be made to sound like anybody else. Which I find rather reassuring.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "lock",
+            "label": "One voice only"
+          }
+        ]
+      }
+    }
+  ]
+}

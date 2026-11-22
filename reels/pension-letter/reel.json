@@ -1,0 +1,159 @@
+{
+  "format": "pixelreel/1",
+  "title": "Your pension letter, in plain words",
+  "transition": "dissolve",
+  "scenes": [
+    {
+      "title": "The pension letter",
+      "caption": "It comes once a year. It looks scary. It is not.",
+      "say": "Once a year, your pension sends you a letter. It's long, and it looks important. Here's what it actually says.",
+      "picture": {
+        "type": "sprite",
+        "label": "ONCE A YEAR",
+        "rows": [
+          "...kkkkkkkkkkkkkkkkkkkkkkkk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwrrrrrrwwBBBBBBBBBBwwk...",
+          "...kwwrrrrrrwwwwwwwwwwwwwwk...",
+          "...kwwrrrrrrwwBBBBBBBwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeeeeeeewwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeewwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeeeewwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeeeeeewwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeeewwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeeeeewwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeeeeeeewwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeewwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeeeeeewwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeewwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "..kkkkkkkkkkkkkkkkkkkkkkkkkk..",
+          "..kcccccccccccccccccccccccck..",
+          "..keeeeeeeeeeeeeeeeeeeeeeeek..",
+          "..kkkkkkkkkkkkkkkkkkkkkkkkkk.."
+        ]
+      }
+    },
+    {
+      "title": "What's in the pot",
+      "caption": "How much you have saved so far.",
+      "say": "First, it tells you how much is in your pot today. That's everything you've saved so far.",
+      "picture": {
+        "type": "sprite",
+        "label": "YOUR POT",
+        "rows": [
+          "............kkkkkk..kkkk..........",
+          "...........kyyyyyykkPPPPk.........",
+          "...........kyyooyykkPQQPk.........",
+          "..........kkyyyyyykPPQQPk.........",
+          "........kkPkkkkkkkkPPPPPk.........",
+          "......kkPPPPPPPPPPPPPPPPPkk.......",
+          "..k..kPPPPPPPPPPPPPPPPPPPPPk......",
+          ".kPkkPPPPPPPPPPPPPPPPPPPPPPPk.....",
+          "kPk.kPPPPPPPPPPPPPPPPPPPwkPPkkkk..",
+          "kPkkPPPPPPPPPPPPPPPPPPPPkkPPPPPPk.",
+          ".kPkPPPPPPPPPPPPPPPPPPPPPPPPPPPQk.",
+          "..kkPPPPPPPPPPPPPPPPPPPPPPPPPPkQk.",
+          "..kPPPPPPPPPPPPPPPPPPPPPPPPPPPPQk.",
+          "...kPPPPPPPPPPPPPPPPPPPPPPPPPPkQk.",
+          "...kPPPPPPPPPPPPPPPPPPPPPPPPPPPQk.",
+          "...kPPPPPPPPPPPPPPPPPPPPPPPPPPPPk.",
+          "....kPPPPPPPPPPPPPPPPPPPPPPPkkkk..",
+          "....kPPPPPPPPPPPPPPPPPPPPPPPk.....",
+          ".....kPPPPPPPPPPPPPPPPPPPPPk......",
+          "......kkQQQQQQQQQQQQQQQQQkk.......",
+          "......kPPPPQQQQQQQQQQPPPPk........",
+          "......kPPPPkPPPPPPPPPPPPPk........",
+          "......kPPPPkkkkkkkkkkPPPPk........",
+          "......kPPPPk........kPPPPk........",
+          "......kQQQQk........kQQQQk........",
+          ".......kkkk..........kkkk........."
+        ],
+        "colours": {
+          "P": "#ff9eb5",
+          "Q": "#e0728f"
+        }
+      }
+    },
+    {
+      "title": "What went in",
+      "caption": "What you and your employer paid in this year.",
+      "say": "Then, what went in this year. That's your money, plus whatever your employer added on top.",
+      "picture": {
+        "type": "flow",
+        "items": [
+          {
+            "icon": "person",
+            "label": "You"
+          },
+          {
+            "icon": "people",
+            "label": "Your employer"
+          },
+          {
+            "icon": "money",
+            "label": "Your pot"
+          }
+        ],
+        "every": 1.5
+      }
+    },
+    {
+      "title": "What you might get",
+      "caption": "A guess at your income when you retire.",
+      "say": "Next comes a guess at what you might get each year, when you retire. It's an estimate. Not a promise.",
+      "picture": {
+        "type": "big",
+        "text": "A GUESS",
+        "sub": "not a promise"
+      }
+    },
+    {
+      "title": "What to do",
+      "caption": "Usually, nothing. Check your details, and keep it safe.",
+      "say": "So what do you need to do? Usually, nothing at all. Check your name and address are right, and keep it somewhere safe.",
+      "picture": {
+        "type": "list",
+        "heading": "WHAT TO DO",
+        "items": [
+          "Check your details",
+          "Keep it safe"
+        ],
+        "every": 2.2,
+        "start": 3.4
+      }
+    },
+    {
+      "title": "If in doubt",
+      "caption": "Ring the number on the letter.",
+      "say": "And if anything looks wrong, ring the number on the letter. That's exactly what it's there for.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "phone",
+            "label": "Ring them"
+          }
+        ]
+      }
+    }
+  ]
+}

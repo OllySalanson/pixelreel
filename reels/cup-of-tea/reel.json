@@ -1,0 +1,137 @@
+{
+  "format": "pixelreel/1",
+  "title": "How to make a proper cup of tea",
+  "transition": "dissolve",
+  "scenes": [
+    {
+      "title": "A proper cup of tea",
+      "caption": "Six steps. No arguments.",
+      "say": "How to make a proper cup of tea. Six steps. No arguments.",
+      "picture": {
+        "type": "title",
+        "text": "TEA",
+        "sub": "The proper way"
+      }
+    },
+    {
+      "title": "Boil the kettle",
+      "caption": "Fresh water. Properly boiling.",
+      "say": "Start with fresh water, and boil the kettle. Properly boiling. Not just warm and hopeful.",
+      "picture": {
+        "type": "sprite",
+        "label": "PROPERLY BOILING",
+        "rows": [
+          "............k..kwk..k.............",
+          "...........kwk.kwk.kwk............",
+          "...........kwk..kwkkwk............",
+          "............kwk.kwk.kk............",
+          "............kwk..k..kwk...........",
+          ".............k......kwk...........",
+          ".............kkkkkkkkk............",
+          "...........kkkeeeeeekkk...........",
+          ".kkk......kewweeeeeeMMMk..........",
+          "keeek.....kewweeeeeeMMMk..........",
+          "keeekkk..kewweeeeeeeeMMMk..kkkkkk.",
+          "keeeeeek.kewweeeeeeeeMMMk..kkkkkk.",
+          ".keeeeekkewweeeeeeeeeeMMMk.....kk.",
+          ".kMMMMMkkewweeeeeeeeeeMMMk.....kk.",
+          "..kkkkkkewweeeeeeeeeeeeMMMk....kk.",
+          ".......kewweeeeeeeeeeeeMMMk....kk.",
+          "......kewweeeeeeeeeeeeeeMMMk...kk.",
+          "......kewweeeeeeeeeeeeeeMMMk...kk.",
+          ".....kewweeeeeeeeeeeeeeeeMMMk..kk.",
+          ".....kewweeeeeeeeeeeeeeeeMMMk..kk.",
+          ".....kewweeeeeeeeeeeeeeeeMMkkkkkk.",
+          ".....kewweeeeeeeeeeeeeeeeMMkkkkkk.",
+          ".....kewweeeeeyyyeeeeeeeeMMMk.....",
+          ".....kewweeeeeyyyeeeeeeeeMMMk.....",
+          ".....kewweeeeeeeeeeeeeeeeMMMk.....",
+          ".....kewweeeeeeeeeeeeeeeeMMMk.....",
+          ".....kBBBBBBBBBBBBBBBBBBBBBBk.....",
+          ".....kkkkkkkkkkkkkkkkkkkkkkkk.....",
+          "..................................",
+          ".................................."
+        ],
+        "colours": {
+          "M": "#7f93a8"
+        }
+      }
+    },
+    {
+      "title": "Bag first",
+      "caption": "Tea bag in the mug. Then the water.",
+      "say": "Put the tea bag in the mug first. Then pour the water straight on top.",
+      "picture": {
+        "type": "list",
+        "numbered": true,
+        "items": [
+          "Tea bag in",
+          "Water on top"
+        ],
+        "every": 2
+      }
+    },
+    {
+      "title": "Wait",
+      "caption": "Three minutes. Go on, be patient.",
+      "say": "Now wait. Three whole minutes. I know. But a rushed cup of tea is a sad cup of tea.",
+      "picture": {
+        "type": "big",
+        "text": "3 MIN",
+        "sub": "and not a second less"
+      }
+    },
+    {
+      "title": "Bag out",
+      "caption": "One gentle squeeze, then into the bin.",
+      "say": "Take the bag out. One gentle squeeze against the side, and into the bin it goes.",
+      "picture": {
+        "type": "flow",
+        "items": [
+          {
+            "icon": "cup",
+            "label": "Squeeze"
+          },
+          {
+            "icon": "tick",
+            "label": "Bin it"
+          }
+        ],
+        "every": 2
+      }
+    },
+    {
+      "title": "Milk last",
+      "caption": "Milk goes in last. We will not be taking questions.",
+      "say": "Then the milk. Milk goes in last. We will not be taking questions on this.",
+      "picture": {
+        "type": "compare",
+        "bad": {
+          "icon": "cup",
+          "label": "Milk first"
+        },
+        "good": {
+          "icon": "cup",
+          "label": "Milk last"
+        }
+      }
+    },
+    {
+      "title": "Sit down",
+      "caption": "Put your feet up. You have earned it.",
+      "say": "And that's it. Sit down. Put your feet up. You've earned it.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "cup"
+          },
+          {
+            "icon": "heart"
+          }
+        ],
+        "every": 1.2
+      }
+    }
+  ]
+}

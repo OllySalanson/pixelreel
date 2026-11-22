@@ -1,0 +1,36 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "Here are the questions people ask most. With nice short answers.",
+      "file": "516ce783b9b27afb.mp3",
+      "seconds": 4.24
+    },
+    {
+      "text": "Does it cost anything? No. It's free.",
+      "file": "14de12dbfba8d5dc.mp3",
+      "seconds": 4.16
+    },
+    {
+      "text": "Do I need Claude? Yes, you do. Claude writes the scenes. But the free plan works fine.",
+      "file": "74f4bf7af975e22a.mp3",
+      "seconds": 5.76
+    },
+    {
+      "text": "How long does it take? About as long as the reel itself. So, a minute or two.",
+      "file": "60715e11add3cb5d.mp3",
+      "seconds": 5.92
+    },
+    {
+      "text": "Can it get things wrong? It can. For money, health or the law, always check with whoever sent you the original.",
+      "file": "fb480c7365f4249d.mp3",
+      "seconds": 6.96
+    },
+    {
+      "text": "Can I keep it? Yes. Ask Claude for the video, and you get a file to save or send.",
+      "file": "35d5d6ecc08dbdeb.mp3",
+      "seconds": 5.44
+    }
+  ]
+}

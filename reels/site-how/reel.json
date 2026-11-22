@@ -1,0 +1,103 @@
+{
+  "format": "pixelreel/1",
+  "title": "How Pixel Reel works",
+  "transition": "slide",
+  "scenes": [
+    {
+      "title": "Three steps",
+      "caption": "Three steps. One of them is pressing play.",
+      "say": "Getting a pixel reel takes three steps. And one of them is pressing play.",
+      "picture": {
+        "type": "big",
+        "text": "3 STEPS",
+        "sub": "one is pressing play"
+      }
+    },
+    {
+      "title": "Add it to Claude",
+      "caption": "Do this once. It takes about a minute.",
+      "say": "First, add Pixel Reel to Claude. You only do this once, and it takes about a minute.",
+      "picture": {
+        "type": "flow",
+        "items": [
+          {
+            "icon": "person",
+            "label": "You"
+          },
+          {
+            "icon": "computer",
+            "label": "Claude"
+          },
+          {
+            "icon": "star",
+            "label": "Pixel Reel"
+          }
+        ],
+        "every": 1.3
+      }
+    },
+    {
+      "title": "Ask for a reel",
+      "caption": "Say what you want explained.",
+      "say": "Then ask for a reel. Say what you want explained. You can paste in a link, or a whole letter.",
+      "picture": {
+        "type": "chat",
+        "title": "Claude",
+        "every": 2.4,
+        "messages": [
+          {
+            "from": "Claude",
+            "text": "Hello. What can I do?"
+          },
+          {
+            "from": "You",
+            "text": "Make me a pixel reel about this letter."
+          },
+          {
+            "from": "Claude",
+            "text": "Writing the scenes now."
+          }
+        ]
+      }
+    },
+    {
+      "title": "Press play",
+      "caption": "It plays right there in the chat.",
+      "say": "A minute or two later, it's ready. Press play, right there in the chat. And you get a link to send to anyone you like.",
+      "picture": {
+        "type": "sprite",
+        "label": "PRESS PLAY",
+        "rows": [
+          ".kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.",
+          "kcccccccccccccccccccccccccccccccck",
+          "kcccccccccccccccccccccccccccccccck",
+          "kcckkkkkkkkkkkkkkkkkkkkkkkkkkkkcck",
+          "kcckbbbbbbbbbbbbbbbbbbbbbbbbbbkcck",
+          "kcckBBBBBBBBBBBBBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByBBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyyBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyyyBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyyBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByBBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBBBBBBBBBBBBBBBBBBkcck",
+          "kcckkkkkkkkkkkkkkkkkkkkkkkkkkkkcck",
+          "kcccccccccccccccccccccccccccccccck",
+          "keeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeek",
+          "keeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeek",
+          "keeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeek",
+          ".kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.",
+          "..............kkkkkk..............",
+          "..............kkkkkk..............",
+          "..............kkkkkk..............",
+          ".........keeeeeeeeeeeeeek.........",
+          ".........kkkkkkkkkkkkkkkk.........",
+          ".................................."
+        ]
+      }
+    }
+  ]
+}

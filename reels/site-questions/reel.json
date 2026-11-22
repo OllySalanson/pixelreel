@@ -1,0 +1,126 @@
+{
+  "format": "pixelreel/1",
+  "title": "Your questions, answered",
+  "transition": "wipe",
+  "scenes": [
+    {
+      "title": "Questions",
+      "caption": "The ones people ask most.",
+      "say": "Here are the questions people ask most. With nice short answers.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "question"
+          },
+          {
+            "icon": "question"
+          },
+          {
+            "icon": "question"
+          }
+        ],
+        "every": 0.5
+      }
+    },
+    {
+      "title": "Does it cost anything?",
+      "caption": "No. It's free.",
+      "say": "Does it cost anything? No. It's free.",
+      "picture": {
+        "type": "big",
+        "text": "FREE"
+      }
+    },
+    {
+      "title": "Do I need Claude?",
+      "caption": "Yes. The free plan works.",
+      "say": "Do I need Claude? Yes, you do. Claude writes the scenes. But the free plan works fine.",
+      "picture": {
+        "type": "flow",
+        "items": [
+          {
+            "icon": "person",
+            "label": "You ask"
+          },
+          {
+            "icon": "computer",
+            "label": "Claude writes"
+          },
+          {
+            "icon": "star",
+            "label": "You watch"
+          }
+        ],
+        "every": 1.2
+      }
+    },
+    {
+      "title": "How long does it take?",
+      "caption": "A minute or two.",
+      "say": "How long does it take? About as long as the reel itself. So, a minute or two.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "clock",
+            "label": "A minute or two"
+          }
+        ]
+      }
+    },
+    {
+      "title": "Can it be wrong?",
+      "caption": "Yes. Check anything that matters.",
+      "say": "Can it get things wrong? It can. For money, health or the law, always check with whoever sent you the original.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "warning",
+            "label": "Check what matters"
+          }
+        ]
+      }
+    },
+    {
+      "title": "Can I keep it?",
+      "caption": "Yes. Ask for the video.",
+      "say": "Can I keep it? Yes. Ask Claude for the video, and you get a file to save or send.",
+      "picture": {
+        "type": "sprite",
+        "label": "ASK FOR THE VIDEO",
+        "rows": [
+          ".kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.",
+          "kcccccccccccccccccccccccccccccccck",
+          "kcccccccccccccccccccccccccccccccck",
+          "kcckkkkkkkkkkkkkkkkkkkkkkkkkkkkcck",
+          "kcckbbbbbbbbbbbbbbbbbbbbbbbbbbkcck",
+          "kcckBBBBBBBBBBBBBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByBBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyyBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyyyBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyyBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByBBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBBBBBBBBBBBBBBBBBBkcck",
+          "kcckkkkkkkkkkkkkkkkkkkkkkkkkkkkcck",
+          "kcccccccccccccccccccccccccccccccck",
+          "keeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeek",
+          "keeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeek",
+          "keeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeek",
+          ".kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.",
+          "..............kkkkkk..............",
+          "..............kkkkkk..............",
+          "..............kkkkkk..............",
+          ".........keeeeeeeeeeeeeek.........",
+          ".........kkkkkkkkkkkkkkkk.........",
+          ".................................."
+        ]
+      }
+    }
+  ]
+}

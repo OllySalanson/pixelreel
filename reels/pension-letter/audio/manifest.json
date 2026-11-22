@@ -1,0 +1,36 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "Once a year, your pension sends you a letter. It's long, and it looks important. Here's what it actually says.",
+      "file": "2121828cccd73001.mp3",
+      "seconds": 6.24
+    },
+    {
+      "text": "First, it tells you how much is in your pot today. That's everything you've saved so far.",
+      "file": "b8a10b12c9f2f5ae.mp3",
+      "seconds": 4.88
+    },
+    {
+      "text": "Then, what went in this year. That's your money, plus whatever your employer added on top.",
+      "file": "01556cea9e4e19f4.mp3",
+      "seconds": 5.52
+    },
+    {
+      "text": "Next comes a guess at what you might get each year, when you retire. It's an estimate. Not a promise.",
+      "file": "c632a5e0d98fa72e.mp3",
+      "seconds": 5.76
+    },
+    {
+      "text": "So what do you need to do? Usually, nothing at all. Check your name and address are right, and keep it somewhere safe.",
+      "file": "6169ef154ea39419.mp3",
+      "seconds": 6.64
+    },
+    {
+      "text": "And if anything looks wrong, ring the number on the letter. That's exactly what it's there for.",
+      "file": "a7fed2e6d77c1daa.mp3",
+      "seconds": 5.12
+    }
+  ]
+}

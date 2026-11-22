@@ -1,0 +1,51 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "Hello. This is a pixel reel. A short cartoon that explains one thing. I'm Peter, and I'll be reading it to you.",
+      "file": "437b56e8e24a7146.mp3",
+      "seconds": 7.68
+    },
+    {
+      "text": "You know the feeling. A long letter lands on the mat. Or someone sends a link you really must read. And your heart sinks a bit.",
+      "file": "9660c85a0e178b88.mp3",
+      "seconds": 6.88
+    },
+    {
+      "text": "So don't read it. Watch it instead. A pixel reel takes the bits that matter, and turns them into a little film.",
+      "file": "2a0b79f275e33c49.mp3",
+      "seconds": 6.24
+    },
+    {
+      "text": "Each scene has one idea. A few big, plain words. And a picture to go with them. That's all there is to take in.",
+      "file": "3ee04e2df1f06a64.mp3",
+      "seconds": 7.68
+    },
+    {
+      "text": "And you're in charge. Pause me whenever you like. Go back a bit. Watch it twice. I really don't mind.",
+      "file": "f6a6c16f545c24c4.mp3",
+      "seconds": 6.64
+    },
+    {
+      "text": "To get one, just ask Claude. Say what you want explained. Claude writes the scenes, and I do the talking.",
+      "file": "adbb630c67e298b6.mp3",
+      "seconds": 6.64
+    },
+    {
+      "text": "It's good for letters and bills. For plans, and how things work. Even homework. Anything you would rather watch than read.",
+      "file": "c812e26d62e9b53b.mp3",
+      "seconds": 6.88
+    },
+    {
+      "text": "Now for the small print. There isn't much. It's free. Only people with your link can watch. And after thirty days, your reel is gone.",
+      "file": "8799521f80a2ba78.mp3",
+      "seconds": 8.64
+    },
+    {
+      "text": "So. Your turn. Add Pixel Reel to Claude, and ask for a reel about anything you like. Thanks for watching.",
+      "file": "32cbc696aacb795c.mp3",
+      "seconds": 7.76
+    }
+  ]
+}

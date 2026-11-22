@@ -1,0 +1,62 @@
+// Make a pixel reel now: turns what someone wants explained into the words to give to
+// Claude, to copy across. Nothing is sent anywhere; Claude and the connector do the making.
+const EXAMPLE = 'my gas bill';
+
+/** The words to say to Claude for `what`: a web address, or a few words. */
+export function askFor(what) {
+  const about = what.trim().replace(/\s+/g, ' ') || EXAMPLE;
+  return /^(https?:\/\/|www\.)\S+$/i.test(about) ? `Make me a pixel reel about this page: ${about}` : `Make me a pixel reel about this: ${about}`;
+}
+
+/** Puts `text` on the clipboard. Resolves to whether it worked. */
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // an older browser, or a page not allowed the clipboard: select it and copy the old way
+    const box = Object.assign(document.createElement('textarea'), { value: text, readOnly: true });
+    box.className = 'sr-only';
+    document.body.append(box);
+    box.select();
+    try {
+      return document.execCommand('copy');
+    } catch {
+      return false;
+    } finally {
+      box.remove();
+    }
+  }
+}
+
+/** Anything with data-copy="#id" copies that element's words when pressed, and says so. */
+export function startCopying() {
+  for (const el of document.querySelectorAll('[data-copy]')) {
+    el.addEventListener('click', async () => {
+      const from = document.querySelector(el.dataset.copy);
+      if (!from) return;
+      const ok = await copyText(from.textContent.trim());
+      const says = el.dataset.says ? document.querySelector(el.dataset.says) : el.closest('form, section, article')?.querySelector('.said');
+      if (says) says.textContent = ok ? (el.dataset.copied ?? 'Copied.') : 'That did not copy. Press and hold the words to copy them yourself.';
+    });
+  }
+}
+
+export function startMaker() {
+  const form = document.getElementById('maker');
+  if (!form) return;
+  const input = form.querySelector('input'), words = document.getElementById('ask-words'), open = document.getElementById('ask-open');
+  const update = () => {
+    const ask = askFor(input.value);
+    words.textContent = ask;
+    open.href = `https://claude.ai/new?q=${encodeURIComponent(ask)}`;
+    form.querySelector('.said').textContent = '';
+  };
+  input.addEventListener('input', update);
+  for (const chip of form.querySelectorAll('[data-try]')) {
+    chip.addEventListener('click', () => { input.value = chip.dataset.try; update(); });
+  }
+  // Enter in the box copies the words, the same as the first button
+  form.addEventListener('submit', (e) => { e.preventDefault(); form.querySelector('button[data-copy]').click(); });
+  update();
+}

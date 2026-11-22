@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
+import { fileURLToPath } from 'node:url';
+import { readReel } from '../scripts/reel-file.mjs';
 import { createKit } from '../src/kit.js';
 import { CAPTION_STYLES, clipLookup, defaultDraw, normalizeReel, REEL_NAME, ReelError } from '../src/reel.js';
 import { coverage, fakeContext } from './fake-canvas.js';
@@ -132,7 +134,7 @@ describe('clipLookup', () => {
 const root = new URL('../reels/', import.meta.url);
 const names = readdirSync(root, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
 const reels = await Promise.all(names.map(async (name) => {
-  const reel = normalizeReel((await import(new URL(`${name}/reel.js`, root).href)).default, { base: `reels/${name}/` });
+  const reel = await readReel(fileURLToPath(new URL(name, root)));   // a reel.js, or a reel.json
   const manifest = JSON.parse(readFileSync(new URL(`${name}/audio/manifest.json`, root), 'utf8'));
   return { name, reel, manifest };
 }));
@@ -150,7 +152,7 @@ describe('the reels in reels/', () => {
   for (const { name, reel, manifest } of reels) {
     it(`${name}: valid, with a name fit for an address and a picture for every scene`, () => {
       assert.ok(REEL_NAME.test(name));
-      assert.ok(reel.scenes.length >= 6);
+      assert.ok(reel.scenes.length >= 4);
       for (const s of reel.scenes) assert.notEqual(s.draw, defaultDraw, `${s.title} draws its own picture`);
     });
 

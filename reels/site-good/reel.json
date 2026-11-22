@@ -1,0 +1,109 @@
+{
+  "format": "pixelreel/1",
+  "title": "Good to know",
+  "transition": "slide",
+  "scenes": [
+    {
+      "title": "Good to know",
+      "caption": "Free, private, and gone in 30 days.",
+      "say": "A few things worth knowing. None of them are scary.",
+      "picture": {
+        "type": "title",
+        "text": "GOOD TO KNOW",
+        "sub": "None of it is scary"
+      }
+    },
+    {
+      "title": "It's free",
+      "caption": "No sign-up. No account. No email.",
+      "say": "It's free. There's nothing to sign up for. No account, no name, no email address.",
+      "picture": {
+        "type": "list",
+        "items": [
+          "No sign-up",
+          "No account",
+          "No email"
+        ],
+        "every": 1.1,
+        "start": 1.6
+      }
+    },
+    {
+      "title": "It's private",
+      "caption": "Only people with the link can watch.",
+      "say": "Your reel is private. Its link is long and random, so nobody can guess it. Only people you send it to can watch.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "lock",
+            "label": "Only your link opens it"
+          }
+        ]
+      }
+    },
+    {
+      "title": "It doesn't hang about",
+      "caption": "Gone after 30 days. Or sooner, if you ask.",
+      "say": "After thirty days, it's deleted. Or ask Claude to delete it sooner, and it's gone straight away.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "calendar",
+            "label": "30 days"
+          },
+          {
+            "icon": "cross",
+            "label": "Then gone"
+          }
+        ],
+        "every": 1.8
+      }
+    },
+    {
+      "title": "Your words stay put",
+      "caption": "The voice is made by Pixel Reel itself.",
+      "say": "And the voice is made by Pixel Reel itself. Your words are never sent off to a voice company.",
+      "picture": {
+        "type": "sprite",
+        "label": "MADE IN HOUSE",
+        "rows": [
+          "....................................rrr...",
+          "....................................rrr...",
+          "....................................rrr...",
+          "...................................e......",
+          "..................................e.......",
+          "..................................e.......",
+          ".................................e........",
+          "................................e.........",
+          "..kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk..",
+          ".knLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLnk.",
+          ".knnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnk.",
+          ".knnnkkkkkkkkkkkkkkkknnnkkkkkkkkkkkkknnnk.",
+          ".knnnkccccccccccccccknnnkyyyyyyryyyyknnnk.",
+          ".knnnkcNcNcNcNcNcNcNknnnkyyyyyyryyyyknnnk.",
+          ".knnnkccccccccccccccknnnkyyyyyyryyyyknnnk.",
+          ".knnnkccNcNcNcNcNcNcNnnnkyNyNyyryNyNknnnk.",
+          ".knnnkccccccccccccccknnnkkkkkkkkkkkkknnnk.",
+          ".knnnkcNcNcNcNcNcNcNknnnnnnnnnnnnnnnnnnnk.",
+          ".knnnkccccccccccccccknnnnnnnnnnnnnnnnnnnk.",
+          ".knnnkccNcNcNcNcNcNcNnnnnnkkknnnnkkknnnnk.",
+          ".knnnkccccccccccccccknnnnkkekknnkkekknnnk.",
+          ".knnnkcNcNcNcNcNcNcNknnnnkkkkknnkkkkknnnk.",
+          ".knnnkkkkkkkkkkkkkkkknnnnkkkkknnkkkkknnnk.",
+          ".kNNNNNNNNNNNNNNNNNNNNNNNNkkkNNNNkkkNNNNk.",
+          ".kNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNk.",
+          ".kNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNk.",
+          "..kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk..",
+          ".....kkkkk......................kkkkk.....",
+          ".....kkkkk......................kkkkk.....",
+          ".........................................."
+        ],
+        "colours": {
+          "L": "#9a6234"
+        }
+      }
+    }
+  ]
+}

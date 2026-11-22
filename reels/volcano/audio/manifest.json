@@ -1,0 +1,36 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "A volcano is a mountain with a very hot secret.",
+      "file": "02dde9ead701e4b3.mp3",
+      "seconds": 2.72
+    },
+    {
+      "text": "Deep under the ground, it is so hot that rock melts. Melted rock is called magma.",
+      "file": "dd1e2ea4d7def671.mp3",
+      "seconds": 5.84
+    },
+    {
+      "text": "Magma is full of gas. It pushes up, harder and harder, like the fizz in a bottle of lemonade that you've shaken.",
+      "file": "035eeaf231dbe3de.mp3",
+      "seconds": 6.64
+    },
+    {
+      "text": "Then, whoosh. Out it comes, through the top. Once it's outside, we call it lava.",
+      "file": "3e03eab58bfd2049.mp3",
+      "seconds": 6.64
+    },
+    {
+      "text": "The lava cools down, and turns back into hard rock. So every time it erupts, the mountain grows a little taller.",
+      "file": "ca8dc7edbc17ec59.mp3",
+      "seconds": 6.8
+    },
+    {
+      "text": "So remember. Inside the volcano, it's magma. Outside, it's lava. And now you know more than most grown-ups.",
+      "file": "684623b5aa7c1808.mp3",
+      "seconds": 7.68
+    }
+  ]
+}

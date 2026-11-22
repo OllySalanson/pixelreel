@@ -241,11 +241,13 @@ src/                        the player: main.js (the page), player.js (timing), 
                             flipbook.js for banners
 reels/showreel/             the showreel, and its recorded narration
 reels/what-is-pixelreel/    a smaller example
+reels/pixel-reel/ ...       the reels the website plays, each a reel.json narrated by Peter
 scripts/                    npm start, new, voices, check, page, video and skill, and
                             setup-voices.sh
 skill/                      the Claude skill: SKILL.md and example.json, and the ZIP to upload
 plugins/, .claude-plugin/   the same skill as a Claude Code plugin and marketplace
 service/                    the Pixel Reel service: a Claude connector and a page for each reel
+site/                       the website the service serves: pages, styles, scripts, fonts and art
 docs/                       writing scenes, voices, sharing, and the pictures in this README
 test/                       unit tests (node --test)
 fonts/                      Orange Kid, the pixel font (CC0)

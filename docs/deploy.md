@@ -15,6 +15,9 @@ docker run -p 8787:8787 -e PIXELREEL_URL=https://reels.example -v pixelreel-data
   `X-Forwarded-For`. Turn it off (`0`) if yours does not, or callers could pretend to be
   someone else to get round the rate limits.
 - `GET /health` answers `ok` once it is up.
+- `PIXELREEL_LISTED=1` lets search engines list the website, for once Pixel Reel is open to
+  everyone. Until then leave it off: every page asks them to keep out, which also keeps
+  their robots from waking a sleeping copy.
 
 ## What the host needs
 

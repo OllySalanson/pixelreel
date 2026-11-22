@@ -1,0 +1,36 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "Your gas meter looks fiddly. It isn't. Reading it takes about a minute.",
+      "file": "6e578f113643a433.mp3",
+      "seconds": 4.72
+    },
+    {
+      "text": "First, find it. Gas meters often live in a box outside, in the hall, or under the stairs.",
+      "file": "334319e13934872d.mp3",
+      "seconds": 6
+    },
+    {
+      "text": "Now look at the row of numbers. Write them down from left to right, just as you see them.",
+      "file": "ad98ed9e09677e76.mp3",
+      "seconds": 4.88
+    },
+    {
+      "text": "Stop when you reach a red number, or a decimal point. Anything after that, you can ignore.",
+      "file": "01167f17bf70d77d.mp3",
+      "seconds": 4.96
+    },
+    {
+      "text": "That's your reading. Give it to your energy supplier. On their app, their website, or over the phone.",
+      "file": "16214f09475d9824.mp3",
+      "seconds": 6.08
+    },
+    {
+      "text": "Why bother? Because then your bill is based on what you really used. Not on a guess.",
+      "file": "4199f3201a3d5bdd.mp3",
+      "seconds": 5.76
+    }
+  ]
+}

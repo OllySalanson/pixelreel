@@ -1,0 +1,26 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "Hello. I'm Peter. I read every pixel reel out loud, so you don't have to.",
+      "file": "3d1bf383d695a694.mp3",
+      "seconds": 5.28
+    },
+    {
+      "text": "I should be honest with you. I'm a computer voice, built from old audiobook readings that belong to everyone.",
+      "file": "098ea4edda942cac.mp3",
+      "seconds": 5.68
+    },
+    {
+      "text": "It means I never get tired, and I'm never in a rush. Play me again as often as you like.",
+      "file": "8fc0074bfd7d5061.mp3",
+      "seconds": 5.2
+    },
+    {
+      "text": "And there's only me. Pixel Reel can't be made to sound like anybody else. Which I find rather reassuring.",
+      "file": "cf33c6a9e0635ced.mp3",
+      "seconds": 6.48
+    }
+  ]
+}

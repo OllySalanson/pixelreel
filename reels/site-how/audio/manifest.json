@@ -1,0 +1,26 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "Getting a pixel reel takes three steps. And one of them is pressing play.",
+      "file": "c6612f7ffd769b36.mp3",
+      "seconds": 4.24
+    },
+    {
+      "text": "First, add Pixel Reel to Claude. You only do this once, and it takes about a minute.",
+      "file": "f1813941acf3c536.mp3",
+      "seconds": 5.12
+    },
+    {
+      "text": "Then ask for a reel. Say what you want explained. You can paste in a link, or a whole letter.",
+      "file": "5cc9990aa255de95.mp3",
+      "seconds": 5.2
+    },
+    {
+      "text": "A minute or two later, it's ready. Press play, right there in the chat. And you get a link to send to anyone you like.",
+      "file": "0c2cfd43367f6a95.mp3",
+      "seconds": 5.92
+    }
+  ]
+}

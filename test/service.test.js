@@ -6,7 +6,7 @@ import { after, before, describe, it } from 'node:test';
 import { LIMITS, limitProblems, RateLimit } from '../service/limits.mjs';
 import { BusyError, isId, KEEP_DAYS, newId, Reels } from '../service/reels.mjs';
 import { reelFromData } from '../src/format.js';
-import { markdownHtml, SITE_PAGES } from '../service/site.mjs';
+import { markdownHtml, SITE_PAGES, SITE_POLICY } from '../service/site.mjs';
 import { checkKey, DiskStore, S3Store, signRequest } from '../service/store.mjs';
 import { fakeS3 } from './fake-s3.js';
 import { ReelError } from '../src/reel.js';
@@ -248,8 +248,8 @@ describe('the site pages', () => {
       '<ul><li><code>code</code></li><li><code class="address">https:/<wbr>/<wbr>a.example/<wbr>mcp</code> more</li></ul>\n<ol><li>first</li><li>second</li></ol>');
   });
 
-  it('has a page for each address, each with a heading', () => {
-    assert.deepEqual(Object.keys(SITE_PAGES), ['/', '/claude', '/privacy', '/terms', '/credits']);
+  it('has a page for each address', () => {
+    assert.deepEqual(Object.keys(SITE_PAGES), ['/', '/claude', '/press', '/privacy', '/terms', '/credits']);
   });
 });
 
@@ -402,11 +402,84 @@ describe('the service over HTTP', async () => {
     for (const path of Object.keys(SITE_PAGES)) {
       const res = await fetch(`${local}${path}`);
       assert.equal(res.status, 200, path);
-      assert.equal(res.headers.get('content-security-policy'), "default-src 'none'; style-src 'unsafe-inline'");
+      assert.equal(res.headers.get('content-security-policy'), SITE_POLICY);
       const html = await res.text();
-      assert.match(html, /<h1>[^<]+<\/h1>/, path);
+      assert.equal(html.match(/<h1[ >]/g)?.length, 1, `${path} has one main heading`);
       assert.doesNotMatch(html, /\{\{|<!--/, `${path} has no placeholders or notes left in it`);
+      assert.match(html, /<meta name="robots" content="noindex, nofollow">/, `${path} asks not to be listed, while Pixel Reel is by invitation`);
     }
-    assert.match(await (await fetch(`${local}/claude`)).text(), /<code class="address">https:\/<wbr>\/<wbr>reels\.example\/<wbr>mcp<\/code>/);
+    const claude = await (await fetch(`${local}/claude`)).text();
+    assert.match(claude, /<code class="address" id="address">https:\/\/reels\.example\/mcp<\/code>/);
+    assert.ok(claude.includes('href="https://claude.ai/customize/connectors?modal=add-custom-connector&amp;connectorName=Pixel%20Reel&amp;connectorUrl=https%3A%2F%2Freels.example%2Fmcp"'), 'the big button opens Claude with the name and address filled in');
+  });
+
+  it('sends a page compressed, and not at all to a browser that has it', async () => {
+    const plain = await fetch(`${local}/`, { headers: { 'accept-encoding': 'identity' } });
+    const small = await fetch(`${local}/`, { headers: { 'accept-encoding': 'br' } });
+    assert.equal(small.headers.get('content-encoding'), 'br');
+    assert.equal(small.headers.get('vary'), 'accept-encoding');
+    assert.equal(await small.text(), await plain.text(), 'fetch unpacks it to the same page');
+    assert.ok(Number(small.headers.get('content-length')) < Number(plain.headers.get('content-length')) / 3);
+    const again = await fetch(`${local}/`, { headers: { 'if-none-match': plain.headers.get('etag') } });
+    assert.equal(again.status, 304);
+  });
+
+  it('answers an address it does not know with its own page, and 404', async () => {
+    const res = await fetch(`${local}/no-such-page`);
+    assert.equal(res.status, 404);
+    assert.equal(res.headers.get('cache-control'), 'no-store');
+    assert.match(await res.text(), /<h1 id="lost-title">Nothing on this channel<\/h1>/);
+  });
+
+  it("serves the site's files, and nothing else in the project", async () => {
+    const css = await fetch(`${local}/site/css/site.css`, { headers: { 'accept-encoding': 'gzip' } });
+    assert.equal(css.status, 200);
+    assert.equal(css.headers.get('content-type'), 'text/css; charset=utf-8');
+    assert.equal(css.headers.get('content-encoding'), 'gzip');
+    assert.equal(css.headers.get('cache-control'), 'public, max-age=3600');
+    assert.equal((await fetch(`${local}/site/css/site.css`, { headers: { 'if-none-match': css.headers.get('etag') } })).status, 304);
+    for (const [path, type] of [['/site/js/main.js', 'text/javascript; charset=utf-8'], ['/src/kit.js', 'text/javascript; charset=utf-8'],
+      ['/reels/pixel-reel/reel.json', 'application/json; charset=utf-8'], ['/reels/pixel-reel/audio/manifest.json', 'application/json; charset=utf-8'],
+      ['/site/art/favicon.svg', 'image/svg+xml'], ['/favicon.ico', 'image/x-icon'], ['/site/art/site.webmanifest', 'application/manifest+json']]) {
+      const res = await fetch(`${local}${path}`);
+      assert.equal(res.status, 200, path);
+      assert.equal(res.headers.get('content-type'), type, path);
+    }
+    const font = await fetch(`${local}/site/fonts/lexend.woff2`);
+    assert.equal(font.headers.get('content-type'), 'font/woff2');
+    assert.equal(font.headers.get('cache-control'), 'public, max-age=31536000, immutable', 'a font never changes under the same name');
+    const { clips } = await (await fetch(`${local}/reels/pixel-reel/audio/manifest.json`)).json();
+    const clip = await fetch(`${local}/reels/pixel-reel/audio/${clips[0].file}`, { headers: { range: 'bytes=0-9' } });
+    assert.equal(clip.status, 206, 'a recording can be asked for a part at a time, to seek');
+    assert.equal(clip.headers.get('content-type'), 'audio/mpeg');
+    assert.equal((await clip.arrayBuffer()).byteLength, 10);
+    for (const bad of ['/package.json', '/site/layout.html', '/site/pages/home.html', '/site/pages/privacy.md', '/reels/showreel/reel.js', '/service/main.mjs',
+      '/src/../package.json', '/site/js/..%2F..%2Fpackage.json', '/site/css/', '/src/pixelreel.css', '/reels/pixel-reel/', '/.gitignore', '/site/art/.hidden.png']) {
+      assert.equal((await fetch(`${local}${bad}`)).status, 404, bad);
+    }
+  });
+
+  it('keeps search engines out, and never lets them near a reel', async () => {
+    assert.equal(await (await fetch(`${local}/robots.txt`)).text(), 'User-agent: *\nDisallow: /\n');
+    assert.equal((await fetch(`${local}/sitemap.xml`)).status, 404);
+    const { id } = await reels.create(tea);
+    await reels.idle();
+    for (const path of [`/r/${id}`, `/r/${id}/play.json`, `/r/${id}/audio/clip0.mp3`, `/r/${newId()}`]) {
+      assert.equal((await fetch(`${local}${path}`)).headers.get('x-robots-tag'), 'noindex, nofollow', path);
+    }
+  });
+
+  it('lets search engines list the site, but still not the reels, once it is listed', async () => {
+    const open = createService({ reels, baseUrl: 'https://reels.example', listed: true });
+    await new Promise((ok) => open.listen(0, '127.0.0.1', ok));
+    const at = `http://127.0.0.1:${open.address().port}`;
+    try {
+      assert.match(await (await fetch(`${at}/`)).text(), /<meta name="robots" content="index, follow">/);
+      assert.equal(await (await fetch(`${at}/robots.txt`)).text(), 'User-agent: *\nDisallow: /r/\nDisallow: /mcp\n\nSitemap: https://reels.example/sitemap.xml\n');
+      const map = await (await fetch(`${at}/sitemap.xml`)).text();
+      for (const path of Object.keys(SITE_PAGES)) assert.ok(map.includes(`<loc>https://reels.example${path}</loc>`), path);
+    } finally {
+      open.close();
+    }
   });
 });
