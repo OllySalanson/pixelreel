@@ -14,7 +14,8 @@ import { markdownHtml, SITE_PAGES, SITE_POLICY } from '../service/site.mjs';
 import { staticFile } from '../service/static.mjs';
 import { checkKey, DiskStore, S3Store, signRequest } from '../service/store.mjs';
 import { fakeS3 } from './fake-s3.js';
-import { ReelError } from '../src/reel.js';
+import { INTRO, QUIET_INTRO, ReelError } from '../src/reel.js';
+import { APP_WORDS, filled, LANG_CODES, WORDS, wordsFor } from '../src/words.js';
 
 const tmp = mkdtempSync(join(tmpdir(), 'pixelreel-service-'));
 after(() => rmSync(tmp, { recursive: true, force: true }));
@@ -1030,6 +1031,53 @@ describe('the service over HTTP', async () => {
     }
   });
 
+  it('gives the player its own words in every language a reel can be in', async () => {
+    const languages = ['english', 'french', 'german', 'spanish', 'italian', 'portuguese', 'dutch'];
+    for (const table of [WORDS, APP_WORDS]) {
+      assert.deepEqual(Object.keys(table), languages);
+      for (const language of languages) {
+        assert.deepEqual(Object.keys(table[language]), Object.keys(table.english), `${language} has every word English has`);
+        for (const [key, words] of Object.entries(table[language])) {
+          assert.ok(typeof words === 'string' && words.trim() === words && words.length > 1, `${language}.${key}`);
+          assert.deepEqual(words.match(/\{\w+\}/g) ?? [], table.english[key].match(/\{\w+\}/g) ?? [], `${language}.${key} names the same things to fill in`);
+        }
+      }
+    }
+    assert.equal(WORDS.english.intro, INTRO, 'English is word for word what the player has always said');
+    assert.equal(WORDS.english.quiet, QUIET_INTRO);
+    for (const language of languages) {
+      const { play, pause, replay, soundOn, soundOff } = WORDS[language];
+      assert.equal(new Set([play, pause, replay]).size, 3, `${language}: the Play button's three words are told apart by what they say`);
+      assert.notEqual(soundOn, soundOff);
+    }
+    assert.deepEqual(Object.keys(LANG_CODES), languages, 'and a code for each, for the page and the browser\'s voice');
+    assert.equal(wordsFor('french').back, 'Retour');
+    assert.equal(wordsFor('klingon'), WORDS.english, 'a language it has no words for gets English');
+    assert.equal(wordsFor(undefined), WORDS.english);
+    assert.equal(filled(WORDS.german.scene, { n: 2, of: 6 }), 'Szene 2 von 6');
+    assert.equal(filled('{who} and {nobody}', { who: 'Anna' }), 'Anna and {nobody}');
+
+    // the page in the chat carries its own words, and is told which language a reel is in
+    const page = playerHtml('https://reels.example');
+    assert.match(page, /window\.pixelreelAppWords = \{"english":\{"recording":"Recording the voice"/);
+    assert.match(page, /"french":\{"recording":"Enregistrement de la voix"/);
+    assert.match(page, /window\.pixelreelLangCodes = \{"english":"en","french":"fr"/, 'and the code of each language, which it tells a screen reader');
+    assert.match(page, /if \(code\) document\.documentElement\.lang = code;/);
+    assert.match(page, /const language = document\.body\.dataset\.language, words = wordsFor\(language\);/);
+    const speaking = new Reels({ store: freshStore(), record: () => new Promise(() => {}), video: fakeVideo, picture: fakePicture, languages: ['french'] });
+    const other = createService({ reels: speaking, baseUrl: 'https://reels.example' });
+    await new Promise((ok) => other.listen(0, '127.0.0.1', ok));
+    try {
+      const french = await speaking.create(tea, { language: 'french' }), english = await speaking.create(tea);
+      const at = `http://127.0.0.1:${other.address().port}`;
+      assert.equal((await (await fetch(`${at}/r/${french.id}/play.json`)).json()).language, 'french');
+      assert.equal((await (await fetch(`${at}/r/${english.id}/play.json`)).json()).language, undefined, 'English is not named');
+    } finally {
+      other.close();
+      other.closeAllConnections();
+    }
+  });
+
   it('tells whoever is waiting how many lines are recorded so far', async () => {
     let carryOn;
     const slow = new Reels({
@@ -1100,7 +1148,8 @@ describe('the service over HTTP', async () => {
 
   it('shows the count in the player in the chat, and does not say a new reel is waiting when it is not', async () => {
     const bridge = readFileSync(new URL('../service/app-bridge.js', import.meta.url), 'utf8');
-    assert.match(bridge, /\$\{state\.narrator \?\? 'Peter'\} has read \$\{state\.recorded\} of \$\{state\.lines\} lines/, 'by whoever is reading it');
+    assert.match(bridge, /t\('read', \{ who: state\.narrator \?\? 'Peter', done: state\.recorded, of: state\.lines \}\)/, 'by whoever is reading it');
+    assert.equal(APP_WORDS.english.read, '{who} has read {done} of {of} lines. The reel plays here in a moment.');
     assert.match(bridge, /waiting\(\{ state: 'recording' \}\)/, 'a reel just made is shown as being recorded until the service says otherwise');
     assert.match(bridge, /className: 'lines'/, 'with a square for each line');
     assert.match(bridge, /if \(heading \+ words\[0\] !== announced\)/, 'and says each thing that happens once to a screen reader, not every line');

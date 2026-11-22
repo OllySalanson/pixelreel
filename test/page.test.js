@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
+import { WORDS } from '../src/words.js';
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const html = read('index.html');
 const main = read('src/main.js');
-
 describe('the player page', () => {
   // A button that changed its words used to change its width, so at the end of the example reel
   // "Play again" pushed the scene dots onto a second line and gave the page a scrollbar.
@@ -17,8 +17,13 @@ describe('the player page', () => {
       assert.equal(spans.filter((m) => m[1]).length, 1, 'one label shows before the script runs');
       const call = new RegExp(`showLabel\\(${variable}, (.*)\\);`).exec(main);
       assert.ok(call, `main.js sets #${id} with showLabel`);
-      const shown = [...call[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+      // main.js shows the player's words by name (words.play), in the reel's language; the page itself holds the English
+      const shown = [...call[1].matchAll(/words\.(\w+)/g)].map((m) => WORDS.english[m[1]]);
+      assert.ok(shown.length >= 2 && shown.every(Boolean), 'every word it shows is one the player has');
       assert.deepEqual(spans.map((m) => m[2]).sort(), [...new Set(shown)].sort());
+      for (const [language, words] of Object.entries(WORDS)) {
+        assert.equal(new Set(shown.map((_, i) => words[[...call[1].matchAll(/words\.(\w+)/g)][i][1]])).size, new Set(shown).size, `${language} has a different word for each`);
+      }
     });
   }
 });

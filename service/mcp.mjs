@@ -10,6 +10,7 @@ import { PICTURE_NOTES, REEL_FORMAT, reelSchema } from '../src/format.js';
 import { ICON_GROUPS } from '../src/icons.js';
 import { PICTURES } from '../src/pictures.js';
 import { ReelError } from '../src/reel.js';
+import { APP_WORDS, LANG_CODES } from '../src/words.js';
 import { clockTime } from '../src/timing.js';
 import { LIMITS } from './limits.mjs';
 import { promptList, promptMessages, WHAT_TO_PUT_IN } from './prompts.mjs';
@@ -24,7 +25,8 @@ const SHOWS_PLAYER = { ui: { resourceUri: PLAYER_URI } };
 const players = new Map();
 export function playerHtml(baseUrl) {
   if (!players.has(baseUrl)) {
-    const bridge = readFileSync(new URL('./app-bridge.js', import.meta.url), 'utf8');
+    // the page's own words for while a reel is recorded, in every language a reel can be in, then the page's side of the protocol
+    const bridge = `window.pixelreelAppWords = ${JSON.stringify(APP_WORDS).replace(/</g, '\\u003c')};\nwindow.pixelreelLangCodes = ${JSON.stringify(LANG_CODES)};\n${readFileSync(new URL('./app-bridge.js', import.meta.url), 'utf8')}`;
     players.set(baseUrl, pageHtml({ title: 'Pixel Reel', app: { service: baseUrl, bridge } }));
   }
   return players.get(baseUrl);

@@ -3312,6 +3312,142 @@ class Player {
 return { Player };
 })();
 
+__m['words.js'] = (() => {
+// The player's own words, in each language a reel can be in: what its buttons say and what
+// it says before Play is pressed, and (APP_WORDS) what the player in a chat says while a reel
+// is being recorded. A reel's own words are written in its language by whoever made it; these
+// are the few around it. Data only. English is what everything falls back to. The other
+// languages were written without anyone who speaks them reading them over.
+
+/** The words of the player itself. */
+const WORDS = {
+  english: {
+    play: 'Play', pause: 'Pause', replay: 'Replay', again: 'Play again', back: 'Back', next: 'Next',
+    soundOn: 'Sound: on', soundOff: 'Sound: off', press: 'Press Play', scene: 'Scene {n} of {of}',
+    pictures: 'Pictures for: {title}', dot: 'Scene {n}: {title}', position: 'Position in the reel', where: '{at} of {total}, scene {n}: {title}',
+    intro: 'Sound will start. Use Next and Back any time.',
+    quiet: 'The sound is off. Press Sound to have it read aloud. Use Next and Back any time.',
+    still: 'This line is still being recorded. It plays in a moment.'
+  },
+  french: {
+    play: 'Lire', pause: 'Pause', replay: 'Revoir', again: 'Revoir', back: 'Retour', next: 'Suivant',
+    soundOn: 'Son : oui', soundOff: 'Son : non', press: 'Appuyez sur Lire', scene: 'Scène {n} sur {of}',
+    pictures: 'Images pour : {title}', dot: 'Scène {n} : {title}', position: 'Position dans le reel', where: '{at} sur {total}, scène {n} : {title}',
+    intro: 'Le son va démarrer. Utilisez Suivant et Retour à tout moment.',
+    quiet: "Le son est coupé. Appuyez sur Son pour l'entendre à voix haute. Utilisez Suivant et Retour à tout moment.",
+    still: "Cette phrase est encore en cours d'enregistrement. Elle arrive dans un instant."
+  },
+  german: {
+    play: 'Start', pause: 'Pause', replay: 'Nochmal', again: 'Nochmal', back: 'Zurück', next: 'Weiter',
+    soundOn: 'Ton: an', soundOff: 'Ton: aus', press: 'Start drücken', scene: 'Szene {n} von {of}',
+    pictures: 'Bilder zu: {title}', dot: 'Szene {n}: {title}', position: 'Position im Reel', where: '{at} von {total}, Szene {n}: {title}',
+    intro: 'Der Ton startet gleich. Weiter und Zurück gehen jederzeit.',
+    quiet: 'Der Ton ist aus. Drücken Sie Ton, dann wird vorgelesen. Weiter und Zurück gehen jederzeit.',
+    still: 'Dieser Satz wird noch aufgenommen. Er kommt gleich.'
+  },
+  spanish: {
+    play: 'Reproducir', pause: 'Pausa', replay: 'Repetir', again: 'Repetir', back: 'Atrás', next: 'Siguiente',
+    soundOn: 'Sonido: sí', soundOff: 'Sonido: no', press: 'Pulsa Reproducir', scene: 'Escena {n} de {of}',
+    pictures: 'Imágenes de: {title}', dot: 'Escena {n}: {title}', position: 'Posición en el reel', where: '{at} de {total}, escena {n}: {title}',
+    intro: 'El sonido va a empezar. Usa Siguiente y Atrás cuando quieras.',
+    quiet: 'El sonido está apagado. Pulsa Sonido para oírlo en voz alta. Usa Siguiente y Atrás cuando quieras.',
+    still: 'Esta frase todavía se está grabando. Llega en un momento.'
+  },
+  italian: {
+    play: 'Riproduci', pause: 'Pausa', replay: 'Rivedi', again: 'Rivedi', back: 'Indietro', next: 'Avanti',
+    soundOn: 'Audio: sì', soundOff: 'Audio: no', press: 'Premi Riproduci', scene: 'Scena {n} di {of}',
+    pictures: 'Immagini per: {title}', dot: 'Scena {n}: {title}', position: 'Posizione nel reel', where: '{at} di {total}, scena {n}: {title}',
+    intro: "L'audio sta per partire. Usa Avanti e Indietro quando vuoi.",
+    quiet: "L'audio è spento. Premi Audio per sentirlo ad alta voce. Usa Avanti e Indietro quando vuoi.",
+    still: 'Questa frase è ancora in registrazione. Arriva tra un attimo.'
+  },
+  portuguese: {
+    play: 'Iniciar', pause: 'Pausa', replay: 'Rever', again: 'Rever', back: 'Voltar', next: 'Seguinte',
+    soundOn: 'Som: sim', soundOff: 'Som: não', press: 'Toque em Iniciar', scene: 'Cena {n} de {of}',
+    pictures: 'Imagens de: {title}', dot: 'Cena {n}: {title}', position: 'Posição no reel', where: '{at} de {total}, cena {n}: {title}',
+    intro: 'O som vai começar. Use Seguinte e Voltar quando quiser.',
+    quiet: 'O som está desligado. Toque em Som para ouvir em voz alta. Use Seguinte e Voltar quando quiser.',
+    still: 'Esta frase ainda não foi gravada. Chega num instante.'
+  },
+  dutch: {
+    play: 'Afspelen', pause: 'Pauze', replay: 'Opnieuw', again: 'Opnieuw', back: 'Terug', next: 'Volgende',
+    soundOn: 'Geluid: aan', soundOff: 'Geluid: uit', press: 'Druk op Afspelen', scene: 'Scène {n} van {of}',
+    pictures: 'Beelden bij: {title}', dot: 'Scène {n}: {title}', position: 'Positie in de reel', where: '{at} van {total}, scène {n}: {title}',
+    intro: 'Het geluid gaat beginnen. Gebruik Volgende en Terug wanneer je wilt.',
+    quiet: 'Het geluid staat uit. Druk op Geluid om het te laten voorlezen. Gebruik Volgende en Terug wanneer je wilt.',
+    still: 'Deze zin wordt nog opgenomen. Hij komt zo.'
+  }
+};
+
+/** What the player in a chat says while a reel is being recorded, or cannot be shown. */
+const APP_WORDS = {
+  english: {
+    recording: 'Recording the voice', soon: 'The reel plays here as soon as it is ready.',
+    read: '{who} has read {done} of {of} lines. The reel plays here in a moment.',
+    turn: 'Waiting its turn', turnWords: 'Another reel is being recorded first. Yours plays here as soon as it is ready.',
+    open: 'Open it in its own page', failed: 'This reel could not be made',
+    gone: 'No reel here', goneWords: 'It has been deleted, or kept past its 30 days.'
+  },
+  french: {
+    recording: 'Enregistrement de la voix', soon: "Le reel se lance ici dès qu'il est prêt.",
+    read: '{who} lit le texte : {done} sur {of}. Le reel se lance ici dans un instant.',
+    turn: 'En attente', turnWords: "Un autre reel est enregistré d'abord. Le vôtre se lance ici dès qu'il est prêt.",
+    open: "L'ouvrir dans sa propre page", failed: "Ce reel n'a pas pu être créé",
+    gone: 'Pas de reel ici', goneWords: 'Il a été supprimé, ou conservé plus de 30 jours.'
+  },
+  german: {
+    recording: 'Die Stimme wird aufgenommen', soon: 'Das Reel spielt hier, sobald es fertig ist.',
+    read: '{who} liest vor: {done} von {of}. Das Reel spielt hier gleich.',
+    turn: 'Wartet, bis es an der Reihe ist', turnWords: 'Zuerst wird ein anderes Reel aufgenommen. Ihres spielt hier, sobald es fertig ist.',
+    open: 'Auf eigener Seite öffnen', failed: 'Dieses Reel konnte nicht erstellt werden',
+    gone: 'Hier ist kein Reel', goneWords: 'Es wurde gelöscht oder länger als 30 Tage aufbewahrt.'
+  },
+  spanish: {
+    recording: 'Grabando la voz', soon: 'El reel se reproduce aquí en cuanto esté listo.',
+    read: '{who} está leyendo: {done} de {of}. El reel se reproduce aquí en un momento.',
+    turn: 'Esperando su turno', turnWords: 'Primero se está grabando otro reel. El tuyo se reproduce aquí en cuanto esté listo.',
+    open: 'Abrirlo en su propia página', failed: 'No se pudo crear este reel',
+    gone: 'Aquí no hay ningún reel', goneWords: 'Se ha borrado, o se guardó más de 30 días.'
+  },
+  italian: {
+    recording: 'Registrazione della voce', soon: 'Il reel parte qui appena è pronto.',
+    read: '{who} sta leggendo: {done} di {of}. Il reel parte qui tra un attimo.',
+    turn: 'In attesa del suo turno', turnWords: 'Prima viene registrato un altro reel. Il tuo parte qui appena è pronto.',
+    open: 'Aprilo nella sua pagina', failed: 'Non è stato possibile creare questo reel',
+    gone: "Qui non c'è nessun reel", goneWords: 'È stato eliminato, o conservato per più di 30 giorni.'
+  },
+  portuguese: {
+    recording: 'Gravação da voz', soon: 'O reel começa aqui assim que estiver pronto.',
+    read: 'Leitura de {who}: {done} de {of}. O reel começa aqui num instante.',
+    turn: 'À espera da sua vez', turnWords: 'Outro reel é gravado primeiro. O seu começa aqui assim que estiver pronto.',
+    open: 'Abrir na sua própria página', failed: 'Não foi possível criar este reel',
+    gone: 'Não há nenhum reel aqui', goneWords: 'Foi apagado, ou guardado mais de 30 dias.'
+  },
+  dutch: {
+    recording: 'De stem wordt opgenomen', soon: 'De reel speelt hier af zodra hij klaar is.',
+    read: '{who} leest voor: {done} van {of}. De reel speelt hier zo af.',
+    turn: 'Wacht op zijn beurt', turnWords: 'Eerst wordt een andere reel opgenomen. De jouwe speelt hier af zodra hij klaar is.',
+    open: 'Openen op een eigen pagina', failed: 'Deze reel kon niet worden gemaakt',
+    gone: 'Hier is geen reel', goneWords: 'Hij is verwijderd, of langer dan 30 dagen bewaard.'
+  }
+};
+
+/** Each language's code, as a page's lang attribute and a browser's voices name it. */
+const LANG_CODES = { english: 'en', french: 'fr', german: 'de', spanish: 'es', italian: 'it', portuguese: 'pt', dutch: 'nl' };
+
+/** The player's words in `language` (as a reel names it: french), or in English for one it has none for. */
+function wordsFor(language) {
+  return WORDS[language] ?? WORDS.english;
+}
+
+/** `words` with each {name} in it replaced by that name's value. */
+function filled(words, values) {
+  return words.replace(/\{(\w+)\}/g, (all, name) => (name in values ? String(values[name]) : all));
+}
+
+return { WORDS, APP_WORDS, LANG_CODES, wordsFor, filled };
+})();
+
 __m['main.js'] = (() => {
 // Wires a reel to the page: loads it, then draws scenes on the canvas and keeps the
 // caption, progress bar, buttons and dots in step with the player.
@@ -3320,8 +3456,9 @@ const { inlineReel, loadReel } = __m['load.js'];
 const { createNarrator } = __m['narrator.js'];
 const { noSignal } = __m['pictures.js'];
 const { Player } = __m['player.js'];
-const { INTRO, QUIET_INTRO } = __m['reel.js'];
+const { INTRO } = __m['reel.js'];
 const { clockTime, narrationMs, typedLength } = __m['timing.js'];
+const { filled, LANG_CODES, wordsFor } = __m['words.js'];
 const { transitionMs } = __m['transitions.js'];
 
 const FRAME_MS = 50;   // about 20 frames a second: plenty for pixel art, and easy on the machine
@@ -3359,9 +3496,6 @@ function showError(message) {
   (document.fonts ? document.fonts.load("12px 'Orange Kid'").catch(() => {}) : Promise.resolve()).then(() => requestAnimationFrame(card));
 }
 
-/** What the caption says at a scene whose recording has not come yet, in a reel that plays while it is being recorded. */
-const STILL_RECORDING = 'This line is still being recorded. It plays in a moment.';
-
 async function start() {
   if (params.has('embed')) document.body.classList.add('embed');
   // A one-file reel carries its reel (and any recordings) in the page; any other loads by name.
@@ -3384,10 +3518,21 @@ async function start() {
   const px = createKit(g, images);
   const dots = $('dots'), playBtn = $('play'), muteBtn = $('mute'), bigPlay = $('bigplay'), seek = $('seek');
   document.title = reel.title + ' - pixelreel';
+  // The player's own words, in the reel's language where whoever frames the player says which
+  // (data-language on the body, as a reel names it: french); otherwise in English.
+  const language = document.body.dataset.language, words = wordsFor(language);
+  // told to a screen reader, so that it reads the words as that language; and to the browser's own voice, if it has to read a line
+  const code = LANG_CODES[language];
+  if (code) document.documentElement.lang = code;
+  seek.setAttribute('aria-label', words.position);
+  $('back').textContent = words.back;
+  $('next').textContent = words.next;
+  [words.play, words.pause, words.replay].forEach((label, i) => { playBtn.children[i].textContent = label; });
+  [words.soundOn, words.soundOff].forEach((label, i) => { muteBtn.children[i].textContent = label; });
   document.body.dataset.opens = reel.opens;
   $('heading').textContent = reel.title;
   $('note').textContent = reel.note;
-  canvas.setAttribute('aria-label', 'Pictures for: ' + reel.title);
+  canvas.setAttribute('aria-label', filled(words.pictures, { title: reel.title }));
 
   const narrator = createNarrator({
     scenes,
@@ -3395,6 +3540,7 @@ async function start() {
     audio: new Audio(),
     speech: window.speechSynthesis,
     Utterance: window.SpeechSynthesisUtterance,
+    ...(code && code !== 'en' ? { lang: code } : {}),   // English keeps the narrator's own choice of a British voice
     expecting: (scene) => coming && !clipNow(scene),
     onArrive: () => player.resync()
   });
@@ -3439,7 +3585,7 @@ async function start() {
     const d = document.createElement('button');
     d.className = 'dot';
     d.title = `${i + 1}. ${s.title}`;
-    d.setAttribute('aria-label', `Scene ${i + 1}: ${s.title}`);
+    d.setAttribute('aria-label', filled(words.dot, { n: i + 1, title: s.title }));
     d.onclick = () => { leaveIntro(); player.goTo(i); };
     dots.appendChild(d);
   });
@@ -3458,7 +3604,8 @@ async function start() {
   // What is said before Play is pressed. With the sound off (as a page with no recordings
   // starts) the usual words would promise sound that does not come, so they say how to get it.
   function introWords() {
-    return reel.intro === INTRO && player.muted ? QUIET_INTRO : reel.intro;
+    if (reel.intro !== INTRO) return reel.intro;   // the reel's own words for before Play
+    return player.muted ? words.quiet : words.intro;
   }
 
   // The picture's clock: the narration's while playing or paused part-way; a preview that
@@ -3477,7 +3624,7 @@ async function start() {
       previewStart = now;
       typedText = null;
       const s = scenes[state.index];
-      $('cap-live').textContent = `Scene ${state.index + 1} of ${scenes.length}: ${s.title}. ${s.caption}`;
+      $('cap-live').textContent = `${filled(words.scene, { n: state.index + 1, of: scenes.length })}: ${s.title}. ${s.caption}`;
       const next = scenes[state.index + 1], nextClip = next && clipNow(next);
       if (nextClip && !warmed.has(nextClip.url)) { warmed.add(nextClip.url); new Audio().src = nextClip.url; }   // so it starts at once
     }
@@ -3486,11 +3633,11 @@ async function start() {
       d.classList.toggle('on', j === state.index);
       if (j === state.index) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current');
     });
-    showLabel(playBtn, state.playing ? 'Pause' : state.ended ? 'Replay' : 'Play');
-    showLabel(muteBtn, state.muted ? 'Sound: off' : 'Sound: on');
+    showLabel(playBtn, state.playing ? words.pause : state.ended ? words.replay : words.play);
+    showLabel(muteBtn, state.muted ? words.soundOff : words.soundOn);
     muteBtn.setAttribute('aria-pressed', String(!state.muted));
     bigPlay.hidden = !(intro || state.ended);
-    $('bigplay-label').textContent = state.ended ? 'Play again' : 'Play';
+    $('bigplay-label').textContent = state.ended ? words.again : words.play;
     paintCaption();
   }
 
@@ -3498,9 +3645,9 @@ async function start() {
   // un-types, and shows in full whenever the reel is not playing, so it can be read.
   function paintCaption() {
     const s = scenes[player.index];
-    const title = intro ? 'Press Play' : `${player.index + 1}. ${s.title}`;
+    const title = intro ? words.press : `${player.index + 1}. ${s.title}`;
     // a scene skipped to before its recording has come: say why it is quiet, until the voice begins
-    const text = intro ? introWords() : player.playing && narrator.lastSource === 'waiting' ? STILL_RECORDING : s.caption;
+    const text = intro ? introWords() : player.playing && narrator.lastSource === 'waiting' ? words.still : s.caption;
     if (text !== typedText) { typedText = text; typed = 0; }
     let n = text.length;
     if (!intro && s.captions === 'typewriter' && !calm.matches && player.playing) {
@@ -3526,7 +3673,8 @@ async function start() {
     const cap = $('cap'), main = document.querySelector('main'), page = document.documentElement;
     cap.style.minHeight = '';
     const least = parseFloat(getComputedStyle(cap).minHeight) || 0;
-    const all = [['Press Play', reel.intro], ...(reel.intro === INTRO ? [['Press Play', QUIET_INTRO]] : []), ...(coming ? [['Press Play', STILL_RECORDING]] : []), ...scenes.map((s, i) => [`${i + 1}. ${s.title}`, s.caption])];
+    const before = reel.intro === INTRO ? [words.intro, words.quiet] : [reel.intro];
+    const all = [...before.map((text) => [words.press, text]), ...(coming ? [[words.press, words.still]] : []), ...scenes.map((s, i) => [`${i + 1}. ${s.title}`, s.caption])];
     cap.classList.remove('typing');
     $('cap-rest').textContent = '';
     // Sizes the caption for the player as wide as it can be with `more` pixels taken off the
@@ -3575,7 +3723,7 @@ async function start() {
     shownSecond = second;
     $('time').textContent = `${clockTime(at)} / ${clockTime(total)}`;
     seek.setAttribute('aria-valuenow', String(second));
-    seek.setAttribute('aria-valuetext', `${clockTime(at)} of ${clockTime(total)}, scene ${player.index + 1}: ${scenes[player.index].title}`);
+    seek.setAttribute('aria-valuetext', filled(words.where, { at: clockTime(at), total: clockTime(total), n: player.index + 1, title: scenes[player.index].title }));
   }
 
   function seekToPointer(e) {

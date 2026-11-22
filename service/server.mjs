@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { ReelError } from '../src/reel.js';
+import { LANG_CODES } from '../src/words.js';
 import { createMcpServer } from './mcp.mjs';
 import { BusyError, isId, languageName } from './reels.mjs';
 import { addToClaudeLink, appManifest, robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
@@ -137,6 +138,7 @@ async function handleReel(req, res, id, rest, context) {
     const clipAt = (c) => ({ text: c.text, file: `${baseUrl}/r/${id}/audio/${c.file}`, seconds: c.seconds });
     if (status.state === 'failed') play.error = status.error;
     if (status.narrator) play.narrator = languageName(status.narrator);   // who reads it, when it is not Peter
+    if (status.language) play.language = status.language;   // the language it is in, when it is not English: the player's own words follow it
     // while the voice is being recorded: how many lines are done, of how many
     if (status.state === 'recording' && status.lines) Object.assign(play, { recorded: status.recorded, lines: status.lines });
     // and what there is to play already: a player may start before the last line is recorded, once `playable` says it would stay behind the recorder
@@ -307,7 +309,6 @@ async function writeReel({ reels, writer, limits, log }, id, source, caller) {
 export const languageChoices = (languages = []) => (languages.length ? ['english', ...languages].map((language) =>
   `<label><input type="radio" name="language" value="${language}"${language === 'english' ? ' checked' : ''}><span lang="${LANG_CODES[language] ?? 'en'}">${escapeHtml(OWN_NAMES[language] ?? languageName(language))}</span></label>`).join('\n          ') : '');
 
-const LANG_CODES = { english: 'en', french: 'fr', german: 'de', spanish: 'es', italian: 'it', portuguese: 'pt', dutch: 'nl' };
 
 function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages, writer, reels }, extra = {}) {
   let page = fresh ? null : pages.get(name);
