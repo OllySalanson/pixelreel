@@ -157,6 +157,9 @@ man's voice or a woman's, a button to hear them say hello, and one to choose the
 - `site/js/voice.js` keeps the choice on the device and says who was chosen. The make-one
   box asks it, so the words it writes for Claude say who should read: "Make me a pixel
   reel, read by Anna, about this: my gas bill".
+- **In which language** is chosen in the make-one box itself ("Read it to me in"), wherever
+  the service can read more than English, and is said in the same words: "Make me a pixel
+  reel in French, read by Anna, about this: my gas bill".
 - A reel's own page names whoever is reading while it waits ("Anna is recording scene 3 of
   6"), from what the service says of the reel.
 - The site never says a voice can copy anyone: all are computer voices made from public
@@ -777,3 +780,20 @@ The page a shared reel is watched on is where a reel does its work, so it got th
   (`site-make-here`): give it anything wordy; type it, drop it or take a photo; press Make
   my reel; ask for it simpler or shorter; and find your reels listed. "Watch this whole
   page" plays it too. Where the box still writes words for Claude, the old reel stays.
+
+### Version 35
+
+- **The choice of language is there for everyone.** "Read it to me in" was only shown where
+  Make it right here is on, which it is not on the live site, so nobody could see it. It
+  now shows wherever more than English can be read: English, Français, Deutsch, Español,
+  Italiano, Português, Nederlands, each called what its speakers call it.
+- **The words for Claude say it.** With Français and Anna chosen, the box writes "Make me a
+  pixel reel in French, read by Anna, about this: my gas bill". The language is named in
+  English there, as it is Claude who reads it. Choosing a language rewrites the words at
+  once, and it is still remembered on the device and still starts on the reader's own.
+- All well with seven languages showing, at 320, 390 and 1280 pixels wide, at all 27
+  settings.
+
+| The choice in the make-one box, with Make it right here off, on a laptop and a phone |
+| --- |
+| ![What do you want explained, the ready-made things to ask for, then Read it to me in: English, Français chosen, Deutsch, Español, Italiano, Português, Nederlands, above the words to say to Claude.](log/v35-every-language.jpg) |

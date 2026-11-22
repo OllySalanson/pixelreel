@@ -313,7 +313,7 @@ function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages, w
   let page = fresh ? null : pages.get(name);
   if (!page) {
     // "watch/<reel>" is the page of one of the site's own reels
-    const html = name.startsWith('watch/') ? watchPage(name.slice(6), baseUrl, { listed }) : sitePage(name, baseUrl, { listed, narrators: reels.narrators ?? [], values: { here: writer ? 'on' : 'off', languages: writer ? languageChoices(reels.languages) : '' } });
+    const html = name.startsWith('watch/') ? watchPage(name.slice(6), baseUrl, { listed }) : sitePage(name, baseUrl, { listed, narrators: reels.narrators ?? [], values: { here: writer ? 'on' : 'off', languages: languageChoices(reels.languages ?? []) } });
     page = squeezed(html);
     page.tag = tagOf(page.bytes);
     if (!fresh) pages.set(name, page);

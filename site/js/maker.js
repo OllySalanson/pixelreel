@@ -21,9 +21,14 @@ const LANGUAGE = 'pixelreel-language';
 /** The most the box takes when its words are for copying across to Claude. */
 const ASK_MAX = 2000;
 
-/** The words to say to Claude for `what`: a web address, or a few words. With `narrator` (a name, such as "Anna"), they ask for that narrator to read it. */
-export function askFor(what, narrator = null) {
-  const about = what.trim().replace(/\s+/g, ' ') || EXAMPLE, reel = narrator ? `a pixel reel, read by ${narrator},` : 'a pixel reel';
+/**
+ * The words to say to Claude for `what`: a web address, or a few words. With `narrator` (a
+ * name, such as "Anna") they ask for that narrator to read it, and with `language` (such as
+ * 'french') for the reel to be in that language.
+ */
+export function askFor(what, narrator = null, language = null) {
+  const about = what.trim().replace(/\s+/g, ' ') || EXAMPLE;
+  const reel = `a pixel reel${language ? ` in ${language[0].toUpperCase()}${language.slice(1)}` : ''}${narrator ? `, read by ${narrator},` : ''}`;
   return isLink(about) ? `Make me ${reel} about this page: ${about}` : `Make me ${reel} about this: ${about}`;
 }
 
@@ -47,8 +52,12 @@ export function startMaker() {
   const here = form.dataset.here === 'on';
   // the box is one line that grows with what is put in it, as far as its styles let it
   const grow = () => { box.style.height = 'auto'; box.style.height = `${box.scrollHeight + box.offsetHeight - box.clientHeight}px`; };
+  // The language the reel is read in, where more than English can be read here: the one chosen
+  // last time on this device, or else the one the browser says its reader prefers.
+  const choices = [...form.querySelectorAll('input[name="language"]')];
+  const language = () => { const chosen = choices.find((choice) => choice.checked)?.value; return chosen && chosen !== 'english' ? chosen : null; };
   const update = () => {
-    const ask = askFor(box.value, chosenNarrator());
+    const ask = askFor(box.value, chosenNarrator(), language());
     words.textContent = ask;
     open.href = `https://claude.ai/new?q=${encodeURIComponent(ask)}`;
     for (const said of form.querySelectorAll('.said')) { said.textContent = ''; said.classList.remove('sorry'); }
@@ -66,7 +75,21 @@ export function startMaker() {
     e.preventDefault();
     form.requestSubmit();
   });
-  const make = here ? makeHere(form, box, update) : null;
+  if (choices.length) {
+    const offered = choices.map((choice) => choice.value);
+    let last = null;
+    try { last = localStorage.getItem(LANGUAGE); } catch { /* nowhere to keep it */ }
+    const start = offered.includes(last) ? last : languageFor(navigator.languages ?? [navigator.language], offered);
+    for (const choice of choices) {
+      choice.checked = choice.value === start;
+      choice.addEventListener('change', () => {
+        try { localStorage.setItem(LANGUAGE, choice.value); } catch { /* as above */ }
+        update();   // the words for Claude say which language
+      });
+    }
+    document.getElementById('maker-language').hidden = false;
+  }
+  const make = here ? makeHere(form, box, update, language) : null;
   if (!here) box.maxLength = ASK_MAX;
   // the main thing: make the reel here, or else copy the words, the same as the first button
   form.addEventListener('submit', (e) => {
@@ -96,7 +119,7 @@ async function shrinkPicture(file) {
  * to the reel's page, which shows it being written and recorded. It also takes anything dropped on the page,
  * a file that is chosen, and what is pasted when the pointer is not in a box.
  */
-function makeHere(form, box, update) {
+function makeHere(form, box, update, language) {
   const id = (name) => document.getElementById(name);
   const said = id('here-said'), wait = id('maker-wait'), over = id('drop-over'), file = id('maker-file'), own = id('maker-own'), ownOpen = id('maker-own-open');
   const lead = id('make-lead');
@@ -135,21 +158,6 @@ function makeHere(form, box, update) {
     if (asked && !box.value) { box.value = asked; update(); }
   } catch {
     // as above
-  }
-  // The language Peter reads the reel in, where he can read more than English: the one chosen
-  // last time on this device, or else the one the browser says its reader prefers.
-  const choices = [...form.querySelectorAll('input[name="language"]')];
-  const language = () => { const chosen = choices.find((choice) => choice.checked)?.value; return chosen && chosen !== 'english' ? chosen : null; };
-  if (choices.length) {
-    const offered = choices.map((choice) => choice.value);
-    let last = null;
-    try { last = localStorage.getItem(LANGUAGE); } catch { /* nowhere to keep it */ }
-    const start = offered.includes(last) ? last : languageFor(navigator.languages ?? [navigator.language], offered);
-    for (const choice of choices) {
-      choice.checked = choice.value === start;
-      choice.addEventListener('change', () => { try { localStorage.setItem(LANGUAGE, choice.value); } catch { /* as above */ } });
-    }
-    id('maker-language').hidden = false;
   }
   let busy = false;
   const setBusy = (on) => {

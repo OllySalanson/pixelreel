@@ -672,6 +672,9 @@ describe('who reads', () => {
     assert.equal(askFor('my gas bill', 'Anna'), 'Make me a pixel reel, read by Anna, about this: my gas bill');
     assert.equal(askFor('https://example.com/a', 'Stuart'), 'Make me a pixel reel, read by Stuart, about this page: https://example.com/a');
     assert.equal(askFor('my gas bill'), 'Make me a pixel reel about this: my gas bill', 'and say nothing of it for Peter');
+    assert.equal(askFor('my gas bill', null, 'french'), 'Make me a pixel reel in French about this: my gas bill', 'and for the language that was chosen');
+    assert.equal(askFor('https://example.com/a', 'Anna', 'spanish'), 'Make me a pixel reel in Spanish, read by Anna, about this page: https://example.com/a');
+    assert.equal(askFor('my gas bill', 'Anna', null), 'Make me a pixel reel, read by Anna, about this: my gas bill');
     const main = readFileSync(root('site/js/main.js'), 'utf8');
     assert.ok(main.indexOf('startVoice();') < main.indexOf('startMaker();'), 'the choice is looked up before the box writes its first words');
   });

@@ -380,7 +380,7 @@ html.reel-filling { overflow: hidden; }
 .said.sorry::before { content: '!'; content: '!' / ''; float: left; display: grid; place-items: center; width: 2rem; height: 2rem; margin: 0 0.9rem 0.1rem 0; font: 2rem/1 var(--pixel); letter-spacing: 0; color: #ffffff; background: var(--red); }
 .maker-here > .btn-big { width: calc(100% - var(--u) * 2); }
 /* the choice of language: the same kind of choice as in Make it comfy, a little smaller (these come after .pick's own, so they say .maker too) */
-.maker .maker-language { margin: 0 0 1.5rem; }
+.maker .maker-language { margin: 1.25rem 0 0; }
 .maker .maker-language legend { font-size: 1.125rem; margin-bottom: 0.5rem; }
 .maker .maker-language span { padding: 0.4rem 0.8rem; font-size: 1.0625rem; }
 .maker-drop { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; align-items: flex-start; margin: 1.25rem var(--u) 0; padding: 1.1rem 1.25rem 0.75rem; background: var(--tint);
