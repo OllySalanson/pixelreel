@@ -945,6 +945,10 @@ html[data-aloud="on"] :is(h1, h2, h3, p, li, summary, dt, dd, figcaption):not(:i
   .hero h1 { font-size: 2.5rem; }   /* and "Watch" the top of the home page */
   .menu-in, .comfort-in { padding: 1.125rem; }
   .doc h2 { font-size: 1.5rem; }   /* so "Questions" fits the privacy page at the biggest, widest letters */
+  .brief h2, .press-h { font-size: 1.5rem; }   /* and "paragraph" the press kit */
+  /* and "Homework." a scene under a reel: a little less room at its sides, and slightly smaller letters */
+  .step > :not(.shot):not(.step-n) { margin-inline: 1rem; }
+  .storyboard .step p:not(.step-n) { font-size: 1.0625rem; }
   .doc ul, .doc ol { padding-left: 1.1em; }
   .doc li { font-size: 1rem; }   /* so "OpenDyslexic", in bold on the credits page, fits at the biggest, widest, roomiest letters */
   .box { padding-inline: 0.9rem; }

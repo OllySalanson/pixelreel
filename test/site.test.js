@@ -1090,6 +1090,16 @@ describe('the foot of every page', () => {
   });
 });
 
+describe('the narrowest phones', () => {
+  it('have smaller headings on the press kit and smaller words in a reel\'s scenes, so that none is cut in two', () => {
+    const css = readFileSync(root('site/css/site.css'), 'utf8');
+    const narrow = css.slice(css.indexOf('@media (max-width: 23.5rem) {'));
+    assert.match(narrow, /\n {2}\.brief h2, \.press-h \{ font-size: 1\.5rem; \}/);
+    assert.match(narrow, /\n {2}\.storyboard \.step p:not\(\.step-n\) \{ font-size: 1\.0625rem; \}/);
+    assert.match(narrow, /\n {2}\.step > :not\(\.shot\):not\(\.step-n\) \{ margin-inline: 1rem; \}/);
+  });
+});
+
 describe('a reel over the page', () => {
   it('has Close beside its name while the name has room, and above it when it has not', () => {
     for (const name of pages) assert.match(html[name], /<div class="theatre-head">\s*<div class="theatre-words">\s*<p class="theatre-kicker" id="theatre-kicker">[^<]+<\/p>\s*<h2 id="theatre-title">[^<]+<\/h2>\s*<\/div>\s*<button class="btn btn-paper btn-small theatre-close" type="button" data-close>Close<\/button>\s*<\/div>/, name);
