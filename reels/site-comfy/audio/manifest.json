@@ -1,0 +1,36 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "Reading is hard work for a lot of people. So this website changes to suit you. Look for Make it comfy, at the top of every page.",
+      "file": "c09b2900fded1f12.mp3",
+      "seconds": 7.12
+    },
+    {
+      "text": "You can make the letters bigger, or give them more room. And there are letters made for dyslexia, too.",
+      "file": "ba36cbbba38fc5a2.mp3",
+      "seconds": 5.28
+    },
+    {
+      "text": "You can change the colour of the paper. Cream, a soft tint, or dark, if a bright page dazzles you.",
+      "file": "5ef4485e8fc4e148.mp3",
+      "seconds": 6
+    },
+    {
+      "text": "There is a ruler to keep your place. It follows your pointer, or your finger, and dims everything else.",
+      "file": "599c9be2fdb819e4.mp3",
+      "seconds": 5.76
+    },
+    {
+      "text": "And you can have any words on the site read out. Just press them. That voice is not me, mind. It is your own device's.",
+      "file": "f3b468d43e10467e.mp3",
+      "seconds": 7.76
+    },
+    {
+      "text": "Whatever you choose is remembered on your own device, and nowhere else. Go on. Get comfy.",
+      "file": "88f313b78d6531d2.mp3",
+      "seconds": 5.6
+    }
+  ]
+}

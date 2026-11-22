@@ -8,6 +8,7 @@ import { staticFile } from '../service/static.mjs';
 import { hopHeight, lookAt, REELIE, SAYINGS, SCENES } from '../site/js/landscape.js';
 import { sentenceAt, sentencesOf } from '../site/js/follow.js';
 import { createAloud, NOT_READ, pressed, READABLE, voiceFor, wordsOf } from '../site/js/aloud.js';
+import { tried } from '../site/js/comfort.js';
 import { askFor } from '../site/js/maker.js';
 import { startMenu } from '../site/js/menu.js';
 import { nowPlaying } from '../site/js/player.js';
@@ -973,6 +974,50 @@ describe('getting the site onto a phone with no address to type', () => {
     const css = readFileSync(root('site/css/site.css'), 'utf8');
     assert.match(css, /\n\.scan \{ display: none;/);
     assert.match(css, /@media \(hover: hover\) and \(pointer: fine\) \{\n {2}\.scan \{ display: flex; \}\n\}/);
+  });
+});
+
+describe('Make it comfy, tried on the home page', () => {
+  const part = html.home.slice(html.home.indexOf('<section class="section" id="comfy"'), html.home.indexOf('<section class="section night cinema" id="examples"'));
+  const tiles = [...part.matchAll(/<li( data-needs-speech hidden)?><button class="comfy-try" type="button" data-try="([a-z]+):([a-z0-9]+)" aria-pressed="false">[\s\S]*?<span class="comfy-words">([^<]+)<\/span><span class="comfy-on" aria-hidden="true">On<\/span><\/button><\/li>/g)];
+
+  it('has a part of its own, between who it is for and the examples, with its reel', () => {
+    assert.ok(part.length > 0, 'it is there, and before the examples');
+    assert.ok(html.home.indexOf('id="who"') < html.home.indexOf('id="comfy"'));
+    assert.match(part, /<h2 id="comfy-title">Hard on the eyes\? Change it\.<\/h2>/);
+    assert.match(part, /<button class="btn btn-reel" type="button" data-reel="site-comfy">Make a pixel reel about this<\/button>/);
+    assert.match(html.home, /data-reels="[^"]*site-who site-comfy site-peter[^"]*"/, 'and Watch this whole page plays it in its place');
+  });
+
+  it('offers six choices as big buttons, each one a choice that Make it comfy really has', () => {
+    assert.deepEqual(tiles.map((tile) => tile[4]), ['Bigger letters', 'Letters made for dyslexia', 'Dark paper', 'A ruler to keep your place', 'Hear any words you press', 'A slower voice']);
+    for (const [, , key, value, words] of tiles) {
+      assert.match(html.home, new RegExp(`<input type="radio" name="${key}" value="${value}"(?! checked)>`), `${words}: ${key} can be ${value}, and is not already`);
+    }
+    assert.deepEqual(tiles.filter((tile) => tile[1]).map((tile) => tile[3] + tile[2]), ['onaloud'], 'the one that needs a voice is out of sight where the browser has none');
+  });
+
+  it('keeps the buttons out of sight until the script that works them is there', () => {
+    assert.match(part, /<ul class="comfy-list" data-comfy hidden>/);
+    assert.match(part, /<div class="row comfy-more" data-comfy hidden>\s*<button class="btn btn-paper" type="button" data-open="comfort">See every choice<\/button>/);
+    assert.match(readFileSync(root('site/js/comfort.js'), 'utf8'), /querySelectorAll\('\[data-comfy\]'\)\) part\.hidden = false;/);
+  });
+
+  it('switches a choice on with one press, and puts it back with the next', () => {
+    assert.equal(tried({ size: '1', paper: 'cream' }, 'size', '2'), '2');
+    assert.equal(tried({ size: '2', paper: 'cream' }, 'size', '2'), '1', 'back to the usual size');
+    assert.equal(tried({ size: '3' }, 'size', '2'), '2', 'from another choice it goes to the one on the button');
+    assert.equal(tried({ paper: 'blue' }, 'paper', 'night'), 'night');
+    assert.equal(tried({ paper: 'night' }, 'paper', 'night'), 'cream');
+    assert.equal(tried({ aloud: 'on' }, 'aloud', 'on'), 'off');
+  });
+
+  it('shows which choices are in force, and says aloud that words can now be pressed however that was chosen', () => {
+    const css = readFileSync(root('site/css/site.css'), 'utf8');
+    assert.match(css, /\n\.comfy-try\[aria-pressed="true"\] \{ background: var\(--gold\);/);
+    assert.match(css, /\n\.comfy-try\[aria-pressed="true"\] \.comfy-on \{ display: block; \}/, 'in words as well as in colour');
+    assert.match(readFileSync(root('site/js/comfort.js'), 'utf8'), /addEventListener\('comfort', show\);/, 'a change made in the panel shows on the buttons too');
+    assert.match(readFileSync(root('site/js/aloud.js'), 'utf8'), /if \(now && !was\) \{ hush\(\); aloud\.say\('On\. Press any words to hear them\.'/);
   });
 });
 

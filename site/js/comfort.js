@@ -7,9 +7,15 @@
 // is drawn), and nothing is ever sent anywhere.
 const DEFAULTS = { font: 'lexend', size: '1', space: '1', paper: 'cream', motion: 'on', pace: 'usual', words: 'few', ruler: 'off', aloud: 'off' };
 const KEYS = Object.keys(DEFAULTS);
-const root = document.documentElement;
+const root = () => document.documentElement;   // asked for when needed, so that Node can load this to test it
 
-const chosen = () => Object.fromEntries(KEYS.map((key) => [key, root.dataset[key] ?? DEFAULTS[key]]));
+/**
+ * What a "try it" button for `key` and `value` leaves that setting at, given what is
+ * `chosen` now: its value, or the usual one if it was already that (a second press puts it back).
+ */
+export const tried = (chosen, key, value) => (chosen[key] === value ? DEFAULTS[key] : value);
+
+const chosen = () => Object.fromEntries(KEYS.map((key) => [key, root().dataset[key] ?? DEFAULTS[key]]));
 
 function keep() {
   const changed = Object.fromEntries(Object.entries(chosen()).filter(([key, value]) => value !== DEFAULTS[key]));
@@ -34,11 +40,11 @@ export function startComfort() {
   dialog.addEventListener('change', (e) => {
     const { name, value } = e.target;
     if (!KEYS.includes(name)) return;
-    if (value === DEFAULTS[name]) delete root.dataset[name]; else root.dataset[name] = value;
+    if (value === DEFAULTS[name]) delete root().dataset[name]; else root().dataset[name] = value;
     keep();
   });
   dialog.querySelector('[data-comfort-reset]').addEventListener('click', () => {
-    for (const key of KEYS) delete root.dataset[key];
+    for (const key of KEYS) delete root().dataset[key];
     tick();
     keep();
   });
@@ -47,4 +53,21 @@ export function startComfort() {
   for (const opener of document.querySelectorAll('[data-open="comfort"]')) {
     opener.addEventListener('click', () => { tick(); dialog.showModal(); });
   }
+  // The buttons on a page that switch one choice on, and off again: <button data-try="size:2">.
+  // Each shows whether its choice is the one in force, however that came about.
+  const tries = [...document.querySelectorAll('button[data-try]')].map((button) => [button, ...button.dataset.try.split(':')]);
+  const show = () => {
+    const now = chosen();
+    for (const [button, key, value] of tries) button.setAttribute('aria-pressed', String(now[key] === value));
+  };
+  for (const [button, key, value] of tries) {
+    button.addEventListener('click', () => {
+      const next = tried(chosen(), key, value);
+      if (next === DEFAULTS[key]) delete root().dataset[key]; else root().dataset[key] = next;
+      keep();
+    });
+  }
+  addEventListener('comfort', show);
+  show();
+  for (const part of document.querySelectorAll('[data-comfy]')) part.hidden = false;
 }

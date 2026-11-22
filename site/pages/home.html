@@ -25,7 +25,7 @@ fetch: /reels/pixel-reel/reel.json /reels/pixel-reel/audio/manifest.json
       <a class="btn btn-paper btn-big" href="/make">Make a pixel reel now</a>
       <p class="hero-small">Free. Nothing to sign up for. Works with every Claude plan.</p>
       <p class="hero-watch"><span>Rather not read the rest?</span>
-        <button class="btn btn-reel" type="button" data-reels="site-what site-how site-who site-peter site-make site-good site-phone site-questions site-open" data-kicker="This page, as a reel">Watch this whole page</button></p>
+        <button class="btn btn-reel" type="button" data-reels="site-what site-how site-who site-comfy site-peter site-make site-good site-phone site-questions site-open" data-kicker="This page, as a reel">Watch this whole page</button></p>
     </div>
   </div>
 </section>
@@ -197,6 +197,30 @@ fetch: /reels/pixel-reel/reel.json /reels/pixel-reel/audio/manifest.json
         </div>
       </li>
     </ul>
+  </div>
+</section>
+
+<section class="section" id="comfy" aria-labelledby="comfy-title">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">Built for you</p>
+      <h2 id="comfy-title">Hard on the eyes? Change it.</h2>
+      <p class="lead">This site is made for people who find reading hard work. Press one of these, and watch it change.</p>
+      <button class="btn btn-reel" type="button" data-reel="site-comfy">Make a pixel reel about this</button>
+    </div>
+    <!-- each switches one choice of Make it comfy on, and off again: comfort.js works them, and shows them, since without it they would do nothing -->
+    <ul class="comfy-list" data-comfy hidden>
+      <li><button class="comfy-try" type="button" data-try="size:2" aria-pressed="false"><span class="comfy-glyph" aria-hidden="true">A</span><span class="comfy-words">Bigger letters</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
+      <li><button class="comfy-try" type="button" data-try="font:opendyslexic" aria-pressed="false">{{icon:book:3}}<span class="comfy-words">Letters made for dyslexia</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
+      <li><button class="comfy-try" type="button" data-try="paper:night" aria-pressed="false">{{icon:moon:3}}<span class="comfy-words">Dark paper</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
+      <li><button class="comfy-try" type="button" data-try="ruler:on" aria-pressed="false"><span class="comfy-glyph comfy-rule" aria-hidden="true"></span><span class="comfy-words">A ruler to keep your place</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
+      <li data-needs-speech hidden><button class="comfy-try" type="button" data-try="aloud:on" aria-pressed="false">{{icon:speech:3}}<span class="comfy-words">Hear any words you press</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
+      <li><button class="comfy-try" type="button" data-try="pace:slow" aria-pressed="false">{{icon:clock:3}}<span class="comfy-words">A slower voice</span><span class="comfy-on" aria-hidden="true">On</span></button></li>
+    </ul>
+    <div class="row comfy-more" data-comfy hidden>
+      <button class="btn btn-paper" type="button" data-open="comfort">See every choice</button>
+      <p>Your choices are remembered on this device only.</p>
+    </div>
   </div>
 </section>
 
