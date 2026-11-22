@@ -47,6 +47,8 @@
     <button class="top-comfort" type="button" data-open="comfort" aria-haspopup="dialog" aria-label="Make it comfy: change how this site looks">
       <span class="aa" aria-hidden="true">Aa</span><span class="top-comfort-words" aria-hidden="true">Make it comfy</span>
     </button>
+    <!-- shown when the bar has no room for its links (boot.js): they are in the menu it opens -->
+    <button class="top-menu" type="button" data-open="menu" aria-haspopup="dialog">Menu</button>
     <a class="btn btn-gold btn-small top-add" href="/claude"><span>Add<span class="top-add-more"> to Claude</span></span></a>
   </div>
 </header>
@@ -146,6 +148,25 @@
 
     <button class="comfort-reset" type="button" data-comfort-reset>Put it all back</button>
   </form>
+</dialog>
+
+<dialog class="menu" id="menu" aria-labelledby="menu-title">
+  <div class="menu-in">
+    <div class="comfort-head">
+      <h2 id="menu-title">Menu</h2>
+      <button class="btn btn-paper btn-small" type="button" data-close>Close</button>
+    </div>
+    <nav class="menu-list" aria-label="Menu">
+      <a href="/">{{icon:house:3}}<span>Home</span></a>
+      <a href="/make">{{icon:pencil:3}}<span>Make a pixel reel</span></a>
+      <a href="/#how">{{icon:lightbulb:3}}<span>How it works</span></a>
+      <a href="/#examples">{{icon:star:3}}<span>Examples</span></a>
+      <a href="/#questions">{{icon:question:3}}<span>Questions</span></a>
+      <a href="/app" data-not-app>{{icon:phone:3}}<span>Add to your phone</span></a>
+      <button type="button" data-open="comfort"><span class="aa" aria-hidden="true">Aa</span><span>Make it comfy</span></button>
+    </nav>
+    <a class="btn btn-gold btn-big" href="/claude">Add Pixel Reel to Claude</a>
+  </div>
 </dialog>
 
 <dialog class="theatre" id="theatre" aria-labelledby="theatre-title" data-pages="{{watchable}}">
