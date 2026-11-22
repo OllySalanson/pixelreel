@@ -3,6 +3,7 @@
 // transitions as src/main.js), with the site's own buttons round it, and any number can sit
 // on one page. Only one talks at a time, and none makes a sound until it is pressed.
 import { calm, onComfortChange } from './calm.js';
+import { pacedClock, rateOf } from './pace.js';
 import { loadReel } from './reels.js';
 import { createKit, H, W } from '../../src/kit.js';
 import { createNarrator } from '../../src/narrator.js';
@@ -21,6 +22,15 @@ export function hush(keep = null) {
 
 /** Adds something with a pause() to the things only one of which talks at a time. */
 export function addTalker(talker) { talkers.add(talker); }
+
+/**
+ * The browser's own voice, which reads a line that has no recording, made to read at a
+ * clock's pace too: whatever rate the narrator gives it is the rate at the usual pace.
+ */
+const pacedUtterance = (clock) => window.SpeechSynthesisUtterance && class extends window.SpeechSynthesisUtterance {
+  get rate() { return super.rate; }
+  set rate(value) { super.rate = value * clock.rate; }
+};
 
 /** Sizes a canvas showing a 320 x 180 picture so each of its pixels is a whole number of the screen's. */
 export function fitCanvas(canvas) {
@@ -55,6 +65,7 @@ export class ReelPlayer {
     this.soundKey = find('reel-sound');
     this.audio = new Audio();
     this.audio.preload = 'auto';
+    this.clock = pacedClock();   // the reel's own clock, which Peter's pace (Make it comfy) slows or quickens
     this.show = null;          // what is loaded: see loadReel
     this.player = null;
     this.intro = true;         // nobody has pressed anything yet
@@ -66,7 +77,20 @@ export class ReelPlayer {
     this.wire(find('reel-back'), find('reel-next'));
     new IntersectionObserver(([entry]) => { this.visible = entry.isIntersecting; this.wake(); }).observe(root);
     new ResizeObserver(() => { fitCanvas(this.canvas); this.paint(performance.now()); }).observe(this.canvas);
-    onComfortChange(() => { this.paint(performance.now()); this.wake(); });
+    onComfortChange(() => { this.setPace(); this.paint(performance.now()); this.wake(); });
+    this.setPace();
+  }
+
+  /** Reads at the pace chosen in Make it comfy, from this moment on, even in the middle of a line. */
+  setPace() {
+    const rate = rateOf(document.documentElement.dataset.pace);
+    if (rate === this.clock.rate) return;
+    const playing = this.player?.playing;
+    if (playing) this.player.pause();   // its timers were set at the old pace: it sets them again when it plays
+    this.clock.setRate(rate);
+    this.audio.defaultPlaybackRate = rate;   // a new recording starts at the default rate
+    this.audio.playbackRate = rate;
+    if (playing) this.player.play();
   }
 
   wire(back, next) {
@@ -155,8 +179,9 @@ export class ReelPlayer {
     this.root.dataset.reel = show.name;
     this.root.dataset.opens = show.opens;
     this.canvas.setAttribute('aria-label', `Pictures for: ${reel.title}`);
-    this.narrator = createNarrator({ scenes: reel.scenes, clipFor, audio: this.audio, speech: window.speechSynthesis, Utterance: window.SpeechSynthesisUtterance });
-    this.player = new Player({ count: reel.scenes.length, narrator: this.narrator, durations, onChange: (state) => this.changed(state) });
+    const { timer, now } = this.clock;
+    this.narrator = createNarrator({ scenes: reel.scenes, clipFor, audio: this.audio, speech: window.speechSynthesis, Utterance: pacedUtterance(this.clock), timer, now });
+    this.player = new Player({ count: reel.scenes.length, narrator: this.narrator, durations, onChange: (state) => this.changed(state), timer, now });
     this.intro = true;
     this.wasEnded = false;
     this.shown = -1;

@@ -1,6 +1,7 @@
 // The theatre: "Make a pixel reel about this" opens it over the page and plays the reel
 // that was made earlier for that part of the page. Any <button data-reel="name"> opens it.
 // Also "Hear Peter say hello", which plays one line.
+import { rateOf } from './pace.js';
 import { addTalker, hush, ReelPlayer } from './player.js';
 import { loadReel } from './reels.js';
 import { phoneShare, sendReel, sentWords } from './send.js';
@@ -93,6 +94,7 @@ export function startHearing() {
       try {
         const { reel, clipFor } = await loadReel(button.dataset.hear);
         audio.src = clipFor(reel.scenes[0]).url;
+        audio.playbackRate = rateOf(document.documentElement.dataset.pace);   // at the pace chosen in Make it comfy
         await audio.play();
         button.textContent = 'Stop';
         stage?.classList.add('playing');
