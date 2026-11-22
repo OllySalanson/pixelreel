@@ -1042,6 +1042,46 @@ describe('on a phone, posters and narrators two across', () => {
   });
 });
 
+describe('the design log', () => {
+  const log = readFileSync(root('docs/site/README.md'), 'utf8');
+
+  it('numbers its versions one after another, none twice', () => {
+    // three of us add to its end, and a rebase can leave two entries under one number without any conflict
+    const numbers = [...log.matchAll(/^### Version (\d+)$/gm)].map((found) => Number(found[1]));
+    assert.ok(numbers.length > 50);
+    assert.deepEqual(numbers, numbers.map((_, i) => i + 1));
+  });
+
+  it('shows only pictures that are there', () => {
+    for (const [, picture] of log.matchAll(/\]\((log\/[^)]+)\)/g)) assert.ok(existsSync(root(`docs/site/${picture}`)), picture);
+  });
+});
+
+describe('what the make-one box takes, on the home page', () => {
+  const gives = /<ul class="people gives">([\s\S]*?)<\/ul>/.exec(html.home)?.[1] ?? '';
+
+  it('shows four cards under Make a pixel reel now: a link, a letter, a photo and a question', () => {
+    const cards = [...gives.matchAll(/<li class="person"><span class="tile tile-[a-z]+"><svg[\s\S]*?<\/svg><\/span><div class="words"><h3>([^<]+)<\/h3><p>([^<]+)<\/p><\/div><\/li>/g)];
+    assert.deepEqual(cards.map((card) => card[1]), ['A link', 'A letter', 'A photo', 'A question']);
+    assert.ok(html.home.indexOf('id="make-title"') < html.home.indexOf('class="people gives"') && html.home.indexOf('class="people gives"') < html.home.indexOf('id="good"'), 'in that part of the page');
+  });
+
+  it('shows them only where the service makes the reel itself, since only there does it take all four', () => {
+    const css = readFileSync(root('site/css/site.css'), 'utf8');
+    assert.match(css, /\n#make:not\(\[data-here="on"\]\) \.gives \{ display: none; \}/);
+    assert.match(html.home, /<section class="section section-tint" id="make" aria-labelledby="make-title" data-here="off">/, 'off unless the service says otherwise');
+    assert.match(sitePage('home', 'https://reels.example', { values: { here: 'on' } }), /id="make" aria-labelledby="make-title" data-here="on">/);
+  });
+
+  it('promises nothing the make page does not take', () => {
+    // each card stands for something the make page has: if one of these goes, so must its card
+    assert.match(html.make, /Paste a link here/, 'a link');
+    assert.match(html.make, /id="maker-choose"[^>]*data-accept="application\/pdf,text\/plain/, 'a letter, as a PDF or as writing');
+    assert.match(html.make, /id="maker-photo"[^>]*data-accept="image\/\*"/, 'a photo');
+    assert.match(html.make, /placeholder="Or type a question"/, 'a question');
+  });
+});
+
 describe('Make it comfy, tried on the home page', () => {
   const part = html.home.slice(html.home.indexOf('<section class="section" id="comfy"'), html.home.indexOf('<section class="section night cinema" id="examples"'));
   const tiles = [...part.matchAll(/<li( data-needs-speech hidden)?><button class="comfy-try" type="button" data-comfy-try="([a-z]+):([a-z0-9]+)" aria-pressed="false">[\s\S]*?<span class="comfy-words">([^<]+)<\/span><span class="comfy-on" aria-hidden="true">On<\/span><\/button><\/li>/g)];

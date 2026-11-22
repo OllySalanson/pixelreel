@@ -297,6 +297,9 @@ html[data-paper="night"] .letter-title { color: #25272c; }
 .people { --across: 3; --gap: clamp(1.25rem, 2.5vw, 2rem); display: grid; gap: var(--gap);
   grid-template-columns: repeat(auto-fit, minmax(min(100%, max(21ch, (100% - (var(--across) - 1) * var(--gap)) / var(--across))), 1fr)); }
 .person { padding: 1.5rem 1.5rem 1.6rem; }
+/* what the make-one box takes, four cards under "Make a pixel reel now": only where the service makes the reel itself */
+.gives { --across: 4; margin-top: 2.5rem; }
+#make:not([data-here="on"]) .gives { display: none; }
 .person p { margin-top: 0.4rem; font-size: 1.125rem; color: var(--ink-soft); }
 
 /* now showing: a strip of film */

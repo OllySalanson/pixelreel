@@ -1403,3 +1403,18 @@ After, on the same page here: none says anything of the kind, and pressing one c
 
 Checked with `scripts/site-fit.js` at 320, 390 and 1366 pixels wide: nothing cut in two or
 too wide at any of the 27 settings.
+
+### Version 62
+
+- **"Make a pixel reel now" had nothing to look at.** Since the form moved to a page of its
+  own (Version 42), this part of the home page was a heading, a sentence and two buttons,
+  and the sentence did the work: "Give it a link, a letter, a photo or a question." Those
+  four are now four cards under the buttons, a picture and a few words each, like the
+  cards under "Who it's for".
+- **Only where it is true.** The cards show where the service makes the reel itself, since
+  only there does the make page take all four. A test ties each card to the make page
+  still taking it, so that a card cannot outlive what it promises.
+
+| On a computer, and on a phone |
+| --- |
+| ![Make a pixel reel now, with its two buttons, and under them four cards: A link, A letter, A photo, A question, each with a picture. Beside it, the same on a phone, the cards one under the other.](log/v62-what-it-takes.jpg) |
