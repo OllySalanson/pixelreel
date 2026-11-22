@@ -80,6 +80,13 @@ describe('what someone gives the page', () => {
     const shot = await givenFromClipboard(copied({ 'image/png': PNG }));
     assert.deepEqual([shot.file.type, shot.file.name, shot.file.size, nameOf(shot)], ['image/png', 'A copied picture', PNG.length, 'A copied picture']);
     assert.equal((await requestFor(shot)).headers['content-type'], 'image/png', 'and it is sent as any other picture is');
+    // a copied link may come as a link and nothing else, or as a link with its name as the words: the link is what was copied
+    assert.deepEqual(await givenFromClipboard(copied({ 'text/uri-list': 'https://example.com/story' })), { words: 'https://example.com/story' });
+    assert.deepEqual(await givenFromClipboard(copied({ 'text/plain': 'A story', 'text/uri-list': '# a note\r\nhttps://example.com/story\r\n' })), { words: 'https://example.com/story' });
+    // a kind the browser lists and then will not hand over is passed by, not the end of the paste
+    const stuck = { types: ['text/uri-list', 'text/plain', 'image/png'], getType: async (kind) => { if (kind !== 'text/plain') throw new Error('not this one'); return new Blob(['tea'], { type: kind }); } };
+    assert.deepEqual(await givenFromClipboard({ read: async () => [stuck] }), { words: 'tea' });
+    assert.equal(await givenFromClipboard({ read: async () => [{ types: ['image/png'], getType: async () => { throw new Error('not this one'); } }] }), null);
     assert.equal(await givenFromClipboard(copied()), null, 'nothing copied');
     assert.equal(await givenFromClipboard(copied({ 'text/plain': ' \n ' })), null, 'only spaces copied');
     assert.equal(await givenFromClipboard(copied({ 'text/html': '<b>x</b>' })), null, 'nothing it can use');

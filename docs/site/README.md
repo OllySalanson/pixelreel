@@ -1269,3 +1269,16 @@ the new part about Make it comfy in it, where it was 18,791 without.
 | Now showing, and the narrators, on a phone |
 | --- |
 | ![On a phone: the six example reels as posters, two across, all on one screen. Beside it, the six narrators' cards, two across, each with Hear and Choose one under the other.](log/v54-two-across.jpg) |
+
+### Version 55
+
+- **Paste takes a link however it is handed over.** A browser can hand a page what was
+  copied in several kinds at once, and a copied link may come as a link alone, with no
+  plain words beside it. The Paste button looked only for plain words, so such a link
+  would have come back as "Nothing to paste yet". It now takes the link first, as a drop
+  already did, then words, then a picture. And a kind the browser lists but will not hand
+  over is passed by, where it used to end the paste with "That did not paste".
+
+This one is a guard, not a fault that was seen: the Paste button has still only been
+pressed with a stand-in for the clipboard, never on a real phone, and which browsers hand
+a link over without words is not something that was tried.
