@@ -1,0 +1,26 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "A pixel reel is a short cartoon that explains one thing. No waffle. No small print. Just the bits that matter.",
+      "file": "ed3e4a7236091cc7.mp3",
+      "seconds": 7.12
+    },
+    {
+      "text": "Each scene says one thing, then moves on. So there's never much to hold in your head.",
+      "file": "2929bfdc0f243cda.mp3",
+      "seconds": 4.64
+    },
+    {
+      "text": "The words are big and plain. Short enough to take in at a glance. And I read every one of them out loud.",
+      "file": "a2ecce770b41de80.mp3",
+      "seconds": 5.76
+    },
+    {
+      "text": "And you're the boss. Pause, go back, or watch it twice. Nobody's counting.",
+      "file": "bcdc4849fa583b4f.mp3",
+      "seconds": 6.4
+    }
+  ]
+}

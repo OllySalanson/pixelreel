@@ -1,0 +1,126 @@
+{
+  "format": "pixelreel/1",
+  "title": "How to read your gas meter",
+  "transition": "wipe",
+  "scenes": [
+    {
+      "title": "Your gas meter",
+      "caption": "Reading it takes about a minute.",
+      "say": "Your gas meter looks fiddly. It isn't. Reading it takes about a minute.",
+      "picture": {
+        "type": "title",
+        "text": "GAS METER",
+        "sub": "Read it in a minute"
+      }
+    },
+    {
+      "title": "Find it",
+      "caption": "Often outside, in the hall, or under the stairs.",
+      "say": "First, find it. Gas meters often live in a box outside, in the hall, or under the stairs.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "house",
+            "label": "Outside"
+          },
+          {
+            "icon": "question",
+            "label": "Under the stairs"
+          }
+        ],
+        "every": 2.2
+      }
+    },
+    {
+      "title": "Read left to right",
+      "caption": "Write down the numbers, left to right.",
+      "say": "Now look at the row of numbers. Write them down from left to right, just as you see them.",
+      "picture": {
+        "type": "sprite",
+        "label": "LEFT TO RIGHT",
+        "rows": [
+          ".kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.",
+          "kewwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwek",
+          "keeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeek",
+          "keeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeek",
+          "keeekkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkeeek",
+          "keeekkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkeeek",
+          "keeekkDDDDDkDDDDDkDDDDDkDDDDDkDDDDDkrrrrrkrrrrrkeeek",
+          "keeekkDDDDDkDDDDDkDDDDDkDDDDDkDDDDDkrrrrrkrrrrrkeeek",
+          "keeekkDwwwDkDwDwDkDwwwDkDwwwDkDDwDDkrwwwrkrwwwrkeeek",
+          "keeekkDwDwDkDwDwDkDDDwDkDDDwDkDwwDDkrwrwrkrrrwrkeeek",
+          "keeekkDwDwDkDwwwDkDDDwDkDwwwDkDDwDDkrwwwrkrwwwrkeeek",
+          "keeekkDwDwDkDDDwDkDDwDDkDwDDDkDDwDDkrrrwrkrrrwrkeeek",
+          "keeekkDwwwDkDDDwDkDDwDDkDwwwDkDwwwDkrwwwrkrwwwrkeeek",
+          "keeekkDDDDDkDDDDDkDDDDDkDDDDDkDDDDDkrrrrrkrrrrrkeeek",
+          "keeekkDDDDDkDDDDDkDDDDDkDDDDDkDDDDDkrrrrrkrrrrrkeeek",
+          "keeekkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkeeek",
+          "keeekkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkeeek",
+          "keeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeek",
+          "keeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeek",
+          "keeeeyyyyyyyyyyyyeeeeeeeeeeeeeeeeeeeeeeekkeekkeeeeek",
+          "keeeeyyyyyyyyyyyyeeeeeeeeeeeeeeeeeeeeeeekkeekkeeeeek",
+          "keeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeek",
+          "kMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMk",
+          "kMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMk",
+          "kMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMk",
+          ".kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk."
+        ],
+        "colours": {
+          "M": "#7f93a8",
+          "D": "#26262b"
+        }
+      }
+    },
+    {
+      "title": "Stop at the red",
+      "caption": "Ignore red numbers, and anything after a dot.",
+      "say": "Stop when you reach a red number, or a decimal point. Anything after that, you can ignore.",
+      "picture": {
+        "type": "big",
+        "text": "04721",
+        "sub": "the red numbers do not count"
+      }
+    },
+    {
+      "title": "Send it in",
+      "caption": "Give the number to your energy supplier.",
+      "say": "That's your reading. Give it to your energy supplier. On their app, their website, or over the phone.",
+      "picture": {
+        "type": "flow",
+        "items": [
+          {
+            "icon": "document",
+            "label": "Your reading"
+          },
+          {
+            "icon": "phone",
+            "label": "App or phone"
+          },
+          {
+            "icon": "tick",
+            "label": "Done"
+          }
+        ],
+        "every": 1.6
+      }
+    },
+    {
+      "title": "Why bother?",
+      "caption": "So your bill is right, not a guess.",
+      "say": "Why bother? Because then your bill is based on what you really used. Not on a guess.",
+      "picture": {
+        "type": "compare",
+        "bad": {
+          "icon": "question",
+          "label": "A guess"
+        },
+        "good": {
+          "icon": "money",
+          "label": "The right bill"
+        }
+      }
+    }
+  ]
+}

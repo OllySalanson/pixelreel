@@ -1,0 +1,162 @@
+{
+  "format": "pixelreel/1",
+  "title": "How a volcano works",
+  "transition": "slide",
+  "scenes": [
+    {
+      "title": "Volcanoes",
+      "caption": "A mountain with a very hot secret.",
+      "say": "A volcano is a mountain with a very hot secret.",
+      "picture": {
+        "type": "title",
+        "text": "VOLCANO",
+        "sub": "A mountain with a hot secret"
+      }
+    },
+    {
+      "title": "Deep down",
+      "caption": "Far underground, rock gets so hot that it melts.",
+      "say": "Deep under the ground, it is so hot that rock melts. Melted rock is called magma.",
+      "picture": {
+        "type": "sprite",
+        "label": "MAGMA",
+        "rows": [
+          "........................................................",
+          "........................................................",
+          "........................................................",
+          "........................................................",
+          "........................................................",
+          "......................kkkkkkkkkkkk......................",
+          "......................knnnroornNNk......................",
+          ".....................knnnnroornNNNk.....................",
+          "....................knnnnnroornNNNNk....................",
+          "...................knnnnnnroornnNNNNk...................",
+          "..................knnnnnnnroornnNNNNNk..................",
+          ".................knnnnnnnnroornnNNNNNNk.................",
+          "................knnnnnnnnroooornnNNNNNNk................",
+          "...............knnnnnnnnnroooornnNNNNNNNk...............",
+          "..............knnnnnnnnnnroooornnNNNNNNNNk..............",
+          ".............knnnnnnnnnnnroooornnnNNNNNNNNk.............",
+          "............knnnnnnnnnnnnroooornnnNNNNNNNNNNk...........",
+          "..........knnnnnnnnnnnnnnroooornnnNNNNNNNNNNNk..........",
+          ".........knnnnnnnnnnnnnnnroooornnnnNNNNNNNNNNNk.........",
+          "........knnnnnnnnnnnnnnnnroooornnnLLNNNNNNNNNNNk........",
+          ".......knnnnnnnnnnnnnnnnnroooornnnNNNNNNNNNNNNNNk.......",
+          "......knnnnnnnnnnnnnnnrroooooooorrnnNNNNNNNNNNNNNk......",
+          ".....knnnnnnnnnnnnrroooooooooooooooorrNNNNNNNNNNNNk.....",
+          "....knnnnnnnnnLrroooooooooooooooooooooorrNNNNNNNNNNk....",
+          "...knnnnnnnnnrrooooyyyyyyyyywyyyyyyyyoooorrNNNNNNNNNk...",
+          "..knnnnnnnnnrrooooyyyyyyyyyyyyyyyyyyyyoooorrNNNNNNNNNk..",
+          ".knnnnnnnnnnrrooooyyyyyywyyyyyyyyyywyyoooorrNNNNNNNNNNk.",
+          "knnnnnnnnnnrrooooyyyyyyyyyyyyyyyyyyyyyyoooorrNNNNNNNNNNk",
+          "nnnnnnnnnnnnrrooooyyyyyyyyyyyyywyyyyyyoooorrNNNNNNNNNNNN",
+          "nnnnnnnnnnnnrrooooyyywyyyyyyyyyyyyyyyyoooorrNNNNNNNNNNNN",
+          "nnnnnnnnnnLLnrrooooyyyyyyyyyyyyyyyyyyoooorrLLNNNNNNNNNNN",
+          "nnnnnnnnnnNNNnnrroooooooooooooooooooooorrNNNNNNNNNNNNNNN",
+          "nnnnnnnnnnnnnnnnnnrroooooooooooooooorrnnNNNNNNNNNNNNNNNN",
+          "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnNNNNNNNNNNNNNNNN"
+        ],
+        "colours": {
+          "L": "#9a6234"
+        }
+      }
+    },
+    {
+      "title": "It wants out",
+      "caption": "Magma pushes up, like fizz in a shaken bottle.",
+      "say": "Magma is full of gas. It pushes up, harder and harder, like the fizz in a bottle of lemonade that you've shaken.",
+      "picture": {
+        "type": "big",
+        "text": "FIZZ",
+        "sub": "pushing up, harder and harder"
+      }
+    },
+    {
+      "title": "Eruption",
+      "caption": "Out it comes. Now it is called lava.",
+      "say": "Then, whoosh. Out it comes, through the top. Once it's outside, we call it lava.",
+      "picture": {
+        "type": "sprite",
+        "label": "WHOOSH",
+        "rows": [
+          "........................eeeee...........................",
+          "...................eee.eeeewwe..eee.....................",
+          "..................eeeeeeeeeeee.eeeee....................",
+          ".................eeeewweeeeeeeeeewwee...................",
+          ".................eeeeeeeeeeyy.eeeeeee...................",
+          ".................eeeeeee.ooyyooeeyoeeeee................",
+          "..............eee.eeeeyrrooyyooreooeeeeee...............",
+          ".............eeeee.eeerrrooyyooreee.eeeee...............",
+          ".............eeeee......rooyyoor...yoeeee...............",
+          ".............eeeee..yr..rooyyoor...ooeee................",
+          "..............eee...rr..rooyyoor........................",
+          "........................rooyyoor........................",
+          "........................rooyyoor.......yo...............",
+          ".................yr.....rooyyoor.......oo...............",
+          ".................rr...kroooooooork......................",
+          ".....................knrrrrrrrrrrNk.....................",
+          "....................knnrornrorrorNNk......yr............",
+          ".............yo....knnrornnrornrorNNk.....rr............",
+          ".............oo...knnrornnnrornnrorNNk..................",
+          ".................knnnrornnnrornnrorLNNk.................",
+          "................knnrornnnnnnrornnrorNNNk................",
+          "...............knnnrornnnnnLrornnNrorNNNk...............",
+          "..............knnnrornnnnnnNNNnnnNrorNNNNk..............",
+          ".............kLLnrornnnnnnnnnnnnnnNrorNNNNk.............",
+          "............knNNrornnnnnnnnnnnnnnnNNrorNNNNNk...........",
+          "..........knnnnnrornnnnnnnnnnnnnnnNNNNLLNNNNNk..........",
+          ".........knnnnnrornnnnnnnnnnnnnnnnnNNNNNNNNNNNk.........",
+          "........knnnnnnnnnnnnnnnnnnnnnnnnnnNNNNNNNNNNNNk........",
+          ".......knnnnnnnnnnnLLnnnnnnnnnnnnnnNNNNNNNNNNNNNk.......",
+          "......knnnnnnnnnnnnNNNnnnnnnnnnnnnnnNNNNNNNNNNNNNk......",
+          ".....knnnnLLnnnnnnnnnnnnnnnnnnnnnnnnNNNNNNNLLNNNNNk.....",
+          "....knnnnnNNNnnnnnnnnnnnnnnnnnnnnnnnNNNNNNNNNNNNNNNk....",
+          "...knnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnNNNNNNNNNNNNNNNk...",
+          "..knnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnNNNNNNNNNNNNNNNNk.."
+        ],
+        "colours": {
+          "L": "#9a6234"
+        }
+      },
+      "transition": "flash"
+    },
+    {
+      "title": "A taller mountain",
+      "caption": "Lava cools into rock, and the mountain grows.",
+      "say": "The lava cools down, and turns back into hard rock. So every time it erupts, the mountain grows a little taller.",
+      "picture": {
+        "type": "flow",
+        "items": [
+          {
+            "icon": "warning",
+            "label": "Hot lava"
+          },
+          {
+            "icon": "clock",
+            "label": "Cools down"
+          },
+          {
+            "icon": "star",
+            "label": "New rock"
+          }
+        ],
+        "every": 1.7
+      }
+    },
+    {
+      "title": "Remember",
+      "caption": "Magma inside. Lava outside.",
+      "say": "So remember. Inside the volcano, it's magma. Outside, it's lava. And now you know more than most grown-ups.",
+      "picture": {
+        "type": "list",
+        "heading": "REMEMBER",
+        "items": [
+          "Inside: magma",
+          "Outside: lava"
+        ],
+        "every": 2.2,
+        "start": 1.4
+      }
+    }
+  ]
+}

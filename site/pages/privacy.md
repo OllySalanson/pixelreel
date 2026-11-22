@@ -1,3 +1,7 @@
+<!--
+title: Privacy - Pixel Reel
+description: What Pixel Reel keeps, for how long, and who can see it. In plain words.
+-->
 <!-- Draft: for Olly to approve before Pixel Reel is public. The contact address is still to choose. -->
 # Privacy
 
@@ -32,8 +36,14 @@ seen by whoever might get the link.
 - Claude, which writes the scenes, is run by Anthropic, under Anthropic's own privacy policy.
 - Pixel Reel runs on a hosting company's computers, which store the reels for it.
 
+## This website
+
+- It uses no cookies, no trackers and no adverts, and loads nothing from anywhere else.
+- If you change how it looks in Make it comfy, that choice is kept on your own device. It is
+  never sent to Pixel Reel.
+- The box that writes what to say to Claude does its work on your device. What you type in
+  it is not sent to Pixel Reel.
+
 ## Questions
 
 Ask at: [contact to be added].
-
-[Back to Pixel Reel](/)

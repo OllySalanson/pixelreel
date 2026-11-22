@@ -20,6 +20,7 @@
     "page": "node scripts/page.mjs",
     "service": "node service/main.mjs",
     "skill": "node scripts/skill.mjs",
+    "site-art": "node scripts/site-art.mjs",
     "video": "node scripts/video.mjs",
     "test": "node --test --test-concurrency=2 \"test/*.test.js\"",
     "lint": "eslint ."

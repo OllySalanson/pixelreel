@@ -1,0 +1,31 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "Pixel Reel is for anyone who would rather watch than read. Which, let's be honest, is most of us.",
+      "file": "435277d3a1ec222d.mp3",
+      "seconds": 6.08
+    },
+    {
+      "text": "If reading is hard work, with dyslexia, say, or just tired eyes, let the reel do the reading for you.",
+      "file": "90cb1be1f56760ae.mp3",
+      "seconds": 6.08
+    },
+    {
+      "text": "If your mind likes to wander, short scenes keep things moving. One idea, then the next.",
+      "file": "4a7db3aacbd6999a.mp3",
+      "seconds": 5.12
+    },
+    {
+      "text": "If you're short on time, most reels are done in two minutes. That's about one cup of tea.",
+      "file": "1298f54f6354359c.mp3",
+      "seconds": 4.88
+    },
+    {
+      "text": "And it's good for children. Volcanoes. Fractions. Why the sky is blue. It's homework, but a cartoon.",
+      "file": "16a1075ac46cd949.mp3",
+      "seconds": 6.48
+    }
+  ]
+}

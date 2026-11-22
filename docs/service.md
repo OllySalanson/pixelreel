@@ -8,10 +8,10 @@ code or install on their side. It is a small Node server with two faces:
 - **A page for each reel** at `/r/<id>`, which plays it in the real player, with its
   recordings, and `/r/<id>/video.mp4` once a video has been asked for.
 
-It also serves a few pages of its own: what Pixel Reel is (`/`), how to add it to Claude
-(`/claude`, with its own address filled in), and privacy, terms and credits. They are written
-in Markdown in [docs/site/](site/), so they are easy to change. The privacy and terms pages
-are drafts, still to be approved, and the privacy page still needs a contact address.
+It also serves the website: what Pixel Reel is (`/`), how to add it to Claude (`/claude`, with
+its own address filled in), the press kit, and privacy, terms and credits. The site lives in
+[`site/`](../site) and is described in [docs/site/](site/README.md). The privacy and terms
+pages are drafts, still to be approved, and the privacy page still needs a contact address.
 
 - [Run it](#run-it)
 - [Add it to Claude](#add-it-to-claude)
@@ -37,6 +37,7 @@ npm run service
 | `PIXELREEL_DATA` | `.service-data` | The folder it keeps reels in. |
 | `PIXELREEL_S3_BUCKET` | none | A bucket to keep reels in instead, with the settings in [deploy.md](deploy.md#keeping-reels-in-a-bucket). |
 | `PIXELREEL_PYTHON` | `.venv/bin/python` | The Python with Pocket TTS installed, as for `npm run voices`. |
+| `PIXELREEL_LISTED` | off | `1` lets search engines list the website. Off, every page asks them not to. Reels are never listed. |
 
 It records one reel at a time, and carries on with any waiting after a restart. Stopping it
 (Ctrl+C) finishes the job in hand first. To put it online, see [deploy.md](deploy.md).
@@ -107,6 +108,7 @@ The local tools (`npm run voices`, `page`, `video`) have no such limits.
   company.
 - A reel's page loads nothing from anywhere else: its content security policy allows only the
   page itself, its font and its own recordings.
+- Search engines are asked not to list any reel, its recordings or its video.
 
 ## How it fits together
 
@@ -118,7 +120,8 @@ The local tools (`npm run voices`, `page`, `video`) have no such limits.
 | `service/app-bridge.js` | The in-chat player's side of the MCP Apps protocol. |
 | `service/reels.mjs` | Making, recording, videos, expiry and deleting: one job at a time. |
 | `service/limits.mjs` | How big a reel may be, and how many each caller may make. |
-| `service/site.mjs` | The service's own pages, from `docs/site/*.md`. |
+| `service/site.mjs` | Puts the website's pages together, from `site/`. |
+| `service/static.mjs` | Serves the files those pages load (styles, scripts, fonts, pictures and the site's reels), and nothing else. |
 | `service/store.mjs` | Where reels are kept: a folder now, behind an interface an S3-style store can take over. |
 
 A job copies its reel out of the store into a folder of its own, runs the same

@@ -1,0 +1,26 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "Making a pixel reel starts with one sentence. You tell Claude what you'd like explained.",
+      "file": "c91465ef5e7f40af.mp3",
+      "seconds": 5.04
+    },
+    {
+      "text": "It can be a link to an article. A letter you've been sent. Or just a question, like, how does a mortgage work.",
+      "file": "da2c5f0e66a750bd.mp3",
+      "seconds": 6.24
+    },
+    {
+      "text": "Type it into the box on this page, and we'll write out the words to give to Claude. Then you copy them across.",
+      "file": "aa76b0cebb5424db.mp3",
+      "seconds": 6.32
+    },
+    {
+      "text": "Claude does the rest. And if you haven't added Pixel Reel to Claude yet, do that first. It only takes a minute.",
+      "file": "1926060471b55946.mp3",
+      "seconds": 6.88
+    }
+  ]
+}

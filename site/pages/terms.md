@@ -1,3 +1,7 @@
+<!--
+title: Terms - Pixel Reel
+description: The terms for using Pixel Reel. Short, and in plain words.
+-->
 <!-- Draft: for Olly to approve before Pixel Reel is public. -->
 # Terms
 
@@ -17,5 +21,3 @@ Pixel Reel is free, and offered as it is.
   breaks these terms. It keeps reels for 30 days at most.
 - **Fair use.** There are limits on how many reels anyone can make in an hour, so it stays
   free for everyone.
-
-[Back to Pixel Reel](/)

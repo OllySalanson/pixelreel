@@ -1,0 +1,133 @@
+{
+  "format": "pixelreel/1",
+  "title": "Who Pixel Reel is for",
+  "transition": "dissolve",
+  "scenes": [
+    {
+      "title": "Who it's for",
+      "caption": "For anyone who would rather watch.",
+      "say": "Pixel Reel is for anyone who would rather watch than read. Which, let's be honest, is most of us.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "people"
+          },
+          {
+            "icon": "person"
+          },
+          {
+            "icon": "people"
+          }
+        ],
+        "every": 0.7
+      }
+    },
+    {
+      "title": "Reading is hard work",
+      "caption": "Dyslexia, or tired eyes. Let the reel do the reading.",
+      "say": "If reading is hard work, with dyslexia, say, or just tired eyes, let the reel do the reading for you.",
+      "picture": {
+        "type": "compare",
+        "bad": {
+          "icon": "document",
+          "label": "Read it all"
+        },
+        "good": {
+          "icon": "heart",
+          "label": "Have it read"
+        }
+      }
+    },
+    {
+      "title": "A busy head",
+      "caption": "Short scenes keep things moving.",
+      "say": "If your mind likes to wander, short scenes keep things moving. One idea, then the next.",
+      "picture": {
+        "type": "flow",
+        "items": [
+          {
+            "icon": "lightbulb"
+          },
+          {
+            "icon": "lightbulb"
+          },
+          {
+            "icon": "lightbulb"
+          },
+          {
+            "icon": "tick"
+          }
+        ],
+        "every": 0.9
+      }
+    },
+    {
+      "title": "Short on time",
+      "caption": "Two minutes. About one cup of tea.",
+      "say": "If you're short on time, most reels are done in two minutes. That's about one cup of tea.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "clock",
+            "label": "2 minutes"
+          },
+          {
+            "icon": "cup",
+            "label": "One cuppa"
+          }
+        ],
+        "every": 1.8
+      }
+    },
+    {
+      "title": "Children too",
+      "caption": "Volcanoes. Fractions. Homework, but a cartoon.",
+      "say": "And it's good for children. Volcanoes. Fractions. Why the sky is blue. It's homework, but a cartoon.",
+      "picture": {
+        "type": "sprite",
+        "label": "HOMEWORK",
+        "rows": [
+          "........................eeeee...........................",
+          "...................eee.eeeewwe..eee.....................",
+          "..................eeeeeeeeeeee.eeeee....................",
+          ".................eeeewweeeeeeeeeewwee...................",
+          ".................eeeeeeeeeeyy.eeeeeee...................",
+          ".................eeeeeee.ooyyooeeyoeeeee................",
+          "..............eee.eeeeyrrooyyooreooeeeeee...............",
+          ".............eeeee.eeerrrooyyooreee.eeeee...............",
+          ".............eeeee......rooyyoor...yoeeee...............",
+          ".............eeeee..yr..rooyyoor...ooeee................",
+          "..............eee...rr..rooyyoor........................",
+          "........................rooyyoor........................",
+          "........................rooyyoor.......yo...............",
+          ".................yr.....rooyyoor.......oo...............",
+          ".................rr...kroooooooork......................",
+          ".....................knrrrrrrrrrrNk.....................",
+          "....................knnrornrorrorNNk......yr............",
+          ".............yo....knnrornnrornrorNNk.....rr............",
+          ".............oo...knnrornnnrornnrorNNk..................",
+          ".................knnnrornnnrornnrorLNNk.................",
+          "................knnrornnnnnnrornnrorNNNk................",
+          "...............knnnrornnnnnLrornnNrorNNNk...............",
+          "..............knnnrornnnnnnNNNnnnNrorNNNNk..............",
+          ".............kLLnrornnnnnnnnnnnnnnNrorNNNNk.............",
+          "............knNNrornnnnnnnnnnnnnnnNNrorNNNNNk...........",
+          "..........knnnnnrornnnnnnnnnnnnnnnNNNNLLNNNNNk..........",
+          ".........knnnnnrornnnnnnnnnnnnnnnnnNNNNNNNNNNNk.........",
+          "........knnnnnnnnnnnnnnnnnnnnnnnnnnNNNNNNNNNNNNk........",
+          ".......knnnnnnnnnnnLLnnnnnnnnnnnnnnNNNNNNNNNNNNNk.......",
+          "......knnnnnnnnnnnnNNNnnnnnnnnnnnnnnNNNNNNNNNNNNNk......",
+          ".....knnnnLLnnnnnnnnnnnnnnnnnnnnnnnnNNNNNNNLLNNNNNk.....",
+          "....knnnnnNNNnnnnnnnnnnnnnnnnnnnnnnnNNNNNNNNNNNNNNNk....",
+          "...knnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnNNNNNNNNNNNNNNNk...",
+          "..knnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnNNNNNNNNNNNNNNNNk.."
+        ],
+        "colours": {
+          "L": "#9a6234"
+        }
+      }
+    }
+  ]
+}

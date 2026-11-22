@@ -1,0 +1,78 @@
+{
+  "format": "pixelreel/1",
+  "title": "What is a pixel reel?",
+  "transition": "wipe",
+  "scenes": [
+    {
+      "title": "A pixel reel",
+      "caption": "A short cartoon that explains one thing.",
+      "say": "A pixel reel is a short cartoon that explains one thing. No waffle. No small print. Just the bits that matter.",
+      "picture": {
+        "type": "title",
+        "text": "ONE THING",
+        "sub": "explained simply"
+      }
+    },
+    {
+      "title": "One idea at a time",
+      "caption": "Each scene says one thing. Then it moves on.",
+      "say": "Each scene says one thing, then moves on. So there's never much to hold in your head.",
+      "picture": {
+        "type": "flow",
+        "items": [
+          {
+            "icon": "lightbulb",
+            "label": "One idea"
+          },
+          {
+            "icon": "lightbulb",
+            "label": "The next"
+          },
+          {
+            "icon": "tick",
+            "label": "Done"
+          }
+        ],
+        "every": 1.5
+      }
+    },
+    {
+      "title": "Big, plain words",
+      "caption": "Short captions you can take in at a glance.",
+      "say": "The words are big and plain. Short enough to take in at a glance. And I read every one of them out loud.",
+      "picture": {
+        "type": "big",
+        "text": "BIG",
+        "sub": "plain words, read out loud"
+      }
+    },
+    {
+      "title": "You're in charge",
+      "caption": "Pause. Go back. Watch it twice.",
+      "say": "And you're the boss. Pause, go back, or watch it twice. Nobody's counting.",
+      "picture": {
+        "type": "sprite",
+        "label": "NOBODY'S COUNTING",
+        "rows": [
+          ".kkkkkkkkkkkkkkk....kkkkkkkkkkkkkkk....kkkkkkkkkkkkkkk.",
+          "kccccccccccccccck..kyyyyyyyyyyyyyyyk..kccccccccccccccck",
+          "kccccccccccccccck..kyyyyyyyyyyyyyyyk..kccccccccccccccck",
+          "kccccckcccckcccck..kyyyykkkyyykkkyyk..kcccckcccckccccck",
+          "kcccckkccckkcccck..kyyyykkkyyykkkyyk..kcccckkccckkcccck",
+          "kccckkkcckkkcccck..kyyyykkkyyykkkyyk..kcccckkkcckkkccck",
+          "kcckkkkckkkkcccck..kyyyykkkyyykkkyyk..kcccckkkkckkkkcck",
+          "kcckkkkckkkkcccck..kyyyykkkyyykkkyyk..kcccckkkkckkkkcck",
+          "kcckkkkckkkkcccck..kyyyykkkyyykkkyyk..kcccckkkkckkkkcck",
+          "kccckkkcckkkcccck..kyyyykkkyyykkkyyk..kcccckkkcckkkccck",
+          "kcccckkccckkcccck..kyyyykkkyyykkkyyk..kcccckkccckkcccck",
+          "kccccckcccckcccck..kyyyykkkyyykkkyyk..kcccckcccckccccck",
+          "kccccccccccccccck..kyyyyyyyyyyyyyyyk..kccccccccccccccck",
+          "keeeeeeeeeeeeeeek..koooooooooooooook..keeeeeeeeeeeeeeek",
+          "keeeeeeeeeeeeeeek..koooooooooooooook..keeeeeeeeeeeeeeek",
+          "keeeeeeeeeeeeeeek..koooooooooooooook..keeeeeeeeeeeeeeek",
+          ".kkkkkkkkkkkkkkk....kkkkkkkkkkkkkkk....kkkkkkkkkkkkkkk."
+        ]
+      }
+    }
+  ]
+}

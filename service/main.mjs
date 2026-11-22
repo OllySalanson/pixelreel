@@ -7,6 +7,10 @@
 // docs/deploy.md). PIXELREEL_TRUST_PROXY=1 behind a proxy that sets
 // X-Forwarded-For; PIXELREEL_REELS_PER_HOUR (each caller, default 10), PIXELREEL_REELS_PER_DAY
 // (everyone, default 300) and PIXELREEL_VIDEOS_PER_HOUR (default 10) set the rate limits.
+// PIXELREEL_LISTED=1 lets search engines list the website (never the reels); without it every
+// page asks them not to, for as long as Pixel Reel is by invitation. Unless NODE_ENV is
+// production (as it is in the image), browsers check for a newer copy of the site's files
+// every time, so a change shows on the next reload.
 // Recording needs Pocket TTS set up (scripts/setup-voices.sh) and ffmpeg; videos need
 // @napi-rs/canvas.
 import { join } from 'node:path';
@@ -35,7 +39,7 @@ const limits = {
   reels: new RateLimit({ perHour: setting('PIXELREEL_REELS_PER_HOUR', 10), perDay: setting('PIXELREEL_REELS_PER_DAY', 300) }),
   videos: new RateLimit({ perHour: setting('PIXELREEL_VIDEOS_PER_HOUR', 10), perDay: setting('PIXELREEL_REELS_PER_DAY', 300) })
 };
-const server = createService({ reels, baseUrl, log, limits, trustProxy: process.env.PIXELREEL_TRUST_PROXY === '1' });
+const server = createService({ reels, baseUrl, log, limits, trustProxy: process.env.PIXELREEL_TRUST_PROXY === '1', listed: process.env.PIXELREEL_LISTED === '1', fresh: process.env.NODE_ENV !== 'production' });
 server.listen(port, () => log(`Pixel Reel is at ${baseUrl}: connector ${baseUrl}/mcp, reels kept in ${store}`));
 
 const stop = () => {

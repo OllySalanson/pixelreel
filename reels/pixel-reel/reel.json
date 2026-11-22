@@ -1,0 +1,243 @@
+{
+  "format": "pixelreel/1",
+  "title": "What is Pixel Reel?",
+  "intro": "Press Play and Peter will explain. It takes about a minute.",
+  "transition": "dissolve",
+  "scenes": [
+    {
+      "title": "Hello",
+      "caption": "This is a pixel reel.",
+      "say": "Hello. This is a pixel reel. A short cartoon that explains one thing. I'm Peter, and I'll be reading it to you.",
+      "picture": {
+        "type": "title",
+        "text": "PIXEL REEL",
+        "sub": "Watch it. Don't read it."
+      }
+    },
+    {
+      "title": "The trouble",
+      "caption": "Some things are just too long to read.",
+      "say": "You know the feeling. A long letter lands on the mat. Or someone sends a link you really must read. And your heart sinks a bit.",
+      "picture": {
+        "type": "sprite",
+        "label": "OH NO",
+        "rows": [
+          "...kkkkkkkkkkkkkkkkkkkkkkkk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwrrrrrrwwBBBBBBBBBBwwk...",
+          "...kwwrrrrrrwwwwwwwwwwwwwwk...",
+          "...kwwrrrrrrwwBBBBBBBwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeeeeeeewwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeewwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeeeewwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeeeeeewwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeeewwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeeeeewwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeeeeeeewwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeewwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeeeeeeewwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwweeeeeeeeeeeewwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "...kwwwwwwwwwwwwwwwwwwwwwwk...",
+          "..kkkkkkkkkkkkkkkkkkkkkkkkkk..",
+          "..kcccccccccccccccccccccccck..",
+          "..keeeeeeeeeeeeeeeeeeeeeeeek..",
+          "..kkkkkkkkkkkkkkkkkkkkkkkkkk.."
+        ]
+      }
+    },
+    {
+      "title": "The idea",
+      "caption": "So don't read it. Watch it.",
+      "say": "So don't read it. Watch it instead. A pixel reel takes the bits that matter, and turns them into a little film.",
+      "picture": {
+        "type": "compare",
+        "bad": {
+          "icon": "document",
+          "label": "A wall of words"
+        },
+        "good": {
+          "icon": "computer",
+          "label": "A pixel reel"
+        }
+      }
+    },
+    {
+      "title": "One thing at a time",
+      "caption": "One idea. A few plain words. A picture.",
+      "say": "Each scene has one idea. A few big, plain words. And a picture to go with them. That's all there is to take in.",
+      "picture": {
+        "type": "list",
+        "heading": "EVERY SCENE HAS",
+        "items": [
+          "One idea",
+          "A few plain words",
+          "A picture",
+          "A voice"
+        ],
+        "every": 1.7,
+        "start": 0.8
+      }
+    },
+    {
+      "title": "You're in charge",
+      "caption": "Pause. Go back. Watch it twice.",
+      "say": "And you're in charge. Pause me whenever you like. Go back a bit. Watch it twice. I really don't mind.",
+      "picture": {
+        "type": "sprite",
+        "label": "YOU ARE THE BOSS",
+        "rows": [
+          ".kkkkkkkkkkkkkkk....kkkkkkkkkkkkkkk....kkkkkkkkkkkkkkk.",
+          "kccccccccccccccck..kyyyyyyyyyyyyyyyk..kccccccccccccccck",
+          "kccccccccccccccck..kyyyyyyyyyyyyyyyk..kccccccccccccccck",
+          "kccccckcccckcccck..kyyyykkkyyykkkyyk..kcccckcccckccccck",
+          "kcccckkccckkcccck..kyyyykkkyyykkkyyk..kcccckkccckkcccck",
+          "kccckkkcckkkcccck..kyyyykkkyyykkkyyk..kcccckkkcckkkccck",
+          "kcckkkkckkkkcccck..kyyyykkkyyykkkyyk..kcccckkkkckkkkcck",
+          "kcckkkkckkkkcccck..kyyyykkkyyykkkyyk..kcccckkkkckkkkcck",
+          "kcckkkkckkkkcccck..kyyyykkkyyykkkyyk..kcccckkkkckkkkcck",
+          "kccckkkcckkkcccck..kyyyykkkyyykkkyyk..kcccckkkcckkkccck",
+          "kcccckkccckkcccck..kyyyykkkyyykkkyyk..kcccckkccckkcccck",
+          "kccccckcccckcccck..kyyyykkkyyykkkyyk..kcccckcccckccccck",
+          "kccccccccccccccck..kyyyyyyyyyyyyyyyk..kccccccccccccccck",
+          "keeeeeeeeeeeeeeek..koooooooooooooook..keeeeeeeeeeeeeeek",
+          "keeeeeeeeeeeeeeek..koooooooooooooook..keeeeeeeeeeeeeeek",
+          "keeeeeeeeeeeeeeek..koooooooooooooook..keeeeeeeeeeeeeeek",
+          ".kkkkkkkkkkkkkkk....kkkkkkkkkkkkkkk....kkkkkkkkkkkkkkk."
+        ]
+      }
+    },
+    {
+      "title": "How to get one",
+      "caption": "Ask Claude. That's it.",
+      "say": "To get one, just ask Claude. Say what you want explained. Claude writes the scenes, and I do the talking.",
+      "picture": {
+        "type": "chat",
+        "title": "Claude",
+        "every": 2.2,
+        "messages": [
+          {
+            "from": "Claude",
+            "text": "What shall I explain?"
+          },
+          {
+            "from": "You",
+            "text": "My gas bill, as a pixel reel."
+          },
+          {
+            "from": "Claude",
+            "text": "Ready. Press play."
+          }
+        ]
+      }
+    },
+    {
+      "title": "Good for",
+      "caption": "Letters. Bills. Plans. Homework.",
+      "say": "It's good for letters and bills. For plans, and how things work. Even homework. Anything you would rather watch than read.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "letter",
+            "label": "Letters"
+          },
+          {
+            "icon": "money",
+            "label": "Bills"
+          },
+          {
+            "icon": "lightbulb",
+            "label": "Ideas"
+          },
+          {
+            "icon": "star",
+            "label": "Homework"
+          }
+        ],
+        "every": 1.3
+      }
+    },
+    {
+      "title": "The small print",
+      "caption": "Free. Private. Gone in 30 days.",
+      "say": "Now for the small print. There isn't much. It's free. Only people with your link can watch. And after thirty days, your reel is gone.",
+      "picture": {
+        "type": "list",
+        "heading": "THE SMALL PRINT",
+        "items": [
+          "It's free",
+          "Only your link opens it",
+          "Gone after 30 days"
+        ],
+        "every": 2,
+        "start": 2.6
+      }
+    },
+    {
+      "title": "Your turn",
+      "caption": "Add Pixel Reel to Claude, and ask away.",
+      "transition": "iris",
+      "say": "So. Your turn. Add Pixel Reel to Claude, and ask for a reel about anything you like. Thanks for watching.",
+      "picture": {
+        "type": "sprite",
+        "label": "YOUR TURN",
+        "rows": [
+          "..........kkkkkkk..........",
+          ".......kklllllllmkkk.......",
+          "......kllllldddlllmkk......",
+          "....klllllfdddddflllmkk....",
+          "...kllllfffdddddfffllmkk...",
+          "...llllffffdddddffffllmk...",
+          "..klllfffffkkkkkffffflmmk..",
+          ".klllffffkkyyyyykkfffflmkk.",
+          ".klldddfkyhhhhyyyykfdddmmk.",
+          ".llddddkyyyyyyyyyyykddddmk.",
+          "kllddddkyyyyyyyyyyykddddmmk",
+          "klldddkyyykyyyyykyyykdddmmk",
+          "kllfddkyyykyyyyykyyykddfmmk",
+          "kllfffkyyyyyyyyyyyyykfffmmk",
+          "kllfffkyyyyyyyyyyyyykfffmmk",
+          "kllfffkyyyykyyykyyyykfffmmk",
+          "kmlffffkyyyykkkyyyykffffmmk",
+          ".kllfffkyyyyyyyyyyykfffmmk.",
+          ".kmlfffdkyyyyyyyyykdfffmmk.",
+          ".kkllfdddkkyyyyykkdddfmmkk.",
+          "..kmlldddddkkkkkdddddmmmk..",
+          "...kmldddddfffffdddddmmk...",
+          "...kkmmdddfffffffdddmmkk...",
+          "...kkkmmmlfffffffmmmmkk....",
+          "...kqqkkmmmmmmmmmmmkkqk....",
+          "...kqqqkkkmmmmmmmkkkqqk....",
+          "...kkkkkkkkkkkkkkkkkkkk....",
+          "...kkkkkkkk....kkkkkkkk...."
+        ],
+        "colours": {
+          "m": "#8094ab",
+          "l": "#cfdbe7",
+          "f": "#aebfd1",
+          "d": "#2b3a52",
+          "h": "#ffe08a",
+          "q": "#46566e"
+        }
+      }
+    }
+  ]
+}

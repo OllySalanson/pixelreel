@@ -6,7 +6,8 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { pageHtml } from '../scripts/page.mjs';
 import { createMcpServer } from './mcp.mjs';
 import { isId } from './reels.mjs';
-import { SITE_PAGES, sitePage } from './site.mjs';
+import { robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage } from './site.mjs';
+import { sendBytes, sendSqueezed, sendStatic, squeezed, tagOf } from './static.mjs';
 
 /** The most a request to /mcp may carry. A long reel is a few kilobytes. */
 export const MAX_BODY = 256 * 1024;
@@ -17,6 +18,9 @@ const AUDIO_FILE = /^[A-Za-z0-9_-]{1,64}\.mp3$/;
 const PAGE_POLICY = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src data:; img-src data:; media-src 'self'; base-uri 'none'; form-action 'none'";
 
 const SAFE = { 'x-content-type-options': 'nosniff', 'referrer-policy': 'no-referrer' };
+
+/** A reel is for whoever has its link, so search engines are asked to stay out of them all. */
+const UNLISTED = { 'x-robots-tag': 'noindex, nofollow' };
 
 const escapeHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -43,23 +47,6 @@ p { margin: 0; }
 </body>
 </html>
 `;
-}
-
-/** Sends `bytes`, answering Range requests so audio and video can seek. */
-function sendBytes(req, res, bytes, type) {
-  const headers = { ...SAFE, 'content-type': type, 'accept-ranges': 'bytes', 'cache-control': 'private, max-age=3600' };
-  const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? '');
-  if (range && (range[1] || range[2])) {
-    const size = bytes.length;
-    const start = range[1] ? Number(range[1]) : Math.max(0, size - Number(range[2]));
-    const end = range[1] && range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
-    if (start > end || start >= size) { res.writeHead(416, { ...headers, 'content-range': `bytes */${size}` }).end(); return; }
-    res.writeHead(206, { ...headers, 'content-range': `bytes ${start}-${end}/${size}`, 'content-length': end - start + 1 });
-    res.end(req.method === 'HEAD' ? undefined : bytes.subarray(start, end + 1));
-    return;
-  }
-  res.writeHead(200, { ...headers, 'content-length': bytes.length });
-  res.end(req.method === 'HEAD' ? undefined : bytes);
 }
 
 const sendPage = (res, status, html, extra = {}) => res.writeHead(status, { ...SAFE, 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', ...extra }).end(html);
@@ -106,20 +93,20 @@ async function handleMcp(req, res, { reels, baseUrl, log, limits, trustProxy }) 
 async function handleReel(req, res, id, rest, { reels, baseUrl }) {
   const status = await reels.status(id);
   if (!status) {
-    if (rest === 'play.json') { res.writeHead(404, { ...SAFE, 'content-type': 'application/json', 'access-control-allow-origin': '*' }).end('{"state":"gone"}'); return; }
-    sendPage(res, 404, notice('No reel here', 'This reel has been deleted, or kept past its 30 days, or the link is not quite right.'));
+    if (rest === 'play.json') { res.writeHead(404, { ...SAFE, ...UNLISTED, 'content-type': 'application/json', 'access-control-allow-origin': '*' }).end('{"state":"gone"}'); return; }
+    sendPage(res, 404, notice('No reel here', 'This reel has been deleted, or kept past its 30 days, or the link is not quite right.'), UNLISTED);
     return;
   }
   if (rest === '') {
-    if (status.state === 'failed') { sendPage(res, 200, notice('This reel could not be made', status.error ?? 'Something went wrong.')); return; }
+    if (status.state === 'failed') { sendPage(res, 200, notice('This reel could not be made', status.error ?? 'Something went wrong.'), UNLISTED); return; }
     if (status.state !== 'ready') {
-      sendPage(res, 200, notice('Nearly ready', `The voice for "${status.title}" is being recorded. This page will play the reel as soon as it is done.`, { refresh: 5 }));
+      sendPage(res, 200, notice('Nearly ready', `The voice for "${status.title}" is being recorded. This page will play the reel as soon as it is done.`, { refresh: 5 }), UNLISTED);
       return;
     }
     const manifest = await reels.manifest(id);
     const clips = (manifest?.clips ?? []).map((c) => ({ text: c.text, file: `/r/${id}/audio/${c.file}`, seconds: c.seconds }));
     const page = pageHtml({ reelJson: JSON.stringify(await reels.reel(id)), manifest: { clips }, title: `${status.title} - pixelreel` });
-    sendPage(res, 200, page, { 'content-security-policy': PAGE_POLICY });
+    sendPage(res, 200, page, { ...UNLISTED, 'content-security-policy': PAGE_POLICY });
     return;
   }
   if (rest === 'play.json') {
@@ -130,35 +117,62 @@ async function handleReel(req, res, id, rest, { reels, baseUrl }) {
       play.reel = await reels.reel(id);
       play.clips = ((await reels.manifest(id))?.clips ?? []).map((c) => ({ text: c.text, file: `${baseUrl}/r/${id}/audio/${c.file}`, seconds: c.seconds }));
     }
-    res.writeHead(200, { ...SAFE, 'content-type': 'application/json', 'cache-control': 'no-store', 'access-control-allow-origin': '*' }).end(JSON.stringify(play));
+    res.writeHead(200, { ...SAFE, ...UNLISTED, 'content-type': 'application/json', 'cache-control': 'no-store', 'access-control-allow-origin': '*' }).end(JSON.stringify(play));
     return;
   }
   const audio = /^audio\/(.+)$/.exec(rest);
   const key = audio && AUDIO_FILE.test(audio[1]) ? `reels/${id}/audio/${audio[1]}` : rest === 'video.mp4' ? `reels/${id}/video.mp4` : null;
   const bytes = key && (await reels.store.get(key));
-  if (!bytes) { sendPage(res, 404, notice('Not here', 'There is nothing at this address.')); return; }
-  sendBytes(req, res, bytes, key.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg');
+  if (!bytes) { sendPage(res, 404, notice('Not here', 'There is nothing at this address.'), UNLISTED); return; }
+  sendBytes(req, res, bytes, { ...SAFE, ...UNLISTED, 'content-type': key.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg', 'cache-control': 'private, max-age=3600' });
+}
+
+/**
+ * One of the site's own pages, which loads only the site's own files. Each is put together
+ * once and kept, compressed (unless `fresh`, when it is made again each time, for working on
+ * the site), and a browser that already has it is told so.
+ */
+function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages }) {
+  let page = fresh ? null : pages.get(name);
+  if (!page) {
+    page = squeezed(sitePage(name, baseUrl, { listed }));
+    page.tag = tagOf(page.bytes);
+    if (!fresh) pages.set(name, page);
+  }
+  const keep = status !== 200 ? 'no-store' : fresh ? 'no-cache' : 'public, max-age=300';
+  const headers = { ...SAFE, 'content-type': 'text/html; charset=utf-8', 'cache-control': keep, 'content-security-policy': SITE_POLICY, etag: page.tag };
+  if (status === 200 && req.headers['if-none-match'] === page.tag) { res.writeHead(304, headers).end(); return; }
+  sendSqueezed(req, res, status, page, headers);
 }
 
 /**
  * The service as an HTTP server (not yet listening). `baseUrl` is the address people reach it
  * at; `limits` ({ reels, videos }, RateLimits) cap what each caller asks for; `trustProxy`
- * takes the caller's address from X-Forwarded-For, for a service behind a proxy that sets it.
+ * takes the caller's address from X-Forwarded-For, for a service behind a proxy that sets it;
+ * `listed` lets search engines list the website (never the reels), for once it is open to all;
+ * `fresh` has browsers check for a newer copy of the site's files every time, for working on it.
  */
-export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false }) {
-  const context = { reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, trustProxy };
+export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false, listed = false, fresh = false }) {
+  const context = { reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, trustProxy, listed, fresh, pages: new Map() };
   return createServer(async (req, res) => {
     try {
       const path = new URL(req.url, 'http://localhost').pathname;
       if (path === '/mcp') { await handleMcp(req, res, context); return; }
       if (path === '/health') { res.writeHead(200, { ...SAFE, 'content-type': 'text/plain' }).end('ok'); return; }
-      if (SITE_PAGES[path] && (req.method === 'GET' || req.method === 'HEAD')) {
-        sendPage(res, 200, sitePage(SITE_PAGES[path], context.baseUrl), { 'cache-control': 'public, max-age=300', 'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'" });
+      const reading = req.method === 'GET' || req.method === 'HEAD';
+      if (reading && SITE_PAGES[path]) { sendSitePage(req, res, 200, SITE_PAGES[path], context); return; }
+      if (reading && path === '/robots.txt') {
+        res.writeHead(200, { ...SAFE, 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=3600' }).end(robotsTxt(context.baseUrl, listed));
         return;
       }
+      if (reading && path === '/sitemap.xml' && listed) {
+        res.writeHead(200, { ...SAFE, 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=3600' }).end(sitemapXml(context.baseUrl));
+        return;
+      }
+      if (reading && sendStatic(req, res, path, SAFE, fresh)) return;
       const reel = /^\/r\/([^/]+)(?:\/(.*))?$/.exec(path);
-      if (reel && isId(reel[1]) && (req.method === 'GET' || req.method === 'HEAD')) { await handleReel(req, res, reel[1], reel[2] ?? '', context); return; }
-      sendPage(res, 404, notice('Not here', 'There is nothing at this address.'));
+      if (reel && isId(reel[1]) && reading) { await handleReel(req, res, reel[1], reel[2] ?? '', context); return; }
+      sendSitePage(req, res, 404, 'not-found', context);
     } catch (err) {
       log(`${req.method} ${req.url}: ${err.stack ?? err}`);
       if (!res.headersSent) sendPage(res, 500, notice('Something went wrong', 'Try again in a while.'));

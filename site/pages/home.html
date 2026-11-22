@@ -1,0 +1,307 @@
+<!--
+title: Pixel Reel - Watch it. Don't read it.
+description: Pixel Reel turns anything wordy into a short cartoon, read to you in a warm voice. Free, and made for anyone who would rather watch than read.
+-->
+
+<section class="hero night" aria-labelledby="hero-title">
+  <canvas class="scene" data-scene="hero" aria-hidden="true"></canvas>
+  <div class="wrap hero-in">
+    <div class="hero-words" data-quiet>
+      <p class="chip">By invitation, for now. Hello.</p>
+      <h1 id="hero-title">Watch it. <span>Don't read it.</span></h1>
+      <p class="hero-lead">Pixel Reel turns anything wordy into a short cartoon, read to you in a warm voice.</p>
+    </div>
+    <div class="hero-reel">
+      {{player:pixel-reel}}
+    </div>
+    <div class="hero-go" data-quiet>
+      <a class="btn btn-gold btn-big" href="/claude">Add Pixel Reel to Claude</a>
+      <a class="btn btn-paper btn-big" href="#make">Make a pixel reel now</a>
+      <p class="hero-small">Free. Nothing to sign up for. Works with every Claude plan.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="what" aria-labelledby="what-title">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">What is it?</p>
+      <h2 id="what-title">A short cartoon that explains one thing.</h2>
+      <p class="lead">That is a pixel reel. No waffle. No small print. Just the bits that matter.</p>
+      <button class="btn btn-reel" type="button" data-reel="site-what">Make a pixel reel about this</button>
+    </div>
+    <div class="anatomy">
+      <figure class="specimen" aria-label="A scene from a pixel reel: a picture, a heading, a short caption and the buttons to pause or go back.">
+        <canvas class="shot" data-reel="pixel-reel" data-scene="4" data-loop width="960" height="540" aria-hidden="true"></canvas>
+        <div class="specimen-cap" aria-hidden="true">
+          <p class="specimen-title">4. One thing at a time</p>
+          <p class="specimen-words">One idea. A few plain words. A picture.</p>
+        </div>
+        <div class="specimen-keys" aria-hidden="true"><span>Back</span><span class="on">Pause</span><span>Next</span><span>Sound</span></div>
+      </figure>
+      <ul class="points">
+        <li class="point point-1">
+          {{icon:lightbulb:3}}
+          <h3>One idea at a time</h3>
+          <p>Each scene says one thing. Then it moves on.</p>
+        </li>
+        <li class="point point-2">
+          {{icon:document:3}}
+          <h3>Big, plain words</h3>
+          <p>Short captions you can take in at a glance.</p>
+        </li>
+        <li class="point point-3">
+          {{icon:heart:3}}
+          <h3>A warm voice</h3>
+          <p>Peter reads every word, so you don't have to.</p>
+        </li>
+        <li class="point point-4">
+          {{icon:tick:3}}
+          <h3>You're in charge</h3>
+          <p>Pause. Go back. Watch it twice. Nobody's counting.</p>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section section-tint" id="how" aria-labelledby="how-title">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">How it works</p>
+      <h2 id="how-title">Three steps. One of them is pressing play.</h2>
+      <button class="btn btn-reel" type="button" data-reel="site-how">Make a pixel reel about this</button>
+    </div>
+    <ol class="steps">
+      <li class="step">
+        <canvas class="shot" data-reel="site-how" data-scene="2" width="960" height="540" aria-hidden="true"></canvas>
+        <p class="step-n" aria-hidden="true">1</p>
+        <h3>Add it to Claude</h3>
+        <p>Do this once. It takes about a minute.</p>
+        <a class="more" href="/claude">Show me how</a>
+      </li>
+      <li class="step">
+        <canvas class="shot" data-reel="site-how" data-scene="3" width="960" height="540" aria-hidden="true"></canvas>
+        <p class="step-n" aria-hidden="true">2</p>
+        <h3>Ask for a reel</h3>
+        <p>Say what you want explained. Paste a link, or a whole letter.</p>
+        <a class="more" href="#make">Help me ask</a>
+      </li>
+      <li class="step">
+        <canvas class="shot" data-reel="site-how" data-scene="4" width="960" height="540" aria-hidden="true"></canvas>
+        <p class="step-n" aria-hidden="true">3</p>
+        <h3>Press play</h3>
+        <p>It plays right there in the chat. Send the link to anyone you like.</p>
+      </li>
+    </ol>
+    <p class="aside">Claude writes the scenes. Pixel Reel records the voice. A minute or two later, it is ready.</p>
+  </div>
+</section>
+
+<section class="section" id="who" aria-labelledby="who-title">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">Who it's for</p>
+      <h2 id="who-title">For anyone who would rather watch.</h2>
+      <p class="lead">Which, let's be honest, is most of us.</p>
+      <button class="btn btn-reel" type="button" data-reel="site-who">Make a pixel reel about this</button>
+    </div>
+    <ul class="people">
+      <li class="person">
+        {{icon:document:4}}
+        <h3>Reading is hard work</h3>
+        <p>Dyslexia, or just tired eyes. Let the reel do the reading.</p>
+      </li>
+      <li class="person">
+        {{icon:lightbulb:4}}
+        <h3>Your mind wanders</h3>
+        <p>ADHD, or a busy head. Short scenes keep things moving.</p>
+      </li>
+      <li class="person">
+        {{icon:clock:4}}
+        <h3>You're short on time</h3>
+        <p>Most reels are done in two minutes. About one cup of tea.</p>
+      </li>
+      <li class="person">
+        {{icon:star:4}}
+        <h3>You've got children</h3>
+        <p>Volcanoes. Fractions. Why the sky is blue. Homework, but a cartoon.</p>
+      </li>
+      <li class="person">
+        {{icon:letter:4}}
+        <h3>It's late, and it's long</h3>
+        <p>The letter can wait until morning. Or Peter can read it to you now.</p>
+      </li>
+      <li class="person">
+        {{icon:people:4}}
+        <h3>You're the one explaining</h3>
+        <p>Send a reel, not an essay. People will actually watch it.</p>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="section night cinema" id="examples" aria-labelledby="examples-title">
+  <canvas class="scene" data-scene="cinema" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div class="head" data-quiet>
+      <p class="eyebrow">Now showing</p>
+      <h2 id="examples-title">Real reels. Go on, press one.</h2>
+      <p class="lead">Each was made the same way yours will be. Claude wrote the scenes. Peter read them out.</p>
+    </div>
+    <ul class="posters">
+      <li>
+        <button class="poster" type="button" data-reel="gas-meter" data-kicker="Now showing">
+          <canvas class="shot" data-reel="gas-meter" data-scene="3" data-hover width="960" height="540" aria-hidden="true"></canvas>
+          <span class="poster-title">How to read your gas meter</span>
+          <span class="poster-meta"><span class="poster-kind">A chore</span><span data-length="gas-meter">About a minute</span></span>
+        </button>
+      </li>
+      <li>
+        <button class="poster" type="button" data-reel="pension-letter" data-kicker="Now showing">
+          <canvas class="shot" data-reel="pension-letter" data-scene="2" data-hover width="960" height="540" aria-hidden="true"></canvas>
+          <span class="poster-title">Your pension letter, in plain words</span>
+          <span class="poster-meta"><span class="poster-kind">A letter</span><span data-length="pension-letter">About a minute</span></span>
+        </button>
+      </li>
+      <li>
+        <button class="poster" type="button" data-reel="volcano" data-kicker="Now showing">
+          <canvas class="shot" data-reel="volcano" data-scene="4" data-hover width="960" height="540" aria-hidden="true"></canvas>
+          <span class="poster-title">How a volcano works</span>
+          <span class="poster-meta"><span class="poster-kind">Homework</span><span data-length="volcano">About a minute</span></span>
+        </button>
+      </li>
+      <li>
+        <button class="poster" type="button" data-reel="cup-of-tea" data-kicker="Now showing">
+          <canvas class="shot" data-reel="cup-of-tea" data-scene="2" data-hover width="960" height="540" aria-hidden="true"></canvas>
+          <span class="poster-title">How to make a proper cup of tea</span>
+          <span class="poster-meta"><span class="poster-kind">Important</span><span data-length="cup-of-tea">About a minute</span></span>
+        </button>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" id="peter" aria-labelledby="peter-title">
+  <div class="wrap duo">
+    <div class="head">
+      <p class="eyebrow">The voice</p>
+      <h2 id="peter-title">Meet Peter.</h2>
+      <p class="lead">Peter reads every pixel reel. He is warm. He is British. He is never in a rush.</p>
+      <p>He is a computer voice, built from old audiobook readings that belong to everyone. So he never gets tired. And he never sighs when you press Back.</p>
+      <div class="row">
+        <button class="btn btn-gold" type="button" data-hear="site-peter">Hear Peter say hello</button>
+        <button class="btn btn-reel" type="button" data-reel="site-peter">Make a pixel reel about this</button>
+      </div>
+    </div>
+    <div class="wireless" aria-hidden="true">
+      {{sprite:radio:8}}
+      <div class="waves"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-tint" id="make" aria-labelledby="make-title">
+  <div class="wrap duo">
+    <div class="head">
+      <p class="eyebrow">Your turn</p>
+      <h2 id="make-title">Make a pixel reel now.</h2>
+      <p class="lead">Say what you want explained. We will write the words to give to Claude.</p>
+      <button class="btn btn-reel" type="button" data-reel="site-make">Make a pixel reel about this</button>
+    </div>
+    <form class="maker" id="maker" action="/claude">
+      <label for="maker-what">What do you want explained?</label>
+      <input id="maker-what" name="about" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste a link, or type a few words" maxlength="2000">
+      <ul class="tries" aria-label="Or try one of these">
+        <li><button type="button" data-try="my gas bill">My gas bill</button></li>
+        <li><button type="button" data-try="how a mortgage works">How a mortgage works</button></li>
+        <li><button type="button" data-try="the offside rule">The offside rule</button></li>
+        <li><button type="button" data-try="why the sky is blue">Why the sky is blue</button></li>
+      </ul>
+      <div class="ask">
+        <p class="ask-label" id="ask-label">Say this to Claude</p>
+        <p class="ask-words" id="ask-words" aria-labelledby="ask-label">Make me a pixel reel about this: my gas bill</p>
+      </div>
+      <div class="row">
+        <button class="btn btn-gold" type="button" data-copy="#ask-words" data-copied="Copied. Now paste it into Claude.">Copy the words</button>
+        <a class="btn btn-paper" id="ask-open" href="https://claude.ai/new" target="_blank" rel="noopener" data-copy="#ask-words">Copy, and open Claude</a>
+      </div>
+      <p class="said" id="maker-said" role="status"></p>
+      <p class="maker-first">First time? <a href="/claude">Add Pixel Reel to Claude</a> first. It takes a minute.</p>
+    </form>
+  </div>
+</section>
+
+<section class="section" id="good" aria-labelledby="good-title">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">Good to know</p>
+      <h2 id="good-title">Free, private, and gone in 30 days.</h2>
+      <button class="btn btn-reel" type="button" data-reel="site-good">Make a pixel reel about this</button>
+    </div>
+    <ul class="facts">
+      <li>{{icon:money:3}}<h3>It's free</h3><p>No catch, and nothing to pay later.</p></li>
+      <li>{{icon:person:3}}<h3>No sign-up</h3><p>No account. No name. No email.</p></li>
+      <li>{{icon:lock:3}}<h3>Your reel is private</h3><p>Only people with the link can watch.</p></li>
+      <li>{{icon:calendar:3}}<h3>Gone in 30 days</h3><p>Or ask Claude to delete it now.</p></li>
+      <li>{{icon:heart:3}}<h3>Your words stay put</h3><p>The voice is made by Pixel Reel itself, not sent to a voice company.</p></li>
+      <li>{{icon:computer:3}}<h3>A quiet website</h3><p>No cookies. No trackers. No adverts.</p></li>
+    </ul>
+  </div>
+</section>
+
+<section class="section section-tint" id="questions" aria-labelledby="questions-title">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">Questions</p>
+      <h2 id="questions-title">The ones people ask most.</h2>
+      <button class="btn btn-reel" type="button" data-reel="site-questions">Make a pixel reel about this</button>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>Does it cost anything?</summary>
+        <p>No. It is free.</p>
+      </details>
+      <details>
+        <summary>Do I need Claude?</summary>
+        <p>Yes. Claude writes the scenes, so you need a Claude account. The free plan works.</p>
+      </details>
+      <details>
+        <summary>How long does it take?</summary>
+        <p>About as long as the reel itself. So, a minute or two.</p>
+      </details>
+      <details>
+        <summary>How long can a reel be?</summary>
+        <p>Up to twelve scenes, and under four minutes. Short is the whole point.</p>
+      </details>
+      <details>
+        <summary>Can it get things wrong?</summary>
+        <p>It can. The words come from Claude, and from what you give it. For money, health or the law, check with whoever sent you the original.</p>
+      </details>
+      <details>
+        <summary>Can I keep my reel?</summary>
+        <p>Yes. Ask Claude for the video. You get a file you can save, or send on WhatsApp.</p>
+      </details>
+      <details>
+        <summary>Can it sound like someone else?</summary>
+        <p>No. There is one voice, and it is Peter. It cannot copy anybody.</p>
+      </details>
+      <details>
+        <summary>Is the code open?</summary>
+        <p>Yes. The player and the tools are open source. <a href="https://github.com/OllySalanson/pixelreel">The code is on GitHub</a>.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="section night finale" aria-labelledby="finale-title">
+  <canvas class="scene" data-scene="finale" aria-hidden="true"></canvas>
+  <div class="wrap finale-in" data-quiet>
+    <h2 id="finale-title">Right then. Your turn.</h2>
+    <p class="lead">Add Pixel Reel to Claude, and ask for a reel about anything you like.</p>
+    <div class="row">
+      <a class="btn btn-gold btn-big" href="/claude">Add Pixel Reel to Claude</a>
+      <a class="btn btn-paper btn-big" href="#make">Make a pixel reel now</a>
+    </div>
+  </div>
+</section>

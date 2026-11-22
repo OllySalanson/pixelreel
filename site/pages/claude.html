@@ -1,0 +1,95 @@
+<!--
+title: Add Pixel Reel to Claude
+description: How to add Pixel Reel to Claude. You do it once, it takes about a minute, and it works on every Claude plan.
+-->
+
+<section class="section guide" aria-labelledby="guide-title">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">Do this once</p>
+      <h1 id="guide-title">Add Pixel Reel to Claude</h1>
+      <p class="lead">It takes about a minute. It is free. It works on every Claude plan.</p>
+      <button class="btn btn-reel" type="button" data-reel="site-how">Make a pixel reel about this</button>
+    </div>
+
+    <ol class="walk">
+      <li class="walk-step">
+        <p class="walk-n" aria-hidden="true">1</p>
+        <div class="walk-words">
+          <h2>Press the big button</h2>
+          <p>Claude opens in a new tab, with Pixel Reel already filled in.</p>
+          <a class="btn btn-gold btn-big" href="{{add}}" target="_blank" rel="noopener">Open Claude and add it</a>
+          <p class="walk-small">You may need to sign in to Claude first.</p>
+        </div>
+        <canvas class="shot" data-reel="site-how" data-scene="2" width="960" height="540" aria-hidden="true"></canvas>
+      </li>
+      <li class="walk-step">
+        <p class="walk-n" aria-hidden="true">2</p>
+        <div class="walk-words">
+          <h2>Say yes</h2>
+          <p>Claude shows a box with Pixel Reel's name and address in it. Follow its buttons to add it: usually <strong>Continue</strong>, then <strong>Add</strong>.</p>
+          <p class="walk-small">There is no password, and nothing to sign in to.</p>
+        </div>
+        <div class="box" aria-hidden="true">
+          <p class="box-title">Add a connector</p>
+          <p class="box-label">Name</p>
+          <p class="box-field">Pixel Reel</p>
+          <p class="box-label">Address</p>
+          <p class="box-field">{{mcp}}</p>
+          <p class="box-go"><span>Add</span></p>
+        </div>
+      </li>
+      <li class="walk-step">
+        <p class="walk-n" aria-hidden="true">3</p>
+        <div class="walk-words">
+          <h2>Ask for a reel</h2>
+          <p>Start a new chat, and say what you want explained. Something like this:</p>
+          <div class="ask">
+            <p class="ask-label">Say this to Claude</p>
+            <p class="ask-words" id="first-ask">Make me a pixel reel about how to read my gas meter.</p>
+          </div>
+          <div class="row">
+            <button class="btn btn-gold" type="button" data-copy="#first-ask" data-says="#first-said" data-copied="Copied. Now paste it into Claude.">Copy the words</button>
+            <a class="more" href="/#make">Help me ask for something else</a>
+          </div>
+          <p class="said" id="first-said" role="status"></p>
+        </div>
+        <canvas class="shot" data-reel="site-how" data-scene="3" width="960" height="540" aria-hidden="true"></canvas>
+      </li>
+      <li class="walk-step">
+        <p class="walk-n" aria-hidden="true">4</p>
+        <div class="walk-words">
+          <h2>Press play</h2>
+          <p>The reel plays right there in the chat, as soon as the voice is recorded. That takes about as long as the reel itself.</p>
+          <p>Want to send it on WhatsApp? Ask Claude for the video.</p>
+        </div>
+        <canvas class="shot" data-reel="site-how" data-scene="4" width="960" height="540" aria-hidden="true"></canvas>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="section section-tint" aria-labelledby="hand-title">
+  <div class="wrap by-hand">
+    <div class="head">
+      <p class="eyebrow">Plan B</p>
+      <h2 id="hand-title">If the big button does not work</h2>
+      <p class="lead">You can add it by hand. Same result, a bit more pressing.</p>
+    </div>
+    <ol class="hand-steps">
+      <li>In Claude, open <strong>Customize</strong>, then <strong>Connectors</strong>.</li>
+      <li>Press <strong>Add</strong>, then <strong>Add custom connector</strong>.</li>
+      <li>
+        Name it <strong>Pixel Reel</strong>, and paste in this address:
+        <span class="address-row"><code class="address" id="address">{{mcp}}</code>
+        <button class="btn btn-paper btn-small" type="button" data-copy="#address" data-says="#address-said" data-copied="Copied.">Copy the address</button></span>
+        <span class="said" id="address-said" role="status"></span>
+      </li>
+      <li>Press <strong>Continue</strong>, then <strong>Add</strong>.</li>
+    </ol>
+    <ul class="notes">
+      <li>{{icon:phone:3}}<p><strong>On a phone?</strong> It is easiest to add it on a computer. After that, it works in the Claude app on your phone too.</p></li>
+      <li>{{icon:star:3}}<p><strong>On the free Claude plan?</strong> You can have one custom connector at a time. Make it this one.</p></li>
+    </ul>
+  </div>
+</section>

@@ -1,0 +1,41 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "How to make a proper cup of tea. Six steps. No arguments.",
+      "file": "5979cf54a97f2e27.mp3",
+      "seconds": 4.72
+    },
+    {
+      "text": "Start with fresh water, and boil the kettle. Properly boiling. Not just warm and hopeful.",
+      "file": "e418a00e3876e078.mp3",
+      "seconds": 6.56
+    },
+    {
+      "text": "Put the tea bag in the mug first. Then pour the water straight on top.",
+      "file": "6ee7774d20ceaec2.mp3",
+      "seconds": 4.4
+    },
+    {
+      "text": "Now wait. Three whole minutes. I know. But a rushed cup of tea is a sad cup of tea.",
+      "file": "9bec2149160bb83b.mp3",
+      "seconds": 5.6
+    },
+    {
+      "text": "Take the bag out. One gentle squeeze against the side, and into the bin it goes.",
+      "file": "c37ce13a72c2cbc9.mp3",
+      "seconds": 4.8
+    },
+    {
+      "text": "Then the milk. Milk goes in last. We will not be taking questions on this.",
+      "file": "f015a8553fd4e53a.mp3",
+      "seconds": 4.88
+    },
+    {
+      "text": "And that's it. Sit down. Put your feet up. You've earned it.",
+      "file": "921ff2577003e14a.mp3",
+      "seconds": 4.08
+    }
+  ]
+}

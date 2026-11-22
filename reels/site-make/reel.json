@@ -1,0 +1,94 @@
+{
+  "format": "pixelreel/1",
+  "title": "How to ask for a reel",
+  "transition": "wipe",
+  "scenes": [
+    {
+      "title": "One sentence",
+      "caption": "A reel starts with one sentence.",
+      "say": "Making a pixel reel starts with one sentence. You tell Claude what you'd like explained.",
+      "picture": {
+        "type": "title",
+        "text": "YOUR TURN",
+        "sub": "It starts with one sentence"
+      }
+    },
+    {
+      "title": "Anything wordy",
+      "caption": "A link, a letter, or just a few words.",
+      "say": "It can be a link to an article. A letter you've been sent. Or just a question, like, how does a mortgage work.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "phone",
+            "label": "A link"
+          },
+          {
+            "icon": "letter",
+            "label": "A letter"
+          },
+          {
+            "icon": "question",
+            "label": "A question"
+          }
+        ],
+        "every": 1.7
+      }
+    },
+    {
+      "title": "We write the ask",
+      "caption": "This page writes the words. You copy them.",
+      "say": "Type it into the box on this page, and we'll write out the words to give to Claude. Then you copy them across.",
+      "picture": {
+        "type": "list",
+        "numbered": true,
+        "items": [
+          "Type what you want",
+          "Copy the words",
+          "Give them to Claude"
+        ],
+        "every": 1.8
+      }
+    },
+    {
+      "title": "Then press play",
+      "caption": "Claude does the rest.",
+      "say": "Claude does the rest. And if you haven't added Pixel Reel to Claude yet, do that first. It only takes a minute.",
+      "picture": {
+        "type": "sprite",
+        "label": "THEN PRESS PLAY",
+        "rows": [
+          ".kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.",
+          "kcccccccccccccccccccccccccccccccck",
+          "kcccccccccccccccccccccccccccccccck",
+          "kcckkkkkkkkkkkkkkkkkkkkkkkkkkkkcck",
+          "kcckbbbbbbbbbbbbbbbbbbbbbbbbbbkcck",
+          "kcckBBBBBBBBBBBBBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByBBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyyBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyyyBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyyBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByBBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBBBBBBBBBBBBBBBBBBkcck",
+          "kcckkkkkkkkkkkkkkkkkkkkkkkkkkkkcck",
+          "kcccccccccccccccccccccccccccccccck",
+          "keeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeek",
+          "keeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeek",
+          "keeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeek",
+          ".kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.",
+          "..............kkkkkk..............",
+          "..............kkkkkk..............",
+          "..............kkkkkk..............",
+          ".........keeeeeeeeeeeeeek.........",
+          ".........kkkkkkkkkkkkkkkk.........",
+          ".................................."
+        ]
+      }
+    }
+  ]
+}

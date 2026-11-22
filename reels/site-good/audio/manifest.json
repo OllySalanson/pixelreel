@@ -1,0 +1,31 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "A few things worth knowing. None of them are scary.",
+      "file": "8ecf99151d8a99a0.mp3",
+      "seconds": 3.2
+    },
+    {
+      "text": "It's free. There's nothing to sign up for. No account, no name, no email address.",
+      "file": "2a166e5299d3f92b.mp3",
+      "seconds": 5.36
+    },
+    {
+      "text": "Your reel is private. Its link is long and random, so nobody can guess it. Only people you send it to can watch.",
+      "file": "9dc8194fdaf84cb2.mp3",
+      "seconds": 6.88
+    },
+    {
+      "text": "After thirty days, it's deleted. Or ask Claude to delete it sooner, and it's gone straight away.",
+      "file": "7ed027c5b87dafe5.mp3",
+      "seconds": 5.92
+    },
+    {
+      "text": "And the voice is made by Pixel Reel itself. Your words are never sent off to a voice company.",
+      "file": "da263bb874a1dd8f.mp3",
+      "seconds": 5.76
+    }
+  ]
+}
