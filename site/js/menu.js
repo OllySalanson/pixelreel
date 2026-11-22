@@ -5,7 +5,13 @@ export function startMenu(page = document) {
   const dialog = page.getElementById('menu');
   if (!dialog) return;
   for (const opener of page.querySelectorAll('[data-open="menu"]')) {
-    opener.addEventListener('click', () => dialog.showModal());
+    // Written as a link to the links at the foot, which is where it leads if this script
+    // never runs. With it, it is a button that opens the menu, and says so.
+    opener.setAttribute('role', 'button');
+    opener.setAttribute('aria-haspopup', 'dialog');
+    const open = (e) => { e.preventDefault(); dialog.showModal(); };
+    opener.addEventListener('click', open);
+    opener.addEventListener('keydown', (e) => { if (e.key === ' ') open(e); });   // a button answers to Space, which a link does not
   }
   // Anything pressed in it closes it, and so does a press on the dimmed page beside it. A
   // link to a part of this page would otherwise scroll there behind it. It listens on the
