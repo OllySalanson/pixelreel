@@ -453,6 +453,8 @@ html[data-app] [data-not-app] { display: none; }
 .watch-foot button[data-send][hidden] { display: inline-flex !important; visibility: hidden; }
 .watch-sent { font-weight: 700; color: var(--gold); }
 .watch-sent:empty { display: none; }
+.watch-again { margin-top: 0.5rem; }
+.watch-again > p:first-child { flex-basis: 100%; font-weight: 500; color: var(--cream); }
 
 /* ---------------------------------------------------------------- adding it to Claude, step by step */
 .walk { display: grid; gap: clamp(2.75rem, 5vw, 4.5rem); }

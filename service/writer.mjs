@@ -7,7 +7,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { isLink } from '../site/js/given.js';
 import { formatGuide } from './mcp.mjs';
-import { replyJson, TryError, writtenSoFar } from './try.mjs';
+import { AGAIN, replyJson, TryError, writtenSoFar } from './try.mjs';
 
 const instructions = () => `You write pixel reels for the Pixel Reel website: short pixel-art explainers, one idea a scene, read aloud by a warm British narrator called Peter. A visitor has given one thing to explain: a few words, a web address, some writing, a document or a picture. Write the reel.
 
@@ -39,12 +39,14 @@ function ask(source) {
       { type: 'image', source: { type: 'base64', media_type: source.type, data: source.data } },
       { type: 'text', text: 'Make a pixel reel that explains what this picture shows or says. The visitor gave it: it may be a photo of a letter or a bill, a screenshot, or a diagram.' }
     ];
+    case 'reel': return `Here is a pixel reel that was made for a visitor, as JSON, between the two lines of dashes. They have watched it and asked for it again, ${source.how}. Write it again, ${AGAIN[source.how]} Keep to what it says: add no facts of your own, and keep its title unless a plainer one says the same.\n----------\n${JSON.stringify(source.reel)}\n----------`;
     default: throw new Error(`nothing to say for a ${source.kind}`);
   }
 }
 
 /** What stands in for something long when a reel is being put right: Claude has its own reel to go on, and need not be sent it all again. */
-const askAgain = (source) => (source.kind === 'words' ? ask(source) : `Make a pixel reel about this:\n(${{ text: 'some writing', pdf: 'a document', picture: 'a picture' }[source.kind]} the visitor gave, which is not repeated here)`);
+const askAgain = (source) => (source.kind === 'words' ? ask(source)
+  : `Make a pixel reel about this:\n(${{ text: 'some writing the visitor gave', pdf: 'a document the visitor gave', picture: 'a picture the visitor gave', reel: `a reel to be written again, ${source.how}` }[source.kind]}, which is not repeated here)`);
 
 /**
  * A writer: write(source, { before, problems }) asks Claude for a reel about what the visitor
