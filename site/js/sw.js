@@ -190,7 +190,7 @@ async function share(request) {
   if (file && typeof file !== 'string' && file.size) {
     await cache.put('/shared/file', new Response(file, { headers: { 'content-type': file.type || 'application/octet-stream', 'x-file-name': encodeURIComponent(file.name ?? '') } }));
   }
-  return Response.redirect(new URL('/?shared#make', self.location.origin), 303);
+  return Response.redirect(new URL('/make?shared', self.location.origin), 303);
 }
 
 self.addEventListener('install', (event) => {
@@ -213,7 +213,7 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;   // not the site's to answer
   if (request.method === 'POST' && path === '/share') {
     // if it cannot be put by, the make-one box is still the place to be
-    event.respondWith(share(request).catch(() => Response.redirect(new URL('/#make', self.location.origin), 303)));
+    event.respondWith(share(request).catch(() => Response.redirect(new URL('/make', self.location.origin), 303)));
     return;
   }
   if (request.method !== 'GET') return;   // anything else being sent is the service's to take

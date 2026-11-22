@@ -392,10 +392,10 @@ export function createService({ reels, baseUrl, log = () => {}, limits = null, t
       }
       // Something shared to Pixel Reel from a phone is taken by the page's own service worker
       // (site/js/sw.js), on the phone. It reaches here only if that was not there to take it:
-      // nothing of it is read or kept, and the home page is brought up at the make-one box.
+      // nothing of it is read or kept, and the page with the make-one box is brought up.
       if (path === '/share') {
         req.resume();
-        res.writeHead(303, { ...SAFE, location: '/#make', 'cache-control': 'no-store' }).end();
+        res.writeHead(303, { ...SAFE, location: '/make', 'cache-control': 'no-store' }).end();
         return;
       }
       if (reading && sendStatic(req, res, path, SAFE, fresh)) return;

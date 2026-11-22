@@ -8,7 +8,7 @@ import { RateLimit } from '../service/limits.mjs';
 import { Reels } from '../service/reels.mjs';
 import { ReelError } from '../src/reel.js';
 import { createService } from '../service/server.mjs';
-import { sitePage } from '../service/site.mjs';
+import { sitePage, whoChoices } from '../service/site.mjs';
 import { DiskStore } from '../service/store.mjs';
 import { ABOUT_MAX, AGAIN, bracedIn, languageOf, narratorOf, OWN_NAMES, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError, writtenSoFar } from '../service/try.mjs';
 import { createWriter, PAGE_READER, PAGE_TOKENS } from '../service/writer.mjs';
@@ -482,8 +482,13 @@ describe('make it right here, over HTTP', () => {
   it('is not there at all unless the service was given a writer', async () => {
     const res = await fetch(`${localOff}/try`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"about":"tea"}' });
     assert.equal(res.status, 404);
-    assert.match(await (await fetch(`${localOff}/`)).text(), /<form class="maker" id="maker" action="\/claude" data-here="off">/, 'and the page does not offer it');
-    assert.match(await (await fetch(`${local}/`)).text(), /data-here="on"/);
+    assert.match(await (await fetch(`${localOff}/make`)).text(), /<form class="maker" id="maker" action="\/claude" data-here="off">/, 'and its page does not offer it');
+    assert.match(await (await fetch(`${local}/make`)).text(), /<form class="maker" id="maker" action="\/claude" data-here="on">/);
+    // the home page has no form: it says what the form does, and has a button that goes to it
+    const home = await (await fetch(`${local}/`)).text();
+    assert.doesNotMatch(home, /id="maker"/);
+    assert.match(home, /<section class="section section-tint" id="make" aria-labelledby="make-title" data-here="on">/);
+    assert.match(home, /<a class="btn btn-gold btn-big" href="\/make">Make a pixel reel<\/a>/);
   });
 
   it('tells a phone that a file may be shared to Pixel Reel, only where it can make a reel of one', async () => {
@@ -496,7 +501,7 @@ describe('make it right here, over HTTP', () => {
   });
 
   it('keeps its part of the page hidden until the page is told it may, with everything the script looks for', async () => {
-    const page = await (await fetch(`${local}/`)).text();
+    const page = await (await fetch(`${local}/make`)).text();
     assert.match(page, /<div class="maker-here" id="maker-here" hidden>/);
     assert.match(page, /<div class="drop-over" id="drop-over" aria-hidden="true" hidden>/);
     assert.match(page, /<input id="maker-file" type="file" accept="[^"]*application\/pdf[^"]*image\/\*[^"]*" hidden>/);
@@ -631,7 +636,7 @@ describe('make it right here, over HTTP', () => {
   });
 
   it('makes a reel in the language that is asked for, and offers only the languages Peter reads here', async () => {
-    const page = await (await fetch(`${local}/`)).text(), without = await (await fetch(`${localOff}/`)).text();
+    const page = await (await fetch(`${local}/make`)).text(), without = await (await fetch(`${localOff}/make`)).text();
     assert.match(page, /<fieldset class="pick maker-language" id="maker-language" hidden>\s*<legend>Read it to me in<\/legend>\s*<label><input type="radio" name="language" value="english" checked><span lang="en">English<\/span><\/label>\s*<label><input type="radio" name="language" value="french"><span lang="fr">Français<\/span><\/label>\s*<label><input type="radio" name="language" value="spanish"><span lang="es">Español<\/span><\/label>\s*<\/fieldset>/);
     assert.match(without, /name="language" value="french"/, 'and the same where the service makes no reels itself: there the words for Claude say which language');
     assert.doesNotMatch(without, /\{\{languages\}\}/);
@@ -654,6 +659,15 @@ describe('make it right here, over HTTP', () => {
     assert.match((await german.json()).error, /cannot read that language here/);
     assert.equal((await give('image/jpeg', JPEG, { 'x-reel-language': 'klingon' })).status, 400);
     assert.equal(calls.length, before);
+  });
+
+  it('offers, on its page, a choice of who reads, where someone besides Peter does', async () => {
+    const page = await (await fetch(`${local}/make`)).text();
+    assert.match(page, /<fieldset class="pick maker-language" id="maker-who" hidden>\s*<legend>Read by<\/legend>\s*<label><input type="radio" name="who" value="peter" checked><span>Peter<\/span><\/label>\s*<label><input type="radio" name="who" value="anna"><span>Anna<\/span><\/label>\s*<label><input type="radio" name="who" value="stuart"><span>Stuart<\/span><\/label>\s*<\/fieldset>/);
+    assert.doesNotMatch(page, /\{\{who\}\}/);
+    const alone = sitePage('make', 'https://reels.example');
+    assert.doesNotMatch(alone, /name="who"|\{\{who\}\}/, 'none where only Peter reads');
+    assert.deepEqual([whoChoices(), whoChoices(['peter']), whoChoices(['nobody'])], ['', '', '']);
   });
 
   it('has the reel read by whoever was chosen, if they read here', async () => {

@@ -899,3 +899,23 @@ Both were mine, from Version 28.
 
 Where each voice comes from was read from the voice model's own table of voices, and the
 licences from Kyutai's page for them, not from memory.
+
+### Version 42
+
+- **Making a reel has a page of its own.** The form that makes a reel sat in the middle of
+  the home page, among the players and the pictures, where it could be taken for one more
+  of them. It is now [/make](../../site/pages/make.html): one heading, "Make a pixel reel",
+  one form, and nothing on the page that plays. "Make a pixel reel" is first in the menu
+  across the top of every page, and in the list at the foot.
+- **The form asks everything in one place:** what to explain, which language to read it
+  in, and who reads it ("Read by": Peter, Anna and the rest). The cards under Meet Peter on
+  the home page still choose the narrator too, and the two agree.
+- **The home page keeps its words about making one, and a big button that goes there.**
+  Every other way to the form goes to the page as well: the buttons at the top and the foot
+  of the home page, "Try something else" on a reel that could not be made, the shortcut on
+  a phone's home screen, and something shared from a phone's Share menu.
+- Your reels, and dropping something anywhere on the page, moved with the form.
+
+| The make page, and what the home page keeps |
+| --- |
+| ![Make a pixel reel: a heading, then a form. What do you want explained, four things to try, Read it to me in, Read by. Beside it, the home page: Make a pixel reel now, and a big button, Make a pixel reel.](log/v42-make-page.jpg) |

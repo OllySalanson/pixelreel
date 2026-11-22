@@ -462,10 +462,10 @@ describe('something shared to Pixel Reel from a phone', () => {
     return new Request(`${ORIGIN}/share`, { method: 'POST', body: form });
   };
 
-  it('is put by on the phone, and the home page brought up at the make-one box', async () => {
+  it('is put by on the phone, and the page with the make-one box brought up', async () => {
     const { caches, asked, ask } = worker();
     const res = await ask('/share', { request: sharing({ title: 'Council tax', text: 'Worth a read https://example.org/council-tax', url: '' }) });
-    assert.deepEqual([res.status, res.headers.get('location')], [303, `${ORIGIN}/?shared#make`]);
+    assert.deepEqual([res.status, res.headers.get('location')], [303, `${ORIGIN}/make?shared`]);
     assert.deepEqual(caches.paths(SHARED), ['/shared/words']);
     assert.deepEqual(asked, [], 'nothing of it is sent to the service');
     assert.deepEqual(await takeShared({ store: caches }), { words: 'https://example.org/council-tax', file: null });
@@ -491,7 +491,7 @@ describe('something shared to Pixel Reel from a phone', () => {
     const { caches, ask } = worker();
     caches.open = async () => { throw new Error('no room'); };
     const res = await ask('/share', { request: sharing({ text: 'tea' }) });
-    assert.deepEqual([res.status, res.headers.get('location')], [303, `${ORIGIN}/#make`]);
+    assert.deepEqual([res.status, res.headers.get('location')], [303, `${ORIGIN}/make`]);
   });
 
   it("is the only thing being sent that the worker takes, and only at the site's own /share", () => {
@@ -529,8 +529,8 @@ describe('something shared to Pixel Reel from a phone', () => {
   it('is handed to the make-one box by the page, after the box has been woken', () => {
     const main = readFileSync(root('site/js/main.js'), 'utf8');
     assert.ok(main.indexOf('startMaker();') < main.indexOf('startShared();'), 'the box must be listening first');
-    const home = sitePage('home', ORIGIN);
-    for (const id of ['maker', 'maker-file', 'maker-said', 'here-said', 'ask-open']) assert.match(home, new RegExp(`id="${id}"`), `the page has the #${id} that shared.js looks for`);
+    const page = sitePage('make', ORIGIN);
+    for (const id of ['maker', 'maker-file', 'maker-said', 'here-said', 'ask-open']) assert.match(page, new RegExp(`id="${id}"`), `the page has the #${id} that shared.js looks for`);
   });
 });
 

@@ -593,7 +593,7 @@ describe('the site pages', () => {
   });
 
   it('has a page for each address', () => {
-    assert.deepEqual(Object.keys(SITE_PAGES), ['/', '/claude', '/app', '/press', '/privacy', '/terms', '/credits', '/offline']);
+    assert.deepEqual(Object.keys(SITE_PAGES), ['/', '/make', '/claude', '/app', '/press', '/privacy', '/terms', '/credits', '/offline']);
   });
 });
 
@@ -1366,7 +1366,7 @@ describe('the service over HTTP', async () => {
     form.set('text', 'my gas bill');
     form.set('file', new File(['x'.repeat(300_000)], 'bill.pdf', { type: 'application/pdf' }));
     const res = await fetch(`${local}/share`, { method: 'POST', body: form, redirect: 'manual' });
-    assert.deepEqual([res.status, res.headers.get('location'), res.headers.get('cache-control')], [303, '/#make', 'no-store']);
+    assert.deepEqual([res.status, res.headers.get('location'), res.headers.get('cache-control')], [303, '/make', 'no-store']);
     assert.equal((await fetch(`${local}/share`, { redirect: 'manual' })).status, 303, 'and the same for anyone who simply goes there');
   });
 
