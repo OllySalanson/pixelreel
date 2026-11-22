@@ -10,7 +10,7 @@ import { sentenceAt, sentencesOf } from '../site/js/follow.js';
 import { createAloud, NOT_READ, pressed, READABLE, voiceFor, wordsOf } from '../site/js/aloud.js';
 import { tried } from '../site/js/comfort.js';
 import { askFor } from '../site/js/maker.js';
-import { startMenu } from '../site/js/menu.js';
+import { leadsHere, startMenu } from '../site/js/menu.js';
 import { nowPlaying, onItsSide } from '../site/js/player.js';
 import { PACES, pacedClock, rateOf } from '../site/js/pace.js';
 import { qrSvg } from '../site/js/qr.js';
@@ -1588,6 +1588,21 @@ describe('the menu, where the bar has no room for its links', () => {
     heard.click({ target: dialog });
     assert.equal(dialog.open, false, 'the dimmed page');
     assert.equal(heard.onTheWayDown, true, 'and it has closed before Make it comfy hears the press and opens');
+  });
+
+  it('marks the row for the page someone is on, and no other', () => {
+    assert.equal(leadsHere('/make', '/make'), true);
+    assert.equal(leadsHere('/', '/'), true, 'the home page');
+    assert.equal(leadsHere('/app', '/app/'), true, 'with or without a slash on the end');
+    assert.equal(leadsHere('/#how', '/'), false, 'a part of the home page is not the page');
+    assert.equal(leadsHere('/claude', '/make'), false);
+    assert.equal(leadsHere('/', '/make'), false);
+    // a pretend menu with three links, on the make page
+    const links = ['/', '/make', '/#how'].map((href) => ({ says: {}, getAttribute: () => href, setAttribute(name, value) { this.says[name] = value; } }));
+    const dialog = { addEventListener() {}, querySelectorAll: () => links };
+    startMenu({ location: { pathname: '/make' }, getElementById: () => dialog, querySelectorAll: () => [] });
+    assert.deepEqual(links.map((link) => link.says), [{}, { 'aria-current': 'page' }, {}]);
+    assert.match(readFileSync(root('site/css/site.css'), 'utf8'), /\n\.menu-list \[aria-current="page"\]::after \{ content: 'You are here';/);
   });
 
   it('does nothing on a page with no menu', () => {

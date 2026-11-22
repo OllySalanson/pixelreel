@@ -563,6 +563,7 @@ html[data-app] [data-not-app] { display: none; }
   [data-not-app] { display: none; }
 }
 .pocket-have { margin-top: 1.5rem; font-size: 1.375rem; font-weight: 700; }
+.pocket .head > .said:empty { min-height: 0; margin: 0; }   /* no room kept for what it has not yet said: the buttons under it sit close */
 .handset { display: grid; justify-items: center; }
 .handset .px { width: min(62%, 14.25rem); height: auto; filter: drop-shadow(calc(var(--u) * 3) calc(var(--u) * 3) 0 rgba(20, 27, 45, 0.16)); }
 /* the phone is nearly black: on Dark paper it gets a light edge, like every card there, or only its screen shows */
@@ -739,6 +740,9 @@ dialog { color: var(--ink); }
 .menu-list > * { flex-wrap: wrap; align-items: center; gap: 0.25rem 1rem; min-height: 3.75rem; padding: 0.5rem 1rem; font: 700 1.25rem/1.25 var(--font); letter-spacing: var(--tracking); text-align: left; text-decoration: none; color: var(--ink); background: var(--paper); border: 0; cursor: pointer;
   box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line); }
 .menu-list > *:hover { background: var(--gold); color: #141b2d; }
+/* the page they are on: a gold edge down its side, and "You are here" after its name */
+.menu-list [aria-current="page"] { background: var(--card); box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line), inset calc(var(--u) * 2) 0 0 0 var(--gold); }
+.menu-list [aria-current="page"]::after { content: 'You are here'; flex: none; padding: 0.2rem 0.5rem 0.25rem; font: 1.25rem/1 var(--pixel); letter-spacing: 0.04em; text-transform: uppercase; color: #141b2d; background: var(--gold); }
 /* the words sit beside the picture while their longest one has room there, and go under it when it has not */
 .menu-list span:last-child { flex: 1 1 9ch; }
 .menu-list .px { flex: none; width: 2.25rem; height: auto; }

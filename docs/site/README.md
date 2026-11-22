@@ -1561,3 +1561,20 @@ two phone widths: twenty runs.
   takes, are out of sight where the browser has no voice.
 - Looked at the page that adds Pixel Reel to Claude and the page about the phone on Dark
   paper, top to foot, with every list of steps open: nothing amiss.
+
+### Version 71
+
+- **The menu says which page you are on.** Its rows all looked alike, wherever it was
+  opened. The row for the page someone is on now has a gold edge and says "You are here",
+  and a screen reader is told it is the current page. A link to a part of the home page
+  (How it works, Examples, Questions) is never marked: a part is not where they are.
+- **A gap closed on the page about the phone.** Room was kept under its big button for a
+  line that says how adding it went, even while it had nothing to say, which pushed the
+  buttons under it a long way down. It takes room only when it speaks.
+- Went through the menu and the buttons that try Make it comfy with a keyboard alone: Enter
+  opens the menu, Tab moves down its rows with a ring round each, and Escape closes it and
+  goes back to Menu. Nothing needed changing.
+
+| The menu on the make page, on cream and on Dark paper |
+| --- |
+| ![The menu opened on the make page: the row "Make a pixel reel" has a gold edge and the words You are here under it. Beside it, the same on Dark paper.](log/v71-you-are-here.jpg) |
