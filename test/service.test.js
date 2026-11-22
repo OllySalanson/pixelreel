@@ -960,6 +960,7 @@ describe('the service over HTTP', async () => {
     assert.match(player.text, /'ui\/initialize'/);
     assert.doesNotMatch(player.text, /id="reel-data"/, 'the reel arrives later, from the tool result');
     assert.match(player.text, /body\[data-opens="title"\] \.bigplay, body\[data-opens="card"\] \.bigplay \{ top: 72%; \}/, "the big Play button sits under a title's words, not on them");
+    assert.match(player.text, /\.bigplay \{[^}]*width: max-content; max-width: calc\(100% - 16px\); \}/, 'and is as wide as its words, so "Play again" stays on one line on a phone');
     assert.match(player.text, /document\.body\.dataset\.opens = reel\.opens;/);
     await assert.rejects(client.readResource({ uri: 'ui://pixelreel/other.html' }));
     await client.close();
