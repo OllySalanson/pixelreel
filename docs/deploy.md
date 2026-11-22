@@ -171,6 +171,20 @@ Measured on Cloud Run when they were switched on (22 November 2026, revision
 | English reel, six scenes: first line, playable, ready | | 7, 11 and 33 seconds |
 | French reel, six scenes: first line, playable, ready | | 19, 38 and 51 seconds |
 
+Since then the loaded voice holds other languages too. Measured on Cloud Run on
+22 November 2026, revision `pixelreel-00029-7v2`, with a seven-scene French reel of 39
+seconds, against the same reel on the revision before:
+
+| | Model loaded for each reel | Held by the loaded voice |
+| --- | --- | --- |
+| French model loaded | each reel, in a second Python | once, in 2.8 seconds |
+| The voice holds, with English and French | | 1228 MB |
+| First French reel: first line, playable, ready | 14, 27 and 47 seconds | 12, 25 and 51 seconds |
+| The next French reel: first line, playable, ready | 13, 25 and 45 seconds | 8, 12 and 45 seconds |
+
+The first reel in a language still waits for its model and that narrator's voice in it;
+the ones after start as soon as an English reel does.
+
 The models are only read when a reel in that language is recorded, so the service starts
 no slower. A reel in another language waits about 12 seconds longer for its first line,
 while its model loads.
