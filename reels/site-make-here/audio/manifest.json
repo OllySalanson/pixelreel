@@ -3,9 +3,9 @@
   "voice": "peter_yearsley",
   "clips": [
     {
-      "text": "Your turn. Give this box anything wordy, and it comes back as a pixel reel, read out by me.",
-      "file": "7f0ed0576b82d525.mp3",
-      "seconds": 5.68
+      "text": "Your turn. Give Pixel Reel anything wordy, and it comes back as a pixel reel, read out by me.",
+      "file": "cc3867be8b333e82.mp3",
+      "seconds": 6.64
     },
     {
       "text": "It can be a link to an article. A letter you've been sent. Or just a question, like, how does a mortgage work.",
@@ -13,9 +13,9 @@
       "seconds": 5.92
     },
     {
-      "text": "Type it, or paste it in. Drop a file anywhere on this page. Or, on a phone, take a photo of the letter.",
-      "file": "1d50a27e34507fff.mp3",
-      "seconds": 6.72
+      "text": "On the make page there is one big box. Copy a link, press Paste, and in it goes. Or type a question. Or, for a letter, take a photo of it.",
+      "file": "d588839b0d76da40.mp3",
+      "seconds": 9.12
     },
     {
       "text": "Then press Make my reel. Claude writes the scenes, I read them out, and it plays as soon as it is ready.",
@@ -23,9 +23,9 @@
       "seconds": 5.76
     },
     {
-      "text": "Still too much to take in? Ask for it simpler, or shorter. And your reels are listed here, to watch again, or to delete.",
-      "file": "0febca51d8301868.mp3",
-      "seconds": 6.96
+      "text": "Still too much to take in? Ask for it simpler, or shorter. And your reels are listed on the make page, to watch again, or to delete.",
+      "file": "b4cd379f340e8470.mp3",
+      "seconds": 8.32
     }
   ]
 }
