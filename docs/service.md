@@ -300,13 +300,14 @@ last line: it can use the same `play.json` fields.
 **Off unless you switch it on, because every reel it makes is paid for.** (It is on at
 pixelreel.pro.)
 
-Someone without Claude cannot use the connector. With this on, the website's "Make a pixel
-reel now" box makes the reel itself. The visitor gives it one thing to explain, in whichever
-way is easiest for them:
+Someone without Claude cannot use the connector. With this on, the form on the website's
+own page for making a reel ([/make](../site/pages/make.html), "Make a pixel reel" in the menu
+of every page) makes the reel itself. The visitor gives it one thing to explain, in
+whichever way is easiest for them:
 
 - **Type or paste** a link or a few words into the box, and press **Make my reel**.
 - **Paste some writing** (an email, a letter) into the box. It grows to hold it.
-- **Drop** a link, a PDF, a picture or some writing **anywhere on the page**. A panel says
+- **Drop** a link, a PDF, a picture or some writing **anywhere on the make page**. A panel says
   "Drop it here" while it is dragged, and the reel is started as soon as it lands.
 - **Choose a file**, or on a phone **take a photo** of a letter or a bill.
 
@@ -342,12 +343,13 @@ stays in the language it is in. With no other language switched on, there is no 
 every reel is in English.
 
 **Read by whoever was chosen.** Where other narrators read ([Other narrators](#other-narrators)), the
-home page lets a visitor choose one, and says "Anna will read the reels you make". A reel
-made in the box is read by that narrator: the choice goes with the request, is checked
+form asks "Read by" and offers each of them, and the cards under Meet Peter on the home
+page make the same choice: it is kept in one place on the device, so each shows what the
+other chose. A reel made in the form is read by that narrator: the choice goes with the request, is checked
 against the narrators the service offers, and Claude is told who will read, so that the
 narrator never says they are Peter. A reel made simpler or shorter keeps whoever read it.
 
-**Your reels.** The home page lists the reels a visitor has made here, under the box, so
+**Your reels.** The make page lists the reels a visitor has made here, under the form, so
 that they can find them again, call them what they like, and delete them. The list is kept
 in the visitor's own browser and never sent to the service. When a reel is begun, `/try`
 gives back a `key` with its id, which the service keeps only the hash of; `DELETE /r/<id>`
@@ -393,7 +395,8 @@ again."
 | --- | --- | --- | --- | --- |
 | A link | 48,617 | 1,227 | 11 cents | **Measured**, once, on 22 November 2026: the first real reel, from a GOV.UK guide, when Claude read up to 20,000 tokens of a page. |
 | A link, now | 12,678 | 933 | 3.5 cents | **Measured** on 22 November 2026, after the two changes below: the same GOV.UK guide, read by Anna, on the live site. Four more runs of the same request took 12,678 in and between 952 and 994 out. |
-| A few words, or a photo | about 3,000 | about 1,200 | about 2 cents | An estimate. Not measured yet. |
+| A few words | 3,294 | 796 | 1.5 cents | **Measured** on 22 November 2026, on the live site: "why the sky is blue", six scenes. |
+| A photo | about 5,000 | about 1,000 | about 2 cents | An estimate. Not measured yet. |
 | A PDF | at most 53,000 | about 1,200 | at most 12 cents | An estimate. The PDF itself is counted before it is read, and turned away over 50,000 tokens. |
 
 A link costs more than its page is long, for two reasons that the first real reels showed:

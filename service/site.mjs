@@ -8,7 +8,7 @@ import { ICONS } from '../src/icons.js';
 import { PALETTE } from '../src/palette.js';
 
 /** Each address the site answers, and the page in site/pages/ it shows. */
-export const SITE_PAGES = { '/': 'home', '/claude': 'claude', '/app': 'app', '/press': 'press', '/privacy': 'privacy', '/terms': 'terms', '/credits': 'credits', '/offline': 'offline' };
+export const SITE_PAGES = { '/': 'home', '/make': 'make', '/claude': 'claude', '/app': 'app', '/press': 'press', '/privacy': 'privacy', '/terms': 'terms', '/credits': 'credits', '/offline': 'offline' };
 
 /** Pages that are no use to a search engine: the one shown when there is no internet (see site/js/sw.js). */
 const UNLISTED_PAGES = new Set(['/offline']);
@@ -66,6 +66,18 @@ const named = (narrator) => narrator[0].toUpperCase() + narrator.slice(1);
 
 /** Names as a sentence lists them: "Anna", "Anna or Vera", "Anna, Vera or Stuart". */
 const oneOf = (names) => (names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} or ${names.at(-1)}`);
+
+/**
+ * Who reads a reel, as the choices of the form on the make page: Peter and each of
+ * `narrators` (those besides Peter that read here), by first name. Nothing at all where
+ * only Peter reads. The same choice as the cards under Meet Peter on the home page make,
+ * kept in the same place on the device (site/js/voice.js).
+ */
+export function whoChoices(narrators = []) {
+  const offered = narrators.filter((narrator) => narrator !== 'peter' && NARRATORS[narrator]);
+  return offered.length ? ['peter', ...offered].map((narrator) =>
+    `<label><input type="radio" name="who" value="${narrator}"${narrator === 'peter' ? ' checked' : ''}><span>${named(narrator)}</span></label>`).join('\n          ') : '';
+}
 
 /**
  * The part of the home page where someone chooses who reads to them: a card for Peter and
@@ -273,7 +285,7 @@ export function appManifest({ files = false } = {}) {
     categories: ['education', 'productivity'],
     icons: [icon(192, 'any'), icon(512, 'any'), icon(192, 'maskable'), icon(512, 'maskable')],
     shortcuts: [
-      { name: 'Make a pixel reel', short_name: 'Make a reel', url: '/#make' },
+      { name: 'Make a pixel reel', short_name: 'Make a reel', url: '/make' },
       { name: 'Watch an example', short_name: 'Examples', url: '/#examples' },
       { name: 'Add Pixel Reel to Claude', short_name: 'Add to Claude', url: '/claude' }
     ],
@@ -324,7 +336,7 @@ export function sitePage(name, baseUrl, { listed = false, values = {}, title = n
   const markdown = !existsSync(siteFile(`pages/${name}.html`));
   const { facts, body } = pageFacts(readFileSync(siteFile(`pages/${name}.${markdown ? 'md' : 'html'}`), 'utf8'));
   // the connector's address is long and has no spaces: <wbr> lets a narrow screen break it before "/mcp", not mid-word
-  const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', languages: '', posters: postersHtml(), voices: narratorsHtml(narrators), whoreads: whoReads(narrators), ...values };
+  const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', languages: '', posters: postersHtml(), voices: narratorsHtml(narrators), who: whoChoices(narrators), whoreads: whoReads(narrators), ...values };
   const heading = /^# (.+)$/m.exec(body)?.[1];
   title ??= facts.title ?? (heading && heading !== 'Pixel Reel' ? `${heading} - Pixel Reel` : 'Pixel Reel');
   // a plain page that has a reel of itself offers it straight under its heading

@@ -385,6 +385,33 @@ describe('when a reel ends', () => {
   });
 });
 
+describe('making a reel has a page of its own', () => {
+  it('is in the menu across the top and at the foot of every page', () => {
+    for (const name of pages) {
+      assert.match(html[name], /<nav class="top-nav" aria-label="Main">\s*<a href="\/make">Make a pixel reel<\/a>/, `${name}: first in the menu across the top`);
+      assert.match(html[name], /<nav class="foot-nav"[^>]*>[\s\S]*?<a href="\/make">Make a pixel reel<\/a>/, `${name}: and at the foot`);
+      assert.doesNotMatch(html[name], /href="\/?#make"/, `${name}: nothing still points at the old place on the home page`);
+    }
+  });
+
+  it('is a form to fill in, with nothing on the page that plays', () => {
+    assert.match(html.make, /<h1 id="make-title">Make a pixel reel<\/h1>/);
+    assert.match(html.make, /<form class="maker" id="maker" action="\/claude" data-here="off">/);
+    for (const id of ['maker-what', 'maker-go', 'maker-file', 'mine', 'drop-over']) assert.match(html.make, new RegExp(`id="${id}"`), id);
+    // the part of the page that is the page's own: the bar, the foot and the theatre are on every page
+    const own = html.make.slice(html.make.indexOf('<main'), html.make.indexOf('</main>'));
+    assert.ok(own.includes('id="maker"'));
+    assert.doesNotMatch(own, /class="reel"|data-reels?=|<canvas/, 'no player, no reel button, no moving picture');
+  });
+
+  it('leaves the home page its words about it, and a big button that goes there', () => {
+    assert.doesNotMatch(html.home, /id="maker"|id="mine"|id="drop-over"/);
+    assert.match(html.home, /<a class="btn btn-gold btn-big" href="\/make">Make a pixel reel<\/a>/);
+    assert.match(html.home, /<p class="lead" data-here-says="[^"]{20,}">Say what you want explained\./);
+    assert.match(html.home, /id="make-reel" data-reel="site-make" data-reel-here="site-make-here"/);
+  });
+});
+
 describe('waiting for a reel that is being made', () => {
   it('says which of the two jobs is being done, in a word for the screen and a plain sentence', () => {
     assert.deepEqual(waitingFor({ state: 'writing' }), { sign: 'WRITING', words: 'Claude is reading it and writing the scenes. This takes about half a minute.', part: 0 });
@@ -414,7 +441,7 @@ describe('waiting for a reel that is being made', () => {
   });
 
   it('offers a way back from a reel that could not be made', () => {
-    assert.match(html.reel, /<a class="btn btn-gold" id="watch-retry" href="\/#make" hidden>Try something else<\/a>/);
+    assert.match(html.reel, /<a class="btn btn-gold" id="watch-retry" href="\/make" hidden>Try something else<\/a>/);
   });
 });
 

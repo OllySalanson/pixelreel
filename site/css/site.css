@@ -308,7 +308,15 @@ html.reel-filling { overflow: hidden; }
 /* two things side by side */
 .duo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(2rem, 6vw, 6rem); align-items: center; }
 .duo .head { margin-bottom: 0; }
-#make .duo { align-items: start; }
+/* the home page's own part about making one: its words, and the button that goes to the form */
+#make .head { margin-bottom: 0; }
+#make .row { margin-top: 1.75rem; gap: 0.75rem 1.25rem; }
+#make .row .btn-reel { margin-top: var(--u); }
+/* the make page: a form to fill in, set out as one, with nothing on it that plays */
+.make { padding-block: clamp(2.5rem, 5vw, 4.5rem) clamp(4rem, 8vw, 7rem); }
+.make .wrap { width: min(100% - 2 * var(--gutter), 46rem); }
+.make .head { margin-bottom: clamp(1.5rem, 3vw, 2.25rem); }
+.make h1 { font-size: clamp(2.4rem, 3.4vw + 1rem, 3.75rem); }
 .duo .row { margin-top: 1.75rem; }
 .duo .row .btn-reel { margin-top: var(--u); }
 

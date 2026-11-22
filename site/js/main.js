@@ -4,7 +4,7 @@
 import { startApp } from './app.js';
 import { startComfort } from './comfort.js';
 import { startKept } from './kept.js';
-import { startCopying, startMaker } from './maker.js';
+import { startCopying, startHere, startMaker } from './maker.js';
 import { startMine } from './mine.js';
 import { ReelPlayer } from './player.js';
 import { startRuler } from './ruler.js';
@@ -26,6 +26,7 @@ startShots();
 startTheatre();
 startHearing();
 startVoice();   // before the make-one box, so that its first words say who was chosen
+startHere();
 startMaker();
 startShared();   // after the box, so that it hears what it is handed
 startMine();

@@ -1,7 +1,7 @@
 // Things shared to Pixel Reel from a phone's Share menu: Android offers it there once Pixel
 // Reel is on the home screen. The phone sends what was shared to /share, where the service
-// worker (sw.js) puts it by, on the device, and brings up the home page at the make-one
-// box. This hands it to the box the way a person would: a link or some words go in the box,
+// worker (sw.js) puts it by, on the device, and brings up the page with the make-one box
+// (/make). This hands it to the box the way a person would: a link or some words go in the box,
 // a file goes to the box's own file chooser. Where the box makes reels itself it starts at
 // once, as it does for a drop; where it writes words for Claude, they are ready to copy.
 // Nothing that was shared leaves the device unless the box sends it.
@@ -37,7 +37,7 @@ export async function takeShared({ store = caches } = {}) {
 export async function startShared() {
   const form = document.getElementById('maker');
   if (!form || !new URLSearchParams(location.search).has('shared') || !('caches' in window)) return;
-  history.replaceState(null, '', `${location.pathname}#make`);   // so that coming back to the page does not look again
+  history.replaceState(null, '', location.pathname);   // so that coming back to the page does not look again
   const given = await takeShared().catch(() => null);
   if (!given) return;
   const here = form.dataset.here === 'on', box = form.querySelector('textarea'), said = document.getElementById(here ? 'here-said' : 'maker-said');

@@ -1,5 +1,5 @@
-// Make a pixel reel now: turns what someone wants explained into the words to give to
-// Claude, to copy across. Nothing is sent anywhere; Claude and the connector do the making.
+// Make a pixel reel (the form on its own page, /make): turns what someone wants explained
+// into the words to give to Claude, to copy across. Nothing is sent anywhere; Claude and the connector do the making.
 // Where the service has Make it right here switched on, the box makes the reel itself
 // instead: from what is typed or pasted in it, a file that is chosen, or anything dropped
 // anywhere on the page (given.js works out what was given, and what to send for it). The
@@ -8,7 +8,7 @@ import { calm } from './calm.js';
 import { canTake, GivenError, givenFrom, isLink, languageFor, nameOf, PICTURE_SIDE, requestFor } from './given.js';
 import { mineStorage, rememberMine } from './mine.js';
 import { copyText } from './send.js';
-import { chosenNarrator } from './voice.js';
+import { keepNarrator, narratorName, readNarrator } from './voice.js';
 
 const EXAMPLE = 'my gas bill';
 
@@ -45,6 +45,22 @@ export function startCopying() {
   }
 }
 
+/**
+ * Where the service makes reels itself, the pages say so: words marked data-here-says say
+ * what they say then, and the reel about the make-one box (the button #make-reel, and
+ * "Watch this whole page") is the one that explains the box as it is then.
+ */
+export function startHere() {
+  if (!document.querySelector('[data-here="on"]')) return;
+  for (const words of document.querySelectorAll('[data-here-says]')) words.textContent = words.dataset.hereSays;
+  const about = document.getElementById('make-reel');
+  if (!about) return;
+  for (const button of document.querySelectorAll('button[data-reels]')) {
+    button.dataset.reels = button.dataset.reels.split(/\s+/).map((name) => (name === about.dataset.reel ? about.dataset.reelHere : name)).join(' ');
+  }
+  about.dataset.reel = about.dataset.reelHere;
+}
+
 export function startMaker() {
   const form = document.getElementById('maker');
   if (!form) return;
@@ -56,15 +72,18 @@ export function startMaker() {
   // last time on this device, or else the one the browser says its reader prefers.
   const choices = [...form.querySelectorAll('input[name="language"]')];
   const language = () => { const chosen = choices.find((choice) => choice.checked)?.value; return chosen && chosen !== 'english' ? chosen : null; };
+  // Who reads the reel, where someone besides Peter reads here: the narrator chosen before
+  // on this device, here or on the cards under Meet Peter, which keep it in the same place.
+  const readers = [...form.querySelectorAll('input[name="who"]')];
+  const narrator = () => { const chosen = readers.find((reader) => reader.checked)?.value; return chosen && chosen !== 'peter' ? chosen : null; };
   const update = () => {
-    const ask = askFor(box.value, chosenNarrator(), language());
+    const who = narrator(), ask = askFor(box.value, who ? narratorName(who) : null, language());
     words.textContent = ask;
     open.href = `https://claude.ai/new?q=${encodeURIComponent(ask)}`;
     for (const said of form.querySelectorAll('.said')) { said.textContent = ''; said.classList.remove('sorry'); }
     grow();
   };
   box.addEventListener('input', update);
-  addEventListener('voice', update);   // another narrator has been chosen (voice.js)
   addEventListener('resize', grow);
   for (const chip of form.querySelectorAll('[data-try]')) {
     chip.addEventListener('click', () => { box.value = chip.dataset.try; update(); });
@@ -89,7 +108,20 @@ export function startMaker() {
     }
     document.getElementById('maker-language').hidden = false;
   }
-  const make = here ? makeHere(form, box, update, language) : null;
+  if (readers.length) {
+    let kept = null;
+    try { kept = readNarrator(localStorage); } catch { /* nowhere to keep it */ }
+    const start = readers.some((reader) => reader.value === kept) ? kept : 'peter';   // one chosen before who no longer reads here is let go
+    for (const reader of readers) {
+      reader.checked = reader.value === start;
+      reader.addEventListener('change', () => {
+        try { keepNarrator(localStorage, reader.value); } catch { /* as above */ }
+        update();   // the words for Claude say who
+      });
+    }
+    document.getElementById('maker-who').hidden = false;
+  }
+  const make = here ? makeHere(form, box, update, language, narrator) : null;
   if (!here) box.maxLength = ASK_MAX;
   // the main thing: make the reel here, or else copy the words, the same as the first button
   form.addEventListener('submit', (e) => {
@@ -119,18 +151,10 @@ async function shrinkPicture(file) {
  * to the reel's page, which shows it being written and recorded. It also takes anything dropped on the page,
  * a file that is chosen, and what is pasted when the pointer is not in a box.
  */
-function makeHere(form, box, update, language) {
+function makeHere(form, box, update, language, narrator) {
   const id = (name) => document.getElementById(name);
   const said = id('here-said'), wait = id('maker-wait'), over = id('drop-over'), file = id('maker-file'), own = id('maker-own'), ownOpen = id('maker-own-open');
-  const lead = id('make-lead');
   id('maker-here').hidden = false;
-  lead.textContent = lead.dataset.here;
-  // the reel about this part of the page is the one that explains the box as it now is, wherever this part is played
-  const about = id('make-reel');
-  for (const button of document.querySelectorAll('button[data-reels]')) {
-    button.dataset.reels = button.dataset.reels.split(/\s+/).map((name) => (name === about.dataset.reel ? about.dataset.reelHere : name)).join(' ');
-  }
-  about.dataset.reel = about.dataset.reelHere;
   // giving the words to their own Claude is still there, behind a button
   own.hidden = true;
   ownOpen.addEventListener('click', () => {
@@ -187,7 +211,7 @@ function makeHere(form, box, update, language) {
     show(wait);
     try {
       // read by whoever was chosen on this page ("Anna will read the reels you make"), in the language chosen in the box
-      const request = await requestFor(given, { shrink: shrinkPicture, language: language(), narrator: chosenNarrator()?.toLowerCase() ?? null });
+      const request = await requestFor(given, { shrink: shrinkPicture, language: language(), narrator: narrator() });
       const res = await fetch('/try', { method: 'POST', ...request });
       const answer = await res.json().catch(() => ({}));
       if (!res.ok || !answer.watch) throw new GivenError(answer.error || 'That did not work. Try again in a minute.');
