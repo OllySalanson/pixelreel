@@ -47,9 +47,19 @@ npm run service
 | `PIXELREEL_S3_BUCKET` | none | A bucket to keep reels in instead, with the settings in [deploy.md](deploy.md#keeping-reels-in-a-bucket). |
 | `PIXELREEL_PYTHON` | `.venv/bin/python` | The Python with Pocket TTS installed, as for `npm run voices`. |
 | `PIXELREEL_LISTED` | off | `1` lets search engines list the website. Off, every page asks them not to. Reels are never listed. |
+| `PIXELREEL_WARM_VOICE` | on | `0` loads the voice afresh for each reel, instead of once when the service starts. Saves about 1 GB of memory, and makes every reel wait longer. |
 
 It records one reel at a time, and carries on with any waiting after a restart. Stopping it
 (Ctrl+C) finishes the job in hand first. To put it online, see [deploy.md](deploy.md).
+
+**Peter is kept ready.** Starting Python and loading the voice model takes longer than
+speaking several lines, so the service does it once, as soon as it starts
+(`service/voice.mjs` runs `scripts/pocket_speak.py --serve`), and each reel's lines are
+spoken by that one. By the time Claude has written a reel's scenes, the voice is loaded.
+Measured on a development machine with a six-scene reel, the wait fell from about 26
+seconds to about 18, and the first line was read after 3 seconds rather than 9. If the
+loaded voice cannot start, stops or goes quiet, the lines it did not get to are recorded
+the usual way, so no reel is lost to it; the log says so in a line starting `voice:`.
 
 ## Add it to Claude
 
@@ -304,6 +314,7 @@ The local tools (`npm run voices`, `page`, `video`) have no such limits.
 | `service/app-bridge.js` | The in-chat player's side of the MCP Apps protocol. |
 | `service/reels.mjs` | Making, recording, videos, expiry and deleting: one job at a time. |
 | `service/pacing.mjs` | Times a recorded reel's pictures to its voice. |
+| `service/voice.mjs` | Keeps the voice model loaded between reels, so a reel starts being spoken at once. |
 | `service/limits.mjs` | How big a reel may be, and how many each caller may make. |
 | `service/try.mjs`, `service/writer.mjs` | Make it right here: what a visitor gives (words, a link, writing, a PDF or a picture), and Claude asked to write it. Off by default. |
 | `service/site.mjs` | Puts the website's pages together, from `site/`. |

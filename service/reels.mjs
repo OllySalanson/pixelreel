@@ -31,11 +31,15 @@ export const newId = () => randomBytes(16).toString('base64url');
 /** True for something shaped like a reel id. */
 export const isId = (id) => typeof id === 'string' && ID.test(id);
 
-/** Records the voice for the reel in folder `dir`, with npm run voices (Pocket TTS, voice peter_yearsley). `onLine(done, of)` is told as each line is recorded. */
-async function recordVoices(dir, log, onLine) {
+/**
+ * A recorder: records the voice for the reel in folder `dir`, with npm run voices (Pocket TTS,
+ * voice peter_yearsley), telling `onLine(done, of)` as each line is recorded. With a
+ * `speaker` (a WarmVoice's, service/voice.mjs) the lines are spoken by a voice kept loaded.
+ */
+export const recordWith = (speaker = null) => async (dir, log, onLine) => {
   const { main } = await import('../scripts/voices.mjs');
-  await main([dir], { log, onClip: (_clip, { done, of }) => onLine(done, of) });
-}
+  await main([dir], { log, onClip: (_clip, { done, of }) => onLine(done, of), ...(speaker ? { speaker } : {}) });
+};
 
 /** Draws a reel's own picture for link previews, from its reel.json, parsed. Resolves to a PNG. */
 async function drawPicture(raw) {
@@ -57,7 +61,7 @@ export class Reels {
    * @param {(dir: string, out: string) => Promise<void>} [options.video]   draws a folder's reel as an MP4
    * @param {(raw: object) => Promise<Uint8Array>} [options.picture]   draws a reel's picture for link previews, as a PNG
    */
-  constructor({ store, record = recordVoices, video = drawVideo, picture = drawPicture, now = () => Date.now(), keepDays = KEEP_DAYS, maxQueue = 20, log = () => {} }) {
+  constructor({ store, record = recordWith(), video = drawVideo, picture = drawPicture, now = () => Date.now(), keepDays = KEEP_DAYS, maxQueue = 20, log = () => {} }) {
     Object.assign(this, { store, record, video, picture, now, keepDays, maxQueue, log });
     this.queue = [];
     this.running = null;

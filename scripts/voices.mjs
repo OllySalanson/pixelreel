@@ -118,7 +118,7 @@ export function reelDir(arg) {
   return REEL_FILES.includes(basename(full)) ? dirname(full) : full;
 }
 
-function findPython() {
+export function findPython() {
   if (process.env.PIXELREEL_PYTHON) return process.env.PIXELREEL_PYTHON;
   const venv = join(ROOT, '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
   return existsSync(venv) ? venv : 'python3';
@@ -153,7 +153,7 @@ export function speakWithCommand(lines, command, onDone) {
 }
 
 /** Runs Pocket TTS or Kokoro over `lines` ([{ text, wav }]), calling onDone(wav, seconds) as each finishes. */
-function speak(lines, settings, threads, onDone) {
+export function speak(lines, settings, threads, onDone) {
   const engine = ENGINES[settings.engine];
   const modelDir = process.env.KOKORO_HOME || join(ROOT, 'models');
   const job = settings.engine === 'kokoro'
@@ -180,9 +180,11 @@ function speak(lines, settings, threads, onDone) {
 /**
  * Records the clips a reel needs. `args` are the command line arguments after npm run voices.
  * `onClip(clip, { done, of })` is told as each clip is recorded: the clip ({ text, file,
- * seconds }), and how many are done of how many there are to record.
+ * seconds }), and how many are done of how many there are to record. `speaker(lines,
+ * settings, threads, onDone)` does the speaking in place of a Python started for this run,
+ * for a caller that keeps a voice loaded (service/voice.mjs).
  */
-export async function main(args = process.argv.slice(2), { log = console.log, onClip = () => {} } = {}) {
+export async function main(args = process.argv.slice(2), { log = console.log, onClip = () => {}, speaker = speak } = {}) {
   const { values, positionals } = parseArgs({
     args,
     allowPositionals: true,
@@ -229,7 +231,7 @@ export async function main(args = process.argv.slice(2), { log = console.log, on
     log(`Recording ${todo.length} of ${clips.length} clips with ${command ? 'your speech command' : `${ENGINES[settings.engine].name}, voice ${settings.voice}`}...`);
     try {
       if (command) speakWithCommand(lines, command, (wav) => encode(wav));
-      else await speak(lines, settings, Number(values.threads) || DEFAULTS.threads, encode);
+      else await speaker(lines, settings, Number(values.threads) || DEFAULTS.threads, encode);
     } catch (err) {
       // keep what was recorded, and the old recordings of lines it did not reach, so the reel
       // still plays and a rerun carries on from here; until the new narrator has recorded

@@ -28,7 +28,7 @@ docker run -p 8787:8787 -e PIXELREEL_URL=https://reels.example -v pixelreel-data
 | | |
 | --- | --- |
 | Processor | 2 vCPUs. Pocket TTS records about 2.5 times faster than real time on 4; one job runs at a time. |
-| Memory | 2 GB. The voice model and PyTorch take about 1 GB; a video job about 300 MB more. |
+| Memory | 2 GB. The voice model and PyTorch take about 1 GB, which the service keeps loaded so reels start at once; a video job about 300 MB more. |
 | Disk for `/data` | About 1 MB a reel (recordings), plus about 1.7 MB a minute for any video. 10 GB is thousands of reels. |
 | Image | About 2 GB, mostly PyTorch and the model. |
 | HTTPS | Claude only connects to `https://` addresses. |
