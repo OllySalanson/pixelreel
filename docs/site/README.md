@@ -1390,3 +1390,16 @@ A fault of mine from Version 52, found while reading the make page for something
 
 Seen on the live site before it was put right: all four suggestions said `aria-pressed="true"`.
 After, on the same page here: none says anything of the kind, and pressing one changes no setting.
+
+### Version 61
+
+- **The big button is on a small laptop's first screen.** The make page was measured at
+  1280 by 800 when it was redesigned (Version 49), where its big button ended 697 pixels
+  down. The commonest small laptop shows a page about 1366 by 650, and there the button
+  ended at 702: cut off at the foot of the screen. The page now spends less room above the
+  form: less space over the heading, a slightly smaller heading, and the line under it on
+  one line. The button ends at 603 of 650, and at 602 of 720.
+- A phone's first screen is as it was (the button ends at 631 of 844).
+
+Checked with `scripts/site-fit.js` at 320, 390 and 1366 pixels wide: nothing cut in two or
+too wide at any of the 27 settings.
