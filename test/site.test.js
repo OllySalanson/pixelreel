@@ -112,9 +112,10 @@ describe('what the pages point at', () => {
   it('plays only reels that exist, are plain data, and are fully recorded', () => {
     const named = new Set();
     for (const name of pages) {
-      for (const [, reels] of html[name].matchAll(/data-(?:reels?|hear|length)="([^"]+)"/g)) reels.split(' ').forEach((reel) => named.add(reel));
+      for (const [, reels] of html[name].matchAll(/data-(?:reels?|reel-here|hear|length)="([^"]+)"/g)) reels.split(' ').forEach((reel) => named.add(reel));
     }
     assert.ok(named.size >= 15, 'the site plays a reel for each part of the page, the examples, and the privacy and terms pages');
+    assert.ok(named.has('site-make') && named.has('site-make-here'), 'the make-one box has a reel for each way it works: words for Claude, and making the reel itself');
     for (const reel of named) {
       assert.ok(reelNames.includes(reel), `there is no reel called ${reel}`);
       const scenes = parseReelJson(readFileSync(root(`reels/${reel}/reel.json`), 'utf8')).scenes;

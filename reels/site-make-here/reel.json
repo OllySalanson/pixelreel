@@ -1,0 +1,120 @@
+{
+  "format": "pixelreel/1",
+  "title": "How to make a reel here",
+  "transition": "wipe",
+  "scenes": [
+    {
+      "title": "Your turn",
+      "caption": "Give this box anything wordy.",
+      "say": "Your turn. Give this box anything wordy, and it comes back as a pixel reel, read out by me.",
+      "picture": {
+        "type": "title",
+        "text": "YOUR TURN",
+        "sub": "Give it anything wordy"
+      }
+    },
+    {
+      "title": "Anything wordy",
+      "caption": "A link, a letter, or just a question.",
+      "say": "It can be a link to an article. A letter you've been sent. Or just a question, like, how does a mortgage work.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "phone",
+            "label": "A link"
+          },
+          {
+            "icon": "letter",
+            "label": "A letter"
+          },
+          {
+            "icon": "question",
+            "label": "A question"
+          }
+        ],
+        "start": 0.3,
+        "every": 1.4
+      }
+    },
+    {
+      "title": "Three ways in",
+      "caption": "Type it, drop it, or take a photo.",
+      "say": "Type it, or paste it in. Drop a file anywhere on this page. Or, on a phone, take a photo of the letter.",
+      "picture": {
+        "type": "list",
+        "numbered": true,
+        "items": [
+          "Type it or paste it",
+          "Drop a file here",
+          "Take a photo"
+        ],
+        "start": 0.3,
+        "every": 1.9
+      }
+    },
+    {
+      "title": "Make my reel",
+      "caption": "Press Make my reel. That is all.",
+      "say": "Then press Make my reel. Claude writes the scenes, I read them out, and it plays as soon as it is ready.",
+      "picture": {
+        "type": "sprite",
+        "label": "MAKE MY REEL",
+        "rows": [
+          ".kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.",
+          "kcccccccccccccccccccccccccccccccck",
+          "kcccccccccccccccccccccccccccccccck",
+          "kcckkkkkkkkkkkkkkkkkkkkkkkkkkkkcck",
+          "kcckbbbbbbbbbbbbbbbbbbbbbbbbbbkcck",
+          "kcckBBBBBBBBBBBBBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByBBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyyBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyyyBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyyBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyyBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByyBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBByBBBBBBBBBBBBBBBkcck",
+          "kcckBBBBBBBBBBBBBBBBBBBBBBBBBBkcck",
+          "kcckkkkkkkkkkkkkkkkkkkkkkkkkkkkcck",
+          "kcccccccccccccccccccccccccccccccck",
+          "keeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeek",
+          "keeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeek",
+          "keeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeek",
+          ".kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.",
+          "..............kkkkkk..............",
+          "..............kkkkkk..............",
+          "..............kkkkkk..............",
+          ".........keeeeeeeeeeeeeek.........",
+          ".........kkkkkkkkkkkkkkkk.........",
+          ".................................."
+        ]
+      }
+    },
+    {
+      "title": "Still too much?",
+      "caption": "Ask for it simpler, or shorter.",
+      "say": "Still too much to take in? Ask for it simpler, or shorter. And your reels are listed here, to watch again, or to delete.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "lightbulb",
+            "label": "Simpler"
+          },
+          {
+            "icon": "clock",
+            "label": "Shorter"
+          },
+          {
+            "icon": "document",
+            "label": "Your reels"
+          }
+        ],
+        "start": 1.7,
+        "every": 0.9
+      }
+    }
+  ]
+}

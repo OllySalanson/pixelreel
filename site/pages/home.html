@@ -241,7 +241,8 @@ fetch: /reels/pixel-reel/reel.json /reels/pixel-reel/audio/manifest.json
       <p class="eyebrow">Your turn</p>
       <h2 id="make-title">Make a pixel reel now.</h2>
       <p class="lead" id="make-lead" data-here="Type it, paste it, or drop it in. We will make the reel, right here.">Say what you want explained. We will write the words to give to Claude.</p>
-      <button class="btn btn-reel" type="button" data-reel="site-make">Make a pixel reel about this</button>
+      <!-- where the box makes the reel itself, maker.js has this play the reel that says so (data-reel-here), here and in "Watch this whole page" -->
+      <button class="btn btn-reel" type="button" id="make-reel" data-reel="site-make" data-reel-here="site-make-here">Make a pixel reel about this</button>
     </div>
     <form class="maker" id="maker" action="/claude" data-here="{{here}}">
       <label for="maker-what">What do you want explained?</label>
