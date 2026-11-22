@@ -7,7 +7,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { ReelError } from '../src/reel.js';
 import { createMcpServer } from './mcp.mjs';
 import { BusyError, isId } from './reels.mjs';
-import { robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
+import { addToClaudeLink, robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
 import { sendBytes, sendSqueezed, sendStatic, squeezed, tagOf } from './static.mjs';
 import { MAX_WORDS_BODY, PDF_MAX, sourceOf, TryError } from './try.mjs';
 
@@ -324,6 +324,8 @@ export function createService({ reels, baseUrl, log = () => {}, limits = null, t
       if (path === '/mcp') { await handleMcp(req, res, context); return; }
       if (path === '/try') { await handleTry(req, res, context); return; }
       if (path === '/health') { res.writeHead(200, { ...SAFE, 'content-type': 'text/plain' }).end('ok'); return; }
+      // a short address to say, type on a phone or print: straight to Claude's own box for adding a connector, with Pixel Reel filled in
+      if (path === '/add') { res.writeHead(302, { ...SAFE, ...UNLISTED, location: addToClaudeLink(context.baseUrl), 'cache-control': 'no-store' }).end(); return; }
       const reading = req.method === 'GET' || req.method === 'HEAD';
       if (reading && SITE_PAGES[path]) { sendSitePage(req, res, 200, SITE_PAGES[path], context); return; }
       const watch = /^\/watch\/([a-z0-9-]+)(\/card\.png)?$/.exec(path);

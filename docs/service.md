@@ -69,7 +69,15 @@ Claude reaches connectors over the internet, so the service needs a public `http
 for this: a server of your own, or for a quick try a tunnel to your machine (such as
 `cloudflared tunnel --url http://localhost:8787`), with `PIXELREEL_URL` set to that address.
 
-Then in Claude, open **Customize > Connectors**, add a custom connector, and paste the address
+The quickest way is the service's own short address, `/add` (for Pixel Reel,
+`pixelreel.pro/add`): it sends the browser straight to Claude's box for adding a connector,
+with the name and address filled in, using
+[Claude's own link for this](https://claude.com/docs/connectors/building/directory-vs-custom).
+The person presses Continue, then Add. It is short enough to say, to type on a phone, or to
+print. The connector is added to their account, so it is then there in the desktop app and
+on their phone too.
+
+Or by hand: in Claude, open **Customize > Connectors**, add a custom connector, and paste the address
 with `/mcp` on the end. It needs no sign-in. Custom connectors work on every Claude plan (the
 Free plan allows one).
 
