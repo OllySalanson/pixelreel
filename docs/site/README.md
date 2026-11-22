@@ -437,3 +437,28 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | The ruler on a laptop and on a phone |
 | --- |
 | ![A clear band across a dimmed page, on the line being read.](log/v19-ruler.jpg) |
+
+### Version 20
+
+- **A reel made here is watched being made.** Pressing Make my reel used to mean half a
+  minute of looking at the box, then a second wait on the reel's page. Now the reel has its
+  page at once and all the waiting is there, in one place: Reelie, a sign that says what is
+  being done ("Writing", then "Recording"), a bar that fills as it is, and one plain
+  sentence under it, such as "Peter is recording scene 4 of 6." The reel takes its own name
+  as soon as Claude has given it one.
+- **The player's buttons are switched off until there is something to play,** rather than
+  sitting there in gold, doing nothing when pressed.
+- **A reel that could not be made says so where the reel would have been:** "No reel this
+  time" on the screen, the reason under it in plain words, and one button, "Try something
+  else", which leads back to the box with what was asked about still in it.
+- **A notice has a mark.** Where the box says why it cannot make something, the notice now
+  carries a red "!" as well as its red edge, so it is known for what it is before a word of
+  it is read. Its words go under the mark, never cut in two, when there is no room beside.
+  File sizes are no longer given in megabytes: "Give it a shorter one, or only the pages
+  that matter."
+- On the narrowest phones the box's question is a little smaller, so that "explained?" fits
+  at the biggest, widest letters.
+
+| Being written, and being recorded | A reel that could not be made, and a notice in the box |
+| --- | --- |
+| ![The reel's page: Reelie under a sign that says Writing, then Recording, with a bar that fills, and the words Peter is recording scene 4 of 7.](log/v20-being-made.jpg) | ![The reel's page says No reel this time, and why, with a Try something else button. And the box's notice, with a red mark: Say what you want explained.](log/v20-no-reel.jpg) |

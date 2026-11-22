@@ -218,6 +218,7 @@ function describe(status, baseUrl) {
   const about = `${status.scenes} scenes, about ${clockTime(status.seconds * 1000)}`;
   const plays = `It plays by itself as soon as the voice is ready, in the chat where the player shows, and at ${watch}`;
   const said = {
+    writing: `"${status.title}" is still being written. It plays by itself, once it is written and recorded, at ${watch}`,
     queued: `"${status.title}" is made (${about}) and waiting its turn: Peter is recording another reel first. ${plays}\n${HAND_OVER} There is no need to check on it.`,
     recording: `"${status.title}" is made (${about}) and Peter is recording the voice now${status.lines ? ` (${status.recorded} of ${status.lines} lines done)` : ''}, which takes about as long as the reel lasts. ${plays}\n${HAND_OVER} There is no need to check on it.`,
     ready: `"${status.title}" is ready: ${status.scenes} scenes, ${clockTime(status.seconds * 1000)}. Watch it at ${watch}`,

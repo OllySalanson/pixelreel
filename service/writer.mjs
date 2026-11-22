@@ -50,9 +50,10 @@ const askAgain = (source) => (source.kind === 'words' ? ask(source) : `Make a pi
  * A writer: write(source, { before, problems }) asks Claude for a reel about what the visitor
  * gave (`source`, from sourceOf in service/try.mjs) and gives back the reel as data, not yet
  * checked. With `before` (its last answer) and `problems` (what the checks said was wrong
- * with it), it asks for a corrected one. A PDF is measured first, for nothing, and turned
- * away if reading it would take more than `maxInputTokens`: that is what bounds the cost of
- * one reel. `log` is told how many tokens each reel took, so its cost can be watched.
+ * with it), it asks for a corrected one. write.fits(source) is asked first: it measures a
+ * PDF, for nothing, and turns it away if reading it would take more than `maxInputTokens`,
+ * which is what bounds the cost of one reel. `log` is told how many tokens each reel took,
+ * so its cost can be watched.
  */
 export function createWriter({ client = new Anthropic({ timeout: 120_000, maxRetries: 1 }), model = 'claude-sonnet-5-5', effort = 'low', maxInputTokens = 50_000, log = () => {} } = {}) {
   /** Runs one call to the Claude API. What goes wrong before Claude has read anything is told to the visitor in plain words, and costs them nothing. */
@@ -75,19 +76,12 @@ export function createWriter({ client = new Anthropic({ timeout: 120_000, maxRet
     }
   };
 
-  return async function write(source, { before = null, problems = null } = {}) {
+  async function write(source, { before = null, problems = null } = {}) {
     const system = instructions();
     const messages = [{ role: 'user', content: before ? askAgain(source) : ask(source) }];
     if (before && problems) {
       messages.push({ role: 'assistant', content: JSON.stringify(before) });
       messages.push({ role: 'user', content: `That reel has problems. Fix every one, and reply with the whole corrected reel as JSON:\n- ${problems.join('\n- ')}` });
-    } else if (source.kind === 'pdf') {
-      // a PDF can be hundreds of pages, and every page is paid for: count them before reading any
-      const { input_tokens: size } = await call(() => client.messages.countTokens({ model, system, messages }));
-      if (size > maxInputTokens) {
-        log(`try: a pdf of ${size} tokens was turned away (the most is ${maxInputTokens})`);
-        throw new TryError('That is too long for one reel. Give it a shorter one, or only the pages that matter.', { free: true });
-      }
     }
     let response;
     for (let turn = 0; ; turn++) {
@@ -110,10 +104,24 @@ export function createWriter({ client = new Anthropic({ timeout: 120_000, maxRet
       if (response.stop_reason !== 'pause_turn' || turn >= 3) break;
       messages.push({ role: 'assistant', content: response.content });
     }
-    if (response.stop_reason === 'refusal') throw new TryError('Claude would not write a reel about that.');
+    if (response.stop_reason === 'refusal') throw new TryError('Claude would not write a reel about that. Try something else.');
     if (response.stop_reason !== 'end_turn') throw new TryError('Claude did not finish that reel. Try again, or give it less.');
     const reply = replyJson(response.content.filter((block) => block.type === 'text').map((block) => block.text).join(''));
-    if (typeof reply.cannot === 'string') throw new TryError(reply.cannot.replace(/\s+/g, ' ').trim().slice(0, 200) || 'Claude could not make a reel about that.');
+    if (typeof reply.cannot === 'string') throw new TryError(reply.cannot.replace(/\s+/g, ' ').trim().slice(0, 200) || 'Claude could not make a reel about that. Try something else.');
     return reply;
+  }
+
+  /**
+   * Says whether what the visitor gave is short enough to read, before any of it is paid
+   * for: throws a TryError if not. A PDF can be hundreds of pages, and every page costs, so
+   * it is counted first, which is free. Nothing else can be long (service/try.mjs).
+   */
+  write.fits = async (source) => {
+    if (source.kind !== 'pdf') return;
+    const { input_tokens: size } = await call(() => client.messages.countTokens({ model, system: instructions(), messages: [{ role: 'user', content: ask(source) }] }));
+    if (size <= maxInputTokens) return;
+    log(`try: a pdf of ${size} tokens was turned away (the most is ${maxInputTokens})`);
+    throw new TryError('That is too long for one reel. Give it a shorter one, or only the pages that matter.', { free: true });
   };
+  return write;
 }

@@ -137,6 +137,8 @@ async function handleReel(req, res, id, rest, context) {
     if (status.state === 'failed') play.error = status.error;
     // while the voice is being recorded: how many lines are done, of how many
     if (status.state === 'recording' && status.lines) Object.assign(play, { recorded: status.recorded, lines: status.lines });
+    // while it waits its turn: how many jobs are before it
+    if (status.state === 'queued') Object.assign(play, reels.progress(id));
     if (status.state === 'ready') {
       play.reel = await reels.reel(id);
       play.clips = ((await reels.manifest(id))?.clips ?? []).map((c) => ({ text: c.text, file: `${baseUrl}/r/${id}/audio/${c.file}`, seconds: c.seconds }));
@@ -163,10 +165,11 @@ const sendJson = (res, status, value) => res.writeHead(status, { ...SAFE, 'conte
 
 /**
  * Make it right here: a visitor with no Claude of their own gives one thing to explain (a
- * link or a few words, some writing, a PDF or a picture: sourceOf in service/try.mjs), the
- * service's writer has Claude write the reel, and the visitor is sent to watch it. Only
- * there when the service was given a writer (service/writer.mjs), since every reel made
- * this way costs money; and counted more strictly than the connector.
+ * link or a few words, some writing, a PDF or a picture: sourceOf in service/try.mjs). They
+ * are given a reel's page to go to straight away, and the service's writer has Claude write
+ * the reel while they wait there (writeReel). Only there when the service was given a
+ * writer (service/writer.mjs), since every reel made this way costs money; and counted more
+ * strictly than the connector.
  */
 async function handleTry(req, res, context) {
   const { reels, writer, limits, trustProxy, baseUrl } = context;
@@ -182,7 +185,7 @@ async function handleTry(req, res, context) {
     // the rest of what is being sent is not wanted: once the answer has gone the line is cut, not read to its end
     res.setHeader('connection', 'close');
     res.once('finish', () => req.socket.destroy());
-    sendJson(res, 413, { error: words ? 'That is too much for one reel. Give it less: a few pages at most.' : 'That file is too big. Pixel Reel takes up to 10 MB.' });
+    sendJson(res, 413, { error: words ? 'That is too much for one reel. Give it less: a few pages at most.' : 'That file is too big. Give it a shorter one, or only the pages that matter.' });
   };
   const most = words ? MAX_WORDS_BODY : PDF_MAX;
   if (Number(req.headers['content-length']) > most) { tooBig(); return; }
@@ -199,22 +202,47 @@ async function handleTry(req, res, context) {
   const caller = callerOf(req, trustProxy);
   const refused = limits?.tries.hit(caller);
   if (refused) { sendJson(res, 429, { error: `No more reels just now. ${refused}` }); return; }
+  let begun;
   try {
-    let reel = await writer(source), made;
+    await writer.fits?.(source);   // too long to read is said here and now, while what was given is still in front of them
+    begun = await reels.begin(WRITING_TITLE);
+  } catch (err) {
+    limits?.tries.undo(caller);   // nothing has reached Claude yet
+    if (!(err instanceof TryError || err instanceof BusyError)) throw err;
+    sendJson(res, 422, { error: err.message });
+    return;
+  }
+  // The visitor goes to the reel's own page at once, and waits there with something to
+  // watch. Claude writes the scenes after this request has been answered.
+  sendJson(res, 200, { id: begun.id, watch: `/r/${begun.id}` });
+  const job = writeReel(context, begun.id, source, caller).finally(() => context.writing.delete(job));
+  context.writing.add(job);
+}
+
+/** What a reel is called on its page until Claude has given it a title. */
+export const WRITING_TITLE = 'Your reel';
+
+/**
+ * Has the writer write the scenes of reel `id` from what the visitor gave, and starts
+ * recording them; or gives up on the reel, saying why in words for whoever is waiting on
+ * its page. Never throws.
+ */
+async function writeReel({ reels, writer, limits, log }, id, source, caller) {
+  try {
+    let reel = await writer(source);
     try {
-      made = await reels.create(reel);
+      await reels.write(id, reel);
     } catch (err) {
       if (!(err instanceof ReelError)) throw err;
       reel = await writer(source, { before: reel, problems: err.problems });   // one chance to put it right
-      made = await reels.create(reel);
+      await reels.write(id, reel);
     }
-    sendJson(res, 200, { id: made.id, watch: `/r/${made.id}` });
   } catch (err) {
-    // what never reached Claude, or never reached the recorder, is not one of the visitor's goes
-    if ((err instanceof TryError && err.free) || err instanceof BusyError) limits?.tries.undo(caller);
-    if (err instanceof TryError || err instanceof BusyError) sendJson(res, 422, { error: err.message });
-    else if (err instanceof ReelError) sendJson(res, 502, { error: 'Claude could not write that reel. Try again, or try other words.' });
-    else throw err;
+    if (err instanceof TryError && err.free) limits?.tries.undo(caller);   // what never reached Claude is not one of the visitor's goes
+    const known = err instanceof TryError || err instanceof ReelError;
+    if (!known) log(`try: ${id} could not be written: ${err.stack ?? err}`);
+    const why = err instanceof TryError ? err.message : err instanceof ReelError ? 'Claude could not write that reel. Try again, or try other words.' : 'Something went wrong. Try again in a while.';
+    await reels.fail(id, why).catch((failure) => log(`try: ${id} could not be marked as failed: ${failure.stack ?? failure}`));
   }
 }
 
@@ -264,14 +292,15 @@ async function sendWatchCard(req, res, name, { reels, cards, fresh, log }) {
  * X-Forwarded-For they set;
  * `listed` lets search engines list the website (never the reels), for once it is open to all;
  * `fresh` has browsers check for a newer copy of the site's files every time, for working on it;
- * `writer` (see service/writer.mjs) switches on Make it right here, which costs money a reel.
+ * `writer` (see service/writer.mjs) switches on Make it right here, which costs money a reel;
+ * the server's written() resolves once every reel begun that way is written or given up on.
  */
 export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false, listed = false, fresh = false, writer = null }) {
   const context = {
-    reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, listed, fresh, writer, pages: new Map(), cards: new Map(),
+    reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, listed, fresh, writer, pages: new Map(), cards: new Map(), writing: new Set(),
     trustProxy: trustProxy === true ? 1 : Math.max(0, Math.floor(Number(trustProxy)) || 0), fewestForwarded: Infinity
   };
-  return createServer(async (req, res) => {
+  const server = createServer(async (req, res) => {
     try {
       const path = new URL(req.url, 'http://localhost').pathname;
       if (path === '/mcp') { await handleMcp(req, res, context); return; }
@@ -302,4 +331,7 @@ export function createService({ reels, baseUrl, log = () => {}, limits = null, t
       if (!res.headersSent) sendPage(res, 500, notice('Something went wrong', 'Try again in a while.'));
     }
   });
+  /** Resolves once every reel that Make it right here has begun is written, or given up on. */
+  server.written = async () => { while (context.writing.size) await Promise.all(context.writing); };
+  return server;
 }

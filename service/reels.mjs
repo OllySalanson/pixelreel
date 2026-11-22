@@ -63,31 +63,90 @@ export class Reels {
     this.running = null;
   }
 
+  /** A reel (parsed reel.json) checked: the reel, or a ReelError if it has problems or is past the service's limits. */
+  check(raw) {
+    const reel = reelFromData(raw);
+    const over = limitProblems(reel, raw);
+    if (over.length) throw new ReelError(over);
+    return reel;
+  }
+
+  /** What a reel's status begins as: an id nobody can guess, and the day it will be deleted. */
+  blank(title, state) {
+    const created = this.now();
+    return {
+      id: newId(),
+      title,
+      scenes: 0,
+      state,
+      seconds: 0,
+      created: new Date(created).toISOString(),
+      expires: new Date(created + this.keepDays * 86400000).toISOString(),
+      video: 'none'
+    };
+  }
+
+  /** What is known of a reel once its scenes are: how many, and about how long it will run. */
+  measure(reel) {
+    return { title: reel.title, scenes: reel.scenes.length, seconds: Math.round(timeline(reel.scenes.map((s) => narrationMs(s, null))).total / 1000) };
+  }
+
   /**
    * Checks a reel (parsed reel.json) and starts recording it. Throws a ReelError if it has
    * problems or is past the service's limits, or a BusyError if too many jobs are waiting.
    */
   async create(raw) {
-    const reel = reelFromData(raw);
-    const over = limitProblems(reel, raw);
-    if (over.length) throw new ReelError(over);
+    const reel = this.check(raw);
     if (this.queue.length >= this.maxQueue) throw new BusyError();
-    const id = newId(), created = this.now();
-    const status = {
-      id,
-      title: reel.title,
-      scenes: reel.scenes.length,
-      state: 'queued',
-      seconds: Math.round(timeline(reel.scenes.map((s) => narrationMs(s, null))).total / 1000),
-      created: new Date(created).toISOString(),
-      expires: new Date(created + this.keepDays * 86400000).toISOString(),
-      video: 'none'
-    };
-    await this.store.put(`reels/${id}/reel.json`, JSON.stringify(raw));
+    const status = { ...this.blank(reel.title, 'queued'), ...this.measure(reel) };
+    await this.store.put(`reels/${status.id}/reel.json`, JSON.stringify(raw));
     await this.save(status);
-    this.enqueue({ id, kind: 'voice' });
+    this.enqueue({ id: status.id, kind: 'voice' });
     // with nothing else in hand its recording has begun already, and whoever asked is told so
-    return this.running?.id === id ? { ...status, state: 'recording' } : status;
+    return this.running?.id === status.id ? { ...status, state: 'recording' } : status;
+  }
+
+  /**
+   * Starts a reel whose scenes are still being written: it has an id, and so a page to wait
+   * on, at once. write() gives it its scenes, or fail() gives up on it. Throws a BusyError
+   * if too many jobs are waiting.
+   */
+  async begin(title) {
+    if (this.queue.length >= this.maxQueue) throw new BusyError();
+    const status = this.blank(title, 'writing');
+    await this.save(status);
+    return status;
+  }
+
+  /**
+   * Gives a reel started with begin() its scenes (parsed reel.json) and starts recording it.
+   * Throws a ReelError, leaving the reel still waiting to be written, if they have problems.
+   * Null if the reel has gone, or is no longer waiting for its scenes.
+   */
+  async write(id, raw) {
+    const reel = this.check(raw);
+    const status = await this.status(id);
+    if (status?.state !== 'writing') return null;
+    const written = { ...status, ...this.measure(reel), state: 'queued' };
+    await this.store.put(`reels/${id}/reel.json`, JSON.stringify(raw));
+    await this.save(written);
+    this.enqueue({ id, kind: 'voice' });
+    return written;
+  }
+
+  /** Gives up on a reel started with begin(), saying why in words for whoever is waiting on its page. */
+  async fail(id, error) {
+    if ((await this.status(id))?.state === 'writing') await this.update(id, { state: 'failed', error });
+  }
+
+  /**
+   * How long a reel that is waiting to be recorded has to wait, for its page to show:
+   * { ahead } (how many jobs are before it), or nothing if it is not waiting. How far the
+   * recording itself has got is kept in the reel's status (`recorded`, of `lines`).
+   */
+  progress(id) {
+    const place = this.queue.findIndex((job) => job.id === id && job.kind === 'voice');
+    return place < 0 ? {} : { ahead: place + (this.running ? 1 : 0) };
   }
 
   /** Where a reel is up to, or null if there is no such reel (or it has expired). */
@@ -120,12 +179,15 @@ export class Reels {
    * there is no such reel, or its picture cannot be drawn.
    */
   async card(id) {
-    if (!(await this.status(id))) return null;
+    const status = await this.status(id);
+    if (!status || status.state === 'writing') return null;   // nothing to draw until it is written
     const key = `reels/${id}/card.png`;
     const kept = await this.store.get(key);
     if (kept) return kept;
+    const raw = await this.reel(id);
+    if (!raw) return null;   // one that could not be written has nothing to draw either
     try {
-      const png = Buffer.from(await this.picture(await this.reel(id)));
+      const png = Buffer.from(await this.picture(raw));
       if (await this.status(id)) await this.store.put(key, png);   // not if it was deleted meanwhile
       return png;
     } catch (err) {
@@ -169,12 +231,16 @@ export class Reels {
     return gone;
   }
 
-  /** After a restart: queues again every job that was waiting or under way. */
+  /**
+   * After a restart: queues again every job that was waiting or under way. A reel that was
+   * still being written cannot be picked up, so whoever is waiting on it is told.
+   */
   async resume() {
     for (const id of await this.store.folders('reels')) {
       const status = await this.status(id);
       if (!status) continue;
-      if (status.state === 'queued' || status.state === 'recording') this.enqueue({ id, kind: 'voice' });
+      if (status.state === 'writing') await this.fail(id, 'Pixel Reel was restarted while it was being written. Make it again.');
+      else if (status.state === 'queued' || status.state === 'recording') this.enqueue({ id, kind: 'voice' });
       else if (status.video === 'queued' || status.video === 'making') this.enqueue({ id, kind: 'video' });
     }
   }

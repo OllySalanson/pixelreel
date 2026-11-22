@@ -6,6 +6,7 @@ import { after, before, describe, it } from 'node:test';
 import Anthropic from '@anthropic-ai/sdk';
 import { RateLimit } from '../service/limits.mjs';
 import { Reels } from '../service/reels.mjs';
+import { ReelError } from '../src/reel.js';
 import { createService } from '../service/server.mjs';
 import { DiskStore } from '../service/store.mjs';
 import { ABOUT_MAX, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError } from '../service/try.mjs';
@@ -136,21 +137,23 @@ describe('the writer', () => {
     assert.deepEqual(said.map((line) => line.split(',')[0]), ['try: text', 'try: pdf', 'try: picture']);
   });
 
-  it('measures a PDF before reading it, and turns away one that is too long, for nothing', async () => {
+  it('measures a PDF before it is read, and turns away one that is too long, for nothing', async () => {
     const client = fakeClient(reply(JSON.stringify(tea))), said = [];
     const write = createWriter({ client, maxInputTokens: 5000, log: (line) => said.push(line) });
-    await write({ kind: 'pdf', data: 'JVBERi0=' });
+    const pdf = { kind: 'pdf', data: 'JVBERi0=' };
+    await write.fits(pdf);
     assert.equal(client.counted.length, 1);
     assert.equal(client.counted[0].model, 'claude-sonnet-5-5');
+    await write(pdf);
     assert.deepEqual(client.counted[0].messages, client.asked[0].messages, 'what is measured is what is sent');
     assert.equal(client.counted[0].system, client.asked[0].system);
+    assert.equal(client.counted.length, 1, 'and it is measured once, not again when it is read');
     client.size = 5001;
-    await assert.rejects(write({ kind: 'pdf', data: 'JVBERi0=' }), (err) => err instanceof TryError && err.free && /too long for one reel/.test(err.message));
-    assert.equal(client.asked.length, 1, 'Claude was never asked to read it');
+    await assert.rejects(write.fits(pdf), (err) => err instanceof TryError && err.free && /too long for one reel/.test(err.message));
     assert.match(said.at(-1), /^try: a pdf of 5001 tokens was turned away/);
     client.size = Object.create(Anthropic.RateLimitError.prototype);
-    await assert.rejects(write({ kind: 'pdf', data: 'JVBERi0=' }), (err) => err instanceof TryError && err.free && /busy/.test(err.message));
-    await assert.rejects(write(words('tea')), TypeError, 'the stand-in has run out of answers');
+    await assert.rejects(write.fits(pdf), (err) => err instanceof TryError && err.free && /busy/.test(err.message));
+    for (const short of [words('tea'), { kind: 'text', text: 'Dear Sam' }, { kind: 'picture', type: 'image/png', data: 'iVBORw0=' }]) await write.fits(short);
     assert.equal(client.counted.length, 3, 'only a PDF is measured: the rest cannot be long');
   });
 
@@ -172,7 +175,6 @@ describe('the writer', () => {
     assert.match(request.messages[2].content, /Fix every one.*\n- scenes: give the reel at least one scene/s);
     await createWriter({ client })({ kind: 'pdf', data: 'JVBERi0=' }, mend);
     assert.equal(client.asked[1].messages[0].content, 'Make a pixel reel about this:\n(a document the visitor gave, which is not repeated here)', 'nor is a long document paid for twice');
-    assert.equal(client.counted.length, 0);
   });
 
   it('carries on a turn the page fetch paused', async () => {
@@ -208,10 +210,79 @@ describe('the writer', () => {
   });
 });
 
+describe('a reel that is still being written', () => {
+  const said = [];
+  /** A recorder that says each line as it finishes it, as npm run voices does, and waits to be let go half way. */
+  const hold = {};
+  const record = async (dir, log, onLine) => {
+    await fakeRecord(dir);
+    onLine(1, 2);
+    hold.reached?.();
+    await hold.until;
+    onLine(2, 2);
+  };
+  const store = new DiskStore(join(tmp, 'writing'));
+  const reels = new Reels({ store, record, video: async () => {}, picture: async () => new Uint8Array([1]), log: (line) => said.push(line) });
+  const two = { ...tea, scenes: [tea.scenes[0], { title: 'Pour', caption: 'Pour it.', say: 'Pour it out.', picture: { type: 'big', text: 'POUR' } }] };
+
+  it('has an id and a place in the store before it has any scenes', async () => {
+    const begun = await reels.begin('Your reel');
+    assert.deepEqual([begun.state, begun.title, begun.scenes, begun.video], ['writing', 'Your reel', 0, 'none']);
+    assert.deepEqual(await reels.status(begun.id), begun);
+    assert.equal(await reels.reel(begun.id), null);
+    assert.equal(await reels.card(begun.id), null, 'and no picture to show yet');
+    assert.deepEqual(reels.progress(begun.id), {});
+    await assert.rejects(reels.write(begun.id, { title: 'No scenes' }), ReelError);
+    assert.equal((await reels.status(begun.id)).state, 'writing', 'scenes with problems leave it waiting for better ones');
+    await reels.fail(begun.id, 'That page would not load.');
+    assert.deepEqual(await reels.status(begun.id).then((s) => [s.state, s.error]), ['failed', 'That page would not load.']);
+    assert.equal(await reels.write(begun.id, tea), null, 'one that was given up on stays given up on');
+    assert.equal(await reels.card(begun.id), null);
+    assert.equal(await reels.write('abcdefghijklmnopqrstuv', tea), null);
+  });
+
+  it('is recorded once it is written, and says how far that has got', async () => {
+    const begun = await reels.begin('Your reel');
+    let reached;
+    const half = new Promise((ok) => { reached = ok; });
+    hold.reached = reached;
+    hold.until = new Promise((ok) => { hold.release = ok; });
+    const written = await reels.write(begun.id, two);
+    assert.deepEqual([written.id, written.state, written.title, written.scenes], [begun.id, 'queued', 'Tea', 2]);
+    assert.ok(written.seconds > 0);
+    assert.equal(written.expires, begun.expires, 'it is kept from when it was begun');
+    const next = await reels.create(tea);
+    assert.deepEqual(reels.progress(next.id), { ahead: 1 }, 'one behind it waits its turn');
+    await half;
+    for (let i = 0; i < 100 && (await reels.status(begun.id)).recorded !== 1; i++) await new Promise((ok) => setTimeout(ok, 5));
+    assert.deepEqual(await reels.status(begun.id).then((s) => [s.state, s.recorded, s.lines]), ['recording', 1, 2], 'and its page can say how far Peter has got');
+    assert.deepEqual(reels.progress(begun.id), {}, 'it is not waiting any more');
+    hold.release();
+    hold.reached = null;
+    await reels.idle();
+    assert.equal((await reels.status(begun.id)).state, 'ready');
+    assert.deepEqual(reels.progress(begun.id), {});
+    assert.equal(await reels.write(begun.id, tea), null, 'and it is written only once');
+  });
+
+  it('is given up on, and whoever is waiting told so, if the service restarts before it is written', async () => {
+    const begun = await reels.begin('Your reel');
+    const after = new Reels({ store, record: fakeRecord, video: async () => {} });
+    await after.resume();
+    await after.idle();
+    assert.deepEqual(await after.status(begun.id).then((s) => [s.state, s.error]), ['failed', 'Pixel Reel was restarted while it was being written. Make it again.']);
+  });
+
+  it('is not begun when too many reels are waiting', async () => {
+    const full = new Reels({ store, record: fakeRecord, video: async () => {}, maxQueue: 0 });
+    await assert.rejects(full.begin('Your reel'), /busy recording/);
+  });
+});
+
 describe('make it right here, over HTTP', () => {
   const calls = [];
   let answers = [];
-  const writer = async (source, more = {}) => { calls.push([source, more]); const next = answers.shift() ?? tea; if (next instanceof Error) throw next; return next; };
+  const writer = async (source, more = {}) => { calls.push([source, more]); const next = await (answers.shift() ?? tea); if (next instanceof Error) throw next; return next; };
   const reels = new Reels({ store: new DiskStore(join(tmp, 'store')), record: fakeRecord, video: async () => {} });
   const limits = { tries: new RateLimit({ perHour: 1000, perDay: 1000 }) };
   const server = createService({ reels, baseUrl: 'https://reels.example', limits, writer, trustProxy: true });
@@ -244,30 +315,51 @@ describe('make it right here, over HTTP', () => {
     for (const id of looked) assert.ok(page.includes(` id="${id}"`), `the page has nothing called ${id}`);
   });
 
-  it('has Claude write the reel, starts recording it, and says where to watch', async () => {
+  /** Where the reel a request began has ended up, once it is written (or given up on) and recorded. */
+  const outcome = async (res) => {
+    assert.equal(res.status, 200);
+    const { id } = await res.json();
+    await server.written();
+    await reels.idle();
+    return reels.status(id);
+  };
+  const playOf = async (id) => (await fetch(`${local}/r/${id}/play.json`)).json();
+
+  it('says where to watch at once, and has Claude write the reel while the visitor waits there', async () => {
+    let release;
+    const held = new Promise((ok) => { release = ok; });
+    answers = [held.then(() => tea)];
     const res = await ask('  my gas\n bill ');
     assert.equal(res.status, 200);
     const { id, watch } = await res.json();
     assert.equal(watch, `/r/${id}`);
     assert.deepEqual(calls.at(-1), [words('my gas bill'), {}]);
+    // Claude has not answered yet, and the reel already has a page to wait on
+    assert.deepEqual(await reels.status(id).then((s) => [s.state, s.title]), ['writing', 'Your reel']);
+    const page = await fetch(`${local}${watch}`);
+    assert.equal(page.status, 200);
+    assert.match(await page.text(), /<h1 class="sr-only" id="watch-title">Your reel<\/h1>/);
+    assert.deepEqual(await playOf(id).then((p) => [p.state, p.title]), ['writing', 'Your reel']);
+    assert.equal((await fetch(`${local}${watch}/card.png`, { redirect: 'manual' })).status, 302, 'with nothing of its own to show in a message yet');
+    release();
+    await server.written();
     await reels.idle();
-    assert.equal((await reels.status(id)).state, 'ready');
-    assert.equal((await fetch(`${local}${watch}`)).status, 200);
+    const status = await reels.status(id);
+    assert.deepEqual([status.state, status.title, status.scenes], ['ready', 'Tea', 1], 'then it is a reel like any other, under its own name');
+    assert.equal((await playOf(id)).reel.title, 'Tea');
   });
 
   it('gives Claude one chance to put a reel right', async () => {
     answers = [{ title: 'No scenes' }, tea];
-    const res = await ask('tea');
-    assert.equal(res.status, 200);
+    assert.equal((await outcome(await ask('tea'))).state, 'ready');
     const [source, more] = calls.at(-1);
     assert.deepEqual(source, words('tea'));
     assert.deepEqual(more.before, { title: 'No scenes' });
     assert.ok(more.problems.some((p) => /scenes/.test(p)), 'it is told what was wrong');
     answers = [{ title: 'No scenes' }, { title: 'Still none' }];
-    const twice = await ask('tea');
-    assert.equal(twice.status, 502);
-    assert.match((await twice.json()).error, /could not write that reel/);
-    await reels.idle();
+    const twice = await outcome(await ask('tea'));
+    assert.equal(twice.state, 'failed');
+    assert.match(twice.error, /could not write that reel/);
   });
 
   it('takes writing, a PDF or a picture, and has Claude explain it', async () => {
@@ -278,6 +370,7 @@ describe('make it right here, over HTTP', () => {
     assert.deepEqual(calls.at(-1), [{ kind: 'pdf', data: PDF.toString('base64') }, {}]);
     assert.equal((await give('image/jpeg', JPEG)).status, 200);
     assert.deepEqual(calls.at(-1), [{ kind: 'picture', type: 'image/jpeg', data: JPEG.toString('base64') }, {}]);
+    await server.written();
     await reels.idle();
   });
 
@@ -300,11 +393,31 @@ describe('make it right here, over HTTP', () => {
     assert.equal(calls.length, before, 'and none of them reaches Claude');
   });
 
-  it('passes on in plain words why a reel could not be written', async () => {
+  it('says on the reel\'s page, in plain words, why it could not be written', async () => {
     answers = [new TryError('That page would not load.')];
     const res = await ask('https://example.com/gone');
-    assert.equal(res.status, 422);
-    assert.deepEqual(await res.json(), { error: 'That page would not load.' });
+    const { id } = await res.clone().json();
+    const status = await outcome(res);
+    assert.deepEqual([status.state, status.error], ['failed', 'That page would not load.']);
+    assert.deepEqual(await playOf(id).then((p) => [p.state, p.error]), ['failed', 'That page would not load.']);
+    answers = [new Error('something broke')];
+    assert.deepEqual(await outcome(await ask('tea')).then((s) => [s.state, s.error]), ['failed', 'Something went wrong. Try again in a while.'], 'and never what went wrong inside');
+  });
+
+  it('says there and then when a PDF is too long, or too much is waiting to be recorded', async () => {
+    const before = calls.length;
+    writer.fits = async () => { throw new TryError('That is too long for one reel.', { free: true }); };
+    const long = await give('application/pdf', PDF);
+    assert.equal(long.status, 422);
+    assert.deepEqual(await long.json(), { error: 'That is too long for one reel.' });
+    delete writer.fits;
+    const full = reels.maxQueue;
+    reels.maxQueue = 0;
+    const busy = await ask('tea');
+    reels.maxQueue = full;
+    assert.equal(busy.status, 422);
+    assert.match((await busy.json()).error, /busy recording/);
+    assert.equal(calls.length, before, 'and neither reaches Claude');
   });
 
   it('turns away anything but a short request from its own page', async () => {
@@ -327,6 +440,7 @@ describe('make it right here, over HTTP', () => {
     assert.equal(again.status, 429);
     assert.match((await again.json()).error, /^No more reels just now\. That is 1 in the last hour from here\. Try again in 60 minutes\.$/);
     assert.equal((await ask('tea', { 'x-forwarded-for': '203.0.113.10' })).status, 200, 'each visitor has their own hour');
+    await server.written();
     await reels.idle();
   });
 
@@ -334,11 +448,14 @@ describe('make it right here, over HTTP', () => {
     limits.tries = new RateLimit({ perHour: 1, perDay: 100 });
     const from = { 'x-forwarded-for': '203.0.113.20' };
     answers = [new TryError('Claude is busy just now. Try again in a minute.', { free: true })];
-    assert.equal((await ask('tea', from)).status, 422);
-    assert.equal((await ask('tea', from)).status, 200, 'Claude never read the first, so the visitor still has their one');
+    assert.equal((await outcome(await ask('tea', from))).state, 'failed');
+    assert.equal((await outcome(await ask('tea', from))).state, 'ready', 'Claude never read the first, so the visitor still has their one');
     answers = [new TryError('Claude would not write a reel about that.')];
-    assert.equal((await ask('tea', { 'x-forwarded-for': '203.0.113.21' })).status, 422);
+    assert.equal((await outcome(await ask('tea', { 'x-forwarded-for': '203.0.113.21' }))).state, 'failed');
     assert.equal((await ask('tea', { 'x-forwarded-for': '203.0.113.21' })).status, 429, 'one that Claude read and declined is counted');
-    await reels.idle();
+    writer.fits = async () => { throw new TryError('That is too long for one reel.', { free: true }); };
+    assert.equal((await give('application/pdf', PDF, { 'x-forwarded-for': '203.0.113.22' })).status, 422);
+    delete writer.fits;
+    assert.equal((await outcome(await ask('tea', { 'x-forwarded-for': '203.0.113.22' }))).state, 'ready', 'nor is a PDF that was too long to read');
   });
 });

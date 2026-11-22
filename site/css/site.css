@@ -146,6 +146,11 @@ h1 { font-size: clamp(2.6rem, 4.2vw + 1rem, 4.75rem); line-height: 1.06; letter-
 .reel-end .btn { width: auto; margin-block: var(--u) calc(var(--u) * 2); }
 .reel-big:hover { filter: brightness(1.06); }
 .reel-big[hidden] { display: none; }
+/* a reel that is still being made: its buttons are there, switched off, and its words have room for two lines */
+.reel-keys button:disabled { opacity: 0.4; pointer-events: none; }
+.reel.is-waiting .reel-words { min-height: 2lh; }
+.reel.is-sorry .reel-keys, .reel.is-sorry .reel-seek { display: none; }
+.reel.is-sorry .reel-cap { padding-bottom: 1.25rem; }
 .reel-big .ico { width: 1.4rem; height: 1.6rem; fill: currentColor; }
 .reel-seek { position: relative; height: 1.125rem; background: #22344f; border-block: var(--u) solid var(--frame); box-sizing: content-box; cursor: pointer; touch-action: none; }
 .reel-seek:focus-visible { outline-offset: 0; }
@@ -314,8 +319,10 @@ h1 { font-size: clamp(2.6rem, 4.2vw + 1rem, 4.75rem); line-height: 1.06; letter-
 .maker-here > .said { margin: 0 0 0.5rem; }
 .maker-here > .said:empty { min-height: 0; margin: 0 0 0.5rem; }
 /* why something could not be made: a notice of its own, not a line to miss */
-.said.sorry { margin: 0.5rem var(--u) 1.25rem; padding: 0.8rem 1.1rem 0.8rem calc(1.1rem + var(--u) * 2); max-width: none; background: var(--card);
-  box-shadow: inset calc(var(--u) * 2) 0 0 0 var(--red), 0 calc(var(--u) * -1) 0 0 var(--red), 0 var(--u) 0 0 var(--red), calc(var(--u) * -1) 0 0 0 var(--red), var(--u) 0 0 0 var(--red); }
+.said.sorry { display: flow-root; margin: 0.5rem var(--u) 1.25rem; padding: 0.8rem 1.1rem; max-width: none; background: var(--card);
+  box-shadow: 0 calc(var(--u) * -1) 0 0 var(--red), 0 var(--u) 0 0 var(--red), calc(var(--u) * -1) 0 0 0 var(--red), var(--u) 0 0 0 var(--red); }
+/* its mark sits beside the first words, and they go under it rather than be cut when there is no room beside */
+.said.sorry::before { content: '!'; content: '!' / ''; float: left; display: grid; place-items: center; width: 2rem; height: 2rem; margin: 0 0.9rem 0.1rem 0; font: 2rem/1 var(--pixel); letter-spacing: 0; color: #ffffff; background: var(--red); }
 .maker-here > .btn-big { width: calc(100% - var(--u) * 2); }
 .maker-drop { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; align-items: flex-start; margin: 1.25rem var(--u) 0; padding: 1.1rem 1.25rem 0.75rem; background: var(--tint);
   box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line); }
@@ -606,9 +613,10 @@ dialog { color: var(--ink); }
   .faq details p { padding: 0 1.1rem 1.1rem; }
 }
 
-/* on the narrowest phones the player's buttons are a touch smaller, to stay on one row */
+/* on the narrowest phones the player's buttons are a touch smaller, to stay on one row, and so is the make-one box's question */
 @media (max-width: 23.5rem) {
   .reel-keys button { font-size: 0.875rem; }
+  .maker > label { font-size: 1.125rem; }   /* so "explained?" fits the box at the biggest, widest letters */
 }
 
 /* ---------------------------------------------------------------- less motion, when asked */
