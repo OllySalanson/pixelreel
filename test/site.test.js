@@ -7,6 +7,7 @@ import { addToClaudeLink, EXAMPLES, NARRATORS, narratorsHtml, pageFacts, playerH
 import { staticFile } from '../service/static.mjs';
 import { hopHeight, lookAt, REELIE, SAYINGS, SCENES } from '../site/js/landscape.js';
 import { askFor } from '../site/js/maker.js';
+import { nowPlaying } from '../site/js/player.js';
 import { PACES, pacedClock, rateOf } from '../site/js/pace.js';
 import { lengthWords, showOf, waitingFor } from '../site/js/reels.js';
 import { rulerTop } from '../site/js/ruler.js';
@@ -551,6 +552,23 @@ describe('a reel that fills the screen', () => {
     assert.match(code, /aria-label', on \? 'Leave full screen' : 'Fill the screen'\)/);
     assert.match(code, /e\.key\.toLowerCase\(\) === 'f' && this\.fullKey\) this\.toggleFull\(\)/);
     assert.match(code, /e\.key === 'Escape' && this\.root\.classList\.contains\('is-filling'\)/);
+  });
+});
+
+describe('what a phone is told while a reel plays', () => {
+  const reel = parseReelJson(readFileSync(root('reels/gas-meter/reel.json'), 'utf8')), code = readFileSync(root('site/js/player.js'), 'utf8');
+
+  it('names the scene and the reel it is from, for the lock screen, with a picture the site serves', () => {
+    const told = nowPlaying(reel, 2);
+    assert.deepEqual([told.title, told.artist, told.album], [`3. ${reel.scenes[2].title}`, 'How to read your gas meter', 'Pixel Reel']);
+    assert.deepEqual(told.artwork.map((picture) => picture.sizes), ['192x192', '512x512']);
+    for (const picture of told.artwork) assert.ok(staticFile(picture.src), `${picture.src} is there to be shown`);
+  });
+
+  it('has the buttons on a lock screen and on headphones do what the player\'s own do', () => {
+    for (const name of ['play', 'pause', 'previoustrack', 'nexttrack']) assert.ok(code.includes(`button('${name}',`), name);
+    assert.match(code, /if \(!phone \|\| !window\.MediaMetadata\) return;/, 'and leaves alone a browser that has no such thing');
+    assert.match(code, /this\.tellPhone\(state\);/, 'told again whenever the scene, or playing, changes');
   });
 });
 

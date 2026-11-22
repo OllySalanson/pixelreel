@@ -15,6 +15,19 @@ const FRAME_MS = 50;                          // about 20 frames a second, as in
 const SILENCE = '/site/art/silence.mp3';
 const talkers = new Set();                    // everything on the page that can make a sound
 
+let onPhone = null;   // the player whose reel the phone shows on its lock screen: the one that played last
+
+/**
+ * What a phone shows on its lock screen, and a car or a watch beside it, while scene `index`
+ * of `reel` plays: the scene, the reel it is from, and Reelie.
+ */
+export const nowPlaying = (reel, index) => ({
+  title: `${index + 1}. ${reel.scenes[index].title}`,
+  artist: reel.title,
+  album: 'Pixel Reel',
+  artwork: [192, 512].map((size) => ({ src: `/site/art/icon-${size}.png`, sizes: `${size}x${size}`, type: 'image/png' }))
+});
+
 /** Quietens everything on the page that is talking, except `keep`. */
 export function hush(keep = null) {
   for (const talker of talkers) if (talker !== keep) talker.pause();
@@ -322,8 +335,38 @@ export class ReelPlayer {
       this.onEnd();
     }
     this.wasEnded = state.ended;
+    this.tellPhone(state);
     this.paintProgress();
     this.wake();
+  }
+
+  /**
+   * Tells the phone what is playing, for its lock screen and for the buttons on headphones:
+   * the reel and the scene, and what Play, Pause, Next and Back do. A phone shows one thing
+   * at a time, so it is the player that played last. A browser with no such thing is left alone.
+   */
+  tellPhone(state) {
+    const phone = navigator.mediaSession;
+    if (!phone || !window.MediaMetadata) return;
+    if (state.playing && onPhone !== this) {
+      onPhone = this;
+      this.told = null;
+      const button = (name, press) => { try { phone.setActionHandler(name, press); } catch { /* this phone has no such button */ } };
+      button('play', () => this.start());
+      button('pause', () => this.pause());
+      button('previoustrack', () => { this.intro = false; this.player.back(); });
+      button('nexttrack', () => {
+        this.intro = false;
+        if (!(this.player.index === this.player.count - 1 && this.onPast())) this.player.next();
+      });
+    }
+    if (onPhone !== this) return;
+    const scene = `${this.show.name} ${state.index}`;
+    if (scene !== this.told) {
+      this.told = scene;
+      phone.metadata = new window.MediaMetadata(nowPlaying(this.show.reel, state.index));
+    }
+    phone.playbackState = state.playing ? 'playing' : 'paused';
   }
 
   paintProgress() {
