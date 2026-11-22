@@ -580,6 +580,15 @@ html[data-paper="night"] .handset .px { filter: drop-shadow(var(--u) 0 0 var(--l
 .walk-words .row { margin-top: 0.5rem; }
 .walk-words .more { margin-top: 0; }
 .walk-small { font-size: 1.0625rem; color: var(--ink-soft); }
+/* a note to someone on a phone, under the big button: a picture, a few words and a way to send the page on */
+.walk-note { margin: 1.5rem var(--u) 0; padding: 1rem 1.1rem; background: var(--card);
+  box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line); }
+/* the words sit beside the picture while their longest one has room there, and go under it when it has not */
+.walk-note-words { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.5rem 1.1rem; }
+.walk-note-words p { flex: 1 1 12ch; }
+.walk-note .btn { margin-top: 0.9rem; }
+.walk-note .said { min-height: 0; margin-top: 0.25rem; }
+.walk-note .said:empty { display: none; }
 .walk-words .ask { margin-top: 1.1rem; }
 .box { padding: 1.25rem 1.4rem 1.4rem; }
 .box-title { font-size: 1.25rem; font-weight: 800; }
@@ -808,6 +817,8 @@ dialog { color: var(--ink); }
   h1 { font-size: 2.25rem; }   /* so "Credits" fits the page at the biggest, widest letters */
   .hero h1 { font-size: 2.5rem; }   /* and "Watch" the top of the home page */
   .menu-in, .comfort-in { padding: 1.125rem; }
+  .box { padding-inline: 0.9rem; }
+  .box-title { font-size: 1.0625rem; }   /* so "connector" fits the pretend box at the biggest, widest, roomiest letters */
   .pick span { padding-inline: 0.75rem; }   /* so "OpenDyslexic" fits Make it comfy when it is the one chosen, at the biggest size */
   h3 { font-size: 1.3125rem; }   /* so "explaining" fits its card at the biggest, widest letters */
   /* and so "anything?" fits beside its + in the first question, which was pushing the page wider than the screen */

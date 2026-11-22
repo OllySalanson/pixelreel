@@ -938,6 +938,38 @@ describe('getting the site onto a phone with no address to type', () => {
   });
 });
 
+describe('adding it to Claude from a phone', () => {
+  it('tells someone on a phone that a computer is easier at the first step, under the big button, not at the foot of the page', () => {
+    const first = html.claude.slice(html.claude.indexOf('<li class="walk-step">'), html.claude.indexOf('</li>', html.claude.indexOf('<li class="walk-step">')));
+    assert.match(first, /Open Claude and add it<\/a>[\s\S]*<div class="walk-note" data-on-phone hidden>[\s\S]*<strong>On a phone\?<\/strong> It is easiest to add it on a computer\./);
+    assert.match(first, /<\/div>\s*<canvas class="shot"/, "and the step's picture is still the step's");
+    assert.match(html.claude, /<li data-not-phone><svg[\s\S]*?<\/svg><p><strong>On a phone\?<\/strong>/, 'the note at the foot is for someone who is not on one');
+    const app = readFileSync(root('site/js/app.js'), 'utf8');
+    assert.match(app, /querySelectorAll\('\[data-on-phone\]'\)\) part\.hidden = device === 'computer';/);
+    assert.match(app, /querySelectorAll\('\[data-not-phone\]'\)\) part\.hidden = device !== 'computer';/);
+  });
+
+  it('offers to send the page to their computer, with words that say what the page is', async () => {
+    assert.match(html.claude, /<button class="btn btn-paper btn-small" type="button" data-send="Add Pixel Reel to Claude" data-words="How to add Pixel Reel to Claude\. It takes about a minute\." data-says="#claude-sent" hidden>Send it to my computer<\/button>\s*<p class="said" id="claude-sent" role="status"><\/p>/);
+    const shared = [];
+    assert.equal(await sendReel('Add Pixel Reel to Claude', 'https://reels.example/claude', { share: async (what) => { shared.push(what); }, words: 'How to add Pixel Reel to Claude.' }), 'shared');
+    assert.deepEqual(shared, [{ title: 'Add Pixel Reel to Claude', text: 'How to add Pixel Reel to Claude.', url: 'https://reels.example/claude' }], 'not "as a pixel reel. Press Play.", which it is not');
+    assert.match(readFileSync(root('site/js/send.js'), 'utf8'), /words: button\.dataset\.words \?\? null/);
+  });
+});
+
+describe('every page is put together whole', () => {
+  it('closes everything it opens', () => {
+    const tags = ['div', 'section', 'ul', 'ol', 'li', 'p', 'button', 'a', 'span', 'nav', 'figure', 'details', 'summary', 'dialog', 'form', 'fieldset', 'label', 'h1', 'h2', 'h3', 'svg', 'canvas', 'main', 'header', 'footer'];
+    for (const name of pages) {
+      for (const tag of tags) {
+        const opened = (html[name].match(new RegExp(`<${tag}[\\s>]`, 'g')) ?? []).length, closed = (html[name].match(new RegExp(`</${tag}>`, 'g')) ?? []).length;
+        assert.equal(opened, closed, `${name}: <${tag}> opened ${opened} times and closed ${closed}`);
+      }
+    }
+  });
+});
+
 describe('on Dark paper, which is chosen so that nothing dazzles', () => {
   const css = readFileSync(root('site/css/site.css'), 'utf8');
 

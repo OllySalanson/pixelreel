@@ -44,6 +44,10 @@ export function startApp() {
     steps.parentElement.prepend(steps);   // first, so nobody has to look for theirs
   }
 
+  // what is said only to someone on a phone or a tablet, and what is said only to someone who is not
+  for (const part of document.querySelectorAll('[data-on-phone]')) part.hidden = device === 'computer';
+  for (const part of document.querySelectorAll('[data-not-phone]')) part.hidden = device !== 'computer';
+
   // Pages are kept for when there is no internet: this one, and for someone who has Pixel
   // Reel on their home screen, every page it leads to, so that the whole of it is there.
   const keep = async (all) => {
