@@ -4,13 +4,13 @@
 // Pure: no DOM, so the same checks run in the browser, in the tools and in the tests.
 import { ICON_NAMES, PICTURES, SPRITE_MAX } from './pictures.js';
 import { PALETTE } from './palette.js';
-import { CAPTION_STYLES, normalizeReel, ReelError } from './reel.js';
+import { CAPTION_STYLES, LANGUAGES, normalizeReel, ReelError } from './reel.js';
 import { TRANSITIONS } from './transitions.js';
 
 /** The format a reel.json names in its "format" field. A new number means a change old readers cannot play. */
 export const REEL_FORMAT = 'pixelreel/1';
 
-const REEL_KEYS = ['format', 'title', 'intro', 'note', 'transition', 'captions', 'images', 'scenes'];
+const REEL_KEYS = ['format', 'title', 'intro', 'note', 'transition', 'captions', 'language', 'images', 'scenes'];
 const SCENE_KEYS = ['title', 'caption', 'say', 'picture', 'transition', 'captions'];
 
 /** What each ready-made picture shows, for people and agents choosing one. */
@@ -167,6 +167,7 @@ export function reelSchema() {
       note: { type: 'string', description: 'Small print under the player.' },
       transition: { enum: TRANSITIONS, default: 'cut', description: 'How every scene enters, unless it says otherwise.' },
       captions: { enum: CAPTION_STYLES, default: 'plain', description: 'Captions all at once, or typed out as the narrator speaks.' },
+      language: { enum: LANGUAGES, default: 'english', description: "The language the reel's words are written in. The player's own buttons and words are then in it too, and a browser reads it aloud in a voice of that language." },
       images: {
         type: 'object',
         description: 'Pictures the scenes can show, as name: path or URL.',

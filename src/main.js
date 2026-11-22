@@ -67,9 +67,10 @@ async function start() {
   const px = createKit(g, images);
   const dots = $('dots'), playBtn = $('play'), muteBtn = $('mute'), bigPlay = $('bigplay'), seek = $('seek');
   document.title = reel.title + ' - pixelreel';
-  // The player's own words, in the reel's language where whoever frames the player says which
-  // (data-language on the body, as a reel names it: french); otherwise in English.
-  const language = document.body.dataset.language, words = wordsFor(language);
+  // The player's own words, in the reel's language: the one the reel names, or the one whoever
+  // frames the player says (data-language on the body, named as a reel names it: french);
+  // otherwise in English.
+  const language = reel.language ?? document.body.dataset.language, words = wordsFor(language);
   // told to a screen reader, so that it reads the words as that language; and to the browser's own voice, if it has to read a line
   const code = LANG_CODES[language];
   if (code) document.documentElement.lang = code;

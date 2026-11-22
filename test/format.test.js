@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { parseReelJson, PICTURE_NOTES, REEL_FORMAT, reelFromData, reelSchema } from '../src/format.js';
 import { PICTURES } from '../src/pictures.js';
-import { CAPTION_STYLES, normalizeReel, ReelError } from '../src/reel.js';
+import { CAPTION_STYLES, LANGUAGES, normalizeReel, ReelError } from '../src/reel.js';
 import { TRANSITIONS } from '../src/transitions.js';
+import { WORDS } from '../src/words.js';
 
 const reel = (extra = {}) => ({
   format: REEL_FORMAT,
@@ -70,6 +71,16 @@ describe('reelFromData', () => {
       'scene 1: needs a caption',
       'scene 1: picture.type must be one of: title, list, terminal, code, chat, big, image, icons, flow, compare, sprite'
     ]);
+  });
+
+  it('lets a reel say which language it is written in, and keeps it for the player', () => {
+    const scenes = [{ title: 'Thé', caption: 'Du buisson à la tasse.' }];
+    assert.equal(reelFromData({ format: REEL_FORMAT, title: 'Le thé', language: 'french', scenes }).language, 'french');
+    assert.equal('language' in reelFromData({ format: REEL_FORMAT, title: 'Tea', scenes }), false, 'a reel that does not say is left as it was');
+    assert.deepEqual(reelSchema().properties.language.enum, LANGUAGES);
+    assert.deepEqual(LANGUAGES, Object.keys(WORDS), 'the languages the player has its own words for');
+    assert.throws(() => reelFromData({ format: REEL_FORMAT, title: 'Herbata', language: 'polish', scenes }),
+      (err) => err instanceof ReelError && /^language: must be one of 'english', 'french', .*; leave it out for any other language$/.test(err.problems[0]));
   });
 
   it('says plainly when it is not one object', () => {

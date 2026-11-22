@@ -33,7 +33,7 @@ describe('bundle', () => {
   it('takes each module once, after the ones it needs', () => {
     const script = bundle([src('format.js'), src('reel.js')]);
     const order = [...script.matchAll(/^__m\['([a-z]+\.js)'\]/gm)].map((m) => m[1]);
-    assert.deepEqual(order, ['icons.js', 'palette.js', 'pictures.js', 'transitions.js', 'reel.js', 'format.js']);
+    assert.deepEqual(order, ['icons.js', 'palette.js', 'pictures.js', 'transitions.js', 'words.js', 'reel.js', 'format.js']);
   });
 
   it('refuses forms of import and export it does not understand', () => {
@@ -158,7 +158,7 @@ describe('the Claude skill', () => {
     const bad = spawnSync(process.execPath, [join(dir, 'make-page.mjs'), join(dir, 'bad.json')], { encoding: 'utf8', cwd: dir });
     assert.equal(bad.status, 1);
     assert.equal(bad.stderr, 'This reel has problems. Fix them all, then run this again:\n' +
-      '- colour: a reel has format, title, intro, note, transition, captions, images, scenes, not colour\n' +
+      '- colour: a reel has format, title, intro, note, transition, captions, language, images, scenes, not colour\n' +
       '- scene 1: needs a caption\n- scene 1: picture.text is needed for a big picture\n');
   });
 });

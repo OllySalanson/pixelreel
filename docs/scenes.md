@@ -36,6 +36,7 @@ export default {
 | `note` | no | Small print under the player: credits, a link. |
 | `transition` | no | How every scene enters, unless it says otherwise. Default `'cut'`. See [Transitions](#transitions). |
 | `captions` | no | `'plain'` (the default) or `'typewriter'`. See [Typewriter captions](#typewriter-captions). |
+| `language` | no | The language the reel's words are in: `'english'` (the default), `'french'`, `'german'`, `'spanish'`, `'italian'`, `'portuguese'` or `'dutch'`. The player's own buttons and words are then in it too, and a browser reads it aloud in a voice of that language. Leave it out for any other language. |
 | `images` | no | Pictures the scenes can show, as `name: 'path'`, relative to the reel's folder. |
 
 `npm run new my-reel` writes a starter file; `npm run new my-reel -- --from notes.md` writes

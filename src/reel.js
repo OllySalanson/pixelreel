@@ -2,6 +2,7 @@
 // Pure: no DOM, so the same checks run in the browser, in the tools and in the tests.
 import { drawPicture, pictureProblems } from './pictures.js';
 import { TRANSITIONS } from './transitions.js';
+import { LANG_CODES } from './words.js';
 
 /** A reel name doubles as its folder name under reels/, so keep it URL- and file-safe. */
 export const REEL_NAME = /^[a-z0-9][a-z0-9-]{0,63}$/;
@@ -17,12 +18,15 @@ export class ReelError extends Error {
 /** How captions appear: all at once, or typed out as the narrator speaks. */
 export const CAPTION_STYLES = ['plain', 'typewriter'];
 
+/** The languages a reel can say it is written in: the ones the player has its own words for (words.js). */
+export const LANGUAGES = Object.keys(LANG_CODES);
+
 const isText = (v) => typeof v === 'string' && v.trim() !== '';
 const oneOf = (list) => list.map((v) => `'${v}'`).join(', ');
 
 /**
  * Returns a clean copy of `raw`:
- *   { title, intro, note, transition, captions, images: { name: url },
+ *   { title, intro, note, transition, captions, language, images: { name: url },
  *     scenes: [{ title, caption, say, draw, transition, captions }] }
  * `base` is put in front of relative image paths (the reel's folder, for example
  * "reels/my-reel/"). Throws a ReelError listing every problem found, not just the first.
@@ -38,6 +42,7 @@ export function normalizeReel(raw, { base = '' } = {}) {
   const transition = raw.transition ?? 'cut', captions = raw.captions ?? 'plain';
   if (!TRANSITIONS.includes(transition)) problems.push(`transition: must be one of ${oneOf(TRANSITIONS)}`);
   if (!CAPTION_STYLES.includes(captions)) problems.push(`captions: must be one of ${oneOf(CAPTION_STYLES)}`);
+  if (raw.language !== undefined && !LANGUAGES.includes(raw.language)) problems.push(`language: must be one of ${oneOf(LANGUAGES)}; leave it out for any other language`);
 
   const images = {};
   if (raw.images !== undefined) {
@@ -90,6 +95,7 @@ export function normalizeReel(raw, { base = '' } = {}) {
     captions,
     images,
     scenes,
+    ...(raw.language ? { language: raw.language } : {}),   // only a reel that says: the player then speaks it too
     // the kind of picture it opens on, so the big Play button can keep off a title's words
     opens: raw.scenes[0].picture?.type ?? (typeof raw.scenes[0].draw === 'function' ? 'drawing' : 'card')
   };

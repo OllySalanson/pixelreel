@@ -73,13 +73,19 @@ What to put in, by what you are given:
 ```
 
 The reel: `format` (always `"pixelreel/1"`), `title`, `scenes`, and optionally `intro` (shown
-before Play), `note` (small print under the player), `transition` and `captions`.
+before Play), `note` (small print under the player), `transition`, `captions` and `language`.
 
 A scene: `title`, `caption`, and optionally `say`, `picture`, `transition` and `captions`.
 Any other field is an error. There is no drawing code: every picture is a ready-made one.
 
 `transition` is one of `cut` (default), `fade`, `dissolve`, `wipe`, `slide`, `blinds`, `iris`,
 `flash` or `star`. `captions` is `plain` (default) or `typewriter`.
+
+`language` is the language the reel is written in: `english` (default), `french`, `german`,
+`spanish`, `italian`, `portuguese` or `dutch`. Write the reel in the language the person
+writes to you in, every word of it, and say which with `language`: the player's buttons are
+then in that language too, and it is read aloud in a voice of that language, not an English
+one. For any other language, write the reel in it and leave `language` out.
 
 ### Pictures
 
