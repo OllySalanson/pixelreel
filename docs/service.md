@@ -97,7 +97,7 @@ the reel, which plays as soon as the voice is recorded: about as long as the ree
 | --- | --- | --- |
 | `reel_format` | The full guide to writing a reel: what makes a good one, every picture and icon, how to draw a sprite, and a finished reel to learn from. | read-only |
 | `make_reel` | Checks a reel and starts recording it. Its input is the [reel.json format](scenes.md#a-reel-as-data-reeljson) as a JSON Schema. A reel with problems comes back as a tool error listing every one, for Claude to fix. | |
-| `get_reel` | Says whether a reel is waiting, being recorded, ready or failed, with its links. | read-only |
+| `get_reel` | Says whether a reel is waiting, being recorded, ready or failed, with its links and its scenes. | read-only |
 | `get_reel_video` | Asks for a ready reel's MP4 and gives its link once it is made. | |
 | `delete_reel` | Deletes a reel, its recordings and its video at once. | destructive |
 
@@ -137,6 +137,9 @@ Read what it wrote, how many tries it took, and what it said to the person after
   lines are read again. It is a new reel with a link of its own; the earlier one stays
   until it is deleted, as someone may have been sent its link. It works even when the
   change is asked for before the first reel has finished recording.
+- **A reel can be changed from another chat.** There, Claude has only the reel's link.
+  Every tool that takes a reel takes its id or its link, and `get_reel` gives the reel's
+  scenes as they were written, so Claude can change them and send them back.
 
 ### Ready-made things to ask for
 

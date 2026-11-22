@@ -34,8 +34,27 @@ const ID_INPUT = {
   type: 'object',
   additionalProperties: false,
   required: ['id'],
-  properties: { id: { type: 'string', description: 'The reel id that make_reel gave.' } }
+  properties: { id: { type: 'string', description: "The reel's id, as make_reel gave it, or the reel's link." } }
 };
+
+/** A reel's id from what a person or Claude has to hand: the id itself, or the reel's link (https://.../r/<id>, with or without more after it). */
+export function reelId(given) {
+  const said = typeof given === 'string' ? given.trim() : '';
+  return /\/r\/([A-Za-z0-9_-]{22})(?:[/?#]|$)/.exec(said)?.[1] ?? said;
+}
+
+/** A kept reel as make_reel takes it: without the timings the service gave its pictures. */
+function asWritten(raw) {
+  return {
+    ...raw,
+    scenes: raw.scenes.map((scene) => {
+      if (!scene.picture) return scene;
+      const picture = { ...scene.picture };
+      for (const key of TIMING) delete picture[key];
+      return { ...scene, picture };
+    })
+  };
+}
 
 /** What Claude is told when it connects, and at the top of make_reel: when a reel is wanted, and how to hand it over. */
 const WHEN = 'Use it when someone asks for a pixel reel, or wants something explained so they can watch instead of read: ' +
@@ -88,7 +107,7 @@ function reelInput(languages = [], narrators = []) {
   }
   reel.properties.improves = {
     type: 'string',
-    description: 'To change a reel you made: the id of that reel. Send the whole reel again with the changes; the lines you leave word for word as they were keep their recordings, so it is ready sooner.'
+    description: 'To change a reel: the id of that reel, or its link. Send the whole reel again with the changes; the lines you leave word for word as they were keep their recordings, so it is ready sooner. If you do not have its scenes (it was made in another chat), get_reel gives them.'
   };
   return reel;
 }
@@ -134,7 +153,7 @@ export function toolList(languages = [], narrators = []) {
     {
       name: 'get_reel',
       title: 'Check on a pixel reel',
-      description: 'Says whether a reel is still being recorded, ready to watch, or failed, with its links. Only for when the person asks: a reel plays by itself once it is ready.',
+      description: 'Says whether a reel is still being recorded, ready to watch, or failed, with its links and its scenes. Takes the reel\'s id or its link. For when the person asks how a reel is getting on, or gives you the link of one to change: a reel you have just made plays by itself, so there is no need to check on it.',
       inputSchema: ID_INPUT,
       annotations: { title: 'Check on a pixel reel', readOnlyHint: true, openWorldHint: false },
       _meta: SHOWS_PLAYER
@@ -241,7 +260,7 @@ export function formatGuide(languages = [], narrators = []) {
       'Draw one only to show the thing itself (the numbers on a meter, a volcano), 12 to 24 pixels across, outlined in k, with every row the same length. If nobody would know what it is, use icons instead.',
     '',
     'Transitions: cut (default), fade, dissolve, wipe, slide, blinds, iris, flash, star. One for the whole reel is plenty.',
-    'To change a reel you made, call make_reel again with the whole reel and "improves" set to the earlier reel\'s id. Lines left word for word as they were keep their recordings, so change only what was asked for.',
+    'To change a reel, call make_reel again with the whole reel and "improves" set to the earlier reel\'s id or link. Lines left word for word as they were keep their recordings, so change only what was asked for. For a reel from another chat, where you have only its link, get_reel gives its scenes.',
     `Limits here: at most ${LIMITS.scenes} scenes, ${LIMITS.sayWords} spoken words and ${LIMITS.captionChars} caption characters a scene, ${LIMITS.listItems} items in a picture, under ${LIMITS.minutes} minutes in all, and no images from elsewhere.`,
     `Reels are kept for ${KEEP_DAYS} days, unlisted: only people with the link can watch.`,
     '',
@@ -323,6 +342,7 @@ export function createMcpServer({ reels, baseUrl, client = 'local', limits = nul
   });
   server.setRequestHandler(CallToolRequestSchema, async ({ params }) => {
     const args = params.arguments ?? {};
+    const id = reelId(args.id);   // the tools that take a reel take its id or its link
     switch (params.name) {
       case 'reel_format':
         return text(formatGuide(languages, narrators));
@@ -335,7 +355,7 @@ export function createMcpServer({ reels, baseUrl, client = 'local', limits = nul
           const { improves, language, narrator, ...reel } = args;
           const word = (value) => (typeof value === 'string' ? value : null);
           const made = await reels.create(reel.format === undefined ? { format: REEL_FORMAT, ...reel } : reel,
-            { improves: word(improves), language: word(language), narrator: word(narrator) });
+            { improves: word(improves) && reelId(improves), language: word(language), narrator: word(narrator) });
           limits?.reels.count(client);   // only a reel that is made counts: one sent back to be fixed does not
           return describe(made, baseUrl);
         } catch (err) {
@@ -345,25 +365,31 @@ export function createMcpServer({ reels, baseUrl, client = 'local', limits = nul
         }
       }
       case 'get_reel': {
-        const status = await reels.status(args.id);
-        return status ? describe(status, baseUrl) : failure(`There is no reel with the id "${args.id}". It may have been deleted, or kept past its ${KEEP_DAYS} days.`);
+        const status = await reels.status(id);
+        if (!status) return failure(`There is no reel with the id "${id}". It may have been deleted, or kept past its ${KEEP_DAYS} days.`);
+        const result = describe(status, baseUrl), raw = status.scenes ? await reels.reel(id) : null;
+        if (!raw) return result;
+        // its scenes too, so a reel from another chat can be changed: Claude has only its link to go on there
+        const reel = asWritten(raw);
+        const words = `${result.content[0].text}\nTo change it, send these scenes to make_reel with your changes and "improves": "${id}":\n${JSON.stringify(reel)}`;
+        return told(words, { ...result.structuredContent, reel });
       }
       case 'get_reel_video': {
-        const before = await reels.status(args.id);
+        const before = await reels.status(id);
         if (before?.state === 'ready' && (before.video === 'none' || before.video === 'failed')) {
           const refused = limits?.videos.hit(client);
           if (refused) return failure(`No more videos for now. ${refused}`);
         }
-        const status = await reels.requestVideo(args.id);
-        if (!status) return failure(`There is no reel with the id "${args.id}".`);
+        const status = await reels.requestVideo(id);
+        if (!status) return failure(`There is no reel with the id "${id}".`);
         if (status.state === 'failed') return failure(`"${status.title}" could not be made, so it has no video.`);
         if (status.state !== 'ready') return text(`"${status.title}" is still being recorded. Ask for the video once it is ready.`);
         if (status.video === 'ready') return told(`The video of "${status.title}" is ready: ${links(baseUrl, status.id).video}`, { id: status.id, video: links(baseUrl, status.id).video });
         return text(`The video of "${status.title}" is being made. It takes about a minute; ask again for the link.`);
       }
       case 'delete_reel':
-        return (await reels.remove(args.id)) ? text('Deleted. The reel, its recordings and its video are gone, and its links no longer work.')
-          : failure(`There is no reel with the id "${args.id}".`);
+        return (await reels.remove(id)) ? text('Deleted. The reel, its recordings and its video are gone, and its links no longer work.')
+          : failure(`There is no reel with the id "${id}".`);
       default:
         return failure(`There is no tool called ${params.name}.`);
     }
