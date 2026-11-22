@@ -8,7 +8,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { reelFromData } from '../src/format.js';
 import { clipLookup, ReelError } from '../src/reel.js';
-import { limitProblems, reelMs } from './limits.mjs';
+import { staysAhead } from './ahead.mjs';
+import { limitProblems, peterMs, reelMs } from './limits.mjs';
 import { paceReel } from './pacing.mjs';
 import { narrationMs, timeline } from '../src/timing.js';
 
@@ -36,12 +37,13 @@ export const isId = (id) => typeof id === 'string' && ID.test(id);
 
 /**
  * A recorder: records the voice for the reel in folder `dir`, with npm run voices (Pocket TTS,
- * voice peter_yearsley), telling `onLine(done, of)` as each line is recorded. With a
- * `speaker` (a WarmVoice's, service/voice.mjs) the lines are spoken by a voice kept loaded.
+ * voice peter_yearsley), telling `onLine(done, of, clip)` as each line is recorded: how many
+ * are done of how many, and the recording ({ text, file, seconds }), by then in the folder's
+ * audio/. With a `speaker` (a WarmVoice's, service/voice.mjs) the lines are spoken by a voice kept loaded.
  */
 export const recordWith = (speaker = null) => async (dir, log, onLine) => {
   const { main } = await import('../scripts/voices.mjs');
-  await main([dir], { log, onClip: (_clip, { done, of }) => onLine(done, of), ...(speaker ? { speaker } : {}) });
+  await main([dir], { log, onClip: (clip, { done, of }) => onLine(done, of, clip), ...(speaker ? { speaker } : {}) });
 };
 
 /** Draws a reel's own picture for link previews, from its reel.json, parsed. Resolves to a PNG. */
@@ -60,7 +62,7 @@ export class Reels {
   /**
    * @param {object} options
    * @param {import('./store.mjs').DiskStore} options.store   where reels are kept
-   * @param {(dir: string, log: Function, onLine: (done: number, of: number) => void) => Promise<void>} [options.record]   records a folder's voices, saying as each line is done
+   * @param {(dir: string, log: Function, onLine: (done: number, of: number, clip?: object) => void) => Promise<void>} [options.record]   records a folder's voices, saying as each line is done
    * @param {(dir: string, out: string) => Promise<void>} [options.video]   draws a folder's reel as an MP4
    * @param {(raw: object) => Promise<Uint8Array>} [options.picture]   draws a reel's picture for link previews, as a PNG
    */
@@ -253,6 +255,30 @@ export class Reels {
     }
   }
 
+  /**
+   * What a player can have of a reel whose voice is still being recorded, so it need not wait
+   * for the last line: the reel with its pictures timed (to each line's recording, or to a
+   * guess at it), the recordings so far, a guess at how long each line still to come will
+   * last (`guesses`), and `playable`: whether a player that starts now would stay behind
+   * the recorder (ahead.mjs). Null until there is a recording to play.
+   */
+  async early(id) {
+    const status = await this.status(id);
+    const manifest = status?.state === 'recording' ? await this.manifest(id) : null;
+    if (!manifest?.clips?.length) return null;
+    const raw = await this.reel(id), reel = reelFromData(raw), clipFor = clipLookup(manifest);
+    const lines = reel.scenes.map((scene) => {
+      const clip = clipFor(scene);
+      return { text: scene.say, seconds: clip?.seconds || peterMs(scene.say) / 1000, ready: Boolean(clip) };
+    });
+    // how long the recorder has taken over each second of speech so far, and how long it has been at the line in hand
+    const pace = status.spoken > 0 ? (status.spokenAt - status.since) / 1000 / status.spoken : NaN;
+    const spent = (this.now() - (status.spokenAt ?? status.since ?? this.now())) / 1000;
+    const timed = paceReel(raw, { clips: lines.map((line) => ({ text: line.text, file: 'guess', seconds: line.seconds })) });
+    const guesses = lines.filter((line) => !line.ready).map(({ text, seconds }) => ({ text, seconds: Math.round(seconds * 100) / 100 }));
+    return { reel: timed, clips: manifest.clips, guesses, playable: staysAhead(lines, pace, { spent }) };
+  }
+
   /** Asks for a reel's MP4. Does nothing if it is made, being made, or the voice is not ready yet. */
   async requestVideo(id) {
     const status = await this.status(id);
@@ -360,9 +386,24 @@ export class Reels {
     try {
       if (kind === 'voice') {
         await this.update(id, { state: 'recording' });
-        // how far the recording has got, for whoever is waiting to watch: kept one after another, so none lands after "ready"
+        // How far the recording has got, for whoever is waiting to watch; and each line's recording
+        // as it is made, with how fast they are coming, so a player can start before the last one
+        // (early). Kept one after another, so none lands after "ready".
         let progress = Promise.resolve();
-        const onLine = (done, of) => { progress = progress.then(() => this.update(id, { recorded: done, lines: of })).catch(() => {}); };
+        const since = this.now(), sofar = [...((await this.manifest(id))?.clips ?? [])];   // a change to an earlier reel starts with the lines it kept
+        let spoken = 0;
+        const onLine = (done, of, clip = null) => {
+          progress = progress.then(async () => {
+            if (!(await this.status(id))) return;   // deleted meanwhile: nothing of it is put back
+            if (clip?.file && clip.seconds > 0) {
+              await this.store.put(`reels/${id}/audio/${clip.file}`, await readFile(join(dir, 'audio', clip.file)));
+              sofar.push({ text: clip.text, file: clip.file, seconds: clip.seconds });
+              spoken += clip.seconds;
+              await this.store.put(`reels/${id}/audio/manifest.json`, JSON.stringify({ clips: sofar }));
+            }
+            await this.update(id, { recorded: done, lines: of, since, spoken, spokenAt: this.now() });
+          }).catch((err) => this.log(`${id}: could not note line ${done}: ${err.stack ?? err}`));
+        };
         try {
           try {
             await this.record(dir, (line) => this.log(`${id}: ${line}`), onLine);
@@ -378,10 +419,10 @@ export class Reels {
           await this.store.put(`reels/${id}/reel.json`, JSON.stringify(raw));
           const reel = reelFromData(raw), clipFor = clipLookup(manifest);
           const seconds = Math.round(timeline(reel.scenes.map((s) => narrationMs(s, clipFor(s)))).total / 1000);
-          await this.update(id, { state: 'ready', seconds, recorded: undefined, lines: undefined });
+          await this.update(id, { state: 'ready', seconds, recorded: undefined, lines: undefined, since: undefined, spoken: undefined, spokenAt: undefined });
         } catch (err) {
           this.log(`${id}: recording failed: ${err.stack ?? err}`);
-          await this.update(id, { state: 'failed', error: 'The voice could not be recorded. Try again in a while.', recorded: undefined, lines: undefined });
+          await this.update(id, { state: 'failed', error: 'The voice could not be recorded. Try again in a while.', recorded: undefined, lines: undefined, since: undefined, spoken: undefined, spokenAt: undefined });
         }
       } else {
         await this.update(id, { video: 'making' });

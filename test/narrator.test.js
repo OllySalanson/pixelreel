@@ -166,4 +166,45 @@ describe('createNarrator', () => {
     mock.timers.tick(estimateSpeechMs(scenes[1].say) - 1000);
     assert.equal(done, 1);
   });
+  it('waits for a recording that is on its way, rather than read the line in another voice', () => {
+    const audio = fakeAudio(), speech = fakeSpeech(), have = new Map([[scenes[0], { url: 'audio/a.mp3', seconds: 6 }]]);
+    const more = true;
+    let arrived = 0, done = 0;
+    const n = createNarrator({ scenes, clipFor: (s) => have.get(s) ?? null, audio, speech, Utterance, expecting: (s) => more && !have.has(s), onArrive: () => arrived++ });
+    const said = n.speak(1, { muted: false, from: 2000 }, () => done++);
+    assert.equal(n.lastSource, 'waiting');
+    assert.equal(said.from, 0, 'when it comes it will be said from the top');
+    mock.timers.tick(250);
+    mock.timers.tick(250);
+    assert.deepEqual([speech.spoken.length, audio.loads, arrived], [0, 0, 0], 'nothing is said meanwhile');
+    have.set(scenes[1], { url: 'audio/b.mp3', seconds: 4 });
+    mock.timers.tick(250);
+    assert.deepEqual([n.lastSource, audio.src, audio.paused, arrived], ['clip', 'audio/b.mp3', false, 1]);
+    audio.onended();
+    assert.equal(done, 1);
+  });
+
+  it('stops waiting when told to, and reads the line itself if the recording is not coming after all', () => {
+    const audio = fakeAudio(), speech = fakeSpeech();
+    let more = true, done = 0;
+    const n = createNarrator({ scenes, clipFor, audio, speech, Utterance, expecting: (s) => more && !clipFor(s) });
+    n.speak(1, { muted: false }, () => done++).stop();
+    mock.timers.tick(1000);
+    assert.deepEqual([speech.spoken.length, audio.loads, done], [0, 0, 0], 'stopped while waiting: nothing is ever said');
+
+    const waiting = n.speak(1, { muted: false }, () => done++);
+    mock.timers.tick(250);
+    more = false;   // the recorder has finished, and there is still none for this line
+    mock.timers.tick(250);
+    assert.equal(n.lastSource, 'browser-voice');
+    assert.equal(speech.spoken[0].text, scenes[1].say);
+    waiting.stop();
+    assert.equal(speech.cancelled >= 1, true, 'and stopping it stops that voice too');
+
+    n.speak(1, { muted: true }, () => done++);
+    assert.equal(n.lastSource, 'muted', 'with the sound off there is nothing to wait for');
+    assert.equal(createNarrator({ scenes, clipFor, audio, speech, Utterance }).speak(1, { muted: false }, () => {}).from, 0);
+    assert.equal(n.speak(0, { muted: false }, () => {}).from, 0, 'a scene that has its recording is said at once');
+    assert.equal(n.lastSource, 'clip');
+  });
 });
