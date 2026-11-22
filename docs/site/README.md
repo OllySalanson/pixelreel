@@ -1359,3 +1359,19 @@ moves the mark) is not known until it is tried on a real phone and a real comput
 | The privacy page being read, and the button on a phone |
 | --- |
 | ![The privacy page with two buttons under its heading: Make a pixel reel about this, and Stop reading. The heading "What it keeps" has an edge round it. Beside it, the page that adds Pixel Reel to Claude on a phone, with the button Read this page to me.](log/v58-read-this-page.jpg) |
+
+### Version 59
+
+- **The reel about making a reel says what the make page now does.** "Make a pixel reel
+  about this", beside "Make a pixel reel now" on the home page, plays a reel that still
+  described the old form, and described it as being on the page it was playing on: "Give
+  this box anything wordy", "Drop a file anywhere on this page", "your reels are listed
+  here". There has been no box on the home page since Version 42. Its third scene is now
+  "One big box": "On the make page there is one big box. Copy a link, press Paste, and in
+  it goes. Or type a question. Or, for a letter, take a photo of it." Its first and last
+  scenes say "Pixel Reel" and "on the make page" where they said "this box" and "here".
+- The reel for where the page only writes the words for Claude (`site-make`) had the same
+  fault in one line, "the box on this page", and has the same cure.
+- Four lines were recorded again by Peter. A speech-to-text model heard each one say
+  exactly what is written, and gave the moment each word is said, which is what the
+  pictures' items are now timed to. Nobody has listened to them.
