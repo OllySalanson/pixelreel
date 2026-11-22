@@ -826,6 +826,14 @@ html[data-aloud="on"] :is(h1, h2, h3, p, li, summary, dt, dd, figcaption):not(:i
   .on-paper:not([hidden]) { display: block; }
 }
 
+/* ---------------------------------------------------------------- a phone held on its side */
+/* Wider than it is tall, and short: a player in the page is no taller than the screen under
+   the bar, so its whole picture and its Play button can be seen. Played, it fills the screen
+   (player.js). */
+@media (orientation: landscape) and (max-height: 500px) {
+  .hero-reel .reel, .way-watch .reel { width: min(100%, calc((100svh - 6.5rem) * 16 / 9)); margin-inline: auto; }
+}
+
 /* ---------------------------------------------------------------- smaller screens */
 @media (max-width: 68rem) {
   .top-nav { display: none; }

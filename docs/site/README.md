@@ -44,8 +44,8 @@ People who find reading hard work. Every choice follows from that:
 - **A place kept in the words.** Where every word is written, the sentence being said is
   gold as it is said, so nobody has to hunt for where the voice has got to.
 - **As big as the screen.** Every player has a button in the corner of its picture that
-  fills the whole screen with the reel, for anyone who needs it large, or is watching on a
-  phone held on its side.
+  fills the whole screen with the reel, for anyone who needs it large. On a phone held on
+  its side, pressing Play fills the screen without being asked.
 - **On paper, too.** Under a reel, every scene is laid out on one page: its picture and its
   few words. Print it, and how to read the gas meter is on the fridge. The paper carries the
   reel's own QR code, so pointing a phone at the fridge has it read out.
@@ -1418,3 +1418,27 @@ too wide at any of the 27 settings.
 | On a computer, and on a phone |
 | --- |
 | ![Make a pixel reel now, with its two buttons, and under them four cards: A link, A letter, A photo, A question, each with a picture. Beside it, the same on a phone, the cards one under the other.](log/v62-what-it-takes.jpg) |
+
+### Version 63
+
+Turned a phone on its side, which is how a good many people watch anything.
+
+- **The player did not fit.** On a phone on its side the player at the top of the home page
+  was 623 pixels tall on a screen 390 high: the picture ran off the bottom, and its Play
+  button with it. A player in the page is now no taller than the screen there.
+- **Play fills the screen.** With the phone on its side there is no room for a reel with
+  its words and its buttons under it. So the press that plays a reel also fills the screen
+  with it, laid out as the corner button lays it out: picture, words and buttons together.
+  That goes for the big Play button on the home page and on a reel's own page, and for a
+  reel that opens over the page from "Make a pixel reel about this". The corner button, or
+  closing the reel, gives the page back.
+- **Not on a computer.** A small, wide window on a computer is not a phone: with a mouse,
+  Play only plays.
+
+Tried in the headless browser at the size of a phone on its side (844 by 390, and 667 by
+375), where it did fill the screen. A real phone turns its own screen and has its own bars
+top and bottom, and that has not been tried.
+
+| A phone on its side: the player at the top of the home page, and after Play |
+| --- |
+| ![The home page on a phone held on its side: the player's whole picture with its Play button, under the bar. Beside it, after Play: the reel fills the screen, with its words and its buttons along the bottom.](log/v63-on-its-side.jpg) |
