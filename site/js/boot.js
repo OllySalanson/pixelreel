@@ -4,7 +4,7 @@
   const root = document.documentElement;
   try {
     const saved = JSON.parse(localStorage.getItem('pixelreel-comfort') || '{}');
-    for (const key of ['font', 'size', 'space', 'paper', 'motion', 'pace', 'words']) {
+    for (const key of ['font', 'size', 'space', 'paper', 'motion', 'pace', 'words', 'ruler']) {
       if (typeof saved[key] === 'string' && /^[a-z0-9]{1,16}$/.test(saved[key])) root.dataset[key] = saved[key];
     }
   } catch {

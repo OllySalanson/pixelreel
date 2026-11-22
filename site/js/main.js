@@ -3,6 +3,7 @@
 import { startComfort } from './comfort.js';
 import { startCopying, startMaker } from './maker.js';
 import { ReelPlayer } from './player.js';
+import { startRuler } from './ruler.js';
 import { startScenes } from './scenery.js';
 import { startSending } from './send.js';
 import { startShots } from './shots.js';
@@ -11,6 +12,7 @@ import { startHearing, startTheatre } from './theatre.js';
 import { startWatching } from './watch.js';
 
 startComfort();
+startRuler();
 startScenes();
 startShots();
 startTheatre();

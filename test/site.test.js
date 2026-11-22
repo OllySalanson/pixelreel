@@ -9,6 +9,7 @@ import { hopHeight, lookAt, REELIE, SAYINGS, SCENES } from '../site/js/landscape
 import { askFor } from '../site/js/maker.js';
 import { PACES, pacedClock, rateOf } from '../site/js/pace.js';
 import { lengthWords, showOf } from '../site/js/reels.js';
+import { rulerTop } from '../site/js/ruler.js';
 import { sendReel, sentWords } from '../site/js/send.js';
 import { SPRITES } from '../site/js/sprites.js';
 import { parseReelJson } from '../src/format.js';
@@ -413,6 +414,23 @@ describe('passing a reel on', () => {
   });
 });
 
+describe('the reading ruler', () => {
+  it('sits with its middle on the pointer, and never off the screen', () => {
+    assert.equal(rulerTop(400, 80, 800), 360);
+    assert.equal(rulerTop(5, 80, 800), 0, 'at the top');
+    assert.equal(rulerTop(799, 80, 800), 720, 'at the foot');
+  });
+
+  it('is on every page, out of sight and off until it is chosen in Make it comfy', () => {
+    for (const name of pages) {
+      assert.match(html[name], /<div class="ruler" aria-hidden="true" hidden><\/div>/, name);
+      const picks = [...html[name].matchAll(/<input type="radio" name="ruler" value="([a-z]+)"( checked)?>/g)].map((found) => [found[1], Boolean(found[2])]);
+      assert.deepEqual(picks, [['off', true], ['on', false]], name);
+    }
+    assert.match(readFileSync(root('site/css/site.css'), 'utf8'), /\.ruler \{[^}]*pointer-events: none;/, 'and nothing can press it, so it never gets in the way of a press');
+  });
+});
+
 describe("Peter's pace", () => {
   it('has a slower and a quicker rate either side of the usual one', () => {
     assert.ok(PACES.slow < 1 && PACES.usual === 1 && PACES.quick > 1);
@@ -500,7 +518,7 @@ describe('before the page is drawn', () => {
   };
 
   it('puts back the comfort settings chosen last time, and nothing odd', () => {
-    assert.deepEqual(boot({ saved: '{"font":"opendyslexic","size":"3","paper":"<b>","colour":"red","pace":"slow","words":"all"}' }).page.html.dataset, { font: 'opendyslexic', size: '3', pace: 'slow', words: 'all' });
+    assert.deepEqual(boot({ saved: '{"font":"opendyslexic","size":"3","paper":"<b>","colour":"red","pace":"slow","words":"all","ruler":"on"}' }).page.html.dataset, { font: 'opendyslexic', size: '3', pace: 'slow', words: 'all', ruler: 'on' });
     assert.deepEqual(boot({ saved: 'not json' }).page.html.dataset, {});
   });
 

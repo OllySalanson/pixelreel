@@ -526,6 +526,13 @@ dialog { color: var(--ink); }
 .pick-paper input:checked + span { box-shadow: 0 calc(var(--u) * -1) 0 0 var(--line), 0 var(--u) 0 0 var(--line), calc(var(--u) * -1) 0 0 0 var(--line), var(--u) 0 0 0 var(--line), 0 calc(var(--u) * 3) 0 0 var(--gold-lip); font-weight: 700; }
 .comfort-reset { justify-self: start; padding: 0.25rem 0; font-weight: 500; background: none; border: 0; text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; }
 
+/* ---------------------------------------------------------------- the reading ruler */
+/* A clear band about two and a half lines deep, edged like a ruler, with everything round it
+   dimmed by one very wide shadow. ruler.js moves it to the pointer; nothing can press it. */
+.ruler { position: fixed; left: 0; right: 0; top: 0; z-index: 80; height: calc(1.25rem * var(--leading) * 2.5); pointer-events: none;
+  border-block: 3px solid var(--gold); box-shadow: 0 0 0 200vmax rgba(11, 18, 32, 0.45); }
+@media print { .ruler { display: none; } }
+
 /* ---------------------------------------------------------------- smaller screens */
 @media (max-width: 68rem) {
   .top-nav { display: none; }

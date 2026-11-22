@@ -27,6 +27,9 @@ People who find reading hard work. Every choice follows from that:
   Hyperlegible Next or OpenDyslexic), their size and spacing, the colour of the paper,
   whether pictures move, how fast Peter reads, and whether every word he says is written
   under the pictures. It is kept on the reader's device only.
+- **A ruler to keep your place.** Make it comfy can lay a clear band across the page, with
+  the rest dimmed, that follows the pointer or a finger: the reading ruler many dyslexic
+  readers use on paper. It gets out of the way of a reel that is playing.
 - **Nothing lost with the sound off.** A reel shows a few words and Peter says the rest.
   With the sound off, every word he says is written under the picture instead.
 - **Watch instead.** Every part of the home page has a "Make a pixel reel about this" button
@@ -46,7 +49,7 @@ The voice is Peter's: warm, plain, British, a little cheeky. Plain dashes only.
 | `site/layout.html` | The shell every page shares: the bar across the top, the foot, Make it comfy and the theatre. |
 | `site/pages/*.html`, `*.md` | A page each. The comment at the top holds its `title` and `description`. Plain pages are Markdown. `reel.html` is the page every shared reel is watched on (`/r/<id>`), and `watch.html` the page each of the site's own reels has to be sent by (`/watch/<name>`: the examples in `EXAMPLES`, in `service/site.mjs`, which also writes their posters). |
 | `site/css/site.css` | The whole look. |
-| `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` is Make it comfy; `boot.js` runs before the page is drawn, to put its settings back and to keep the bar across the top on one row; `signal.js` is the test card on a page that is not there; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `send.js` copies words and passes a reel on; `pace.js` is the clock that lets Peter read slower or quicker; `sprites.js` is the site's own pixel art. |
+| `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` is Make it comfy; `boot.js` runs before the page is drawn, to put its settings back and to keep the bar across the top on one row; `signal.js` is the test card on a page that is not there; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `send.js` copies words and passes a reel on; `ruler.js` is the reading ruler; `pace.js` is the clock that lets Peter read slower or quicker; `sprites.js` is the site's own pixel art. |
 | `site/fonts/`, `site/art/` | The fonts (with their licences), and the icons, logos and share picture. |
 | `service/site.mjs` | Puts a page together: the layout, the page, and the `{{names}}` in them. |
 | `service/static.mjs` | Serves the files a page loads, and only those. |
@@ -421,3 +424,16 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | Every word, under the first picture of the reel on the home page |
 | --- |
 | ![1. Hello. Hello. This is a pixel reel. A short cartoon that explains one thing. I'm Peter, and I'll be reading it to you.](log/v18-every-word.jpg) |
+
+### Version 19
+
+- **A reading ruler.** Many dyslexic readers keep their place on paper with a ruler, or a
+  strip of card with a window cut in it. Make it comfy now has one for this site: a clear
+  band about two and a half lines deep, edged in gold, with the rest of the page dimmed. It
+  follows the pointer, a finger, or whatever the keyboard has reached; on a phone the page
+  scrolls under it. It gets out of the way of a reel that is playing, nothing can press it,
+  and it is kept on the device like every other choice.
+
+| The ruler on a laptop and on a phone |
+| --- |
+| ![A clear band across a dimmed page, on the line being read.](log/v19-ruler.jpg) |
