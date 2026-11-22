@@ -25,7 +25,9 @@ canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; image-
 /* the big Play button over the picture, before the reel starts and after it ends */
 .bigplay { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 14px;
   font: 44px 'Orange Kid', monospace; letter-spacing: 1px; line-height: 1; padding: 12px 28px 14px 24px; background: var(--go);
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.5); }
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.5);
+  /* as wide as its words: placed from the middle, it would otherwise be given half the picture and "Play again" would break in two on a phone */
+  width: max-content; max-width: calc(100% - 16px); }
 /* a title's words, and a plain card's, are in the middle of the picture: the button sits under them */
 body[data-opens="title"] .bigplay, body[data-opens="card"] .bigplay { top: 72%; }
 .bigplay svg { width: 28px; height: 32px; fill: currentColor; shape-rendering: crispEdges; }
