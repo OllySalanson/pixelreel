@@ -450,6 +450,20 @@ describe("Peter's pace", () => {
     assert.deepEqual(cleared, [2]);
   });
 
+  it('can have every word he says written under the pictures, chosen in Make it comfy', () => {
+    for (const name of pages) {
+      const picks = [...html[name].matchAll(/<input type="radio" name="words" value="([a-z]+)"( checked)?>/g)].map((found) => [found[1], Boolean(found[2])]);
+      assert.deepEqual(picks, [['few', true], ['all', false]], name);
+    }
+    // the player reads the choice from <html data-words>, and writes each scene's "say" in place of its caption
+    const player = readFileSync(root('site/js/player.js'), 'utf8');
+    assert.match(player, /state\.muted \|\| document\.documentElement\.dataset\.words === 'all'/, 'with the sound off too, when nobody can hear him');
+    for (const name of ['pixel-reel', 'gas-meter']) {
+      const reel = parseReelJson(readFileSync(root(`reels/${name}/reel.json`), 'utf8'));
+      assert.ok(reel.scenes.some((scene) => (scene.say ?? scene.caption).length > scene.caption.length), `${name} has more to say than its captions`);
+    }
+  });
+
   it('is chosen in Make it comfy, on every page, and starts as usual', () => {
     for (const name of pages) {
       const picks = [...html[name].matchAll(/<input type="radio" name="pace" value="([a-z]+)"( checked)?>/g)].map((found) => [found[1], Boolean(found[2])]);
@@ -486,7 +500,7 @@ describe('before the page is drawn', () => {
   };
 
   it('puts back the comfort settings chosen last time, and nothing odd', () => {
-    assert.deepEqual(boot({ saved: '{"font":"opendyslexic","size":"3","paper":"<b>","colour":"red","pace":"slow"}' }).page.html.dataset, { font: 'opendyslexic', size: '3', pace: 'slow' });
+    assert.deepEqual(boot({ saved: '{"font":"opendyslexic","size":"3","paper":"<b>","colour":"red","pace":"slow","words":"all"}' }).page.html.dataset, { font: 'opendyslexic', size: '3', pace: 'slow', words: 'all' });
     assert.deepEqual(boot({ saved: 'not json' }).page.html.dataset, {});
   });
 

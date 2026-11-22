@@ -25,7 +25,10 @@ People who find reading hard work. Every choice follows from that:
 - **Buttons.** Every main thing to do is a big button that says what it does.
 - **Make it comfy.** A panel on every page changes the letters (Lexend, Atkinson
   Hyperlegible Next or OpenDyslexic), their size and spacing, the colour of the paper,
-  whether pictures move, and how fast Peter reads. It is kept on the reader's device only.
+  whether pictures move, how fast Peter reads, and whether every word he says is written
+  under the pictures. It is kept on the reader's device only.
+- **Nothing lost with the sound off.** A reel shows a few words and Peter says the rest.
+  With the sound off, every word he says is written under the picture instead.
 - **Watch instead.** Every part of the home page has a "Make a pixel reel about this" button
   that plays a reel of that part, made earlier. "Watch this whole page" plays them all.
 - **Calm.** Sound only ever starts on a press. Pictures hold still for anyone whose device
@@ -406,3 +409,15 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | Pressed at the top of the home page, and woken in the footer |
 | --- |
 | ![Reelie, off the ground mid-hop, says: Tea? And in the footer, eyes open: Night night.](log/v17-reelie.jpg) |
+
+### Version 18
+
+- **Every word, for anyone who cannot hear Peter.** A reel puts a few words under each
+  picture and Peter says the rest, which left nothing to go on for someone who is deaf, or
+  on a quiet train. With the sound off, every word he says is now written under the
+  picture. Make it comfy has the same as a choice, Words under the pictures: A few, or
+  Every word, for anyone who likes to read along while he talks.
+
+| Every word, under the first picture of the reel on the home page |
+| --- |
+| ![1. Hello. Hello. This is a pixel reel. A short cartoon that explains one thing. I'm Peter, and I'll be reading it to you.](log/v18-every-word.jpg) |

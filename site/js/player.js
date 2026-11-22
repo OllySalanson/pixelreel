@@ -84,7 +84,12 @@ export class ReelPlayer {
     this.wire(find('reel-back'), find('reel-next'));
     new IntersectionObserver(([entry]) => { this.visible = entry.isIntersecting; this.wake(); }).observe(root);
     new ResizeObserver(() => { fitCanvas(this.canvas); this.paint(performance.now()); }).observe(this.canvas);
-    onComfortChange(() => { this.setPace(); this.paint(performance.now()); this.wake(); });
+    onComfortChange(() => {
+      this.setPace();
+      if (this.player) this.changed(this.player.state);   // the words under the picture may have been asked for in full
+      this.paint(performance.now());
+      this.wake();
+    });
     this.setPace();
   }
 
@@ -196,7 +201,7 @@ export class ReelPlayer {
     this.lastT = 0;
     this.previewStart = performance.now();
     this.warmed = new Set();
-    this.setWords([reel.intro, ...reel.scenes.map((s) => s.caption)], 0);
+    this.allWords = null;   // changed() writes the words in: the short captions, or every word Peter says
     this.seek.setAttribute('aria-valuemax', String(Math.round(line.total / 1000)));
     for (const tick of this.seek.querySelectorAll('.tick')) tick.remove();
     for (const at of line.starts.slice(1)) {
@@ -268,6 +273,15 @@ export class ReelPlayer {
     this.root.classList.toggle('is-playing', state.playing);
     const scene = scenes[state.index];
     this.title.textContent = this.intro ? reel.title : `${state.index + 1}. ${scene.title}`;
+    // Under the picture go a few words, which Peter enlarges on. With the sound off nobody
+    // hears him, so every word he says goes there instead; so it does for anyone who asks
+    // for every word in Make it comfy (to read along, or because they cannot hear him).
+    const all = state.muted || document.documentElement.dataset.words === 'all';
+    if (all !== this.allWords) {
+      this.allWords = all;
+      this.root.classList.toggle('all-words', all);
+      this.setWords([reel.intro, ...scenes.map((s) => (all ? s.say ?? s.caption : s.caption))], 0);
+    }
     [...this.words.children].forEach((p, i) => p.classList.toggle('on', i === (this.intro ? 0 : state.index + 1)));
     if (state.ended && !this.wasEnded) {
       this.live.textContent = 'The end.';
