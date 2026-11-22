@@ -28,11 +28,15 @@ People who find reading hard work. Every choice follows from that:
 - **Make it comfy.** A panel on every page changes the letters (Lexend, Atkinson
   Hyperlegible Next or OpenDyslexic), their size and spacing, the colour of the paper (cream,
   five tints or dark),
-  whether pictures move, how fast a reel is read, and whether every word he says is written
-  under the pictures. It is kept on the reader's device only.
+  whether pictures move, how fast a reel is read, whether every word he says is written
+  under the pictures, and whether a press on any words reads them aloud. It is kept on the reader's device only.
 - **A ruler to keep your place.** Make it comfy can lay a clear band across the page, with
   the rest dimmed, that follows the pointer or a finger: the reading ruler many dyslexic
   readers use on paper. It gets out of the way of a reel that is playing.
+- **Press words to hear them.** Make it comfy can have a press on any heading, paragraph
+  or line of the site read it aloud, in the device's own voice. A press on a question reads
+  the question and its answer. The reels summarise a page; this reads its actual words,
+  such as the steps for adding Pixel Reel to Claude.
 - **Nothing lost with the sound off.** A reel shows a few words and Peter says the rest.
   With the sound off, every word he says is written under the picture instead.
 - **A place kept in the words.** Where every word is written, the sentence being said is
@@ -69,6 +73,7 @@ narrator ([Who reads](#who-reads)).
 | `site/css/site.css` | The whole look. |
 | `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` is Make it comfy; `boot.js` runs before the page is drawn, to put its settings back and to keep the bar across the top on one row; `signal.js` is the test card on a page that is not there; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `send.js` copies words and passes a reel on; `ruler.js` is the reading ruler; `pace.js` is the clock that lets Peter read slower or quicker; `sprites.js` is the site's own pixel art. |
 | `site/js/menu.js` | The menu a Menu button opens, where the bar across the top has no room for its links (`boot.js` decides): the same links as big rows, with Make it comfy and the way to add Pixel Reel to Claude. A link added to the bar goes in the menu too (a test says so). |
+| `site/js/aloud.js` | Press words to hear them: works out what a press reads (never a button, a link or a player), and says it with the browser's own voice a sentence at a time, at the pace chosen. It takes its turn with the players, so only one thing talks. |
 | `site/js/qr.js` | Makes a QR code from an address, with nothing loaded from anywhere else. The service draws it into a page where the page says `{{scan}}`: the code that opens the page about the phone. |
 | `site/js/app.js`, `site/js/sw.js` | Pixel Reel as an app on a phone: [below](#on-a-phones-home-screen). |
 | `site/js/sheet.js` | The whole reel on one page, under the player on a reel's page: every scene's finished picture with its few words, to glance over and to print. The print rules at the foot of `site.css` leave nothing else on the paper. |
@@ -1142,3 +1147,35 @@ has not yet been pressed on a real phone.
 | The first screen on a phone, before and after |
 | --- |
 | ![Before: What do you want explained, a thin box, four things to try and a row of languages, with no button in sight. After: Paste a link here, a big box with a Paste button in it, Read by Peter in English, and a big gold button, Make my reel.](log/v49-make-at-a-glance.jpg) |
+
+### Version 49
+
+- **Press words to hear them.** Every part of the home page has a reel of itself, but a
+  reel sums a part up: it does not read out the answer to a question, or the four steps
+  for adding Pixel Reel to Claude, or the privacy page. Someone who cannot comfortably read
+  those had no way to hear them short of a screen reader. Make it comfy now has "Press
+  words to hear them". With it on, a press on any heading, paragraph or line reads it
+  aloud, and it has an edge round it until the voice has finished.
+- **A question reads its answer too.** A press that opens a question reads the question
+  and then the answer. A press on a card reads its heading and its words, with a stop
+  between them.
+- **It leaves alone anything that does something.** Buttons, links, the players and their
+  words, and the choices in Make it comfy do what they always did, and their words are
+  left out of what is read round them.
+- **Only one thing talks.** A second press stops it. So does a reel that starts to play,
+  and a press on words stops a reel.
+- **It is the device's own voice, not Peter's,** and the choice says so. Peter is recorded
+  for each reel; these words are read by whatever voice the phone or computer has, in
+  British English where it has one, at the pace chosen in Make it comfy. Where a browser
+  has no voice at all, the choice is not shown.
+- **Choosing it says so, aloud:** "On. Press any words to hear them." So it is plain at
+  once that it works, and that sound has started because of a press.
+
+The headless browser here has no voices, so this was tried with a stand-in for the voice
+that keeps what it is given to say: which words, in what order, in which language and at
+what pace, and when it is stopped. Nobody has heard it yet. How it sounds depends on the
+device, and that needs listening to on a real phone and a real computer.
+
+| The choice in Make it comfy, and a card being read |
+| --- |
+| ![Make it comfy: Press words to hear them, Off and On, with "Press any words on the site, and they are read to you. In your device's own voice, not Peter's." Beside it, the cards under "For anyone who would rather watch": the one being read, "Your mind wanders", has a gold edge round it.](log/v49-aloud.jpg) |

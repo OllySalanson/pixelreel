@@ -7,6 +7,7 @@ import { addressMeant, addToClaudeLink, EXAMPLES, NARRATORS, narratorsHtml, page
 import { staticFile } from '../service/static.mjs';
 import { hopHeight, lookAt, REELIE, SAYINGS, SCENES } from '../site/js/landscape.js';
 import { sentenceAt, sentencesOf } from '../site/js/follow.js';
+import { createAloud, NOT_READ, pressed, READABLE, voiceFor, wordsOf } from '../site/js/aloud.js';
 import { askFor } from '../site/js/maker.js';
 import { startMenu } from '../site/js/menu.js';
 import { nowPlaying } from '../site/js/player.js';
@@ -968,6 +969,144 @@ describe('getting the site onto a phone with no address to type', () => {
     const css = readFileSync(root('site/css/site.css'), 'utf8');
     assert.match(css, /\n\.scan \{ display: none;/);
     assert.match(css, /@media \(hover: hover\) and \(pointer: fine\) \{\n {2}\.scan \{ display: flex; \}\n\}/);
+  });
+});
+
+describe('press words to hear them', () => {
+  // a pretend part of a page: text, or an element with children
+  const text = (data) => ({ nodeType: 3, data });
+  const el = (tagName, children = [], { hidden = false, attrs = {}, classes = [] } = {}) => ({
+    nodeType: 1, tagName, hidden, childNodes: children.map((child) => (typeof child === 'string' ? text(child) : child)),
+    getAttribute: (name) => attrs[name] ?? null, classList: { contains: (name) => classes.includes(name) }
+  });
+
+  it('reads what can be seen, in order, and stops for breath after a heading with no full stop', () => {
+    const card = el('LI', [el('SPAN', [el('SVG', ['a picture'])]), el('DIV', [el('H3', ['Reading is hard work']), el('P', ['Dyslexia, or just   tired eyes.\n Let the reel do the reading.'])])]);
+    assert.equal(wordsOf(card), 'Reading is hard work. Dyslexia, or just tired eyes. Let the reel do the reading.');
+    assert.equal(wordsOf(el('H1', ['Watch it. ', el('SPAN', ["Don't read it."])])), "Watch it. Don't read it.");
+    assert.equal(wordsOf(el('SUMMARY', ['Does it cost anything?'])), 'Does it cost anything?', 'a question keeps its own mark');
+  });
+
+  it('leaves out what is hidden, what is only for a screen reader or only a picture, and the words on buttons', () => {
+    const part = el('P', [
+      'Rather not read the rest? ', el('BUTTON', ['Watch this whole page']), el('SPAN', ['unseen'], { hidden: true }), el('SPAN', ['for show'], { attrs: { 'aria-hidden': 'true' } }),
+      el('SPAN', ['said to a screen reader'], { classes: ['sr-only'] }), el('LABEL', [el('INPUT'), el('SPAN', ['Choose'])]), el('A', ['Show me how'])
+    ]);
+    assert.equal(wordsOf(part), 'Rather not read the rest? Show me how.');
+    assert.equal(wordsOf(el('P', [el('CANVAS')])), '');
+  });
+
+  // a pretend press: what was pressed, and what is round it
+  const target = ({ inside = [], block = null }) => ({ closest: (selector) => (selector === NOT_READ ? (inside.length ? {} : null) : selector === READABLE ? block : null) });
+  const block = (tagName, words, more = {}) => ({ ...el(tagName, [words]), matches: (selector) => selector === 'summary' && tagName === 'SUMMARY', closest: () => null, ...more });
+
+  it('reads the nearest heading, paragraph or line round a press', () => {
+    const p = block('P', 'It is free.');
+    assert.deepEqual(pressed(target({ block: p })), { block: p, words: 'It is free.' });
+    assert.equal(pressed(target({})), null, 'a press on nothing with words');
+    assert.equal(pressed(null), null);
+  });
+
+  it('leaves alone what does something of its own when pressed, the players, and what is not for reading', () => {
+    assert.equal(pressed(target({ inside: ['button'], block: block('P', 'x') })), null);
+    assert.equal(pressed(target({ block: block('P', 'in a dialog', { closest: (selector) => (selector === NOT_READ ? {} : null) }) })), null, 'words inside something that is left alone');
+    for (const kind of ['a', 'button', 'label', 'input', '.reel', 'dialog', '[aria-hidden="true"]']) assert.ok(NOT_READ.split(', ').includes(kind), kind);
+    for (const kind of ['h1', 'h2', 'h3', 'p', 'li', 'summary']) assert.ok(READABLE.split(', ').includes(kind), kind);
+  });
+
+  it('reads a question and its answer when the press opens it, and has no words for the press that closes it', () => {
+    const details = { ...el('DETAILS', [el('SUMMARY', ['Does it cost anything?']), el('P', ['No. It is free.'])]), open: false };
+    const question = block('SUMMARY', 'Does it cost anything?', { parentElement: details });
+    assert.deepEqual(pressed(target({ block: question })), { block: details, words: 'Does it cost anything? No. It is free.' });
+    details.open = true;
+    assert.deepEqual(pressed(target({ block: question })), { block: details, words: '' });
+  });
+
+  it('takes a voice in the page\'s own language, or one of the same tongue, or leaves it to the device', () => {
+    const voices = [{ lang: 'fr-FR' }, { lang: 'en-US' }, { lang: 'en_GB' }];
+    assert.equal(voiceFor(voices, 'en-GB'), voices[2], 'some devices write en_GB');
+    assert.equal(voiceFor(voices.slice(0, 2), 'en-GB'), voices[1]);
+    assert.equal(voiceFor([{ lang: 'fr-FR' }], 'en-GB'), null);
+  });
+
+  // a pretend voice: it keeps what it is given to say, and `end()` has it finish the last of them
+  const voice = () => {
+    const speech = { said: [], cancelled: 0, getVoices: () => [{ lang: 'en-GB', name: 'Daniel' }], speak(u) { this.said.push(u); }, cancel() { this.cancelled++; } };
+    class Utterance { constructor(words) { this.text = words; } }
+    const changes = [], timers = [];
+    const aloud = createAloud({ speech, Utterance, rate: () => 1.25, onChange: (about) => changes.push(about), timer: { set: (fn, ms) => timers.push({ fn, ms }) - 1, clear: (id) => { timers[id].cleared = true; } } });
+    return { speech, aloud, changes, timers };
+  };
+
+  it('says the words a sentence at a time, in a British voice, at the pace chosen in Make it comfy', () => {
+    const { speech, aloud, changes } = voice();
+    aloud.say('That is a pixel reel. No waffle. Just the bits that matter.', 'a paragraph');
+    assert.deepEqual(speech.said.map((u) => u.text), ['That is a pixel reel.', 'No waffle.', 'Just the bits that matter.']);
+    for (const u of speech.said) assert.deepEqual([u.lang, u.voice.name, u.rate], ['en-GB', 'Daniel', 0.95 * 1.25]);
+    assert.deepEqual(changes, ['a paragraph']);
+    assert.equal(aloud.about, 'a paragraph');
+    assert.equal(aloud.sentences, 3, 'and holds on to them until they are said');
+  });
+
+  it('is over when the last sentence has been said, and not before', () => {
+    const { speech, aloud, changes, timers } = voice();
+    aloud.say('One. Two.', 'a line');
+    assert.equal(speech.said[0].onend, undefined);
+    speech.said[1].onend();
+    assert.deepEqual(changes, ['a line', null]);
+    assert.deepEqual([aloud.about, aloud.sentences], [null, 0]);
+    assert.ok(timers[0].cleared, 'and stops waiting');
+  });
+
+  it('stops when told to, and takes no notice when the voice it stopped says it has finished', () => {
+    const { speech, aloud, changes } = voice();
+    aloud.say('One. Two.', 'the first');
+    const old = speech.said[1];
+    aloud.say('Three.', 'the second');
+    assert.deepEqual(changes, ['the first', null, 'the second']);
+    old.onend();
+    old.onerror();
+    assert.equal(aloud.about, 'the second', 'still reading the second');
+    aloud.stop();
+    assert.deepEqual(changes, ['the first', null, 'the second', null]);
+    aloud.stop();
+    assert.equal(changes.length, 4, 'stopping twice says so once');
+  });
+
+  it('gives up marking the words if a voice fails, or never says that it has finished', () => {
+    const failing = voice();
+    failing.aloud.say('One. Two.', 'a line');
+    failing.speech.said[0].onerror();
+    assert.equal(failing.aloud.about, null);
+    const silent = voice();
+    silent.aloud.say('One. Two.', 'a line');
+    assert.ok(silent.timers[0].ms > 1000, 'it waits a good while first');
+    silent.timers[0].fn();
+    assert.deepEqual(silent.changes, ['a line', null]);
+  });
+
+  it('says nothing for no words', () => {
+    const { speech, aloud, changes } = voice();
+    aloud.say('   ', 'nothing');
+    assert.deepEqual([speech.said.length, changes.length], [0, 0]);
+  });
+
+  it('is a choice in Make it comfy on every page, out of sight where the browser has no voice, and off until it is chosen', () => {
+    for (const name of pages) {
+      const choice = /<fieldset class="pick" data-needs-speech hidden>([\s\S]*?)<\/fieldset>/.exec(html[name])?.[1] ?? '';
+      assert.match(choice, /<legend>Press words to hear them<\/legend>/, name);
+      const picks = [...choice.matchAll(/<input type="radio" name="aloud" value="([a-z]+)"( checked)?>/g)].map((found) => [found[1], Boolean(found[2])]);
+      assert.deepEqual(picks, [['off', true], ['on', false]], name);
+      assert.match(choice, /In your device's own voice, not Peter's\./, `${name}: and it says whose voice it is`);
+    }
+    assert.match(readFileSync(root('site/js/boot.js'), 'utf8'), /'ruler', 'aloud'\]/, 'it is put back before the page is drawn');
+    assert.match(readFileSync(root('site/js/comfort.js'), 'utf8'), /aloud: 'off'/);
+  });
+
+  it('shows a hand over words that a press reads, and marks what is being read', () => {
+    const css = readFileSync(root('site/css/site.css'), 'utf8');
+    assert.match(css, /\nhtml\[data-aloud="on"\] :is\(h1, h2, h3, p, li, summary, dt, dd, figcaption\):not\([^{]*\) \{ cursor: pointer; \}/, 'which is also what has a phone send the press');
+    assert.match(css, /\n\.is-aloud \{ outline: var\(--u\) solid var\(--gold-lip\);/);
   });
 });
 
