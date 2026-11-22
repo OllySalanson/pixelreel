@@ -216,7 +216,13 @@ top is on two rows, where a word is cut in two, where words sit on a pattern in 
 night scenes, and where the page is wider than the screen. Fix a layout it complains about by letting it reflow (a `flex-basis` or a column
 width in `ch`, which grows with the letters), not by a rule for one size of screen.
 
-Three things it cannot see, so look at them by hand:
+It only looks. [`scripts/site-press.js`](../../scripts/site-press.js) presses: run the same
+way on the home page, it works the menu, each button that tries Make it comfy, pressing
+words to hear them, a reel over the page and the big Play button, and says what did not do
+what it should. It makes no sound, and puts back what it changed. Run it after changing
+any of the site's scripts, since no test runs a page.
+
+Three things `site-fit.js` cannot see, so look at them by hand:
 
 - **Inside a dialog** (the menu, Make it comfy, the theatre). Open it with `showModal()`
   and compare its `scrollWidth` with its `clientWidth`, at 320 pixels wide with
@@ -1464,3 +1470,19 @@ Small things, and a check.
 | The foot of every page |
 | --- |
 | ![The foot of a page: Pixel Reel and its line, and nine links in three rows of three: Add to Claude, Make a pixel reel, Examples; Add to your phone, Press kit, Privacy; Terms, Credits, The code.](log/v64-foot.jpg) |
+
+### Version 65
+
+Nothing a visitor sees. Something for whoever changes the site next.
+
+- **A script that presses the home page.** The tests never run a page, and
+  `scripts/site-fit.js` only looks at how one is laid out. Twice today a fault of mine got
+  past both: Make it comfy took the make page's buttons for its own, and a stray tag put a
+  picture outside its step. `scripts/site-press.js` works the home page as a visitor would
+  (the menu, each button that tries Make it comfy, pressing words to hear them, a reel over
+  the page, the big Play button) and says what did not do what it should.
+- **It was made to fail first.** With one button's choice and one reel's name changed by
+  hand, it said so, in those words: "Bigger letters" did not switch size to 9; the reel
+  over the page did not start to play.
+
+Run on the home page at a phone's size, a laptop's, and a phone on its side: all well.
