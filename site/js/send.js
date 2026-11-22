@@ -25,16 +25,38 @@ export async function copyText(text) {
 /**
  * Passes a reel on. With `share` (a phone's own way of sending things) it opens that, with
  * the reel's title and address; without, or if that fails, it copies the address with `copy`.
- * Resolves to what to say afterwards, which is nothing when the phone has taken over.
+ * Resolves to how it went: 'shared' (the phone has taken over), 'stopped' (they changed
+ * their mind), 'copied' or 'failed'.
  */
 export async function sendReel(title, url, { share = null, copy = copyText } = {}) {
   if (share) {
     try {
       await share({ title, text: `${title}, as a pixel reel. Press Play.`, url });
-      return '';
+      return 'shared';
     } catch (err) {
-      if (err?.name === 'AbortError') return '';   // they changed their mind
+      if (err?.name === 'AbortError') return 'stopped';
     }
   }
-  return (await copy(url)) ? 'Link copied. Paste it into a message.' : `That did not copy. The link is ${url}`;
+  return (await copy(url)) ? 'copied' : 'failed';
+}
+
+/** What to say after sendReel: nothing when a phone took over, or when they changed their mind. */
+export const sentWords = (how, url) => ({ copied: 'Link copied. Paste it into a message.', failed: `That did not copy. The link is ${url}` })[how] ?? '';
+
+/** A phone's own way of sending things (to WhatsApp, to a message), or null on a computer, which copies the link. */
+export const phoneShare = () => (navigator.share && matchMedia('(pointer: coarse)').matches ? (what) => navigator.share(what) : null);
+
+/**
+ * Wakes every <button data-send="A reel's name" data-says="#where-to-say-so">: pressed, it
+ * passes on the page it is on.
+ */
+export function startSending() {
+  for (const button of document.querySelectorAll('button[data-send]')) {
+    const says = document.querySelector(button.dataset.says);
+    button.hidden = false;
+    button.addEventListener('click', async () => {
+      const url = location.origin + location.pathname;
+      says.textContent = sentWords(await sendReel(button.dataset.send, url, { share: phoneShare() }), url);
+    });
+  }
 }

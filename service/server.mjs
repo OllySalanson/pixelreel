@@ -1,12 +1,13 @@
-// The Pixel Reel service over HTTP: the MCP connector at /mcp, and for each reel a page to
-// watch it (/r/<id>), its recordings and its MP4. Nothing here is specific to one host; it
+// The Pixel Reel service over HTTP: the MCP connector at /mcp, the website, and for each reel
+// a page to watch it (/r/<id>), its recordings and its MP4. Nothing here is specific to one host; it
 // needs a folder (or store) for the reels, and the address people reach it at.
+import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { ReelError } from '../src/reel.js';
 import { createMcpServer } from './mcp.mjs';
 import { BusyError, isId } from './reels.mjs';
-import { robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage } from './site.mjs';
+import { robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
 import { sendBytes, sendSqueezed, sendStatic, squeezed, tagOf } from './static.mjs';
 import { tidyAbout, TryError } from './try.mjs';
 
@@ -188,7 +189,9 @@ async function handleTry(req, res, context) {
 function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages, writer }, extra = {}) {
   let page = fresh ? null : pages.get(name);
   if (!page) {
-    page = squeezed(sitePage(name, baseUrl, { listed, values: { here: writer ? 'on' : 'off' } }));
+    // "watch/<reel>" is the page of one of the site's own reels
+    const html = name.startsWith('watch/') ? watchPage(name.slice(6), baseUrl, { listed }) : sitePage(name, baseUrl, { listed, values: { here: writer ? 'on' : 'off' } });
+    page = squeezed(html);
     page.tag = tagOf(page.bytes);
     if (!fresh) pages.set(name, page);
   }
@@ -196,6 +199,25 @@ function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages, w
   const headers = { ...SAFE, ...extra, 'content-type': 'text/html; charset=utf-8', 'cache-control': keep, 'content-security-policy': SITE_POLICY, etag: page.tag };
   if (status === 200 && req.headers['if-none-match'] === page.tag) { res.writeHead(304, headers).end(); return; }
   sendSqueezed(req, res, status, page, headers);
+}
+
+/**
+ * The picture a message shows for the page of one of the site's own reels
+ * (/watch/<name>/card.png): drawn once, the way a made reel's is, and the site's own card if
+ * it cannot be.
+ */
+async function sendWatchCard(req, res, name, { reels, cards, fresh, log }) {
+  if (fresh || !cards.has(name)) {
+    try {
+      cards.set(name, Buffer.from(await reels.picture(JSON.parse(readFileSync(new URL(`../reels/${name}/reel.json`, import.meta.url), 'utf8')))));
+    } catch (err) {
+      log(`${name}: its picture could not be drawn: ${err.stack ?? err}`);
+      cards.set(name, null);
+    }
+  }
+  const png = cards.get(name);
+  if (!png) { res.writeHead(302, { ...SAFE, location: '/site/art/share.png', 'cache-control': 'no-store' }).end(); return; }
+  sendBytes(req, res, png, { ...SAFE, 'content-type': 'image/png', 'cache-control': fresh ? 'no-cache' : 'public, max-age=3600' });
 }
 
 /**
@@ -207,7 +229,7 @@ function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages, w
  * `writer` (see service/writer.mjs) switches on Make it right here, which costs money a reel.
  */
 export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false, listed = false, fresh = false, writer = null }) {
-  const context = { reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, trustProxy, listed, fresh, writer, pages: new Map() };
+  const context = { reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, trustProxy, listed, fresh, writer, pages: new Map(), cards: new Map() };
   return createServer(async (req, res) => {
     try {
       const path = new URL(req.url, 'http://localhost').pathname;
@@ -216,6 +238,12 @@ export function createService({ reels, baseUrl, log = () => {}, limits = null, t
       if (path === '/health') { res.writeHead(200, { ...SAFE, 'content-type': 'text/plain' }).end('ok'); return; }
       const reading = req.method === 'GET' || req.method === 'HEAD';
       if (reading && SITE_PAGES[path]) { sendSitePage(req, res, 200, SITE_PAGES[path], context); return; }
+      const watch = /^\/watch\/([a-z0-9-]+)(\/card\.png)?$/.exec(path);
+      if (reading && watch && WATCH.includes(watch[1])) {
+        if (watch[2]) await sendWatchCard(req, res, watch[1], context);
+        else sendSitePage(req, res, 200, `watch/${watch[1]}`, context);
+        return;
+      }
       if (reading && path === '/robots.txt') {
         res.writeHead(200, { ...SAFE, 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=3600' }).end(robotsTxt(context.baseUrl, listed));
         return;

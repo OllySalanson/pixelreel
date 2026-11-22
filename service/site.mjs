@@ -10,6 +10,22 @@ import { PALETTE } from '../src/palette.js';
 /** Each address the site answers, and the page in site/pages/ it shows. */
 export const SITE_PAGES = { '/': 'home', '/claude': 'claude', '/press': 'press', '/privacy': 'privacy', '/terms': 'terms', '/credits': 'credits' };
 
+/** The example reels on the home page, in order: the scene each one's poster shows, and what kind of thing it explains. */
+export const EXAMPLES = [
+  { name: 'gas-meter', scene: 3, kind: 'A chore' },
+  { name: 'pension-letter', scene: 2, kind: 'A letter' },
+  { name: 'volcano', scene: 4, kind: 'Homework' },
+  { name: 'cup-of-tea', scene: 2, kind: 'Important' },
+  { name: 'offside-rule', scene: 4, kind: 'An argument' },
+  { name: 'blue-sky', scene: 2, kind: 'A good question' }
+];
+
+/** The reel that explains Pixel Reel, at the top of the home page, as a poster among the examples. */
+const EXPLAINER = { name: 'pixel-reel', scene: 3, kind: 'Start here' };
+
+/** Every reel with a page of its own to send to someone (/watch/<name>): the one that explains Pixel Reel, and the examples. */
+export const WATCH = [EXPLAINER, ...EXAMPLES].map((reel) => reel.name);
+
 /** What a page of the site may load: its own files, and nothing from anywhere else. */
 export const SITE_POLICY = "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; media-src 'self'; " +
   "connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
@@ -158,20 +174,37 @@ export function siteModules(entry = '/site/js/main.js') {
 export const addToClaudeLink = (baseUrl) =>
   `https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=${encodeURIComponent('Pixel Reel')}&connectorUrl=${encodeURIComponent(`${baseUrl}/mcp`)}`;
 
+const reelTitle = (name) => JSON.parse(readFileSync(new URL(`../reels/${name}/reel.json`, import.meta.url), 'utf8')).title;
+
+/**
+ * Reels as posters, each named by its reel. On the home page they are the examples, and a
+ * poster plays its reel over the page. With `links` each is a link to its reel's own page,
+ * the reel that explains Pixel Reel is among them, and `except` (the page they are on) is not.
+ */
+export function postersHtml({ links = false, except = null } = {}) {
+  return (links ? [EXPLAINER, ...EXAMPLES] : EXAMPLES).filter(({ name }) => name !== except).map(({ name, scene, kind }) => `      <li>
+        ${links ? `<a class="poster" href="/watch/${name}">` : `<button class="poster" type="button" data-reel="${name}" data-kicker="Now showing">`}
+          <canvas class="shot" data-reel="${name}" data-scene="${scene}" data-hover width="960" height="540" aria-hidden="true"></canvas>
+          <span class="poster-title">${escapeHtml(reelTitle(name))}</span>
+          <span class="poster-meta"><span class="poster-kind">${kind}</span><span data-length="${name}">About a minute</span></span>
+        ${links ? '</a>' : '</button>'}
+      </li>`).join('\n');
+}
+
 /**
  * One of the site's pages, for a service at `baseUrl`. `listed` says whether search engines
  * may list it: until Pixel Reel is open to everyone, every page asks them not to. `values`
  * fills names of the page's own (already safe to put in HTML), such as `here` ("on" when the
- * service can write a reel for a visitor itself); `title`, `path`, `image` (a whole address)
- * and `imagealt` replace the page's own title, address and picture for link previews, for a
- * page that stands for many, such as a reel's.
+ * service can write a reel for a visitor itself); `title`, `description`, `path`, `image` (a
+ * whole address), `imagealt` and `fetch` (files to ask for early) replace the page's own,
+ * for a page that stands for many, such as a reel's.
  */
-export function sitePage(name, baseUrl, { listed = false, values = {}, title = null, path = null, image = null, imagealt = null } = {}) {
+export function sitePage(name, baseUrl, { listed = false, values = {}, title = null, description = null, path = null, image = null, imagealt = null, fetch = null } = {}) {
   path ??= Object.keys(SITE_PAGES).find((p) => SITE_PAGES[p] === name) ?? '/';
   const markdown = !existsSync(siteFile(`pages/${name}.html`));
   const { facts, body } = pageFacts(readFileSync(siteFile(`pages/${name}.${markdown ? 'md' : 'html'}`), 'utf8'));
   // the connector's address is long and has no spaces: <wbr> lets a narrow screen break it before "/mcp", not mid-word
-  const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', ...values };
+  const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', posters: postersHtml(), ...values };
   const heading = /^# (.+)$/m.exec(body)?.[1];
   title ??= facts.title ?? (heading && heading !== 'Pixel Reel' ? `${heading} - Pixel Reel` : 'Pixel Reel');
   // a plain page that has a reel of itself offers it straight under its heading
@@ -181,16 +214,17 @@ export function sitePage(name, baseUrl, { listed = false, values = {}, title = n
     : fill(dropComments(body), links);
   const ahead = [
     ...siteModules().map((module) => `<link rel="modulepreload" href="${module}">`),
-    ...(facts.fetch ?? '').split(/\s+/).filter(Boolean).map((file) => `<link rel="preload" as="fetch" crossorigin href="${escapeHtml(file)}">`)
+    ...(fetch ?? facts.fetch ?? '').split(/\s+/).filter(Boolean).map((file) => `<link rel="preload" as="fetch" crossorigin href="${escapeHtml(file)}">`)
   ];
   return fill(dropComments(readFileSync(siteFile('layout.html'), 'utf8')), {
     ...links,
     ahead: ahead.join('\n'),
     title: escapeHtml(title),
-    description: escapeHtml(facts.description ?? 'Pixel Reel turns anything wordy into a short cartoon, read to you in a warm voice. Free, and made for anyone who would rather watch than read.'),
+    description: escapeHtml(description ?? facts.description ?? 'Pixel Reel turns anything wordy into a short cartoon, read to you in a warm voice. Free, and made for anyone who would rather watch than read.'),
     image: escapeHtml(image ?? `${baseUrl}/site/art/${facts.image ?? 'share.png'}`),
     imagealt: escapeHtml(imagealt ?? facts.imagealt ?? "Pixel Reel. Watch it. Don't read it. A pixel-art film reel with a smiling face stands under a night sky."),
     page: escapeHtml(name),
+    watchable: WATCH.join(' '),
     canonical: escapeHtml(`${baseUrl}${path}`),
     robots: listed ? 'index, follow' : 'noindex, nofollow',
     main
@@ -204,6 +238,25 @@ export function robotsTxt(baseUrl, listed = false) {
 
 /** The pages a search engine may list, once the site is listed. */
 export function sitemapXml(baseUrl) {
-  const pages = Object.keys(SITE_PAGES).map((path) => `  <url><loc>${escapeHtml(`${baseUrl}${path}`)}</loc></url>`);
+  const pages = [...Object.keys(SITE_PAGES), ...WATCH.map((name) => `/watch/${name}`)].map((path) => `  <url><loc>${escapeHtml(`${baseUrl}${path}`)}</loc></url>`);
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages.join('\n')}\n</urlset>\n`;
+}
+
+/**
+ * The page of one of the reels in WATCH, to send to someone: the reel, as large as the
+ * screen allows, a way to pass it on, and the other examples. A message that is sent its
+ * address shows the reel's own picture (/watch/<name>/card.png).
+ */
+export function watchPage(name, baseUrl, { listed = false } = {}) {
+  const title = reelTitle(name);
+  return sitePage('watch', baseUrl, {
+    listed,
+    path: `/watch/${name}`,
+    title: `${title} - Pixel Reel`,
+    description: `${title}. A pixel reel: a short cartoon with a warm voice. Press Play, and Peter will read it to you.`,
+    image: `${baseUrl}/watch/${name}/card.png`,
+    imagealt: `${title}: a pixel reel. Press Play.`,
+    fetch: `/reels/${name}/reel.json /reels/${name}/audio/manifest.json`,
+    values: { reeltitle: escapeHtml(title), theplayer: playerHtml(name), others: postersHtml({ links: true, except: name }) }
+  });
 }

@@ -1,9 +1,7 @@
 // The page a shared reel is watched on (/r/<id>): asks the service for the reel, waits with
-// Reelie while Peter is still recording it, then hands it to the player. A reel is made to
-// be passed on, so the page has a button for that too.
+// Reelie while Peter is still recording it, then hands it to the player.
 import { calm } from './calm.js';
 import { reelie } from './landscape.js';
-import { sendReel } from './send.js';
 import { fitCanvas, ReelPlayer } from './player.js';
 import { showOf } from './reels.js';
 import { createKit, H, W } from '../../src/kit.js';
@@ -41,13 +39,8 @@ export function startWatching() {
 
   const say = (text) => { says.textContent = text; words.textContent = text; };
 
-  // a phone has its own way of sending things (to WhatsApp, to a message); a computer copies the link
-  const send = document.getElementById('watch-send'), sent = document.getElementById('watch-sent');
-  send.hidden = false;   // its link works from the start, even while Peter is still recording
-  send.addEventListener('click', async () => {
-    const share = navigator.share && matchMedia('(pointer: coarse)').matches ? (what) => navigator.share(what) : null;
-    sent.textContent = await sendReel(document.getElementById('watch-title').textContent, `${location.origin}/r/${id}`, { share });
-  });
+  // send.js works the button that passes the reel on: its link is good from the start, even while Peter is still recording
+  const send = holder.querySelector('button[data-send]');
 
   async function look() {
     let play;

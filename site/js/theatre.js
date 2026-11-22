@@ -3,11 +3,17 @@
 // Also "Hear Peter say hello", which plays one line.
 import { addTalker, hush, ReelPlayer } from './player.js';
 import { loadReel } from './reels.js';
+import { phoneShare, sendReel, sentWords } from './send.js';
+
+const COPIED_MS = 4000;   // how long the send button says "Link copied"
 
 export function startTheatre() {
   const dialog = document.getElementById('theatre');
   if (!dialog) return;
   const title = document.getElementById('theatre-title'), kicker = document.getElementById('theatre-kicker');
+  // the reels with a page of their own (/watch/<name>) can be sent to someone from here
+  const send = document.getElementById('theatre-send'), sent = document.getElementById('theatre-sent'), own = document.getElementById('theatre-own');
+  const pages = (dialog.dataset.pages ?? '').split(' '), sendLabel = send.textContent;
   let run = null;   // what is showing: { queue: [reel names], at }
   const more = () => dialog.open && run && run.at < run.queue.length - 1;
   const player = new ReelPlayer(dialog.querySelector('.reel'), {
@@ -25,6 +31,8 @@ export function startTheatre() {
     mine.at = at;
     const name = mine.queue[at];
     title.textContent = 'One moment';
+    send.hidden = !pages.includes(name);
+    own.hidden = !send.hidden;   // there is room for one or the other beside the button to add it
     try {
       await player.load(name);
       if (!dialog.open || run !== mine || mine.at !== at) return;   // closed, or moved on, while it loaded
@@ -57,6 +65,15 @@ export function startTheatre() {
       if (button) loadReel((button.dataset.reels ?? button.dataset.reel).split(/\s+/)[0]).catch(() => {});
     }, true);
   }
+  send.addEventListener('click', async () => {
+    const path = `/watch/${run.queue[run.at]}`, url = location.origin + path;
+    const how = await sendReel(player.show?.reel.title ?? 'A pixel reel', url, { share: phoneShare() });
+    sent.textContent = sentWords(how, url);
+    if (how === 'failed') { location.assign(path); return; }   // its own page, where the address can be copied by hand
+    if (how !== 'copied') return;
+    send.textContent = 'Link copied';
+    setTimeout(() => { send.textContent = sendLabel; }, COPIED_MS);
+  });
   dialog.querySelector('[data-close]').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
   dialog.addEventListener('close', () => { run = null; player.stop(); });
