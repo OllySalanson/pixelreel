@@ -524,7 +524,8 @@ html:not([data-ready]) .finale-send { visibility: hidden; }   /* its button need
 .foot { padding-block: 3rem clamp(11rem, 16vw, 13rem); overflow: hidden; }   /* room under the words for the hills, Reelie asleep and a few Zs */
 .foot-in { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 2rem 4rem; border-top: var(--u) solid #22344f; padding-top: 3rem; }
 .foot-brand p { margin-top: 0.5rem; color: var(--mist); }
-.foot-nav { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: 0.25rem 1.5rem; align-content: start; }
+/* three across where there is room, so its nine links make three rows with none left over, and none of them runs to two lines */
+.foot-nav { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 0.25rem 1.5rem; align-content: start; }
 .foot-nav a { padding: 0.4rem 0; font-weight: 500; color: var(--cream); text-decoration: none; }
 .foot-nav a:hover { text-decoration: underline; text-decoration-color: var(--gold); }
 .foot-small { grid-column: 1 / -1; font-size: 1.0625rem; color: var(--mist); max-width: none; }
@@ -785,7 +786,7 @@ html[data-aloud="on"] :is(h1, h2, h3, p, li, summary, dt, dd, figcaption):not(:i
 /* Any page on paper: its words, black on white, with nothing that only works on a screen
    (the bar, the foot, the players, the buttons) and nothing cut in two by the end of a sheet. */
 @media print {
-  .top, .foot, .skip, dialog, .scene, .reel, .reel-end, button, .doc-reel, .scan:not(.sheet-scan), .wireless, .handset { display: none !important; }
+  .top, .foot, .skip, dialog, .scene, .reel, .reel-end, button, video, .doc-reel, .scan:not(.sheet-scan), .wireless, .handset { display: none !important; }
   /* and the parts of the home page that are only things to press or to watch */
   #ways, #examples, #comfy, .voices, .specimen, .hero-watch, .finale-send { display: none !important; }
   :root:root { --paper: #fff; --tint: #fff; --card: #fff; --ink: #000; --ink-soft: #222; --line: #000; color-scheme: light; }

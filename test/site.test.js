@@ -1066,6 +1066,14 @@ describe('a phone held on its side', () => {
   });
 });
 
+describe('the foot of every page', () => {
+  it('has nine links, three across where there is room, so that none is left over', () => {
+    const links = [.../<nav class="foot-nav"[^>]*>([\s\S]*?)<\/nav>/.exec(html.home)[1].matchAll(/<a href="[^"]+">([^<]+)<\/a>/g)];
+    assert.equal(links.length % 3, 0, `${links.length} links: a number that makes whole rows of three`);
+    assert.match(readFileSync(root('site/css/site.css'), 'utf8'), /\n\.foot-nav \{ display: grid; grid-template-columns: repeat\(auto-fill, minmax\(13rem, 1fr\)\);/);
+  });
+});
+
 describe('the design log', () => {
   const log = readFileSync(root('docs/site/README.md'), 'utf8');
 
@@ -1333,6 +1341,21 @@ describe('press words to hear them', () => {
     assert.match(aloud, /if \(!question && \(block\.closest\('details'\) \|\| block\.querySelector\(READABLE\)\)\) continue;/, 'an answer goes with its question, and a card is read part by part');
     assert.match(aloud, /button\.textContent = wholePage \? 'Stop reading' : 'Read this page to me';/);
     assert.match(aloud, /if \(wholePage\) block\.scrollIntoView\(/, 'and what it is reading is kept in sight');
+  });
+
+  it('tells the voice to stop only when it is talking or has more waiting', () => {
+    const quiet = voice();
+    Object.assign(quiet.speech, { speaking: false, pending: false });
+    quiet.aloud.say('One.', 'a line');
+    assert.equal(quiet.speech.cancelled, 0, 'nothing was being said: nothing to stop');
+    assert.equal(quiet.speech.said.length, 1);
+    quiet.speech.speaking = true;
+    quiet.aloud.say('Two.', 'another');
+    assert.ok(quiet.speech.cancelled > 0, 'the first is stopped for the second');
+    const waiting = voice();
+    Object.assign(waiting.speech, { speaking: false, pending: true });
+    waiting.aloud.say('One.', 'a line');
+    assert.ok(waiting.speech.cancelled > 0, 'something was waiting to be said');
   });
 
   it('says nothing for no words', () => {
