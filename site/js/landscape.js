@@ -89,10 +89,31 @@ function cottage(px, x, y, t, wall, still) {
   }
 }
 
-/** Reelie, the film reel, bobbing gently. With `asleep`, eyes shut and a few Zs, which fade out before they reach any words (`quiet`). */
-export function reelie(px, x, y, t, { asleep = false, still = false, quiet = [] } = {}) {
-  const bob = still || asleep ? 0 : Math.round(Math.sin(t * 2.2) * 1), cx = x + 13, cy = y + 13 + bob;
-  px.sprite(SPRITES.reelie.rows, x, y + bob, 1, false, SPRITES.reelie.colours);
+/** How big Reelie is, in a scene's pixels. */
+export const REELIE = { w: SPRITES.reelie.rows[0].length, h: SPRITES.reelie.rows.length };
+
+/** Which way Reelie's eyes turn for something at (px, py), seen from its face at (cx, cy): -1, 0 or 1 across and down. */
+export const lookAt = (cx, cy, px, py) => [px - cx, py - cy].map((d) => (Math.abs(d) < 10 ? 0 : Math.sign(d)));
+
+/** How far off the ground Reelie is `s` seconds after it is pressed: one hop, of about half a second. */
+export const hopHeight = (s) => (s >= 0 && s < 0.5 ? Math.round(7 * Math.sin((Math.PI * s) / 0.5)) : 0);
+
+/** What Reelie says when it is pressed: something new each time, and short enough for a phone. */
+export const SAYINGS = ['Hello!', 'Tea?', 'Press Play!', 'Oi oi.', 'Ooh.', 'You rang?', 'Again!', 'Mind out.'];
+
+/**
+ * Reelie, the film reel, bobbing gently. With `asleep`, eyes shut and a few Zs, which fade
+ * out before they reach any words (`quiet`). `look` ([across, down], each -1, 0 or 1) turns
+ * its eyes, and `hop` lifts it that many pixels off the ground.
+ */
+export function reelie(px, x, y, t, { asleep = false, still = false, quiet = [], look = null, hop = 0 } = {}) {
+  const bob = still || asleep ? 0 : Math.round(Math.sin(t * 2.2) * 1), cx = x + 13, cy = y + 13 + bob - hop;
+  px.sprite(SPRITES.reelie.rows, x, y + bob - hop, 1, false, SPRITES.reelie.colours);
+  if (look && !asleep && (look[0] || look[1])) {
+    // its eyes are two pixels tall, three either side of the middle: paint them out, and in again where it is looking
+    px.rect(GOLD, cx - 3, cy - 2, 1, 2); px.rect(GOLD, cx + 3, cy - 2, 1, 2);
+    px.rect(INK, cx - 3 + look[0], cy - 2 + look[1], 1, 2); px.rect(INK, cx + 3 + look[0], cy - 2 + look[1], 1, 2);
+  }
   if (asleep || (!still && t % 4.1 > 3.95)) {
     px.rect(GOLD, cx - 3, cy - 2, 1, 2); px.rect(GOLD, cx + 3, cy - 2, 1, 2);
     px.rect(INK, cx - 4, cy - 1, 3, 1); px.rect(INK, cx + 2, cy - 1, 3, 1);
@@ -123,9 +144,22 @@ function shootingStar(px, w, h, t, { still = false, every = 11, quiet = [], top 
 }
 
 /**
- * Each scene: draw(px, w, h, t, { quiet, paper, still, met }) paints it w x h pixels big at
- * time t. `quiet` is where words sit (no stars there), `paper` the page's colour, `still`
- * holds it calm, and `met` is how many seconds ago its foot first came into view (null: not yet).
+ * What Reelie (standing at x, y) says, in a bubble over its head, or beside its head where
+ * words are in the way above: a bubble has a ground of its own, so it may stand in the room
+ * kept round the words, but never on them.
+ */
+function says(px, words, x, y, quiet) {
+  if (!amongWords(quiet, x - 2, y - 19 + ROOM, 60)) px.bubble(words, x - 2, y - 19, 12, x + 13);
+  else if (!amongWords(quiet, x + REELIE.w + 2, y + 3 + ROOM, 60)) px.bubble(words, x + REELIE.w + 2, y + 3, 12);
+}
+
+/**
+ * Each scene: draw(px, w, h, t, { quiet, paper, still, met, pointer, poked, pokes }) paints it
+ * w x h pixels big at time t. `quiet` is where words sit (no stars there), `paper` the
+ * page's colour, `still` holds it calm, and `met` is how many seconds ago its foot first
+ * came into view (null: not yet). `pointer` is where the pointer is, in the scene's pixels;
+ * `poked` how many seconds ago Reelie was last pressed, and `pokes` how many times so far.
+ * A scene with Reelie in it gives back where: { reelie: [x, y, w, h] }.
  */
 /**
  * How far round the words a scene is kept plain, in its own pixels: scenery.js makes each
@@ -135,11 +169,13 @@ function shootingStar(px, w, h, t, { still = false, every = 11, quiet = [], top 
 export const ROOM = 9;
 
 const HELLO = [0.5, 5];   // when Reelie's hello shows, in seconds after you first see it
+const SAY_S = 2.2;        // how long what Reelie says when pressed stays up, in seconds
+const WAKE_S = 4;         // how long sleeping Reelie stays awake when pressed
 const FILM = 11;          // how far in from the top and the foot of the cinema its strips of film reach (.cinema in site.css)
 
 export const SCENES = {
   // the top of the home page: night, with dawn on its way, and the page itself as the nearest hill
-  hero(px, w, h, t, { quiet = [], paper = PAPER, still = false, met = null } = {}) {
+  hero(px, w, h, t, { quiet = [], paper = PAPER, still = false, met = null, pointer = null, poked = null, pokes = 0 } = {}) {
     // the sky is plain behind the words, and glows only below them, low down behind the hills
     const horizon = h - 32, words = Math.max(0, ...quiet.map(([, y, , qh]) => y + qh));
     const glow = Math.max(14, Math.min(44, horizon - words));
@@ -159,11 +195,16 @@ export const SCENES = {
     const front = ridge(w, h - 2, 12, 6);
     ground(px, front, paper, h);
     const at = Math.round(Math.min(w - 40, Math.max(12, w * 0.06))), top = front[at + 13] - 27;
-    reelie(px, at, top, t, { still });
-    // Reelie says hello, once, when you first reach it (it stands below the first screenful);
-    // over its head, clear of the cottage, and never when pictures are held still
-    // (it has a ground of its own, so it may stand in the room round the words, but not on them)
-    if (!still && met !== null && met > HELLO[0] && met < HELLO[1] && !amongWords(quiet, at - 2, top - 19 + ROOM, 44)) px.bubble('Hello!', at - 2, top - 19, 12, at + 13);
+    // Reelie watches the pointer, and hops when it is pressed; held still, it does neither
+    const hop = still ? 0 : hopHeight(poked ?? -1);
+    reelie(px, at, top, t, { still, hop, look: still || !pointer ? null : lookAt(at + 13, top + 12, ...pointer) });
+    // Reelie says hello, once, when you first reach it (it stands below the first screenful),
+    // and something else each time it is pressed; over its head, clear of the cottage, and
+    // never when pictures are held still (the bubble has a ground of its own, so it may
+    // stand in the room round the words, but not on them)
+    const pressed = poked !== null && poked < SAY_S, hello = met !== null && met > HELLO[0] && met < HELLO[1];
+    if (!still && (pressed || hello)) says(px, pressed ? SAYINGS[pokes % SAYINGS.length] : SAYINGS[0], at, top - hop, quiet);
+    return { reelie: [at, top, REELIE.w, REELIE.h] };
   },
 
   // now showing: just the night sky
@@ -183,7 +224,7 @@ export const SCENES = {
   },
 
   // the foot of the page: hills, the moon, and Reelie fast asleep
-  footer(px, w, h, t, { quiet = [], still = false } = {}) {
+  footer(px, w, h, t, { quiet = [], still = false, poked = null } = {}) {
     px.rect(NIGHT, 0, 0, w, h);
     stars(px, w, h - 30, t, 21, quiet);
     moon(px, w - Math.max(14, Math.round(w * 0.08)), 6, 5);   // small, above the footer's rule (3rem down), so the line never crosses it
@@ -191,7 +232,11 @@ export const SCENES = {
     ground(px, far, '#17294a', h);
     pines(px, far, '#17294a', 3);
     ground(px, near, '#0d1930', h);
-    const at = Math.round(Math.min(w - 44, Math.max(12, w * 0.07)));
-    reelie(px, at, near[at + 13] - 27, t, { asleep: true, still, quiet });
+    const at = Math.round(Math.min(w - 44, Math.max(12, w * 0.07))), top = near[at + 13] - 27;
+    // pressed, Reelie wakes for a moment, says goodnight, and goes back to sleep
+    const woken = !still && poked !== null && poked < WAKE_S;
+    reelie(px, at, top, t, { asleep: !woken, still, quiet });
+    if (woken) says(px, poked < WAKE_S / 2 ? 'Mmm?' : 'Night night.', at, top, quiet);
+    return { reelie: [at, top, REELIE.w, REELIE.h] };
   }
 };
