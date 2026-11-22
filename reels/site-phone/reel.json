@@ -1,0 +1,127 @@
+{
+  "format": "pixelreel/1",
+  "title": "On your phone",
+  "transition": "slide",
+  "scenes": [
+    {
+      "title": "On your phone",
+      "caption": "Keep Pixel Reel a press away.",
+      "say": "You can keep Pixel Reel on your phone. Right there on the home screen, next to the weather.",
+      "picture": {
+        "type": "sprite",
+        "label": "ON YOUR PHONE",
+        "colours": {
+          "D": "#13203a"
+        },
+        "rows": [
+          "..kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk..",
+          ".kkkkkkkkkkkkkkeeeeeeeekkkkkkkkkkkkkk.",
+          "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk",
+          "kkkDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDkkk",
+          "kkkDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDkkk",
+          "kkkDDwwwwwDDDDDDDDDDDDDDDDDDDggggDDkkk",
+          "kkkDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDkkk",
+          "kkkDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDkkk",
+          "kkkDDDDDDDDDDDyyyyyyyyyyDDDDDDDDDDDkkk",
+          "kkkDDttttttttDyeeeeeeeeyDbbbbbbbbDDkkk",
+          "kkkDDttttttttDyeeyyyyeeyDbbbbbbbbDDkkk",
+          "kkkDDttwwwwttDyeykyykyeyDbbwwwwbbDDkkk",
+          "kkkDDttttttttDyeyyyyyyeyDbbbbbbbbDDkkk",
+          "kkkDDttwwwtttDyeykyykyeyDbbwwwbbbDDkkk",
+          "kkkDDttttttttDyeyykkyyeyDbbbbbbbbDDkkk",
+          "kkkDDttttttttDyeeyyyyeeyDbbbbbbbbDDkkk",
+          "kkkDDttttttttDyeeeeeeeeyDbbbbbbbbDDkkk",
+          "kkkDDDDDDDDDDDyyyyyyyyyyDDDDDDDDDDDkkk",
+          "kkkDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDkkk",
+          "kkkDDooooooooDDppppppppDDrrrrrrrrDDkkk",
+          "kkkDDooooooooDDppppppppDDrrrrrrrrDDkkk",
+          "kkkDDooyyyyooDDppwwwwppDDrrwwwwrrDDkkk",
+          "kkkDDooooooooDDppppppppDDrrrrrrrrDDkkk",
+          "kkkDDooyyyoooDDppwwwpppDDrrwwwrrrDDkkk",
+          "kkkDDooooooooDDppppppppDDrrrrrrrrDDkkk",
+          "kkkDDooooooooDDppppppppDDrrrrrrrrDDkkk",
+          "kkkDDooooooooDDppppppppDDrrrrrrrrDDkkk",
+          "kkkDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDkkk",
+          "kkkDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDkkk",
+          "kkkDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDkkk",
+          "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk",
+          "kkkkkkkkkkkkkkkkeeeeeekkkkkkkkkkkkkkkk",
+          "kkkkkkkkkkkkkkkkeeeeeekkkkkkkkkkkkkkkk",
+          ".kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.",
+          "..kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.."
+        ]
+      }
+    },
+    {
+      "title": "No app shop",
+      "caption": "One button. Then say yes.",
+      "say": "There's no app shop to visit, and nothing to pay. You press one button, and say yes.",
+      "picture": {
+        "type": "list",
+        "items": [
+          "No app shop",
+          "Nothing to pay",
+          "One button"
+        ],
+        "start": 0.3,
+        "every": 1.4
+      }
+    },
+    {
+      "title": "One press to open",
+      "caption": "It opens like any other app.",
+      "say": "After that, one press and it opens, like any other app. No address to type. No tab to lose.",
+      "picture": {
+        "type": "flow",
+        "items": [
+          {
+            "icon": "phone",
+            "label": "One press"
+          },
+          {
+            "icon": "tick",
+            "label": "It opens"
+          }
+        ],
+        "start": 0.9,
+        "every": 0.7
+      }
+    },
+    {
+      "title": "No internet? No bother",
+      "caption": "Reels you have watched there still play.",
+      "say": "It works with no internet, too. The reels you've watched there are kept on your phone. So they still play on the train.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "wifi",
+            "label": "No internet"
+          },
+          {
+            "icon": "train",
+            "label": "Still plays"
+          }
+        ],
+        "start": 0.5,
+        "every": 3.8
+      }
+    },
+    {
+      "title": "Changed your mind?",
+      "caption": "Take it off again, like any app.",
+      "say": "And if you change your mind, take it off again, like any other app. I shan't be offended.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "bin",
+            "label": "Gone in a press"
+          }
+        ],
+        "start": 0.6,
+        "every": 1.4
+      }
+    }
+  ]
+}

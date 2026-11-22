@@ -1,0 +1,31 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "You can keep Pixel Reel on your phone. Right there on the home screen, next to the weather.",
+      "file": "d4f56ce287510249.mp3",
+      "seconds": 5.2
+    },
+    {
+      "text": "There's no app shop to visit, and nothing to pay. You press one button, and say yes.",
+      "file": "ef3aba46ad2136b3.mp3",
+      "seconds": 5.04
+    },
+    {
+      "text": "After that, one press and it opens, like any other app. No address to type. No tab to lose.",
+      "file": "c4e97c6b45fab9cf.mp3",
+      "seconds": 7.04
+    },
+    {
+      "text": "It works with no internet, too. The reels you've watched there are kept on your phone. So they still play on the train.",
+      "file": "060e451f0d38e68d.mp3",
+      "seconds": 6.16
+    },
+    {
+      "text": "And if you change your mind, take it off again, like any other app. I shan't be offended.",
+      "file": "55e3169fd72a0183.mp3",
+      "seconds": 4.56
+    }
+  ]
+}

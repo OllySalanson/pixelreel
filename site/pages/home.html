@@ -25,7 +25,7 @@ fetch: /reels/pixel-reel/reel.json /reels/pixel-reel/audio/manifest.json
       <a class="btn btn-paper btn-big" href="#make">Make a pixel reel now</a>
       <p class="hero-small">Free. Nothing to sign up for. Works with every Claude plan.</p>
       <p class="hero-watch"><span>Rather not read the rest?</span>
-        <button class="btn btn-reel" type="button" data-reels="site-what site-how site-who site-peter site-make site-good site-questions site-open" data-kicker="This page, as a reel">Watch this whole page</button></p>
+        <button class="btn btn-reel" type="button" data-reels="site-what site-how site-who site-peter site-make site-good site-phone site-questions site-open" data-kicker="This page, as a reel">Watch this whole page</button></p>
     </div>
   </div>
 </section>
@@ -320,7 +320,25 @@ fetch: /reels/pixel-reel/reel.json /reels/pixel-reel/audio/manifest.json
   </div>
 </section>
 
-<section class="section section-tint" id="questions" aria-labelledby="questions-title">
+<!-- no use to someone who already has Pixel Reel on their home screen -->
+<section class="section section-tint" id="phone" aria-labelledby="phone-title" data-not-app>
+  <div class="wrap duo">
+    <div class="head">
+      <p class="eyebrow">On your phone</p>
+      <h2 id="phone-title">Keep it a press away.</h2>
+      <p class="lead">Add Pixel Reel to your home screen. It opens like any other app, with no app shop to visit. And the reels you watch there still play with no internet.</p>
+      <div class="row">
+        <a class="btn btn-gold" href="/app" data-install>Add Pixel Reel to your phone</a>
+        <button class="btn btn-reel" type="button" data-reel="site-phone">Make a pixel reel about this</button>
+      </div>
+    </div>
+    <figure class="handset" aria-label="A phone's home screen. Pixel Reel sits among the apps, with a gold edge.">
+      {{sprite:handset:6}}
+    </figure>
+  </div>
+</section>
+
+<section class="section" id="questions" aria-labelledby="questions-title">
   <div class="wrap">
     <div class="head">
       <p class="eyebrow">Questions</p>
@@ -353,6 +371,10 @@ fetch: /reels/pixel-reel/reel.json /reels/pixel-reel/audio/manifest.json
         <p>Yes. Ask Claude for the video. You get a file you can save, or send on WhatsApp.</p>
       </details>
       <details>
+        <summary>Is there an app?</summary>
+        <p>Yes, of a kind. Add Pixel Reel to your phone's home screen, and it opens like one. <a href="/app">Show me how</a>.</p>
+      </details>
+      <details>
         <summary>Can it sound like someone else?</summary>
         <p>No. There is one voice, and it is Peter. It cannot copy anybody.</p>
       </details>
@@ -364,7 +386,7 @@ fetch: /reels/pixel-reel/reel.json /reels/pixel-reel/audio/manifest.json
   </div>
 </section>
 
-<section class="section" id="open" aria-labelledby="open-title">
+<section class="section section-tint" id="open" aria-labelledby="open-title">
   <div class="wrap duo">
     <div class="head">
       <p class="eyebrow">For the curious</p>
