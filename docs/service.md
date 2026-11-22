@@ -89,7 +89,8 @@ Free plan allows one).
 
 Ask for something like *"Make me a pixel reel explaining how to read my gas meter."*, or
 paste in a letter and ask for a reel of it. Claude writes the scenes and gives you a link to
-the reel, which plays as soon as the voice is recorded: about as long as the reel itself.
+the reel. In the chat it can be played within seconds, while the rest of the voice is
+recorded; at its link it plays once the voice is finished, about as long as the reel itself.
 
 ## The tools
 
@@ -191,6 +192,8 @@ video and the picture for link previews all play the same thing.
   protocol to Claude over `postMessage`: it takes `make_reel`'s result, asks the service at
   `/r/<id>/play.json` until the voice is recorded, then starts the player, and tells Claude
   how tall it is.
+- What it is doing is said aloud to someone using a screen reader, once for each thing
+  that happens (recording, waiting its turn, could not be made), not again for every line.
 - While it waits it says how far Peter has got ("Peter has read 3 of 7 lines"), with a
   square for each line, lit as it is read. `play.json` carries the count (`recorded`,
   `lines`) while a reel is being recorded, for any page that wants to show it.

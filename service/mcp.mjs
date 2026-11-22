@@ -144,7 +144,7 @@ export function toolList(languages = [], narrators = []) {
         'The reel is this tool\'s input: 5 to 7 scenes, about 40 seconds in all. Each scene has a title, one short caption, what Peter says (12 to 25 plain words) and a picture. ' +
         'Open on a title picture, mix the pictures, and label a picture\'s items with words Peter says, so each arrives as he says it. reel_format has the full guide and a finished reel.\n' +
         'To change a reel you made, send the whole reel again with "improves" set to its id: only the lines you changed are recorded again.\n' +
-        'It answers at once with a link. The voice takes about as long to record as the reel lasts; the reel then plays by itself, in the chat where the player shows, and at the link. ' +
+        'It answers at once with a link. The reel can be played within seconds in the chat, where the player shows, while the rest of the voice is recorded; at the link it plays once the voice is finished, which takes about as long as the reel lasts. ' +
         `Do not wait or check on it. ${HAND_OVER}`,
       inputSchema: reelInput(languages, narrators),
       annotations: { title: 'Make a pixel reel', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
@@ -283,11 +283,11 @@ function describe(status, baseUrl) {
   const { watch, video } = links(baseUrl, status.id);
   const about = `${status.scenes} scenes, about ${clockTime(status.seconds * 1000)}${status.language ? `, in ${languageName(status.language)}` : ''}`;
   const who = status.narrator ? languageName(status.narrator) : 'Peter';
-  const plays = `It plays by itself as soon as the voice is ready, in the chat where the player shows, and at ${watch}`;
+  const plays = `In the chat, where the player shows, it can be played within seconds, while the rest is recorded. At ${watch} it plays once the voice is finished, in about ${clockTime(status.seconds * 1000)}.`;
   const said = {
     writing: `"${status.title}" is still being written. It plays by itself, once it is written and recorded, at ${watch}`,
     queued: `"${status.title}" is made (${about}) and waiting its turn: another reel is being recorded first. ${plays}\n${HAND_OVER} There is no need to check on it.`,
-    recording: `"${status.title}" is made (${about}) and ${who} is recording the voice now${status.lines ? ` (${status.recorded} of ${status.lines} lines done)` : ''}, which takes about as long as the reel lasts. ${plays}\n${HAND_OVER} There is no need to check on it.`,
+    recording: `"${status.title}" is made (${about}) and ${who} is recording the voice now${status.lines ? ` (${status.recorded} of ${status.lines} lines done)` : ''}. ${plays}\n${HAND_OVER} There is no need to check on it.`,
     ready: `"${status.title}" is ready: ${status.scenes} scenes, ${clockTime(status.seconds * 1000)}. Watch it at ${watch}`,
     failed: `"${status.title}" could not be made. ${status.error ?? ''}`.trim()
   }[status.state];
