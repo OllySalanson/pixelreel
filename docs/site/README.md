@@ -7,6 +7,7 @@ Reel is, how to add it to Claude, the press kit, and privacy, terms and credits.
 - [Who it is built for](#who-it-is-built-for)
 - [How it fits together](#how-it-fits-together)
 - [On a phone's home screen](#on-a-phones-home-screen)
+- [Who reads](#who-reads)
 - [Changing it](#changing-it)
 - [The reels it plays](#the-reels-it-plays)
 - [Design log](#design-log)
@@ -43,7 +44,9 @@ People who find reading hard work. Every choice follows from that:
 Pixel art is for pictures; words are always in plain letters. One pixel of the page's pixel
 art is `--u` (4px) wide everywhere, so buttons, borders, icons and scenery sit on one grid.
 
-The voice is Peter's: warm, plain, British, a little cheeky. Plain dashes only.
+The site's own voice is Peter's: warm, plain, British, a little cheeky. Plain dashes only.
+Peter reads every reel the site plays, and every made reel unless someone chooses another
+narrator ([Who reads](#who-reads)).
 
 ## How it fits together
 
@@ -127,6 +130,28 @@ To try it for real, open the site in a browser, stop the service, and reload: pa
 opened still show, a reel of the site's already played still plays, and so does a made reel
 that was kept.
 
+## Who reads
+
+Peter, unless someone chooses otherwise. Where the service offers other narrators
+(`PIXELREEL_NARRATORS`, [service.md](../service.md#other-narrators)), the part of the home
+page about the voice has a card for Peter and one for each of them: a name, whether it is a
+man's voice or a woman's, a button to hear them say hello, and one to choose them.
+
+- `narratorsHtml()` in `service/site.mjs` writes the cards, for the narrators the service
+  says it has, and nothing at all where it has only Peter. `NARRATORS` there names each
+  one's hello.
+- **A hello is a reel of one scene**, `reels/voice-anna` and so on, recorded in that
+  narrator's own voice (`npm run voices voice-anna -- --voice anna`; Stuart's voice is
+  `stuart_bell`). "Hear Anna" plays its first line, the way "Hear Peter say hello" plays
+  the first line of `site-peter`. A new narrator needs one, and a test says so.
+- `site/js/voice.js` keeps the choice on the device and says who was chosen. The make-one
+  box asks it, so the words it writes for Claude say who should read: "Make me a pixel
+  reel, read by Anna, about this: my gas bill".
+- A reel's own page names whoever is reading while it waits ("Anna is recording scene 3 of
+  6"), from what the service says of the reel.
+- The site never says a voice can copy anyone: all are computer voices made from public
+  domain readings, and none can be made to sound like a real person.
+
 ## Changing it
 
 ```sh
@@ -156,6 +181,7 @@ connector (ready-made pictures only) and recorded by Peter with `npm run voices`
 | `pixel-reel` | The player at the top of the home page. |
 | `site-what`, `site-how`, `site-who`, `site-peter`, `site-make`, `site-good`, `site-phone`, `site-questions` | "Make a pixel reel about this", one for each part of the home page. With `site-open`, they are also "Watch this whole page". |
 | `site-open` | The reel for "It is all open", and the code typing out beside it. |
+| `voice-anna`, `voice-vera`, `voice-stuart`, `voice-charles`, `voice-paul` | Each narrator's hello, one line in their own voice, for "Hear Anna" and the rest ([Who reads](#who-reads)). |
 | `site-privacy`, `site-terms` | "Make a pixel reel about this" on the privacy and terms pages. A plain page gets the button by naming a reel in the comment at its top (`reel: site-privacy`). |
 | `gas-meter`, `pension-letter`, `volcano`, `cup-of-tea`, `offside-rule`, `blue-sky` | The examples under Now showing. `pension-letter` also plays beside the letter in "Same letter, two ways". |
 
@@ -639,3 +665,26 @@ The page a shared reel is watched on is where a reel does its work, so it got th
 | The new part of the home page, on a laptop and a phone, and its reel |
 | --- |
 | ![On your phone: Keep it a press away, with the buttons Add Pixel Reel to your phone and Make a pixel reel about this, beside a phone with Pixel Reel among its apps. And the reel of it playing.](log/v27-on-the-home-page.jpg) |
+
+### Version 28
+
+- **Choose who reads to you.** Peter is no longer the only narrator. Under Meet Peter there
+  is now a card for each of them: Peter, Anna, Vera, Stuart, Charles and Paul. Each says
+  whether it is a man's voice or a woman's, and has two big buttons: Hear, which plays that
+  narrator saying hello in their own voice, and Choose, which turns gold and says Chosen.
+  Under the cards the page says who will read. Peter is chosen until someone picks another,
+  and the choice is kept on the device.
+- **The words for Claude say who.** With Anna chosen, the make-one box writes "Make me a
+  pixel reel, read by Anna, about this: my gas bill".
+- **The site no longer says there is only Peter.** The lead under Meet Peter, Peter's own
+  reel (two lines recorded again), the question "Can someone else read it?", the press kit
+  and the terms all say there is a choice. They still say what has not changed: no voice
+  can copy a real person.
+- **A reel's page names whoever is reading** while it waits: "Anna is recording scene 3 of 6".
+- The cards are shown only where the service offers other narrators, and only for the ones
+  it offers. Three across on a laptop, one to a row on a phone with its two buttons side
+  by side. All well at 320, 390, 768 and 1280 pixels wide, at all 27 settings.
+
+| The cards on a laptop, with Anna chosen, and on a phone |
+| --- |
+| ![Or choose who reads to you: cards for Peter, Anna, Vera, Stuart, Charles and Paul, each with Hear and Choose. Anna's says Chosen, with a tick. Under them: Anna will read the reels you make.](log/v28-who-reads.jpg) |

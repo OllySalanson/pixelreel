@@ -162,7 +162,8 @@ describe('the reels in reels/', () => {
   for (const { name, reel, manifest } of reels) {
     it(`${name}: valid, with a name fit for an address and a picture for every scene`, () => {
       assert.ok(REEL_NAME.test(name));
-      assert.ok(reel.scenes.length >= 4);
+      // a narrator's hello (voice-anna and the rest, for "Hear Anna" on the website) is one line; every other reel is one to sit and watch
+      assert.ok(reel.scenes.length >= (name.startsWith('voice-') ? 1 : 4));
       for (const s of reel.scenes) assert.notEqual(s.draw, defaultDraw, `${s.title} draws its own picture`);
     });
 

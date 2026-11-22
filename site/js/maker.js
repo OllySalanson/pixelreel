@@ -8,6 +8,7 @@ import { calm } from './calm.js';
 import { canTake, GivenError, givenFrom, isLink, nameOf, PICTURE_SIDE, requestFor } from './given.js';
 import { mineStorage, rememberMine } from './mine.js';
 import { copyText } from './send.js';
+import { chosenNarrator } from './voice.js';
 
 const EXAMPLE = 'my gas bill';
 
@@ -17,10 +18,10 @@ const ASKED = 'pixelreel-asked';
 /** The most the box takes when its words are for copying across to Claude. */
 const ASK_MAX = 2000;
 
-/** The words to say to Claude for `what`: a web address, or a few words. */
-export function askFor(what) {
-  const about = what.trim().replace(/\s+/g, ' ') || EXAMPLE;
-  return isLink(about) ? `Make me a pixel reel about this page: ${about}` : `Make me a pixel reel about this: ${about}`;
+/** The words to say to Claude for `what`: a web address, or a few words. With `narrator` (a name, such as "Anna"), they ask for that narrator to read it. */
+export function askFor(what, narrator = null) {
+  const about = what.trim().replace(/\s+/g, ' ') || EXAMPLE, reel = narrator ? `a pixel reel, read by ${narrator},` : 'a pixel reel';
+  return isLink(about) ? `Make me ${reel} about this page: ${about}` : `Make me ${reel} about this: ${about}`;
 }
 
 /** Anything with data-copy="#id" copies that element's words when pressed, and says so. */
@@ -44,13 +45,14 @@ export function startMaker() {
   // the box is one line that grows with what is put in it, as far as its styles let it
   const grow = () => { box.style.height = 'auto'; box.style.height = `${box.scrollHeight + box.offsetHeight - box.clientHeight}px`; };
   const update = () => {
-    const ask = askFor(box.value);
+    const ask = askFor(box.value, chosenNarrator());
     words.textContent = ask;
     open.href = `https://claude.ai/new?q=${encodeURIComponent(ask)}`;
     for (const said of form.querySelectorAll('.said')) { said.textContent = ''; said.classList.remove('sorry'); }
     grow();
   };
   box.addEventListener('input', update);
+  addEventListener('voice', update);   // another narrator has been chosen (voice.js)
   addEventListener('resize', grow);
   for (const chip of form.querySelectorAll('[data-try]')) {
     chip.addEventListener('click', () => { box.value = chip.dataset.try; update(); });

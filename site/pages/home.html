@@ -219,7 +219,7 @@ fetch: /reels/pixel-reel/reel.json /reels/pixel-reel/audio/manifest.json
     <div class="head">
       <p class="eyebrow">The voice</p>
       <h2 id="peter-title">Meet Peter.</h2>
-      <p class="lead">Peter reads every pixel reel. He is warm. He is British. He is never in a rush.</p>
+      <p class="lead">Peter reads your pixel reel, unless you would rather hear someone else. He is warm. He is British. He is never in a rush.</p>
       <p>He is a computer voice, built from old audiobook readings that belong to everyone. So he never gets tired. And he never sighs when you press Back.</p>
       <div class="row">
         <button class="btn btn-gold" type="button" data-hear="site-peter">Hear Peter say hello</button>
@@ -231,6 +231,8 @@ fetch: /reels/pixel-reel/reel.json /reels/pixel-reel/audio/manifest.json
       <div class="waves"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     </div>
   </div>
+  <!-- who else can read: a card each, where the service offers other narrators (narratorsHtml in service/site.mjs) -->
+{{voices}}
 </section>
 
 <section class="section section-tint" id="make" aria-labelledby="make-title">
@@ -375,8 +377,8 @@ fetch: /reels/pixel-reel/reel.json /reels/pixel-reel/audio/manifest.json
         <p>Yes, of a kind. Add Pixel Reel to your phone's home screen, and it opens like one. <a href="/app">Show me how</a>.</p>
       </details>
       <details>
-        <summary>Can it sound like someone else?</summary>
-        <p>No. There is one voice, and it is Peter. It cannot copy anybody.</p>
+        <summary>Can someone else read it?</summary>
+        <p>{{whoreads}}</p>
       </details>
       <details>
         <summary>Is the code open?</summary>

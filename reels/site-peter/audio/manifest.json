@@ -3,9 +3,9 @@
   "voice": "peter_yearsley",
   "clips": [
     {
-      "text": "Hello. I'm Peter. I read every pixel reel out loud, so you don't have to.",
-      "file": "3d1bf383d695a694.mp3",
-      "seconds": 5.28
+      "text": "Hello. I'm Peter. I read pixel reels out loud, so you don't have to.",
+      "file": "1a95d3bac9b09b80.mp3",
+      "seconds": 5.52
     },
     {
       "text": "I should be honest with you. I'm a computer voice, built from old audiobook readings that belong to everyone.",
@@ -18,9 +18,9 @@
       "seconds": 5.2
     },
     {
-      "text": "And there's only me. Pixel Reel can't be made to sound like anybody else. Which I find rather reassuring.",
-      "file": "cf33c6a9e0635ced.mp3",
-      "seconds": 6.48
+      "text": "And it needn't be me. There are other narrators to choose from, if you'd rather. I shan't take it personally. Much.",
+      "file": "9a18843a588a95e9.mp3",
+      "seconds": 7.12
     }
   ]
 }

@@ -1,0 +1,16 @@
+{
+  "format": "pixelreel/1",
+  "title": "Anna, one of the narrators",
+  "scenes": [
+    {
+      "title": "Anna",
+      "caption": "Hello. I'm Anna.",
+      "say": "Hello. I'm Anna. I can read your pixel reel to you, if you like.",
+      "picture": {
+        "type": "title",
+        "text": "ANNA",
+        "sub": "One of the narrators"
+      }
+    }
+  ]
+}

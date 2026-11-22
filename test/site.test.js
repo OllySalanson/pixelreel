@@ -3,7 +3,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { textArt } from '../scripts/site-art.mjs';
-import { addToClaudeLink, EXAMPLES, pageFacts, playerHtml, robotsTxt, SITE_PAGES, siteModules, sitemapXml, sitePage, spriteSvg, WATCH, watchPage } from '../service/site.mjs';
+import { addToClaudeLink, EXAMPLES, NARRATORS, narratorsHtml, pageFacts, playerHtml, robotsTxt, SITE_PAGES, siteModules, sitemapXml, sitePage, spriteSvg, WATCH, watchPage } from '../service/site.mjs';
 import { staticFile } from '../service/static.mjs';
 import { hopHeight, lookAt, REELIE, SAYINGS, SCENES } from '../site/js/landscape.js';
 import { askFor } from '../site/js/maker.js';
@@ -12,6 +12,7 @@ import { lengthWords, showOf, waitingFor } from '../site/js/reels.js';
 import { rulerTop } from '../site/js/ruler.js';
 import { sendReel, sentWords } from '../site/js/send.js';
 import { SPRITES } from '../site/js/sprites.js';
+import { keepNarrator, narratorName, readNarrator, VOICE } from '../site/js/voice.js';
 import { parseReelJson } from '../src/format.js';
 import { createKit } from '../src/kit.js';
 import { PALETTE } from '../src/palette.js';
@@ -521,6 +522,88 @@ describe("Peter's pace", () => {
       assert.deepEqual(picks, [['slow', false], ['usual', true], ['quick', false]], name);
       for (const [value] of picks) assert.ok(value in PACES, `${value} is a pace the players know`);
     }
+  });
+});
+
+describe('who reads', () => {
+  const others = ['anna', 'vera', 'stuart', 'charles', 'paul'];
+  const home = sitePage('home', 'https://reels.example', { narrators: others }), plain = sitePage('home', 'https://reels.example');
+
+  it('offers a card for Peter and for each narrator the service has, each to hear and to choose, Peter chosen', () => {
+    const cards = [...home.matchAll(/<li class="voice">\s*<p class="voice-name">(\w+)<\/p>\s*<p class="voice-kind">([^<]+)<\/p>\s*<button class="btn btn-teal btn-small" type="button" data-hear="([a-z-]+)">Hear (\w+)<\/button>\s*<label class="voice-pick"><input type="radio" name="narrator" value="([a-z]+)"( checked)?>/g)];
+    assert.deepEqual(cards.map(([, name]) => name), ['Peter', 'Anna', 'Vera', 'Stuart', 'Charles', 'Paul']);
+    assert.deepEqual(cards.map(([, , , , , value]) => value), ['peter', ...others]);
+    assert.deepEqual(cards.filter(([, , , , , , checked]) => checked).map(([, name]) => name), ['Peter'], 'Peter reads unless someone chooses otherwise');
+    for (const [, name, kind, hello, heard, value] of cards) {
+      assert.equal(heard, name);
+      assert.equal(hello, NARRATORS[value].hello);
+      assert.match(kind, /^A (wo)?man's voice$/);
+    }
+    assert.match(home, /<legend>Or choose who reads to you<\/legend>/);
+    assert.match(home, /<p class="said" id="voices-said" role="status"><\/p>/, 'somewhere to say who was chosen');
+  });
+
+  it('has a hello recorded in their own voice for every narrator it knows', () => {
+    for (const [narrator, { hello }] of Object.entries(NARRATORS)) {
+      const { voice } = JSON.parse(readFileSync(root(`reels/${hello}/audio/manifest.json`), 'utf8'));
+      assert.ok(voice.startsWith(narrator), `${hello} is read by ${voice}, not ${narrator}`);
+      const first = parseReelJson(readFileSync(root(`reels/${hello}/reel.json`), 'utf8')).scenes[0];
+      assert.match(first.say, new RegExp(`^Hello\\. I'm ${narratorName(narrator)}\\.`), `${hello} starts with their name`);
+    }
+  });
+
+  it('offers only narrators the service has, and nothing at all where there is only Peter', () => {
+    assert.equal(narratorsHtml(), '');
+    assert.equal(narratorsHtml(['peter']), '');
+    assert.equal(narratorsHtml(['nobody']), '');
+    assert.ok(!plain.includes('id="voices"') && !plain.includes('{{voices}}'));
+    const two = narratorsHtml(['stuart', 'zebedee', 'anna']);
+    assert.deepEqual([...two.matchAll(/value="([a-z]+)"/g)].map(([, value]) => value), ['peter', 'stuart', 'anna']);
+  });
+
+  it('no longer says there is only Peter, but still says no voice can copy a real person', () => {
+    assert.match(home, /<summary>Can someone else read it\?<\/summary>\s*<p>Yes\. Peter reads it unless you choose Anna, Vera, Stuart, Charles or Paul\. None of them can copy a real person's voice\.<\/p>/);
+    assert.match(sitePage('home', 'https://reels.example', { narrators: ['anna'] }), /unless you choose Anna\. None/);
+    assert.match(plain, /<summary>Can someone else read it\?<\/summary>\s*<p>Not here, yet\. Peter reads every reel\. He cannot copy a real person's voice\.<\/p>/);
+    for (const page of [home, plain, html.press, html.terms]) assert.doesNotMatch(page, /one voice|only me|always the same voice/i);
+    assert.match(home, /Peter reads your pixel reel, unless you would rather hear someone else\./);
+    const peter = parseReelJson(readFileSync(root('reels/site-peter/reel.json'), 'utf8'));
+    assert.doesNotMatch(peter.scenes.map((scene) => `${scene.title} ${scene.caption} ${scene.say}`).join(' '), /there's only me|one voice|every pixel reel/i);
+  });
+
+  it('keeps the choice on the device, and takes nothing odd from it', () => {
+    const kept = new Map(), storage = { getItem: (key) => kept.get(key) ?? null, setItem: (key, value) => kept.set(key, value), removeItem: (key) => kept.delete(key) };
+    assert.equal(readNarrator(storage), null, 'Peter, until someone chooses');
+    keepNarrator(storage, 'anna');
+    assert.equal(kept.get(VOICE), '{"narrator":"anna"}');
+    assert.equal(readNarrator(storage), 'anna');
+    keepNarrator(storage, 'peter');
+    assert.equal(kept.has(VOICE), false, 'choosing Peter keeps nothing');
+    for (const odd of ['not json', '{"narrator":"<b>"}', '{"narrator":7}', '{"narrator":"peter"}', '[]', 'null']) {
+      kept.set(VOICE, odd);
+      assert.equal(readNarrator(storage), null, odd);
+    }
+    assert.equal(readNarrator({ getItem() { throw new Error('no storage here'); } }), null);
+    assert.doesNotThrow(() => keepNarrator({ setItem() { throw new Error('full'); } }, 'anna'));
+    assert.equal(narratorName('stuart'), 'Stuart');
+  });
+
+  it('has the words for Claude ask for the narrator who was chosen', () => {
+    assert.equal(askFor('my gas bill', 'Anna'), 'Make me a pixel reel, read by Anna, about this: my gas bill');
+    assert.equal(askFor('https://example.com/a', 'Stuart'), 'Make me a pixel reel, read by Stuart, about this page: https://example.com/a');
+    assert.equal(askFor('my gas bill'), 'Make me a pixel reel about this: my gas bill', 'and say nothing of it for Peter');
+    const main = readFileSync(root('site/js/main.js'), 'utf8');
+    assert.ok(main.indexOf('startVoice();') < main.indexOf('startMaker();'), 'the choice is looked up before the box writes its first words');
+  });
+
+  it('names whoever is reading while a reel is recorded', () => {
+    assert.equal(waitingFor({ state: 'recording', recorded: 2, lines: 6, narrator: 'Anna' }).words, 'Anna is recording scene 3 of 6.');
+    assert.equal(waitingFor({ state: 'recording', narrator: 'Vera' }).words, 'Vera is recording it. It will play here in a moment.');
+    assert.equal(waitingFor({ state: 'queued', ahead: 0, narrator: 'Paul' }).words, 'It is written. Paul is about to record it.');
+    assert.equal(waitingFor({ state: 'queued', ahead: 2, narrator: 'Paul' }).words, 'It is written. There are 2 reels to record first.');
+    assert.equal(waitingFor({ state: 'queued', ahead: 1, narrator: 'Paul' }).words, 'It is written. There is one reel to record first.');
+    assert.equal(waitingFor({ state: 'recording', recorded: 0, lines: 4 }).words, 'Peter is recording scene 1 of 4.', 'Peter, when nobody is named');
+    assert.equal(waitingFor({ state: 'recording', recorded: 0, lines: 4, narrator: '<b>x</b>' }).words, 'Peter is recording scene 1 of 4.', 'and nothing odd is taken for a name');
   });
 });
 

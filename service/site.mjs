@@ -37,6 +37,61 @@ const escapeHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
 
 const siteFile = (path) => new URL(`../site/${path}`, import.meta.url);
 
+/**
+ * Every narrator the site knows, by first name: the reel in reels/ whose first line is their
+ * hello, for "Hear Anna", and a few words on the voice. Peter comes first, and is who reads
+ * unless someone chooses otherwise.
+ */
+export const NARRATORS = {
+  peter: { hello: 'site-peter', kind: "A man's voice" },
+  anna: { hello: 'voice-anna', kind: "A woman's voice" },
+  vera: { hello: 'voice-vera', kind: "A woman's voice" },
+  stuart: { hello: 'voice-stuart', kind: "A man's voice" },
+  charles: { hello: 'voice-charles', kind: "A man's voice" },
+  paul: { hello: 'voice-paul', kind: "A man's voice" }
+};
+
+const named = (narrator) => narrator[0].toUpperCase() + narrator.slice(1);
+
+/** Names as a sentence lists them: "Anna", "Anna or Vera", "Anna, Vera or Stuart". */
+const oneOf = (names) => (names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} or ${names.at(-1)}`);
+
+/**
+ * The part of the home page where someone chooses who reads to them: a card for Peter and
+ * one for each of `narrators` (first names, as the service offers them), each with a button
+ * to hear them say hello. Nothing at all where the service offers nobody but Peter.
+ * site/js/voice.js remembers the choice.
+ */
+export function narratorsHtml(narrators = []) {
+  const offered = narrators.filter((narrator) => narrator !== 'peter' && NARRATORS[narrator]);
+  if (!offered.length) return '';
+  const cards = ['peter', ...offered].map((narrator) => {
+    const name = named(narrator), { hello, kind } = NARRATORS[narrator];
+    return `      <li class="voice">
+        <p class="voice-name">${name}</p>
+        <p class="voice-kind">${kind}</p>
+        <button class="btn btn-teal btn-small" type="button" data-hear="${hello}">Hear ${name}</button>
+        <label class="voice-pick"><input type="radio" name="narrator" value="${narrator}"${narrator === 'peter' ? ' checked' : ''}><span><span class="voice-off">Choose<span class="sr-only"> ${name}</span></span><span class="voice-on">Chosen<span class="sr-only">: ${name}</span></span></span></label>
+      </li>`;
+  });
+  return `  <fieldset class="wrap voices" id="voices">
+    <legend>Or choose who reads to you</legend>
+    <p class="voices-lead">Press Hear to listen to each of them. Then choose the one you like best. Your choice is kept on this device.</p>
+    <ul class="voices-list">
+${cards.join('\n')}
+    </ul>
+    <p class="said" id="voices-said" role="status"></p>
+  </fieldset>`;
+}
+
+/** The answer to "Can someone else read it?", for the narrators the service offers besides Peter. */
+export const whoReads = (narrators = []) => {
+  const offered = narrators.filter((narrator) => narrator !== 'peter' && NARRATORS[narrator]).map(named);
+  return offered.length
+    ? `Yes. Peter reads it unless you choose ${oneOf(offered)}. None of them can copy a real person's voice.`
+    : "Not here, yet. Peter reads every reel. He cannot copy a real person's voice.";
+};
+
 /** Inline Markdown: `code`, **bold**, *emphasis* and [links](address), on escaped text. */
 function inline(text) {
   return escapeHtml(text)
@@ -246,12 +301,12 @@ export function postersHtml({ links = false, except = null } = {}) {
  * whole address), `imagealt` and `fetch` (files to ask for early) replace the page's own,
  * for a page that stands for many, such as a reel's.
  */
-export function sitePage(name, baseUrl, { listed = false, values = {}, title = null, description = null, path = null, image = null, imagealt = null, fetch = null } = {}) {
+export function sitePage(name, baseUrl, { listed = false, values = {}, title = null, description = null, path = null, image = null, imagealt = null, fetch = null, narrators = [] } = {}) {
   path ??= Object.keys(SITE_PAGES).find((p) => SITE_PAGES[p] === name) ?? '/';
   const markdown = !existsSync(siteFile(`pages/${name}.html`));
   const { facts, body } = pageFacts(readFileSync(siteFile(`pages/${name}.${markdown ? 'md' : 'html'}`), 'utf8'));
   // the connector's address is long and has no spaces: <wbr> lets a narrow screen break it before "/mcp", not mid-word
-  const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', posters: postersHtml(), ...values };
+  const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', posters: postersHtml(), voices: narratorsHtml(narrators), whoreads: whoReads(narrators), ...values };
   const heading = /^# (.+)$/m.exec(body)?.[1];
   title ??= facts.title ?? (heading && heading !== 'Pixel Reel' ? `${heading} - Pixel Reel` : 'Pixel Reel');
   // a plain page that has a reel of itself offers it straight under its heading

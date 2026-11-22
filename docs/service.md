@@ -237,8 +237,9 @@ to offer the choice unprompted: Peter stays the narrator unless someone asks.
 
 - Why it might be wanted: some people follow one voice more easily than another, and some
   would simply rather hear a woman's voice.
-- The website still says, in Peter's own words, "there's only me" (the reel under Meet
-  Peter). Now that other narrators can be asked for, that reel wants changing.
+- The website offers the same choice: where narrators are on, the part of the home page
+  about the voice has a card for each, with a button to hear them say hello
+  ([site](site/README.md#who-reads)). It no longer says there is only Peter.
 - Each voice is a small file that must be to hand, like a language's model
   ([deploy.md](deploy.md#other-languages-and-narrators)).
 - A line was recorded in each of the six voices and written down again by a speech-to-text

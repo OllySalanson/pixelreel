@@ -65,6 +65,8 @@ export function lengthWords(ms) {
  * it, which gives no sign of how far along it is, then Peter records it, a scene at a time.
  */
 export function waitingFor(play, waited = 0) {
+  // who is reading it: the service names anyone but Peter
+  const who = typeof play.narrator === 'string' && /^[A-Z][a-z]{1,15}$/.test(play.narrator) ? play.narrator : 'Peter';
   switch (play.state) {
     case 'writing': {
       // with no news the bar creeps towards half way, quickly at first, and never gets there by itself;
@@ -77,14 +79,20 @@ export function waitingFor(play, waited = 0) {
       };
     }
     case 'queued':
-      return { sign: 'WRITTEN', words: play.ahead > 0 ? `It is written. Peter has ${play.ahead === 1 ? 'one reel' : `${play.ahead} reels`} to record first.` : 'It is written. Peter is about to record it.', part: 0.5 };
+      return {
+        sign: 'WRITTEN',
+        words: play.ahead > 0
+          ? (who === 'Peter' ? `It is written. Peter has ${play.ahead === 1 ? 'one reel' : `${play.ahead} reels`} to record first.` : `It is written. There ${play.ahead === 1 ? 'is one reel' : `are ${play.ahead} reels`} to record first.`)
+          : `It is written. ${who} is about to record it.`,
+        part: 0.5
+      };
     case 'recording': {
       // the service counts the lines Peter has said, of how many: one a scene, as a rule
       const known = play.lines > 0 && Number.isInteger(play.recorded);
       const done = known ? Math.min(play.recorded, play.lines) : 0;
       return known
-        ? { sign: 'RECORDING', words: `Peter is recording scene ${Math.min(done + 1, play.lines)} of ${play.lines}.`, part: 0.5 + 0.5 * done / play.lines }
-        : { sign: 'RECORDING', words: 'Peter is recording it. It will play here in a moment.', part: 0.75 };
+        ? { sign: 'RECORDING', words: `${who} is recording scene ${Math.min(done + 1, play.lines)} of ${play.lines}.`, part: 0.5 + 0.5 * done / play.lines }
+        : { sign: 'RECORDING', words: `${who} is recording it. It will play here in a moment.`, part: 0.75 };
     }
     default:
       return { sign: 'ONE MOMENT', words: 'Trying to reach Pixel Reel. One moment.', part: null };
