@@ -34,6 +34,8 @@ People who find reading hard work. Every choice follows from that:
   readers use on paper. It gets out of the way of a reel that is playing.
 - **Nothing lost with the sound off.** A reel shows a few words and Peter says the rest.
   With the sound off, every word he says is written under the picture instead.
+- **A place kept in the words.** Where every word is written, the sentence being said is
+  gold as it is said, so nobody has to hunt for where the voice has got to.
 - **As big as the screen.** Every player has a button in the corner of its picture that
   fills the whole screen with the reel, for anyone who needs it large, or is watching on a
   phone held on its side.
@@ -63,6 +65,7 @@ narrator ([Who reads](#who-reads)).
 | `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` is Make it comfy; `boot.js` runs before the page is drawn, to put its settings back and to keep the bar across the top on one row; `signal.js` is the test card on a page that is not there; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `send.js` copies words and passes a reel on; `ruler.js` is the reading ruler; `pace.js` is the clock that lets Peter read slower or quicker; `sprites.js` is the site's own pixel art. |
 | `site/js/app.js`, `site/js/sw.js` | Pixel Reel as an app on a phone: [below](#on-a-phones-home-screen). |
 | `site/js/sheet.js` | The whole reel on one page, under the player on a reel's page: every scene's finished picture with its few words, to glance over and to print. The print rules at the foot of `site.css` leave nothing else on the paper. |
+| `site/js/follow.js` | Following the words: splits a line into its sentences and works out which is being said, for the player to mark where every word is written. |
 | `site/fonts/`, `site/art/` | The fonts (with their licences), and the icons, logos and share picture. |
 | `service/site.mjs` | Puts a page together: the layout, the page, and the `{{names}}` in them. |
 | `service/static.mjs` | Serves the files a page loads, and only those. |
@@ -810,3 +813,19 @@ afternoon of three people changing it. One thing was off:
 | Before, and after |
 | --- |
 | ![The player at the top of the home page: the button over the moon at the top right; then at the bottom right, clear of it.](log/v36-off-the-moon.jpg) |
+
+### Version 37
+
+- **Follow the words.** Where every word the narrator says is written under the picture
+  (the sound is off, or Every word is chosen in Make it comfy), the sentence being said
+  now turns gold as it is said, and the rest stays as it was. Reading along with a voice is
+  how many dyslexic readers like to read, and losing the place is what stops them.
+- A recording does not say when each sentence starts, so it is worked out: each sentence
+  has a share of the line's time in proportion to its letters. That is near enough for a
+  sentence. It would not be for a word, which is why it is not a word at a time.
+- Nothing is marked before a reel starts or once it has ended, and it keeps with the voice
+  at any pace, as it uses the reel's own clock.
+
+| The sentence being said, in gold |
+| --- |
+| ![4. What you might get. Next comes a guess at what you might get each year, when you retire, in gold; then, It's an estimate. Not a promise.](log/v37-follow-the-words.jpg) |

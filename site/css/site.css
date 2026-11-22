@@ -192,6 +192,7 @@ html.reel-filling { overflow: hidden; }
 .reel-words > p { grid-area: 1 / 1; max-width: none; color: var(--cream); visibility: hidden; }
 .reel-words > p.on { visibility: visible; }
 .reel.all-words .reel-words { font-size: 1.1875rem; line-height: 1.5; }   /* every word Peter says: more of them, so a little smaller */
+.reel-words span.now { color: var(--gold); }   /* the sentence being said, to keep a reader's place (follow.js) */
 .reel-keys { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 3); padding: var(--u) calc(1.25rem + var(--u)) calc(1.25rem + var(--u)); }
 /* the buttons share out each row between them, so they are big, and tidy on one row or
    (with large letters in a narrow player) on three */
