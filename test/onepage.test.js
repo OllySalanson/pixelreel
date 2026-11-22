@@ -48,6 +48,7 @@ describe('bundle', () => {
 
 describe('npm run page', () => {
   it('makes a page that needs no other file', () => {
+    assert.match(pageHtml({ reelJson: '{}', title: 'Save $$$ & $& more' }), /<title>Save \$\$\$ &amp; \$&amp; more<\/title>/, 'a title is never read as a pattern');
     const page = pageHtml({ reelJson: JSON.stringify(tea), title: 'Tea - pixelreel' });
     assert.doesNotMatch(page, /\b(src|href)="(?!data:)[^"#]/, 'nothing to fetch');
     assert.doesNotMatch(page, /url\('\.\.\//);

@@ -2,9 +2,13 @@
 // Runs the Pixel Reel service: npm run service
 // PORT (default 8787) is where it listens; PIXELREEL_URL is the address people reach it at
 // (default http://localhost:PORT), used in the links it gives; PIXELREEL_DATA is the folder
-// it keeps reels in (default .service-data). Recording needs Pocket TTS set up
-// (scripts/setup-voices.sh) and ffmpeg; videos need @napi-rs/canvas.
+// it keeps reels in (default .service-data). PIXELREEL_TRUST_PROXY=1 behind a proxy that sets
+// X-Forwarded-For; PIXELREEL_REELS_PER_HOUR (each caller, default 10), PIXELREEL_REELS_PER_DAY
+// (everyone, default 300) and PIXELREEL_VIDEOS_PER_HOUR (default 10) set the rate limits.
+// Recording needs Pocket TTS set up (scripts/setup-voices.sh) and ffmpeg; videos need
+// @napi-rs/canvas.
 import { join } from 'node:path';
+import { RateLimit } from './limits.mjs';
 import { Reels } from './reels.mjs';
 import { createService } from './server.mjs';
 import { DiskStore } from './store.mjs';
@@ -23,7 +27,12 @@ const sweep = async () => {
 await sweep();
 setInterval(sweep, 3600_000).unref();
 
-const server = createService({ reels, baseUrl, log });
+const setting = (name, fallback) => Number(process.env[name]) || fallback;
+const limits = {
+  reels: new RateLimit({ perHour: setting('PIXELREEL_REELS_PER_HOUR', 10), perDay: setting('PIXELREEL_REELS_PER_DAY', 300) }),
+  videos: new RateLimit({ perHour: setting('PIXELREEL_VIDEOS_PER_HOUR', 10), perDay: setting('PIXELREEL_REELS_PER_DAY', 300) })
+};
+const server = createService({ reels, baseUrl, log, limits, trustProxy: process.env.PIXELREEL_TRUST_PROXY === '1' });
 server.listen(port, () => log(`Pixel Reel is at ${baseUrl}: connector ${baseUrl}/mcp, reels kept in ${data}`));
 
 const stop = () => {

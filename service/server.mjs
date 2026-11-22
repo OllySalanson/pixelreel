@@ -78,13 +78,19 @@ async function readBody(req) {
 const rpcError = (res, status, code, message) => res.writeHead(status, { ...SAFE, 'content-type': 'application/json' })
   .end(JSON.stringify({ jsonrpc: '2.0', error: { code, message }, id: null }));
 
-async function handleMcp(req, res, { reels, baseUrl, log }) {
+/** Who is asking: the connecting address, or behind a trusted proxy, the first it forwarded for. */
+function callerOf(req, trustProxy) {
+  const forwarded = trustProxy ? String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() : '';
+  return forwarded || req.socket.remoteAddress || 'unknown';
+}
+
+async function handleMcp(req, res, { reels, baseUrl, log, limits, trustProxy }) {
   if (req.method !== 'POST') { res.setHeader('allow', 'POST'); rpcError(res, 405, -32000, 'Send MCP requests with POST.'); return; }
   const raw = await readBody(req);
   if (raw === null) { rpcError(res, 413, -32600, `A request may carry at most ${MAX_BODY / 1024} KB.`); return; }
   let body;
   try { body = JSON.parse(raw); } catch { rpcError(res, 400, -32700, 'The request is not valid JSON.'); return; }
-  const server = createMcpServer({ reels, baseUrl });
+  const server = createMcpServer({ reels, baseUrl, limits, client: callerOf(req, trustProxy) });
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   res.on('close', () => { transport.close(); server.close(); });
   try {
@@ -96,9 +102,13 @@ async function handleMcp(req, res, { reels, baseUrl, log }) {
   }
 }
 
-async function handleReel(req, res, id, rest, { reels }) {
+async function handleReel(req, res, id, rest, { reels, baseUrl }) {
   const status = await reels.status(id);
-  if (!status) { sendPage(res, 404, notice('No reel here', 'This reel has been deleted, or kept past its 30 days, or the link is not quite right.')); return; }
+  if (!status) {
+    if (rest === 'play.json') { res.writeHead(404, { ...SAFE, 'content-type': 'application/json', 'access-control-allow-origin': '*' }).end('{"state":"gone"}'); return; }
+    sendPage(res, 404, notice('No reel here', 'This reel has been deleted, or kept past its 30 days, or the link is not quite right.'));
+    return;
+  }
   if (rest === '') {
     if (status.state === 'failed') { sendPage(res, 200, notice('This reel could not be made', status.error ?? 'Something went wrong.')); return; }
     if (status.state !== 'ready') {
@@ -111,6 +121,17 @@ async function handleReel(req, res, id, rest, { reels }) {
     sendPage(res, 200, page, { 'content-security-policy': PAGE_POLICY });
     return;
   }
+  if (rest === 'play.json') {
+    // what the player inside a chat needs, asked for from another origin (the chat's frame)
+    const play = { state: status.state, title: status.title, watch: `${baseUrl}/r/${id}` };
+    if (status.state === 'failed') play.error = status.error;
+    if (status.state === 'ready') {
+      play.reel = await reels.reel(id);
+      play.clips = ((await reels.manifest(id))?.clips ?? []).map((c) => ({ text: c.text, file: `${baseUrl}/r/${id}/audio/${c.file}`, seconds: c.seconds }));
+    }
+    res.writeHead(200, { ...SAFE, 'content-type': 'application/json', 'cache-control': 'no-store', 'access-control-allow-origin': '*' }).end(JSON.stringify(play));
+    return;
+  }
   const audio = /^audio\/(.+)$/.exec(rest);
   const key = audio && AUDIO_FILE.test(audio[1]) ? `reels/${id}/audio/${audio[1]}` : rest === 'video.mp4' ? `reels/${id}/video.mp4` : null;
   const bytes = key && (await reels.store.get(key));
@@ -118,9 +139,13 @@ async function handleReel(req, res, id, rest, { reels }) {
   sendBytes(req, res, bytes, key.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg');
 }
 
-/** The service as an HTTP server (not yet listening). `baseUrl` is the address people reach it at. */
-export function createService({ reels, baseUrl, log = () => {} }) {
-  const context = { reels, baseUrl: baseUrl.replace(/\/$/, ''), log };
+/**
+ * The service as an HTTP server (not yet listening). `baseUrl` is the address people reach it
+ * at; `limits` ({ reels, videos }, RateLimits) cap what each caller asks for; `trustProxy`
+ * takes the caller's address from X-Forwarded-For, for a service behind a proxy that sets it.
+ */
+export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false }) {
+  const context = { reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, trustProxy };
   return createServer(async (req, res) => {
     try {
       const path = new URL(req.url, 'http://localhost').pathname;

@@ -32,21 +32,28 @@ const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace
  * <script> element here; `manifest` is an audio
  * manifest whose clip files are data: URLs, or null for a page with no recordings, which
  * starts with the sound off.
+ *
+ * With `app` ({ service, bridge }), it is instead the player for inside a chat (an MCP App):
+ * no reel in it, the player started by the `bridge` script once the reel arrives from
+ * `service`, and laid out to fit a chat.
  */
-export function pageHtml({ reelJson, manifest = null, title = 'pixelreel' }) {
+export function pageHtml({ reelJson = '', manifest = null, title = 'pixelreel', app = null }) {
   const html = readFileSync(join(ROOT, 'index.html'), 'utf8');
   const font = `data:font/woff2;base64,${readFileSync(join(ROOT, 'fonts', 'orange-kid.woff2')).toString('base64')}`;
   const css = readFileSync(join(ROOT, 'src', 'pixelreel.css'), 'utf8').replace("url('../fonts/orange-kid.woff2')", `url('${font}')`);
   if (css.includes('../fonts/')) throw new Error('src/pixelreel.css names a font file the page cannot carry');
-  const script = bundle([join(ROOT, 'src', 'main.js')]).replace(/<\/script/gi, '<\\/script');
+  const player = bundle([join(ROOT, 'src', 'main.js')]);
+  const script = (app ? `function startPixelreel() {\n${player}}\n\n${app.bridge}` : player).replace(/<\/script/gi, '<\\/script');
+  const body = app ? `<body class="embed app" data-service="${escapeHtml(app.service)}">` : manifest ? '<body>' : '<body data-sound="off">';
+  const data = app ? '' : `<script type="application/json" id="reel-data">${reelJson.replace(/</g, '\\u003c')}</script>\n` +
+    (manifest ? `<script type="application/json" id="reel-audio">${scriptJson(manifest)}</script>\n` : '');
   const swaps = [
-    [/<title>[^<]*<\/title>/, `<title>${escapeHtml(title)}</title>`],
-    [/\n<link rel="preload"[^>]*>/, ''],
+    [/<title>[^<]*<\/title>/, () => `<title>${escapeHtml(title)}</title>`],
+    [/\n<link rel="preload"[^>]*>/, () => ''],
     [/<link rel="stylesheet" href="src\/pixelreel\.css">/, () => `<style>\n${css}</style>`],
     [/<script type="module" src="src\/main\.js"><\/script>/, () => `<script type="module">\n${script}</script>`],
-    [/<!-- data-reel [^>]*-->\n<body data-reel="[^"]*">/, manifest ? '<body>' : '<body data-sound="off">'],
-    [/<\/body>/, () => `<script type="application/json" id="reel-data">${reelJson.replace(/</g, '\\u003c')}</script>\n` +
-      (manifest ? `<script type="application/json" id="reel-audio">${scriptJson(manifest)}</script>\n` : '') + '</body>']
+    [/<!-- data-reel [^>]*-->\n<body data-reel="[^"]*">/, () => body],
+    [/<\/body>/, () => `${data}</body>`]
   ];
   let page = html;
   for (const [from, to] of swaps) {

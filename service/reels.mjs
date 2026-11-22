@@ -7,13 +7,22 @@ import { mkdtemp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { reelFromData } from '../src/format.js';
-import { clipLookup } from '../src/reel.js';
+import { clipLookup, ReelError } from '../src/reel.js';
+import { limitProblems } from './limits.mjs';
 import { narrationMs, timeline } from '../src/timing.js';
 
 /** How long a reel is kept before it is deleted, unless someone deletes it sooner. */
 export const KEEP_DAYS = 30;
 
 const ID = /^[A-Za-z0-9_-]{22}$/;
+
+/** Too many jobs are waiting: the reel is not made, and the person should try again soon. */
+export class BusyError extends Error {
+  constructor() {
+    super('Pixel Reel is busy recording other reels. Try again in a few minutes.');
+    this.name = 'BusyError';
+  }
+}
 
 /** A new reel id: 16 random bytes, so a link to a reel cannot be guessed. */
 export const newId = () => randomBytes(16).toString('base64url');
@@ -40,15 +49,21 @@ export class Reels {
    * @param {(dir: string, log: Function) => Promise<void>} [options.record]   records a folder's voices
    * @param {(dir: string, out: string) => Promise<void>} [options.video]   draws a folder's reel as an MP4
    */
-  constructor({ store, record = recordVoices, video = drawVideo, now = () => Date.now(), keepDays = KEEP_DAYS, log = () => {} }) {
-    Object.assign(this, { store, record, video, now, keepDays, log });
+  constructor({ store, record = recordVoices, video = drawVideo, now = () => Date.now(), keepDays = KEEP_DAYS, maxQueue = 20, log = () => {} }) {
+    Object.assign(this, { store, record, video, now, keepDays, maxQueue, log });
     this.queue = [];
     this.running = null;
   }
 
-  /** Checks a reel (parsed reel.json) and starts recording it. Throws a ReelError if it has problems. */
+  /**
+   * Checks a reel (parsed reel.json) and starts recording it. Throws a ReelError if it has
+   * problems or is past the service's limits, or a BusyError if too many jobs are waiting.
+   */
   async create(raw) {
     const reel = reelFromData(raw);
+    const over = limitProblems(reel, raw);
+    if (over.length) throw new ReelError(over);
+    if (this.queue.length >= this.maxQueue) throw new BusyError();
     const id = newId(), created = this.now();
     const status = {
       id,

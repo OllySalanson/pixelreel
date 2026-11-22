@@ -3,7 +3,9 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, describe, it } from 'node:test';
-import { isId, KEEP_DAYS, newId, Reels } from '../service/reels.mjs';
+import { LIMITS, limitProblems, RateLimit } from '../service/limits.mjs';
+import { BusyError, isId, KEEP_DAYS, newId, Reels } from '../service/reels.mjs';
+import { reelFromData } from '../src/format.js';
 import { checkKey, DiskStore } from '../service/store.mjs';
 import { ReelError } from '../src/reel.js';
 
@@ -154,12 +156,56 @@ describe('the reels service', () => {
   });
 });
 
+describe('the service limits', () => {
+  const scene = (extra = {}) => ({ title: 'A', caption: 'Short.', ...extra });
+  const problems = (raw) => limitProblems(reelFromData(raw), raw);
+
+  it('lets an ordinary reel through', () => {
+    assert.deepEqual(problems(tea), []);
+  });
+
+  it('says what is too big, and how to fix it', () => {
+    const big = { ...tea, images: { cat: 'https://example.com/cat.png' }, scenes: Array.from({ length: 13 }, () => scene()) };
+    big.scenes[0] = scene({ say: 'word '.repeat(71).trim(), caption: 'x'.repeat(161), picture: { type: 'list', items: Array(9).fill('item') } });
+    assert.deepEqual(problems(big), [
+      `scenes: 13 is too many; a reel here has at most ${LIMITS.scenes}. Explain one thing, or make two reels.`,
+      'images: a reel made here cannot carry pictures from elsewhere; use the icons, or a sprite of your own',
+      'scene 1: say has 71 words; keep it to 70, or split the scene in two',
+      'scene 1: caption has 161 characters; keep it to 160',
+      'scene 1: picture.items has 9; keep it to 8'
+    ]);
+    const long = { ...tea, scenes: Array.from({ length: 9 }, () => scene({ say: 'word '.repeat(70).trim() })) };
+    assert.deepEqual(problems(long), ['the reel would run about 4:22; keep it under 4:00, with fewer or shorter scenes']);
+  });
+
+  it('counts each caller by the hour, and everyone by the day', () => {
+    let clock = 0;
+    const limit = new RateLimit({ perHour: 2, perDay: 3, now: () => clock });
+    assert.equal(limit.hit('a'), null);
+    assert.equal(limit.hit('a'), null);
+    assert.equal(limit.hit('a'), 'That is 2 in the last hour from here. Try again in 60 minutes.');
+    assert.equal(limit.hit('b'), null);
+    assert.equal(limit.hit('c'), 'Pixel Reel has made as many reels as it can today. Try again tomorrow.');
+    clock += 86400001;
+    assert.equal(limit.hit('a'), null, 'a new day, a new hour');
+  });
+
+  it('refuses a reel past the limits, and when too many are waiting', async () => {
+    const reels = new Reels({ store: freshStore(), record: () => new Promise(() => {}), video: fakeVideo, maxQueue: 1 });
+    await assert.rejects(reels.create({ ...tea, scenes: Array.from({ length: 13 }, () => scene()) }), (err) => err instanceof ReelError && /too many/.test(err.problems[0]));
+    await reels.create(tea);   // starts at once, its recording never ends
+    await reels.create(tea);   // waits
+    await assert.rejects(reels.create(tea), BusyError);
+  });
+});
+
 describe('the service over HTTP', async () => {
   const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
   const { StreamableHTTPClientTransport } = await import('@modelcontextprotocol/sdk/client/streamableHttp.js');
   const { createService, MAX_BODY } = await import('../service/server.mjs');
   const reels = new Reels({ store: freshStore(), record: fakeRecord, video: fakeVideo });
-  const server = createService({ reels, baseUrl: 'https://reels.example/' });
+  const limits = { reels: new RateLimit({ perHour: 1000, perDay: 1000 }), videos: new RateLimit({ perHour: 1000, perDay: 1000 }) };
+  const server = createService({ reels, baseUrl: 'https://reels.example/', limits, trustProxy: true });
   await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
   const local = `http://127.0.0.1:${server.address().port}`;
   after(() => server.close());
@@ -229,6 +275,56 @@ describe('the service over HTTP', async () => {
     assert.equal(result.isError, true);
     assert.match(words(result), /^This reel has problems\. Fix them all, then call make_reel again:\n- scene 1: needs a caption\n- scene 1: picture\.items must be/);
     await client.close();
+  });
+
+  it('offers a player to show inside the chat, allowed to reach only the service', async () => {
+    const client = await connect();
+    const { tools } = await client.listTools();
+    for (const name of ['make_reel', 'get_reel']) assert.equal(tools.find((t) => t.name === name)._meta.ui.resourceUri, 'ui://pixelreel/player.html');
+    const { resources } = await client.listResources();
+    assert.deepEqual(resources.map((r) => [r.uri, r.mimeType]), [['ui://pixelreel/player.html', 'text/html;profile=mcp-app']]);
+    const [player] = (await client.readResource({ uri: 'ui://pixelreel/player.html' })).contents;
+    assert.equal(player.mimeType, 'text/html;profile=mcp-app');
+    assert.deepEqual(player._meta.ui.csp, { connectDomains: ['https://reels.example'], resourceDomains: ['https://reels.example'] });
+    assert.match(player.text, /<body class="embed app" data-service="https:\/\/reels\.example">/);
+    assert.match(player.text, /function startPixelreel\(\) \{/);
+    assert.match(player.text, /'ui\/initialize'/);
+    assert.doesNotMatch(player.text, /id="reel-data"/, 'the reel arrives later, from the tool result');
+    await assert.rejects(client.readResource({ uri: 'ui://pixelreel/other.html' }));
+    await client.close();
+  });
+
+  it('tells the player in the chat when a reel is ready, from any origin', async () => {
+    const { id } = await reels.create(tea);
+    const early = await fetch(`${local}/r/${id}/play.json`);
+    assert.equal(early.headers.get('access-control-allow-origin'), '*');
+    assert.match((await early.json()).state, /queued|recording/);
+    await reels.idle();
+    const ready = await (await fetch(`${local}/r/${id}/play.json`)).json();
+    assert.equal(ready.state, 'ready');
+    assert.equal(ready.watch, `https://reels.example/r/${id}`);
+    assert.deepEqual(ready.reel, tea);
+    assert.deepEqual(ready.clips.map((c) => c.file), [`https://reels.example/r/${id}/audio/clip0.mp3`, `https://reels.example/r/${id}/audio/clip1.mp3`]);
+    const gone = await fetch(`${local}/r/${newId()}/play.json`);
+    assert.equal(gone.status, 404);
+    assert.deepEqual(await gone.json(), { state: 'gone' });
+  });
+
+  it('stops a caller who asks for too many, as a tool error Claude can pass on', async () => {
+    limits.reels = new RateLimit({ perHour: 1, perDay: 100 });
+    const asking = (from) => {
+      const client = new Client({ name: 'test', version: '1' });
+      return client.connect(new StreamableHTTPClientTransport(new URL(`${local}/mcp`), { requestInit: { headers: { 'x-forwarded-for': from } } })).then(() => client);
+    };
+    const one = await asking('203.0.113.7'), two = await asking('198.51.100.9');
+    assert.equal((await one.callTool({ name: 'make_reel', arguments: tea })).isError, undefined);
+    const again = await one.callTool({ name: 'make_reel', arguments: tea });
+    assert.equal(again.isError, true);
+    assert.match(words(again), /^No more reels for now\. That is 1 in the last hour from here\. Try again in 60 minutes\.$/);
+    assert.equal((await two.callTool({ name: 'make_reel', arguments: tea })).isError, undefined, 'each caller has their own hour');
+    await Promise.all([one.close(), two.close()]);
+    limits.reels = new RateLimit({ perHour: 1000, perDay: 1000 });
+    await reels.idle();
   });
 
   it('answers odd requests plainly, and serves nothing it should not', async () => {

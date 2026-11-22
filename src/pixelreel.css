@@ -88,3 +88,10 @@ body.embed .bigplay svg { width: 0.65em; height: 0.75em; }
 body.embed .caption .time { font-size: clamp(16px, 3vw, 22px); margin-top: 2px; }
 body.embed .dot { width: 12px; height: 12px; }
 button:disabled { opacity: 0.6; cursor: progress; }
+
+/* inside a chat (an MCP App): as wide as the chat, as tall as it needs, with a link to the reel's own page.
+   The chat sizes the frame to fit, so the page never scrolls (a scrollbar would narrow the
+   player, shortening it, and the two would chase each other) */
+body.app { overflow: hidden; }
+body.app main { max-width: none; }
+body.app .note.open-page { display: block; margin: 10px 0 0; font-size: 15px; }
