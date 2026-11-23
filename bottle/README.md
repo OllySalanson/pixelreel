@@ -140,11 +140,12 @@ The page holds nothing itself, and is kept out of search engines.
 ## Sending email
 
 The service builds three emails (`mail.mjs`): the invitation, the sign-in link, and the word that
-a note is done. It sends them with the `mail({ to, subject, text })` function it is given. Without
-one (as Pixel Reel has none yet: no email service is paid for), each email is kept in the
-store's outbox instead (`bottles/outbox/<id>/mail.json`), `bottles outbox` shows them, and
-nothing leaves the service. The sign-in page at `/review` needs real email to be any use to a
-client, so choose a sender before giving anyone the short address.
+a note is done. It sends them with the `mail({ to, subject, text })` function it is given.
+`resend({ key, from })` in `mail.mjs` is one that sends through [Resend](https://resend.com);
+Pixel Reel uses it when it has a key (docs/deploy.md, "Its email, through Resend"). Without one,
+each email is kept in the store's outbox instead (`bottles/outbox/<id>/mail.json`), `bottles
+outbox` shows them, and nothing leaves the service. The sign-in page at `/review` needs real
+email to be any use to a client, so set a sender up before giving anyone the short address.
 
 ## The parts
 
@@ -154,7 +155,7 @@ client, so choose a sender before giving anyone the short address.
 | `bottle-ui.mjs` | The button and what it opens, and the `/review` sign-in box, loaded only when needed. Drawn in a shadow root and styled with `adoptedStyleSheets`, so the page's styles cannot reach it and a strict content security policy (no inline styles or scripts) does not stop it. |
 | `server.mjs` | The endpoint: `createBottle(...)` gives `handle(req, res)`, which answers everything under `/bottle` (and the home site's `/review` page) and returns false for anything else. |
 | `sites.mjs` | The sites, the people on their lists, their keys and sign-in codes. |
-| `mail.mjs` | The emails, and the outbox that keeps them when nothing sends them. |
+| `mail.mjs` | The emails, the Resend sender, and the outbox that keeps them when nothing sends them. |
 | `admin.mjs`, `admin.css` | The page of queues. |
 | `bottles.mjs` | The admin tool. |
 | `test/` | The endpoint's and the tool's tests, with a store kept in memory. |

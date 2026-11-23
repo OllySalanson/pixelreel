@@ -26,8 +26,11 @@
 // PIXELREEL_NARRATORS (such as anna,stuart) lets someone ask for a narrator other than Peter.
 // PIXELREEL_BOTTLE_KEY is Olly's own key to Message in a Bottle's note button (the link
 // ?bottle=<key>), and PIXELREEL_BOTTLE_READER the admin key, which adds sites and people and
-// reads the notes (bottle/README.md). It sends no email: each one is kept in its outbox.
+// reads the notes (bottle/README.md). It sends email through Resend when PIXELREEL_RESEND_KEY
+// and PIXELREEL_BOTTLE_MAIL_FROM (an address on the account's sending domain) are both set;
+// otherwise each email is kept in its outbox and none is sent.
 import { join } from 'node:path';
+import { resend } from '../bottle/mail.mjs';
 import { CLAUDE_ADDRESSES, RateLimit } from './limits.mjs';
 import { NARRATORS, recordWith, Reels } from './reels.mjs';
 import { createService } from './server.mjs';
@@ -91,7 +94,10 @@ if (process.env.PIXELREEL_TRY === '1') {
 }
 
 const bottle = { key: process.env.PIXELREEL_BOTTLE_KEY ?? '', reader: process.env.PIXELREEL_BOTTLE_READER ?? '' };
-if (bottle.key || bottle.reader) log(`Message in a Bottle is on${bottle.reader ? '' : ', but only Olly can read the notes: PIXELREEL_BOTTLE_READER is not set'}`);
+const resendKey = process.env.PIXELREEL_RESEND_KEY ?? '', mailFrom = process.env.PIXELREEL_BOTTLE_MAIL_FROM ?? '';
+if (resendKey && mailFrom) bottle.mail = resend({ key: resendKey, from: mailFrom, log });
+else if (resendKey || mailFrom) log(`Message in a Bottle sends no email: ${resendKey ? 'PIXELREEL_BOTTLE_MAIL_FROM' : 'PIXELREEL_RESEND_KEY'} is not set, so each one is kept in its outbox`);
+if (bottle.key || bottle.reader) log(`Message in a Bottle is on${bottle.reader ? '' : ', but only Olly can read the notes: PIXELREEL_BOTTLE_READER is not set'}, ${bottle.mail ? 'sending email through Resend' : 'keeping its emails in the outbox'}`);
 const server = createService({ reels, baseUrl, log, limits, writer, bottle, trustProxy: Number(process.env.PIXELREEL_TRUST_PROXY) || 0, listed: process.env.PIXELREEL_LISTED === '1', fresh: process.env.NODE_ENV !== 'production' });
 server.listen(port, () => log(`Pixel Reel is at ${baseUrl}: connector ${baseUrl}/mcp, reels kept in ${store}`));
 

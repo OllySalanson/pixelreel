@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import { main as bottles } from '../bottles.mjs';
-import { doneMail, inviteMail, signInMail } from '../mail.mjs';
+import { doneMail, inviteMail, resend, signInMail } from '../mail.mjs';
 import { clientView, createBottle, MAX_BYTES, MAX_SHOT, noteFrom, outcomeFrom, shotFrom } from '../server.mjs';
 import { slug } from '../sites.mjs';
 
@@ -135,6 +135,22 @@ describe('the emails', () => {
     const done = doneMail({ site, person, note: { note: 'Bigger logo', page: { url: `${CLIENT}/about` }, outcome: { what: 'The logo is bigger.' } } });
     assert.equal(done.subject, 'Your note is done');
     assert.match(done.text, /You asked: "Bigger logo"\n\nWhat we did: The logo is bigger\.\n\nSee it here: https:\/\/client\.example\/about/);
+  });
+
+  it('sends through Resend, from the address given, and says when Resend will not', async () => {
+    const asked = [];
+    const fake = async (url, init) => { asked.push([url, init]); return new Response('{"id":"e-1"}', { status: 200 }); };
+    const send = resend({ key: 're_test', from: 'Olly <notes@example.com>', fetch: fake });
+    await send(inviteMail({ site, person, key: 'k-1' }));
+    const [[url, init]] = asked;
+    assert.equal(url, 'https://api.resend.com/emails');
+    assert.equal(init.headers.authorization, 'Bearer re_test');
+    const body = JSON.parse(init.body);
+    assert.deepEqual([body.from, body.to, body.subject], ['Olly <notes@example.com>', ['sam@client.example'], 'Review your website']);
+    assert.ok(body.text.includes('?bottle=k-1'));
+    const refused = resend({ key: 're_test', from: 'x@example.com', fetch: async () => new Response('{"message":"domain not verified"}', { status: 403 }) });
+    await assert.rejects(refused({ to: 'a@b.example', subject: 'Hi', text: 'x' }), /Resend would not send "Hi": 403 .*domain not verified/);
+    assert.throws(() => resend({ key: '', from: 'x@example.com' }), /API key/);
   });
 
   it('makes an id from a name', () => {
@@ -318,6 +334,18 @@ describe('sites and the people on their lists', () => {
     assert.match(res.headers.get('access-control-allow-headers'), /x-bottle-key/);
     assert.equal((await ask('https://elsewhere.example')).status, 403);
     assert.equal((await s.check('a-wrong-key', 'https://elsewhere.example')).headers.get('access-control-allow-origin'), null);
+  });
+
+  it('sends the invitation with the sender it is given, and keeps nothing in the outbox then', async () => {
+    const sent = [];
+    const t = await serve({ mail: async (m) => { sent.push(m); } });
+    try {
+      await t.client();
+      const res = await t.admin('sites/client/people/sam-smith/invite', 'POST', {});
+      assert.deepEqual(res.body, { to: 'sam@client.example', sent: true });
+      assert.deepEqual(sent.map((m) => [m.to, m.subject]), [['sam@client.example', 'Review your website']]);
+      assert.deepEqual(await t.outbox(), []);
+    } finally { await t.close(); }
   });
 
   it('gives a new link, and sends the invitation only to the outbox', async () => {

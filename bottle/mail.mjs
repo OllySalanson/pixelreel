@@ -1,8 +1,9 @@
 // Message in a Bottle, the emails it sends: the invitation with a person's own link, the
 // sign-in link asked for at a site's /review page, and the word that a note is done. Each is
 // built here as { to, subject, text }; sending is whatever `mail` the endpoint is given (see
-// README.md, "Sending email"). Without one, every email is kept in the store's outbox
-// (bottles/outbox/<id>/mail.json), where `bottles outbox` shows it, and nothing leaves the service.
+// README.md, "Sending email"): resend() sends through Resend. Without one, every email is kept
+// in the store's outbox (bottles/outbox/<id>/mail.json), where `bottles outbox` shows it, and
+// nothing leaves the service.
 
 /** The address people are told to go back to: the site's own address and /review, without https://. */
 export const reviewAddress = (site, path = '/review') => `${new URL(site.origins[0]).host}${path}`;
@@ -70,5 +71,22 @@ export function outbox(store, { now = () => Date.now(), log = () => {} } = {}) {
     const id = `${at.toISOString().replace(/[-:T.Z]/g, '').slice(0, 17)}-${String(n++ % 1000).padStart(3, '0')}`;
     await store.put(`bottles/outbox/${id}/mail.json`, JSON.stringify({ id, at: at.toISOString(), ...message }, null, 2));
     log(`bottle: an email was kept in the outbox, not sent: "${message.subject}"`);
+  };
+}
+
+/**
+ * A `mail` that sends through Resend (resend.com), with an API key of the account whose
+ * sending domain `from` is on, such as 'Olly <notes@example.com>'. Throws if Resend says no.
+ */
+export function resend({ key, from, fetch = globalThis.fetch, log = () => {} }) {
+  if (!key || !from) throw new Error('Resend needs an API key and a from address on its sending domain.');
+  return async ({ to, subject, text }) => {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ from, to: [to], subject, text })
+    });
+    if (!res.ok) throw new Error(`Resend would not send "${subject}": ${res.status} ${(await res.text().catch(() => '')).slice(0, 300)}`);
+    log(`bottle: an email was sent, "${subject}"`);
   };
 }
