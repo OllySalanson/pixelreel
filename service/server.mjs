@@ -6,6 +6,7 @@ import { createServer } from 'node:http';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { ReelError } from '../src/reel.js';
 import { LANG_CODES } from '../src/words.js';
+import { createBottle } from '../bottle/server.mjs';
 import { createMcpServer } from './mcp.mjs';
 import { BusyError, isId, languageName } from './reels.mjs';
 import { addressMeant, addToClaudeLink, appManifest, robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
@@ -353,16 +354,21 @@ async function sendWatchCard(req, res, name, { reels, cards, fresh, log }) {
  * `fresh` has browsers check for a newer copy of the site's files every time, for working on it;
  * `writer` (see service/writer.mjs) switches on Make it right here, which costs money a reel;
  * the server's written() resolves once every reel begun that way is written or given up on.
+ * `bottle` ({ key, reader }, see bottle/README.md) takes notes left on the site's pages with
+ * the button its secret link shows; without it the button never shows.
  */
-export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false, listed = false, fresh = false, writer = null }) {
+export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false, listed = false, fresh = false, writer = null, bottle = {} }) {
   const context = {
     reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, listed, fresh, writer, pages: new Map(), cards: new Map(), writing: new Set(),
     trustProxy: trustProxy === true ? 1 : Math.max(0, Math.floor(Number(trustProxy)) || 0), fewestForwarded: Infinity
   };
+  // Message in a Bottle: kept with the reels, under bottles/, which no page or listing of the reels ever reaches
+  const bottles = createBottle({ ...bottle, store: reels.store, origins: [context.baseUrl], caller: (req) => callerOf(req, context.trustProxy), log });
   const server = createServer(async (req, res) => {
     try {
       const path = new URL(req.url, 'http://localhost').pathname;
       if (path === '/mcp') { await handleMcp(req, res, context); return; }
+      if (await bottles.handle(req, res)) return;
       if (path === '/try') { await handleTry(req, res, context); return; }
       if (path === '/health') { res.writeHead(200, { ...SAFE, 'content-type': 'text/plain' }).end('ok'); return; }
       // a short address to say, type on a phone or print: straight to Claude's own box for adding a connector, with Pixel Reel filled in

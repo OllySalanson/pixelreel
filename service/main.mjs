@@ -24,6 +24,8 @@
 // (service/voice.mjs); PIXELREEL_WARM_VOICE=0 loads it afresh for each reel instead.
 // PIXELREEL_LANGUAGES (such as french,spanish) lets reels be made in other languages Peter can read.
 // PIXELREEL_NARRATORS (such as anna,stuart) lets someone ask for a narrator other than Peter.
+// PIXELREEL_BOTTLE_KEY is the secret in the link that shows Message in a Bottle's note button
+// (?bottle=<key>), and PIXELREEL_BOTTLE_READER the one that reads the notes (bottle/README.md).
 import { join } from 'node:path';
 import { CLAUDE_ADDRESSES, RateLimit } from './limits.mjs';
 import { NARRATORS, recordWith, Reels } from './reels.mjs';
@@ -87,7 +89,9 @@ if (process.env.PIXELREEL_TRY === '1') {
   }
 }
 
-const server = createService({ reels, baseUrl, log, limits, writer, trustProxy: Number(process.env.PIXELREEL_TRUST_PROXY) || 0, listed: process.env.PIXELREEL_LISTED === '1', fresh: process.env.NODE_ENV !== 'production' });
+const bottle = { key: process.env.PIXELREEL_BOTTLE_KEY ?? '', reader: process.env.PIXELREEL_BOTTLE_READER ?? '' };
+if (bottle.key) log(`Message in a Bottle is on${bottle.reader ? '' : ', but nobody can read the notes: PIXELREEL_BOTTLE_READER is not set'}`);
+const server = createService({ reels, baseUrl, log, limits, writer, bottle, trustProxy: Number(process.env.PIXELREEL_TRUST_PROXY) || 0, listed: process.env.PIXELREEL_LISTED === '1', fresh: process.env.NODE_ENV !== 'production' });
 server.listen(port, () => log(`Pixel Reel is at ${baseUrl}: connector ${baseUrl}/mcp, reels kept in ${store}`));
 
 const stop = () => {
