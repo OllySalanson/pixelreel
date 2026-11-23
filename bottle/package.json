@@ -1,7 +1,7 @@
 {
   "name": "message-in-a-bottle",
   "version": "0.1.0",
-  "description": "A note button for a website that only a secret link shows: click a part of the page, leave a note, and it arrives with a screenshot.",
+  "description": "A note button for websites that only the people on each site's list see: click a part of the page, type or say a note, and it arrives with a screenshot.",
   "private": true,
   "type": "module",
   "license": "MIT",

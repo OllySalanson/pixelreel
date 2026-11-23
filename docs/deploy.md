@@ -60,15 +60,18 @@ Set `PIXELREEL_S3_BUCKET` and the service keeps reels in an S3-style bucket
 | `PIXELREEL_S3_REGION` | `auto` (the default) suits both. |
 | `PIXELREEL_S3_KEY_ID`, `PIXELREEL_S3_SECRET` | An HMAC key for a Cloud Storage service account, or an R2 API token's key pair. |
 
-Give the bucket a rule that deletes objects 30 days old. The service deletes expired reels
-itself every hour, but only while it is awake; the rule makes sure of it when nobody calls.
+Give the bucket a rule that deletes objects under `reels/` 30 days old. The service deletes
+expired reels itself every hour, but only while it is awake; the rule makes sure of it when
+nobody calls. Keep the rule to `reels/`: Message in a Bottle keeps its sites, the people on
+their lists and their keys under `bottles/`, and a rule for the whole bucket would delete
+those, and every client's link with them, after 30 days.
 Moving to R2 is a change of these settings (and copying any reels still wanted across).
 
 ## On Google Cloud Run
 
 Pixel Reel runs as the Cloud Run service `pixelreel` in project `pixelreel-515501`, region
 `europe-west1` (the nearest that maps custom domains). Reels are in the bucket
-`pixelreel-515501-reels` (30-day delete rule, no public access), reached with an HMAC key of
+`pixelreel-515501-reels` (30-day delete rule for `reels/`, no public access), reached with an HMAC key of
 the service account `pixelreel-run`, whose secret is the Secret Manager secret
 `pixelreel-s3-secret`. To deploy a new version, from a checkout:
 
@@ -219,9 +222,11 @@ To switch it off again: `--update-env-vars PIXELREEL_TRY=0`.
 ### Message in a Bottle
 
 The note button ([bottle/README.md](../bottle/README.md)) is on when the service has its two
-keys: `PIXELREEL_BOTTLE_KEY`, the secret in the link that shows the button, and
-`PIXELREEL_BOTTLE_READER`, which reads the notes. Both are Secret Manager secrets, made so
-that neither is typed or shown:
+keys: `PIXELREEL_BOTTLE_KEY`, Olly's own key (his link is `https://pixelreel.pro/?bottle=<key>`,
+and with it in his browser `https://pixelreel.pro/bottle/admin` opens the page of queues), and
+`PIXELREEL_BOTTLE_READER`, the admin key, which `npm run bottles` uses to add sites and people
+and work through the notes. Both are Secret Manager secrets, made so that neither is typed or
+shown:
 
 ```sh
 for name in pixelreel-bottle-key pixelreel-bottle-reader; do
@@ -233,11 +238,22 @@ gcloud run services update pixelreel --region europe-west1 --project pixelreel-5
   --update-secrets PIXELREEL_BOTTLE_KEY=pixelreel-bottle-key:latest,PIXELREEL_BOTTLE_READER=pixelreel-bottle-reader:latest
 ```
 
-The link is `https://pixelreel.pro/?bottle=<key>`, where the key is
-`gcloud secrets versions access latest --secret pixelreel-bottle-key --project pixelreel-515501`.
-`npm run bottles` reads the notes with the other secret. To change the link, add a new
-version of `pixelreel-bottle-key` and redeploy; browsers holding the old key forget it. To
-switch the button off, `--remove-secrets PIXELREEL_BOTTLE_KEY`.
+Olly's key is `gcloud secrets versions access latest --secret pixelreel-bottle-key --project
+pixelreel-515501`. To change it, add a new version of `pixelreel-bottle-key` and redeploy;
+browsers holding the old one forget it. Everyone else's keys are kept (by their hash) in the
+bucket under `bottles/`, and turned off with `npm run bottles -- person off`.
+
+Before the first client is added, the bucket's delete rule must be kept to `reels/` (see
+above), or their links stop working after 30 days:
+
+```sh
+printf '%s' '{"rule":[{"action":{"type":"Delete"},"condition":{"age":30,"matchesPrefix":["reels/"]}}]}' > lifecycle.json
+gcloud storage buckets update gs://pixelreel-515501-reels --lifecycle-file=lifecycle.json --project pixelreel-515501
+```
+
+The service sends no email yet: the invitations, sign-in links and "your note is done" emails
+are kept in its outbox (`npm run bottles -- outbox`) until it is given a way to send them
+(bottle/README.md, "Sending email").
 
 ### What it costs
 

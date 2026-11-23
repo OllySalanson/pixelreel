@@ -354,8 +354,9 @@ async function sendWatchCard(req, res, name, { reels, cards, fresh, log }) {
  * `fresh` has browsers check for a newer copy of the site's files every time, for working on it;
  * `writer` (see service/writer.mjs) switches on Make it right here, which costs money a reel;
  * the server's written() resolves once every reel begun that way is written or given up on.
- * `bottle` ({ key, reader }, see bottle/README.md) takes notes left on the site's pages with
- * the button its secret link shows; without it the button never shows.
+ * `bottle` ({ key, reader, mail }, see bottle/README.md) is Message in a Bottle: the note
+ * button for the people on each site's list, this one's and other sites', with this site's
+ * /review page where they sign in; `key` is Olly's own, and `reader` the admin key.
  */
 export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false, listed = false, fresh = false, writer = null, bottle = {} }) {
   const context = {
@@ -363,7 +364,10 @@ export function createService({ reels, baseUrl, log = () => {}, limits = null, t
     trustProxy: trustProxy === true ? 1 : Math.max(0, Math.floor(Number(trustProxy)) || 0), fewestForwarded: Infinity
   };
   // Message in a Bottle: kept with the reels, under bottles/, which no page or listing of the reels ever reaches
-  const bottles = createBottle({ ...bottle, store: reels.store, origins: [context.baseUrl], caller: (req) => callerOf(req, context.trustProxy), log });
+  const bottles = createBottle({
+    home: { id: 'pixelreel', name: 'Pixel Reel' }, owner: { id: 'olly', name: 'Olly' }, review: '/review', from: 'Olly',
+    ...bottle, store: reels.store, origins: [context.baseUrl], caller: (req) => callerOf(req, context.trustProxy), log
+  });
   const server = createServer(async (req, res) => {
     try {
       const path = new URL(req.url, 'http://localhost').pathname;

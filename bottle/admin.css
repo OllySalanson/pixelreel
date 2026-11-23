@@ -1,0 +1,54 @@
+/* Message in a Bottle, the page of queues: the bottle's own colours, made for a phone first */
+:root { color-scheme: dark; --ink: #f8f7dd; --dim: #c9c8a8; --night: #0b1220; --card: #13203a; --line: #2a3b60; --gold: #ffcc4d; }
+* { box-sizing: border-box; }
+html { background: var(--night); }
+body { margin: 0; color: var(--ink); background: var(--night); font: 18px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 56rem; margin: 0 auto; padding: 16px 16px 48px; }
+h1 { margin: 0; font-size: 26px; line-height: 1.25; color: var(--gold); overflow-wrap: anywhere; }
+header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+header .count { margin-left: auto; }
+a { color: inherit; }
+a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid #7fd4ff; outline-offset: 2px; }
+ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+p { margin: 0; }
+.error { color: #ffb4a8; font-weight: 700; }
+.empty { color: var(--dim); }
+
+.key { display: flex; flex-direction: column; gap: 14px; max-width: 24rem; margin: 12vh auto 0; }
+.key label { display: flex; flex-direction: column; gap: 6px; font-weight: 700; }
+input { font: inherit; min-height: 48px; padding: 8px 12px; border-radius: 8px; border: 2px solid #ebeac5; background: #fdfcf0; color: var(--night); width: 100%; }
+button { font: inherit; font-weight: 700; min-height: 48px; padding: 6px 16px; border-radius: 8px; cursor: pointer; border: 2px solid var(--gold); background: var(--gold); color: var(--night); }
+
+.site { display: grid; gap: 4px 12px; padding: 14px 16px; border-radius: 10px; background: var(--card); border: 2px solid var(--line); text-decoration: none; }
+.site:hover { border-color: var(--gold); }
+.site .name { font-size: 22px; font-weight: 700; }
+.site .host { color: var(--dim); font-size: 15px; overflow-wrap: anywhere; }
+.counts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.count { display: inline-flex; align-items: baseline; gap: 4px; padding: 0 10px; border-radius: 999px; font-size: 15px; line-height: 1.8; background: #22314f; white-space: nowrap; }
+.count b { font-size: 17px; }
+.count.none { opacity: 0.45; }
+.count.held:not(.none) { background: var(--gold); color: var(--night); }
+
+.back { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 8px; border: 2px solid var(--gold); font-size: 30px; line-height: 1; text-decoration: none; flex: none; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px; }
+.tab { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 999px; border: 2px solid var(--line); text-decoration: none; white-space: nowrap; font-size: 16px; }
+.tab b { font-size: 15px; opacity: 0.8; }
+.tab.on { background: var(--gold); border-color: var(--gold); color: var(--night); font-weight: 700; }
+
+.note { display: grid; grid-template-columns: 1fr; gap: 12px; padding: 12px; border-radius: 10px; background: var(--card); border: 2px solid var(--line); }
+@media (min-width: 700px) { .note { grid-template-columns: 16rem 1fr; } }
+.shot img { display: block; width: 100%; height: auto; max-height: 22rem; object-fit: cover; object-position: top; border-radius: 6px; background: #fff; }
+.shot.none { display: none; }
+.body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.meta { color: var(--dim); font-size: 15px; overflow-wrap: anywhere; }
+.words { white-space: pre-wrap; overflow-wrap: anywhere; }
+.part { color: var(--dim); font: 14px/1.5 ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+.chip { padding: 0 10px; border-radius: 999px; font-size: 15px; font-weight: 700; line-height: 1.7; color: var(--night); background: #d9d8b8; }
+.chip.held { background: var(--gold); }
+.chip.in-progress { background: #7fd4ff; }
+.chip.declined { background: #ffb4a8; }
+.chip.done, .chip.closed { background: #8ee6a0; }
+dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 4px 10px; font-size: 16px; }
+dt { color: var(--dim); font-weight: 700; }
+dd { margin: 0; overflow-wrap: anywhere; }
