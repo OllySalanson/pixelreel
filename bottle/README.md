@@ -18,8 +18,10 @@ no button, no request. The screenshot is made in the browser by
 [modern-screenshot](https://github.com/qq15725/modern-screenshot) (MIT), served from the site
 itself, so no other service is involved.
 
-It is made to move to a repository of its own: everything is in this folder, and the
-endpoint is plain Node with no packages but modern-screenshot.
+It is a package of its own (`package.json` here), used by Pixel Reel first and made to move
+into Crow's Nest as its feedback stage: everything is in this folder, nothing in it reaches
+outside it, and the endpoint is plain Node (20.6 or later) with no packages but
+modern-screenshot. `npm install && npm test` here runs its own tests.
 
 ## The secret link
 
@@ -39,6 +41,7 @@ The key is never in the repository: it is a setting of the service.
 | `bottle-ui.mjs` | The button and what it opens, loaded only once a key is in hand. Drawn in a shadow root and styled with `adoptedStyleSheets`, so the page's styles cannot reach it and a strict content security policy (no inline styles or scripts) does not stop it. |
 | `server.mjs` | The endpoint: `createBottle({ store, key, reader, origins })` gives `handle(req, res)`, which answers everything under `/bottle` and returns false for anything else. |
 | `bottles.mjs` | The reader, for whoever looks after the site (or an agent doing it for them). |
+| `test/` | The endpoint's and the reader's tests, with a store kept in memory. |
 
 ### The endpoint
 
@@ -87,7 +90,8 @@ asked what they meant; `fixed`; `dropped` when nothing will be done.
 
 ## Putting it on a site
 
-1. Serve the endpoint: call `handle(req, res)` early in the server's request handler.
+1. Serve the endpoint: `import { createBottle } from 'message-in-a-bottle'` (or this folder's
+   `server.mjs`) and call `handle(req, res)` early in the server's request handler.
 2. Add `<script src="/bottle/bottle.js" defer></script>` to every page.
 3. Set the two keys as the service's secret settings, each a long random string
    (`openssl rand -hex 24`).
@@ -99,7 +103,8 @@ which is how the screenshot is drawn.
 
 ## How it was checked
 
-`test/bottle.test.js` covers the endpoint and the reader. The button was checked in a
+`test/bottle.test.js` here covers the endpoint and the reader; Pixel Reel's own
+`test/bottle.test.js` covers how it is mounted there. The button was checked in a
 headless Chromium on Pixel Reel's own pages, under its content security policy, on a
 1280 x 657 window and as a 390 x 844 phone: choosing a part, writing, sending, and the
 screenshot matching what was on the screen (scrolled, with the sticky bar at the top).
