@@ -251,9 +251,34 @@ printf '%s' '{"rule":[{"action":{"type":"Delete"},"condition":{"age":30,"matches
 gcloud storage buckets update gs://pixelreel-515501-reels --lifecycle-file=lifecycle.json --project pixelreel-515501
 ```
 
-The service sends no email yet: the invitations, sign-in links and "your note is done" emails
-are kept in its outbox (`npm run bottles -- outbox`) until it is given a way to send them
-(bottle/README.md, "Sending email").
+#### Its email, through Resend
+
+The invitations, sign-in links and "your note is done" emails go out through
+[Resend](https://resend.com), on Olly's personal account (not Renew's). Until the service has
+both `PIXELREEL_RESEND_KEY` and `PIXELREEL_BOTTLE_MAIL_FROM`, it sends nothing and keeps each
+email in its outbox (`npm run bottles -- outbox`); its log says which when it starts. To set it up:
+
+1. Make a personal Resend account and add the domain the emails will come from (pixelreel.pro,
+   say) under Domains. Add the DNS records Resend shows for it where that domain's DNS is kept,
+   and wait until Resend says the domain is Verified.
+2. Under API Keys, make a key with **Sending access** only, for that domain alone. It is shown
+   once: copy it.
+3. Keep it as the secret `pixelreel-resend-key` (pasted at the prompt, so it is in no file or
+   history), and give the service the key and the address to send from:
+
+   ```sh
+   read -rs KEY && printf '%s' "$KEY" | gcloud secrets create pixelreel-resend-key --data-file=- --project pixelreel-515501 && unset KEY
+   gcloud secrets add-iam-policy-binding pixelreel-resend-key --project pixelreel-515501 \
+     --member serviceAccount:pixelreel-run@pixelreel-515501.iam.gserviceaccount.com --role roles/secretmanager.secretAccessor
+   gcloud run services update pixelreel --region europe-west1 --project pixelreel-515501 \
+     --update-secrets PIXELREEL_RESEND_KEY=pixelreel-resend-key:latest \
+     --update-env-vars "PIXELREEL_BOTTLE_MAIL_FROM=Olly <notes@pixelreel.pro>"
+   ```
+
+   The from address must be on the verified domain. Then send yourself the invitation
+   (`npm run bottles -- invite <site> <person> --to <your address>`) to see it arrive.
+
+To stop sending again, `--remove-secrets PIXELREEL_RESEND_KEY`: the emails go back to the outbox.
 
 ### What it costs
 

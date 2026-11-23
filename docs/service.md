@@ -520,7 +520,9 @@ The local tools (`npm run voices`, `page`, `video`) have no such limits.
   each with a screenshot of the page and the browser it was left from, with the sites, their
   people (names and email addresses) and a hash of each person's key. Only the admin key, or
   Olly's own, lists them. The bucket's 30-day rule is for `reels/` only, so they stay until
-  deleted.
+  deleted. The emails it sends them (an invitation, a sign-in link, word that a note is
+  done) go through Resend once it has a key (docs/deploy.md), so Resend sees each person's
+  address and the email; until then none is sent.
 
 ## How it fits together
 
