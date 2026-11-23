@@ -436,7 +436,7 @@ describe('when a reel ends', () => {
 describe('making a reel has a page of its own', () => {
   it('is in the menu across the top and at the foot of every page', () => {
     for (const name of pages) {
-      assert.match(html[name], /<nav class="top-nav" aria-label="Main">\s*<a href="\/make">Make a pixel reel<\/a>/, `${name}: first in the menu across the top`);
+      assert.match(html[name], /<a class="btn btn-gold btn-small top-make" href="\/make">/, `${name}: the first button across the top`);
       assert.match(html[name], /<nav class="foot-nav"[^>]*>[\s\S]*?<a href="\/make">Make a pixel reel<\/a>/, `${name}: and at the foot`);
       assert.doesNotMatch(html[name], /href="\/?#make"/, `${name}: nothing still points at the old place on the home page`);
     }
@@ -956,8 +956,8 @@ describe('before the page is drawn', () => {
 
   it('lets go of one thing at a time until the bar across the top is on one row', () => {
     assert.equal(boot().bar.dataset.tight, undefined, 'nothing goes when everything fits');
-    for (const step of [1, 2, 3, 4, 5]) assert.equal(boot({ fitsFrom: step }).bar.dataset.tight, String(step));
-    assert.equal(boot({ fitsFrom: 9 }).bar.dataset.tight, '5', 'and stops at the last step');
+    for (const step of [1, 2, 3, 4, 5, 6, 7, 8]) assert.equal(boot({ fitsFrom: step }).bar.dataset.tight, String(step));
+    assert.equal(boot({ fitsFrom: 9 }).bar.dataset.tight, '8', 'and stops at the last step');
   });
 
   it('fits the bar again when the room or the letters change', () => {
@@ -977,6 +977,8 @@ describe('before the page is drawn', () => {
     assert.ok(layout.indexOf('rel="stylesheet"') < layout.indexOf('/site/js/boot.js'), 'boot.js waits for the stylesheet only if it comes first');
     // one span round the words, so the button lays them out as one run of text with its usual spaces
     assert.match(layout, /class="[^"]*top-add"[^>]*><span>Add<span class="top-add-more"> to Claude<\/span><\/span><\/a>/);
+    assert.match(layout, /class="[^"]*btn-gold[^"]*top-make" href="\/make"><span>Make<span class="top-make-what"> a<span class="top-make-more"> pixel<\/span> reel<\/span><span class="top-make-now"> now<\/span><\/span><\/a>/);
+    assert.match(layout, /<button class="top-comfort"[^>]*aria-label="Make it comfy[^"]*"><span class="aa" aria-hidden="true">AA<\/span><\/button>/, 'a small box with AA in it, named for a screen reader');
   });
 });
 
@@ -1578,7 +1580,8 @@ describe('the menu, where the bar has no room for its links', () => {
     for (const name of pages) {
       const menu = menuOf(html[name]), bar = /<nav class="top-nav"[^>]*>([\s\S]*?)<\/nav>/.exec(html[name])[1];
       const links = [...bar.matchAll(/<a href="([^"]+)">([^<]+)<\/a>/g)];
-      assert.ok(links.length >= 4, name);
+      assert.ok(links.length >= 3, name);
+      assert.match(menu, new RegExp(`<a href="/make">${SVG}<span>Make a pixel reel</span></a>`), `${name}: and the make page`);
       for (const [, href, words] of links) assert.match(menu, new RegExp(`<a href="${href}">${SVG}<span>${words}</span></a>`), `${name}: ${words}`);
       assert.match(menu, new RegExp(`<a href="/">${SVG}<span>Home</span></a>`), name);
       assert.match(menu, new RegExp(`<a href="/app" data-not-app>${SVG}<span>Add to your phone</span></a>`), `${name}: not for someone who already has it there`);
@@ -1586,9 +1589,9 @@ describe('the menu, where the bar has no room for its links', () => {
     }
   });
 
-  it('holds Make it comfy, since the bar lets go of that button last of all', () => {
+  it('holds Make it comfy and Add to Claude, the last two things the bar lets go of', () => {
     assert.match(menuOf(html.home), /<button type="button" data-open="comfort"><span class="aa" aria-hidden="true">Aa<\/span><span>Make it comfy<\/span><\/button>/);
-    assert.ok(css.includes('.top-in[data-tight="5"] .top-comfort { display: none; }'));
+    assert.match(css, /\[data-tight="7"\], \[data-tight="8"\]\) \.top-comfort, \.top-in\[data-tight="8"\] \.top-add \{ display: none; \}/);
     assert.match(css, /:where\(\.menu-list > \*\) \{ display: flex; \}/, 'a row that is no use on a home screen can still be hidden');
   });
 

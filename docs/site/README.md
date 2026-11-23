@@ -1619,3 +1619,20 @@ marked, and the page is read as before.
 Tried in the headless browser at 844 by 390: the bar gone once the page is scrolled, the
 whole picture and its Play button on the screen. `scripts/site-fit.js` and
 `scripts/site-press.js` both say all well there.
+
+### Version 74
+
+- **The bar across the top asks you to make one.** Its first button, in gold, is "Make a
+  pixel reel now", which goes to `/make`. "Add to Claude" comes next, in teal. The link
+  "Make a pixel reel" has gone from beside How it works, Examples and Questions, which
+  stay as they were. The make page is still in the menu and at the foot.
+- **Make it comfy is a small box with AA in it.** No words beside it; a screen reader
+  still hears "Make it comfy: change how this site looks".
+- **Where there is less room, the bar lets go of more, one thing at a time.** After the
+  links: the "now", the name beside Reelie, "to Claude", the "pixel" (so "Make a reel"),
+  then all but "Make", then the AA box, and last the Add button. The menu holds both of
+  those last two. On a phone 390 wide it reads Menu, Make a reel, Add, AA.
+
+Tried in the headless browser at 1280, 1024, 768, 390 and 360 wide: `scripts/site-fit.js`
+says all well at all 27 settings on the home page and the make page, and
+`scripts/site-press.js` says all well on the home page at a phone's width and a laptop's.

@@ -14,7 +14,7 @@
   // The bar across the top. Bigger letters and wider typefaces need more room than a fixed
   // rule can know, so this measures: it lets go of one thing at a time (site.css says what
   // goes at each step, under "the bar across the top") until what is left sits on one row.
-  const STEPS = 5;
+  const STEPS = 8;
   const fit = () => {
     const bar = document.querySelector('.top-in');
     if (!bar) return;
