@@ -23,7 +23,8 @@
     "site-art": "node scripts/site-art.mjs",
     "video": "node scripts/video.mjs",
     "test": "node --test --test-concurrency=2 \"test/*.test.js\"",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "bottles": "node bottle/bottles.mjs --site https://pixelreel.pro --gcloud-secret pixelreel-bottle-reader --project pixelreel-515501"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -33,6 +34,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",
     "@modelcontextprotocol/sdk": "^1.32.2",
-    "@napi-rs/canvas": "^1.2.0"
+    "@napi-rs/canvas": "^1.2.0",
+    "modern-screenshot": "4.7.0"
   }
 }

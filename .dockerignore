@@ -7,3 +7,4 @@ models
 *.mp4
 !site/art/*.mp4
 zz-*
+.bottles

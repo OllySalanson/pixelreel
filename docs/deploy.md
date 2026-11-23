@@ -216,6 +216,29 @@ change them. What each reel took is in the logs: look for lines that start `try:
 
 To switch it off again: `--update-env-vars PIXELREEL_TRY=0`.
 
+### Message in a Bottle
+
+The note button ([bottle/README.md](../bottle/README.md)) is on when the service has its two
+keys: `PIXELREEL_BOTTLE_KEY`, the secret in the link that shows the button, and
+`PIXELREEL_BOTTLE_READER`, which reads the notes. Both are Secret Manager secrets, made so
+that neither is typed or shown:
+
+```sh
+for name in pixelreel-bottle-key pixelreel-bottle-reader; do
+  openssl rand -hex 24 | tr -d '\n' | gcloud secrets create $name --data-file=- --project pixelreel-515501
+  gcloud secrets add-iam-policy-binding $name --project pixelreel-515501 \
+    --member serviceAccount:pixelreel-run@pixelreel-515501.iam.gserviceaccount.com --role roles/secretmanager.secretAccessor
+done
+gcloud run services update pixelreel --region europe-west1 --project pixelreel-515501 \
+  --update-secrets PIXELREEL_BOTTLE_KEY=pixelreel-bottle-key:latest,PIXELREEL_BOTTLE_READER=pixelreel-bottle-reader:latest
+```
+
+The link is `https://pixelreel.pro/?bottle=<key>`, where the key is
+`gcloud secrets versions access latest --secret pixelreel-bottle-key --project pixelreel-515501`.
+`npm run bottles` reads the notes with the other secret. To change the link, add a new
+version of `pixelreel-bottle-key` and redeploy; browsers holding the old key forget it. To
+switch the button off, `--remove-secrets PIXELREEL_BOTTLE_KEY`.
+
 ### What it costs
 
 Cloud Run bills an awake copy by the second, from the first request until it sleeps about

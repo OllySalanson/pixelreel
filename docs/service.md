@@ -515,6 +515,10 @@ The local tools (`npm run voices`, `page`, `video`) have no such limits.
   service's own files. The page names the reel and points at its first picture (so a link
   sent in a message shows what it is) but holds none of its words: the player fetches those.
 - Search engines are asked not to list any reel, its recordings or its video.
+- Notes left with Message in a Bottle's button ([bottle/README.md](../bottle/README.md)), which
+  only people given its secret link ever see, are kept in the same place under `bottles/`,
+  each with a screenshot of the page and the browser it was left from. Only the reader key
+  lists them. The bucket's 30-day rule deletes them too, so read them before then.
 
 ## How it fits together
 
