@@ -644,7 +644,7 @@ describe("Peter's pace", () => {
     }
     // the player reads the choice from <html data-words>, and writes each scene's "say" in place of its caption
     const player = readFileSync(root('site/js/player.js'), 'utf8');
-    assert.match(player, /state\.muted \|\| document\.documentElement\.dataset\.words === 'all'/, 'with the sound off too, when nobody can hear him');
+    assert.match(player, /const all = document\.documentElement\.dataset\.words === 'all';/, 'and only from there: Sound on and off change nothing but the sound');
     for (const name of ['pixel-reel', 'gas-meter']) {
       const reel = parseReelJson(readFileSync(root(`reels/${name}/reel.json`), 'utf8'));
       assert.ok(reel.scenes.some((scene) => (scene.say ?? scene.caption).length > scene.caption.length), `${name} has more to say than its captions`);

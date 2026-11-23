@@ -1,8 +1,8 @@
 // Presses through a page of the website in a browser, as a visitor would, and says what
 // did not do what it should: the menu, the buttons that try Make it comfy, pressing words
-// to hear them, "Read this page to me", a reel opening over the page, and the big Play
-// button. It works whatever of those the page has, so it can be run on any page; the home
-// page has the most. No test can do this (the tests never run the pages), and
+// to hear them, "Read this page to me", a reel opening over the page, the big Play button,
+// and Sound on and off. It works whatever of those the page has, so it can be run on any
+// page; the home page has the most. No test can do this (the tests never run the pages), and
 // scripts/site-fit.js only looks at how a page is laid out. Paste it into the console of a
 // page (or hand it to a browser driver), at a phone's width and at a laptop's. It answers
 // with what it found, and puts back the settings it changed. It makes no sound: the
@@ -100,6 +100,20 @@
     first.pixelreel.pause();
     if (first.classList.contains('is-full')) first.pixelreel.toggleFull();   // a phone held on its side fills the screen
     await wait(200);
+    // Sound on and Sound off change the sound and nothing else: not the words under the
+    // picture, not their size, and nothing on the page moves
+    const sound = first.querySelector('.reel-sound');
+    if (sound?.offsetWidth) {
+      did.push('Sound on and off');
+      const look = () => JSON.stringify([getComputedStyle(first.querySelector('.reel-words')).fontSize, first.querySelector('.reel-words p.on')?.textContent,
+        ...[...document.querySelectorAll('main a, main button')].filter((el) => el.offsetWidth).map((el) => { const box = el.getBoundingClientRect(); return [Math.round(box.left), Math.round(box.top + scrollY)]; })]);
+      const was = look();
+      for (const press of ['once', 'twice']) {
+        sound.click();
+        await wait(200);
+        check(`pressing Sound ${press} changed more than the sound`, look() === was);
+      }
+    }
   }
 
   // put everything back

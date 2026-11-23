@@ -40,7 +40,8 @@ People who find reading hard work. Every choice follows from that:
   such as the steps for adding Pixel Reel to Claude. The plain pages and the pages of steps
   also have a button, "Read this page to me", that reads the whole of them, top to bottom.
 - **Nothing lost with the sound off.** A reel shows a few words and Peter says the rest.
-  With the sound off, every word he says is written under the picture instead.
+  Every word in Make it comfy writes all he says under the picture instead. Sound on and
+  off change only the sound, so nothing on the page moves when they are pressed.
 - **A place kept in the words.** Where every word is written, the sentence being said is
   gold as it is said, so nobody has to hunt for where the voice has got to. The same goes
   for the site's own words when they are read aloud.
@@ -1636,3 +1637,17 @@ whole picture and its Play button on the screen. `scripts/site-fit.js` and
 Tried in the headless browser at 1280, 1024, 768, 390 and 360 wide: `scripts/site-fit.js`
 says all well at all 27 settings on the home page and the make page, and
 `scripts/site-press.js` says all well on the home page at a phone's width and a laptop's.
+
+### Version 75
+
+- **Sound on and off change only the sound.** With the sound off, the player used to swap
+  its few words for every word Peter says, a little smaller: the words changed size and
+  everything under them, its buttons too, moved down. Now the words stay as they are.
+  Every word is still a choice in Make it comfy, for anyone who wants to read along.
+- `scripts/site-press.js` now presses Sound twice on the first player in a page, and says
+  so if the words, their size or anything on the page moved.
+
+Found by Olly. Before the change, at 1280 wide the words went from 22 to 19 pixels and the
+player's buttons dropped 22 pixels; on a phone 390 wide the buttons under the player moved
+too. `site-press.js` caught it, and says all well since.
+

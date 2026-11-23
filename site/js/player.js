@@ -359,10 +359,11 @@ export class ReelPlayer {
     this.root.classList.toggle('is-playing', state.playing);
     const scene = scenes[state.index];
     this.title.textContent = this.intro ? reel.title : `${state.index + 1}. ${scene.title}`;
-    // Under the picture go a few words, which Peter enlarges on. With the sound off nobody
-    // hears him, so every word he says goes there instead; so it does for anyone who asks
-    // for every word in Make it comfy (to read along, or because they cannot hear him).
-    const all = state.muted || document.documentElement.dataset.words === 'all';
+    // Under the picture go a few words, which Peter enlarges on. Every word he says goes
+    // there instead for anyone who asks for it in Make it comfy (to read along, or because
+    // they cannot hear him). Sound on and off change only the sound: swapping the words with
+    // it changed their size and moved everything below them.
+    const all = document.documentElement.dataset.words === 'all';
     if (all !== this.allWords) {
       this.allWords = all;
       this.root.classList.toggle('all-words', all);
