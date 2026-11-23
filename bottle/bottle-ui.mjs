@@ -1,15 +1,17 @@
 // Message in a Bottle, the button and what it opens: loaded by bottle.js only when this
-// browser holds the key. Press the button, click the part of the page the note is about (or
-// choose the whole page), write the note, send. With it go a screenshot of what was on the
+// browser holds a key, and shown only once the service says the key is right. Press the
+// button, click the part of the page the note is about (or choose the whole page), write or
+// say the note, send. My notes shows what came of each, and turns the button off. With it go a screenshot of what was on the
 // screen with that part outlined, the address, a CSS selector and the words of that part, the
-// window's size and the browser. Everything it draws is in a shadow root, styled through
+// window's size and the browser. On a site's /review page it draws the box where someone on
+// the site's list asks for a link instead (review()). Everything it draws is in a shadow root, styled through
 // adoptedStyleSheets, so the page's own styles cannot reach it and a strict content security
 // policy (no inline styles or scripts) does not stop it.
 
 const CSS = `
 :host { all: initial; }
 * { box-sizing: border-box; }
-.bottle, .banner, .panel, .toast {
+.dock button, .banner, .panel, .toast, .card {
   position: fixed; z-index: 2147483647; font: 18px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
   color: #f8f7dd; background: #13203a; border: 3px solid #ffcc4d; border-radius: 10px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
@@ -20,10 +22,13 @@ button:focus-visible, textarea:focus-visible { outline: 3px solid #7fd4ff; outli
 button.go { background: #ffcc4d; color: #0b1220; font-weight: 700; }
 button.go:hover { background: #ffe08a; }
 button:disabled { opacity: 0.6; cursor: wait; }
-.bottle {
-  left: max(12px, env(safe-area-inset-left)); bottom: max(12px, env(safe-area-inset-bottom));
-  display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 10px; min-height: 48px; font-weight: 700;
+.dock {
+  position: fixed; z-index: 2147483647; left: max(12px, env(safe-area-inset-left)); bottom: max(12px, env(safe-area-inset-bottom));
+  display: flex; gap: 8px;
 }
+.dock button { position: static; display: flex; align-items: center; gap: 8px; padding: 6px 14px; min-height: 48px; font-weight: 700; }
+.dock .bottle { padding-left: 10px; }
+.dock button:hover { background: #1d2d50; }
 .bottle svg { width: 26px; height: 26px; flex: none; }
 .banner {
   left: 50%; bottom: max(12px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: max-content; max-width: calc(100vw - 24px);
@@ -57,6 +62,34 @@ button:disabled { opacity: 0.6; cursor: wait; }
   font: 20px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; color: #0b1220; background: #fdfcf0; border: 2px solid #ebeac5;
 }
 .panel .row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; align-items: center; }
+.panel .row .speak { margin-right: auto; }
+.speak.on { background: #ff2d55; border-color: #ff2d55; color: #fff; }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; max-height: min(60vh, 30rem); overflow-y: auto; scrollbar-color: #3a4d78 transparent; }
+.list li { padding: 10px 12px; border-radius: 8px; background: #0b1220; display: flex; flex-direction: column; gap: 6px; }
+.list p { margin: 0; overflow-wrap: anywhere; }
+.list .words { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.list .said { color: #d9d8b8; }
+.list button { align-self: flex-start; }
+.chip { align-self: flex-start; padding: 0 10px; border-radius: 999px; font-size: 15px; font-weight: 700; line-height: 1.7; color: #0b1220; background: #d9d8b8; }
+.chip.done, .chip.closed { background: #8ee6a0; }
+.chip.declined { background: #ffb4a8; }
+.chip.in-progress { background: #7fd4ff; }
+.empty { margin: 0; color: #d9d8b8; }
+.review { position: fixed; inset: 0; z-index: 2147483646; background: #0b1220; display: grid; place-items: center; padding: 16px; overflow-y: auto; }
+.card { position: static; width: min(28rem, 100%); padding: 22px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
+.card h1 { margin: 0; font-size: 26px; line-height: 1.25; color: #ffcc4d; }
+.card p { margin: 0; }
+.card label { display: flex; flex-direction: column; gap: 6px; font-weight: 700; }
+.card input {
+  font: 20px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; min-height: 48px; padding: 8px 12px; border-radius: 8px;
+  color: #0b1220; background: #fdfcf0; border: 2px solid #ebeac5; width: 100%;
+}
+.card input:focus-visible { outline: 3px solid #7fd4ff; outline-offset: 2px; }
+.card .row { display: flex; flex-wrap: wrap; gap: 10px; }
+.card .row > * { flex: 1 1 auto; }
+.card a.go { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 6px 16px; border-radius: 8px; font-weight: 700; text-decoration: none; background: #ffcc4d; color: #0b1220; border: 2px solid #ffcc4d; }
+.card a.go:focus-visible { outline: 3px solid #7fd4ff; outline-offset: 2px; }
+.card .error { color: #ffb4a8; font-weight: 700; }
 .panel .error { margin: 0; color: #ffb4a8; font-weight: 700; }
 .toast { left: 50%; bottom: max(12px, env(safe-area-inset-bottom)); transform: translateX(-50%); padding: 10px 18px; font-weight: 700; }
 [hidden] { display: none !important; }
@@ -216,31 +249,60 @@ async function shoot(base, host, rect) {
   }
 }
 
-/** Shows the button, for a browser holding `key` (checked with the service first). */
-export async function start({ key, base, fresh, store }) {
-  const send = (path, body) => fetch(new URL(path, base), {
-    method: 'POST', headers: { 'content-type': 'application/json', 'x-bottle-key': key }, body: JSON.stringify(body ?? {}), credentials: 'omit'
-  });
+/** Asks the service, sending `key`: path is under the bottle's own address, and a body makes it a POST. */
+const asker = (base, key) => (path, body) => fetch(new URL(path, base), {
+  method: body === undefined ? 'GET' : 'POST', credentials: 'omit',
+  headers: { ...(body === undefined ? {} : { 'content-type': 'application/json' }), ...(key() ? { 'x-bottle-key': key() } : {}) },
+  ...(body === undefined ? {} : { body: JSON.stringify(body) })
+});
+
+/**
+ * Checks `key` with the service: 'right' (keeping it, or the key of the person's own it was
+ * swapped for, if it came from a link), 'wrong' (forgetting it), or 'unknown' if the service
+ * cannot be reached. Returns [what, the key to use].
+ */
+async function checked(base, key, fresh, store) {
   try {
-    const res = await send('check');
+    const res = await asker(base, () => key)('check', {});
     if (res.status === 403 || res.status === 404) {
       try { localStorage.removeItem(store); } catch { /* nothing kept */ }
-      return;
+      return ['wrong', key];
     }
-    if (res.ok && fresh) {
-      try { localStorage.setItem(store, key); } catch { /* kept for this visit only */ }
+    if (!res.ok) return ['unknown', key];
+    const given = (await res.json().catch(() => null))?.key;
+    if (given || fresh) {
+      try { localStorage.setItem(store, given || key); } catch { /* kept for this visit only */ }
     }
+    return ['right', given || key];
   } catch {
-    // the service cannot be reached just now: show the button anyway, and say so if a note cannot be sent
+    return ['unknown', key];
   }
+}
 
+/** A host on the page with a shadow root of its own, styled by CSS. */
+function shadowHost() {
   const host = make('div', { 'data-bottle': '' });
   const root = host.attachShadow({ mode: 'open' });
   const sheet = new CSSStyleSheet();
   sheet.replaceSync(CSS);
   root.adoptedStyleSheets = [sheet];
+  return { host, root };
+}
 
+/** What a note's state is called to its writer. */
+const STATE_NAMES = { new: 'New', 'in-progress': 'Being done', declined: 'Not done', done: 'Done', closed: 'Done' };
+
+/** Shows the button, for a browser holding `key`, once the service says it is right. */
+export async function start({ key: given, base, fresh, store }) {
+  const [state, key] = await checked(base, given, fresh, store);
+  // only once the service says the key is right: if it cannot be reached just now, the button waits for the next page
+  if (state !== 'right') return;
+  const send = asker(base, () => key);
+
+  const { host, root } = shadowHost();
   const button = make('button', { class: 'bottle', type: 'button', title: 'Leave a note about this page' }, bottleIcon(), 'Note');
+  const yours = make('button', { class: 'mine', type: 'button' }, 'My notes');
+  const dock = make('div', { class: 'dock' }, button, yours);
   const ring = make('div', { class: 'ring', hidden: true }, make('span'));
   const whole = make('button', { type: 'button' }, 'Whole page');
   const cancelPick = make('button', { type: 'button' }, 'Cancel');
@@ -250,12 +312,18 @@ export async function start({ key, base, fresh, store }) {
   const error = make('p', { class: 'error', hidden: true, role: 'alert' });
   const go = make('button', { class: 'go', type: 'submit' }, 'Send note');
   const cancelNote = make('button', { type: 'button' }, 'Cancel');
-  const panel = make('form', { class: 'panel', hidden: true, 'aria-label': 'Leave a note' }, make('h2', {}, 'Note'), about, box, error, make('div', { class: 'row' }, cancelNote, go));
+  const Speech = globalThis.SpeechRecognition ?? globalThis.webkitSpeechRecognition;
+  const speak = make('button', { class: 'speak', type: 'button', hidden: !Speech, 'aria-pressed': 'false' }, 'Speak');
+  const panel = make('form', { class: 'panel', hidden: true, 'aria-label': 'Leave a note' }, make('h2', {}, 'Note'), about, box, error, make('div', { class: 'row' }, speak, cancelNote, go));
+  const list = make('ul', { class: 'list' });
+  const off = make('button', { type: 'button' }, 'Turn off');
+  const closeList = make('button', { class: 'go', type: 'button' }, 'Close');
+  const mine = make('div', { class: 'panel', hidden: true, role: 'dialog', 'aria-label': 'My notes' }, make('h2', {}, 'My notes'), list, make('div', { class: 'row' }, off, closeList));
   const toast = make('div', { class: 'toast', hidden: true, role: 'status' });
-  root.append(ring, button, banner, panel, toast);
+  root.append(ring, dock, banner, panel, mine, toast);
   document.body.append(host);
 
-  let picking = false, hovered = null, chosen = null, shot = null;
+  let picking = false, hovered = null, chosen = null, shot = null, listening = null, spoken = false;
 
   const ours = (event) => event.composedPath().includes(host);
 
@@ -284,15 +352,13 @@ export async function start({ key, base, fresh, store }) {
   };
   const onKey = (event) => {
     if (event.key !== 'Escape') return;
-    event.preventDefault();
-    if (picking) stopPicking();
-    else if (!panel.hidden) closePanel();
+    if (picking) { event.preventDefault(); stopPicking(); } else if (!panel.hidden) { event.preventDefault(); closePanel(); } else if (!mine.hidden) { event.preventDefault(); closeMine(); }
   };
   const PRESSES = ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click', 'auxclick', 'dblclick', 'contextmenu'];
 
   function startPicking() {
     picking = true;
-    button.hidden = true;
+    dock.hidden = true;
     banner.hidden = false;
     addEventListener('pointermove', onMove, true);
     for (const type of PRESSES) addEventListener(type, swallow, true);
@@ -304,7 +370,7 @@ export async function start({ key, base, fresh, store }) {
     banner.hidden = true;
     removeEventListener('pointermove', onMove, true);
     for (const type of PRESSES) removeEventListener(type, swallow, true);
-    if (!keepRing) { outline(null); button.hidden = false; button.focus(); }
+    if (!keepRing) { outline(null); dock.hidden = false; button.focus(); }
   }
 
   function choose(el, isWhole) {
@@ -322,16 +388,50 @@ export async function start({ key, base, fresh, store }) {
     panel.classList.toggle('up', Boolean(rect) && rect.top + rect.height / 2 > innerHeight / 2);
     panel.classList.toggle('left', Boolean(rect) && rect.left + rect.width / 2 > innerWidth / 2);
     error.hidden = true;
+    spoken = false;
     panel.hidden = false;
     box.focus();
   }
 
+  function stopListening() {
+    listening?.stop();
+    listening = null;
+    speak.classList.remove('on');
+    speak.textContent = 'Speak';
+    speak.setAttribute('aria-pressed', 'false');
+  }
+
+  // the note said aloud is written into the box as it is heard, where it can be put right before it is sent
+  function listen() {
+    if (listening) { stopListening(); return; }
+    const heard = new Speech();
+    heard.lang = document.documentElement.lang || navigator.language || 'en-GB';
+    heard.continuous = true;
+    heard.interimResults = false;
+    heard.onresult = (event) => {
+      const words = [...event.results].slice(event.resultIndex).filter((r) => r.isFinal).map((r) => r[0].transcript.trim()).join(' ');
+      if (!words) return;
+      box.value = `${box.value.trim()} ${words}`.trim();
+      spoken = true;
+    };
+    heard.onerror = (event) => {
+      if (event.error !== 'aborted' && event.error !== 'no-speech') { error.textContent = 'The note could not be heard. Type it instead.'; error.hidden = false; }
+    };
+    heard.onend = () => { if (listening === heard) stopListening(); };
+    try { heard.start(); } catch { return; }
+    listening = heard;
+    speak.classList.add('on');
+    speak.textContent = 'Stop';
+    speak.setAttribute('aria-pressed', 'true');
+  }
+
   function closePanel() {
+    stopListening();
     panel.hidden = true;
     chosen = null;
     shot = null;
     outline(null);
-    button.hidden = false;
+    dock.hidden = false;
     button.focus();
   }
 
@@ -344,6 +444,7 @@ export async function start({ key, base, fresh, store }) {
   async function submit(event) {
     event.preventDefault();
     if (!chosen || go.disabled) return;
+    stopListening();
     if (!box.value.trim()) { error.textContent = 'Write the note first.'; error.hidden = false; box.focus(); return; }
     go.disabled = true;
     go.textContent = 'Sending...';
@@ -351,6 +452,7 @@ export async function start({ key, base, fresh, store }) {
     const { el, whole: isWhole, rect } = chosen;
     const body = {
       note: box.value,
+      spoken,
       page: { url: location.href, title: document.title },
       target: { whole: isWhole, selector: isWhole ? 'html' : selectorOf(el), tag: el.localName, text: isWhole ? '' : wordsOf(el), rect: rect && { x: rect.x, y: rect.y, width: rect.width, height: rect.height } },
       viewport: { width: innerWidth, height: innerHeight, scale: devicePixelRatio, scrollX, scrollY },
@@ -373,10 +475,119 @@ export async function start({ key, base, fresh, store }) {
     }
   }
 
+  /** One of this person's notes, as they see it: its state, their words, and what came of it. */
+  const item = (n) => {
+    const li = make('li', {}, make('span', { class: `chip ${n.state}` }, STATE_NAMES[n.state] ?? n.state), make('p', { class: 'words' }, n.note));
+    const outcome = n.state === 'declined' ? n.reason : n.what;
+    if (outcome) li.append(make('p', { class: 'said' }, outcome));
+    if (n.state === 'done') {
+      const right = make('button', { type: 'button' }, 'Looks right');
+      right.addEventListener('click', async () => {
+        right.disabled = true;
+        try {
+          const res = await send(`mine/${n.id}/closed`, {});
+          if (res.ok) li.replaceWith(item(await res.json()));
+          else right.disabled = false;
+        } catch { right.disabled = false; }
+      });
+      li.append(right);
+    }
+    return li;
+  };
+
+  async function openMine() {
+    dock.hidden = true;
+    off.textContent = 'Turn off';
+    list.replaceChildren(make('li', {}, make('p', { class: 'empty' }, '...')));
+    mine.hidden = false;
+    closeList.focus();
+    try {
+      const res = await send('mine');
+      if (!res.ok) throw new Error();
+      const { notes } = await res.json();
+      list.replaceChildren(...(notes.length ? notes.map(item) : [make('li', {}, make('p', { class: 'empty' }, 'No notes yet.'))]));
+    } catch {
+      list.replaceChildren(make('li', {}, make('p', { class: 'empty' }, 'Your notes could not be fetched. Try again in a while.')));
+    }
+  }
+
+  function closeMine() {
+    mine.hidden = true;
+    dock.hidden = false;
+    yours.focus();
+  }
+
+  // turning the button off asks once more, then forgets the key: the button goes until the link is opened again
+  function turnOff() {
+    if (off.textContent === 'Turn off') { off.textContent = 'Turn off now'; return; }
+    try { localStorage.removeItem(store); } catch { /* nothing kept */ }
+    removeEventListener('keydown', onKey, true);
+    host.remove();
+  }
+
   button.addEventListener('click', startPicking);
+  yours.addEventListener('click', openMine);
   whole.addEventListener('click', () => choose(document.documentElement, true));
   cancelPick.addEventListener('click', () => stopPicking());
   cancelNote.addEventListener('click', closePanel);
+  speak.addEventListener('click', listen);
   panel.addEventListener('submit', submit);
+  closeList.addEventListener('click', closeMine);
+  off.addEventListener('click', turnOff);
   addEventListener('keydown', onKey, true);
+}
+
+/**
+ * The site's /review page: whoever is on the site's list gives their email and is sent a link
+ * that switches the button on; anyone else is told the same, and nothing more. A browser that
+ * holds a key already is told the button is on, and can turn it off.
+ */
+export async function review({ key, base, store }) {
+  const { host, root } = shadowHost();
+  const card = make('form', { class: 'card', 'aria-label': 'Review this website' });
+  root.append(make('div', { class: 'review' }, card));
+  document.body.append(host);
+  let submit = null;
+  card.addEventListener('submit', (event) => { event.preventDefault(); submit?.(); });
+
+  const on = () => {
+    submit = null;
+    const off = make('button', { type: 'button' }, 'Turn off');
+    off.addEventListener('click', () => {
+      try { localStorage.removeItem(store); } catch { /* nothing kept */ }
+      ask();
+    });
+    const go = make('a', { class: 'go', href: '/' }, 'Go to the website');
+    card.replaceChildren(make('h1', {}, 'The note button is on'), make('div', { class: 'row' }, go, off));
+    go.focus();
+  };
+
+  const ask = () => {
+    const email = make('input', { type: 'email', name: 'email', autocomplete: 'email', required: true, inputMode: 'email', maxLength: 254 });
+    const error = make('p', { class: 'error', hidden: true, role: 'alert' });
+    const go = make('button', { class: 'go', type: 'submit' }, 'Send me a link');
+    submit = async () => {
+      if (go.disabled) return;
+      go.disabled = true;
+      error.hidden = true;
+      try {
+        const res = await asker(base, () => null)('signin', { email: email.value });
+        if (res.status === 202) {
+          submit = null;
+          card.replaceChildren(make('h1', {}, 'Thank you'), make('p', { role: 'status' }, 'We\'ll be in touch by email.'));
+          return;
+        }
+        error.textContent = res.status === 429 ? 'Try again in a while.' : (await res.json().catch(() => null))?.error ?? 'That did not work. Try again in a while.';
+      } catch {
+        error.textContent = 'Check the connection and try again.';
+      }
+      error.hidden = false;
+      go.disabled = false;
+    };
+    card.replaceChildren(make('h1', {}, 'Review this website'), make('label', {}, 'Email', email), error, go);
+    email.focus();
+  };
+
+  if (key && (await checked(base, key, true, store))[0] === 'right') on();
+  else ask();
 }

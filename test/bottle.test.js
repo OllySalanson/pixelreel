@@ -1,7 +1,7 @@
 // Message in a Bottle (bottle/, a package of its own with its own tests) as Pixel Reel uses
 // it: on every page of the site, with its notes kept in the reels' store.
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, describe, it } from 'node:test';
@@ -32,6 +32,23 @@ describe('in the Pixel Reel service', () => {
       assert.deepEqual(await reels.sweep(), [], 'the hourly sweep of old reels leaves notes alone');
       assert.equal((await fetch(`${base}/bottle/notes`, { method: 'POST', headers: { origin: 'https://elsewhere.example', 'x-bottle-key': KEY }, body: JSON.stringify(note()) })).status, 403);
       assert.equal((await fetch(`${base}/bottle/bottle.js`)).status, 200);
+
+      // the service's own key is Olly's, on Pixel Reel's list, and the admin key adds other sites and the people on them
+      const admin = (path, body) => fetch(`${base}/bottle/${path}`, { method: body ? 'POST' : 'GET', headers: { authorization: `Bearer ${READER}` }, body: body && JSON.stringify(body) }).then((r) => r.json());
+      const kept = JSON.parse(readFileSync(join(tmp, 'service', 'bottles', id, 'note.json'), 'utf8'));
+      assert.deepEqual([kept.site, kept.person], ['pixelreel', 'olly']);
+      await admin('sites', { id: 'civ-speak', name: 'Civ Speak', origins: ['https://civspeak.example'] });
+      const { link } = await admin('sites/civ-speak/people', { name: 'Ann', email: 'ann@civspeak.example' });
+      assert.match(link, /^https:\/\/civspeak\.example\/\?bottle=/);
+      assert.deepEqual((await admin('sites')).sites.map((x) => [x.id, x.name]), [['civ-speak', 'Civ Speak'], ['pixelreel', 'Pixel Reel']]);
+      assert.deepEqual(await reels.sweep(), [], 'and the sweep leaves the sites and people alone too');
+      assert.equal((await admin('sites')).sites.length, 2);
+
+      // Pixel Reel's own page for signing in, kept out of search engines
+      const review = await fetch(`${base}/review`);
+      assert.equal(review.status, 200);
+      assert.match(review.headers.get('x-robots-tag'), /noindex/);
+      assert.match(await review.text(), /<meta name="robots" content="noindex/);
     } finally { await new Promise((ok) => server.close(ok)); }
   });
 });
