@@ -978,7 +978,7 @@ describe('before the page is drawn', () => {
     // one span round the words, so the button lays them out as one run of text with its usual spaces
     assert.match(layout, /class="[^"]*top-add"[^>]*><span>Add<span class="top-add-more"> to Claude<\/span><\/span><\/a>/);
     assert.match(layout, /class="[^"]*btn-gold[^"]*top-make" href="\/make"><span>Make<span class="top-make-what"> a<span class="top-make-more"> pixel<\/span> reel<\/span><span class="top-make-now"> now<\/span><\/span><\/a>/);
-    assert.match(layout, /<button class="top-comfort"[^>]*aria-label="Make it comfy[^"]*"><span class="aa" aria-hidden="true">AA<\/span><\/button>/, 'a small box with AA in it, named for a screen reader');
+    assert.match(layout, /<button class="top-comfort"[^>]*aria-label="Make it comfy[^"]*"><span class="aa" aria-hidden="true">Aa<\/span><\/button>/, 'a small box with Aa in it, named for a screen reader');
   });
 });
 

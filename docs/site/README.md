@@ -1651,3 +1651,8 @@ Found by Olly. Before the change, at 1280 wide the words went from 22 to 19 pixe
 player's buttons dropped 22 pixels; on a phone 390 wide the buttons under the player moved
 too. `site-press.js` caught it, and says all well since.
 
+
+### Version 76
+
+- **The comfort box reads Aa**, a capital A and a small a, as Olly asked in a note on the
+  home page. It read AA.
