@@ -64,7 +64,8 @@ const noteLine = (n, now) => `${n.id}  ${n.state.padEnd(11)} ${age(n.at, now).pa
 function resultsTable(notes) {
   const rows = notes.map((n) => {
     const o = n.outcome ?? {};
-    const done = n.state === 'declined' ? o.reason : n.state === 'held' ? `Held: ${o.proposal ?? ''}` : o.what;
+    // a closed note keeps what came of it before: done, or declined with its reason
+    const done = n.state === 'held' ? `Held: ${o.proposal ?? ''}` : o.what ?? o.reason;
     return `| ${cell(n.note)} | ${cell(n.state)} | ${cell(done)} | ${Number.isFinite(o.confidence) && (n.state === 'done' || n.state === 'closed') ? `${o.confidence}%` : ' '} | ${cell(o.conflict)} |`;
   });
   return ['| Request | State | What was done | Confidence | Conflict |', '| --- | --- | --- | --- | --- |', ...rows].join('\n');

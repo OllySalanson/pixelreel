@@ -563,6 +563,8 @@ describe('the admin tool', () => {
     ].join('\n'));
     assert.match((await run(['queue', 'home'])).text, /held/);
     assert.equal((await run(['close', ids[0]])).text, `${ids[0]} is closed`);
+    assert.equal((await run(['close', ids[2]])).text, `${ids[2]} is closed`);
+    assert.match((await run(['results', 'home'])).text, /\| Remove the Worthing page\. \| closed \| We haven't removed the Worthing page\./);
     assert.match((await run(['list', '--state', 'closed'])).text, /closed/);
   });
 
