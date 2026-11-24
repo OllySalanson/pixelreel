@@ -354,7 +354,7 @@ async function sendWatchCard(req, res, name, { reels, cards, fresh, log }) {
  * `fresh` has browsers check for a newer copy of the site's files every time, for working on it;
  * `writer` (see service/writer.mjs) switches on Make it right here, which costs money a reel;
  * the server's written() resolves once every reel begun that way is written or given up on.
- * `bottle` ({ key, reader, mail }, see bottle/README.md) is Message in a Bottle: the note
+ * `bottle` ({ key, reader, mail, replyTo, notify, hook }, see bottle/README.md) is Message in a Bottle: the note
  * button for the people on each site's list, this one's and other sites', with this site's
  * /review page where they sign in; `key` is Olly's own, and `reader` the admin key.
  */

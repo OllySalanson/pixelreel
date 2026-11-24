@@ -39,7 +39,7 @@ describe('in the Pixel Reel service', () => {
       assert.deepEqual([kept.site, kept.person], ['pixelreel', 'olly']);
       await admin('sites', { id: 'civ-speak', name: 'Civ Speak', origins: ['https://civspeak.example'] });
       const { link } = await admin('sites/civ-speak/people', { name: 'Ann', email: 'ann@civspeak.example' });
-      assert.match(link, /^https:\/\/civspeak\.example\/\?bottle=/);
+      assert.match(link, /^https:\/\/civspeak\.example\/#bottle=/);
       assert.deepEqual((await admin('sites')).sites.map((x) => [x.id, x.name]), [['civ-speak', 'Civ Speak'], ['pixelreel', 'Pixel Reel']]);
       assert.deepEqual(await reels.sweep(), [], 'and the sweep leaves the sites and people alone too');
       assert.equal((await admin('sites')).sites.length, 2);
