@@ -222,7 +222,8 @@ To switch it off again: `--update-env-vars PIXELREEL_TRY=0`.
 ### Message in a Bottle
 
 The note button ([bottle/README.md](../bottle/README.md)) is on when the service has its two
-keys: `PIXELREEL_BOTTLE_KEY`, Olly's own key (his link is `https://pixelreel.pro/?bottle=<key>`,
+keys: `PIXELREEL_BOTTLE_KEY`, Olly's own key (his link is `https://pixelreel.pro/#bottle=<key>`,
+after `#` so that no request log ever holds it,
 and with it in his browser `https://pixelreel.pro/bottle/admin` opens the page of queues), and
 `PIXELREEL_BOTTLE_READER`, the admin key, which `npm run bottles` uses to add sites and people
 and work through the notes. Both are Secret Manager secrets, made so that neither is typed or
@@ -253,7 +254,8 @@ gcloud storage buckets update gs://pixelreel-515501-reels --lifecycle-file=lifec
 
 #### Its email, through Resend
 
-The invitations, sign-in links and "your note is done" emails go out through
+The invitations, sign-in links, news of what came of each person's notes, and word to Olly of
+new notes go out through
 [Resend](https://resend.com), on Olly's personal account (not Renew's). Until the service has
 both `PIXELREEL_RESEND_KEY` and `PIXELREEL_BOTTLE_MAIL_FROM`, it sends nothing and keeps each
 email in its outbox (`npm run bottles -- outbox`); its log says which when it starts. To set it up:
@@ -272,11 +274,25 @@ email in its outbox (`npm run bottles -- outbox`); its log says which when it st
      --member serviceAccount:pixelreel-run@pixelreel-515501.iam.gserviceaccount.com --role roles/secretmanager.secretAccessor
    gcloud run services update pixelreel --region europe-west1 --project pixelreel-515501 \
      --update-secrets PIXELREEL_RESEND_KEY=pixelreel-resend-key:latest \
-     --update-env-vars "PIXELREEL_BOTTLE_MAIL_FROM=Olly <notes@pixelreel.pro>"
+     --update-env-vars "PIXELREEL_BOTTLE_MAIL_FROM=Olly <notes@pixelreel.pro>,PIXELREEL_BOTTLE_REPLY_TO=<your own address>"
    ```
 
-   The from address must be on the verified domain. Then send yourself the invitation
-   (`npm run bottles -- invite <site> <person> --to <your address>`) to see it arrive.
+   The from address must be on the verified domain. `PIXELREEL_BOTTLE_REPLY_TO` is your own
+   address: pixelreel.pro takes no email (it has no MX record), so without it a client's reply
+   bounces. With it, every email ends "Reply to this email to reach Olly" and replies come to
+   you, and so does word of new notes. Then send yourself a preview of the invitation
+   (`npm run bottles -- invite <site> <person> --to <your address>`, which carries no working
+   link) to see it arrive. When emails start to go, the outbox kept until then is emptied.
+4. So that `npm run bottles -- people <site>` shows an email that bounced: in Resend, under
+   Webhooks, add an endpoint `https://pixelreel.pro/bottle/resend` for `email.bounced`,
+   `email.complained` and `email.delivered`, and keep its signing secret (`whsec_...`) as the
+   secret `pixelreel-resend-webhook` the same way, given to the service as
+   `--update-secrets PIXELREEL_RESEND_WEBHOOK_SECRET=pixelreel-resend-webhook:latest`.
+
+If replies should one day land in an inbox at pixelreel.pro itself (`notes@pixelreel.pro`), that
+needs mail hosting for the domain (its MX records, from a provider such as Fastmail or Google
+Workspace, or Cloudflare Email Routing to forward to your own address); then set
+`PIXELREEL_BOTTLE_REPLY_TO` to it, or leave it unset.
 
 To stop sending again, `--remove-secrets PIXELREEL_RESEND_KEY`: the emails go back to the outbox.
 

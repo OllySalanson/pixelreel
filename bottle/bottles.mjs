@@ -32,10 +32,12 @@ Sites and people:
   sites                                 every site, with its queue
   site add <id> --name <name> --origin <address> [--origin <address>]
   people <site>
-  person add <site> --name <name> --email <address>   prints their link
-  person off|on <site> <person>
-  person link <site> <person>           a new link for them
-  invite <site> <person> [--to <address>]             the "Review your website" email
+  person add <site> --name <name> --email <address>   prints their invitation link (7 days)
+  person off|on <site> <person>         off ends every link and key they have, for good
+  person email <site> <person> <address>              corrects their address (what went to the old one stops working)
+  person link <site> <person>           a new invitation link for them (the last one stops working)
+  invite <site> <person>                emails them a new invitation (the last one stops working)
+  invite <site> <person> --to <address> a preview of it, with no link in it, to another address
   outbox                                the emails kept instead of sent
 Options: --service <address> (or BOTTLE_SERVICE), --prefix </bottle>, and the admin key in
 BOTTLE_READER or from --gcloud-secret <name> [--project <project>].
@@ -59,6 +61,18 @@ const cell = (text) => oneLine(text, 200).replace(/\|/g, '\\|') || ' ';
 
 /** A note in one line: its id, state, age, page, the part it is about and its words. */
 const noteLine = (n, now) => `${n.id}  ${n.state.padEnd(11)} ${age(n.at, now).padStart(4)}  ${n.site ? `${n.site} ` : ''}${pathOf(n.page.url)}  ${n.target.whole ? '(whole page)' : n.target.tag}: ${oneLine(n.note, 80)}`;
+
+const MAIL = { sent: 'sent', kept: 'in the outbox', delivered: 'delivered', bounced: 'BOUNCED', complained: 'marked as spam' };
+const KINDS = { invitation: 'invitation', 'sign-in': 'sign-in link', news: 'news of their notes' };
+const day = (at) => new Date(at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+
+/** What became of the last email to a person, and until when their invitation's link works. */
+function personNews(p, now) {
+  const parts = [];
+  if (p.mail) parts.push(`${KINDS[p.mail.kind] ?? p.mail.kind ?? 'email'} ${MAIL[p.mail.state] ?? p.mail.state} ${day(p.mail.at)}`);
+  if (p.invitedUntil) parts.push(Date.parse(p.invitedUntil) > now ? `link works until ${day(p.invitedUntil)}` : 'link has run out');
+  return parts.length ? `  (${parts.join(', ')})` : '';
+}
 
 /** The results as a table: the request, what was done, how sure, and any conflict. */
 function resultsTable(notes) {
@@ -177,14 +191,14 @@ export async function main(argv, { env = process.env, fetch = globalThis.fetch, 
         const site = await askJson(`sites/${enc(rest[0])}`);
         if (opt.json) return show(site.people);
         if (!site.people.length) { out(`Nobody is on ${site.name}'s list.`); return 0; }
-        for (const p of site.people) out(`${p.id.padEnd(16)} ${(p.on ? 'on' : 'off').padEnd(4)} ${p.name}  ${p.email}${p.owner ? '  (the service\'s own key)' : ''}`);
+        for (const p of site.people) out(`${p.id.padEnd(16)} ${(p.on ? 'on' : 'off').padEnd(4)} ${p.name}  ${p.email}${p.owner ? '  (the service\'s own key)' : ''}${personNews(p, now)}`);
         return 0;
       }
       case 'person': {
         const [act, site, person] = rest;
         if (act === 'add' && site) {
           const made = await askJson(`sites/${enc(site)}/people`, { method: 'POST', body: { name: opt.name, email: opt.email } });
-          out(`${made.person.name} (${made.person.id}) is on ${site}'s list. Their link:\n${made.link}`);
+          out(`${made.person.name} (${made.person.id}) is on ${site}'s list. Their link, which works for 7 days:\n${made.link}`);
           return 0;
         }
         if ((act === 'off' || act === 'on') && site && person) {
@@ -193,13 +207,19 @@ export async function main(argv, { env = process.env, fetch = globalThis.fetch, 
           return 0;
         }
         if (act === 'link' && site && person) { out((await askJson(`sites/${enc(site)}/people/${enc(person)}/link`, { method: 'POST', body: {} })).link); return 0; }
+        if (act === 'email' && site && person && rest[3]) {
+          const p = await askJson(`sites/${enc(site)}/people/${enc(person)}`, { method: 'PATCH', body: { email: rest[3] } });
+          out(`${p.name}'s address is ${p.email}. Send them a new invitation.`);
+          return 0;
+        }
         out(usage);
         return 2;
       }
       case 'invite': {
         if (!wants(2)) return 2;
-        const sent = await askJson(`sites/${enc(rest[0])}/people/${enc(rest[1])}/invite`, { method: 'POST', body: opt.to ? { to: opt.to } : {} });
-        out(sent.sent ? `The invitation was sent to ${sent.to}.` : `The invitation to ${sent.to} is in the outbox, not sent.`);
+        const sent = await askJson(`sites/${enc(rest[0])}/people/${enc(rest[1])}/invite`, { method: 'POST', body: opt.to !== undefined ? { to: opt.to } : {} });
+        const what = sent.preview ? 'A preview of the invitation, with no link in it,' : 'The invitation';
+        out(sent.sent ? `${what} was sent to ${sent.to}.` : `${what} to ${sent.to} is in the outbox, not sent.`);
         return 0;
       }
       case 'outbox': {

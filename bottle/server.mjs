@@ -1,14 +1,16 @@
 // Message in a Bottle, the endpoint: one service for every site the button is on. It checks
 // each person's key before the button shows, takes the notes they leave with it, keeps each one
 // with its screenshot, sends the sign-in links asked for at a site's /review page, and hands the
-// notes to whoever looks after the sites, to work through and mark. Plain Node (node:http
+// notes to whoever looks after the sites, to work through and mark; what came of them goes to
+// each person in one email at most an hour, and word of new ones to whoever looks after the
+// sites the same way. Plain Node (node:http
 // requests and responses), with no other packages but the screenshot maker it serves to the
 // browser, so it can be dropped into any Node service. See README.md.
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
-import { doneMail, inviteMail, keyLink, outbox, signInMail } from './mail.mjs';
+import { arrivedMail, inviteMail, keyLink, newsMail, outbox, signInMail } from './mail.mjs';
 import { plainEmail, Said, same, ID as SITE_ID, Sites } from './sites.mjs';
 
 /** The most one note may carry, screenshot and all. */
@@ -55,14 +57,18 @@ class Window {
 
 /** The files a browser loads: the button, the rest of it once a key is in hand, the screenshot maker, and the page of queues. */
 function files() {
-  const file = (url, type) => {
-    const bytes = readFileSync(url);
-    return { bytes, type, gzip: gzipSync(bytes, { level: 9 }), tag: `"${createHash('sha256').update(bytes).digest('base64url').slice(0, 20)}"` };
+  const tagOf = (bytes) => createHash('sha256').update(bytes).digest('base64url').slice(0, 20);
+  const file = (url, type, change = (bytes) => bytes) => {
+    const bytes = change(readFileSync(url));
+    return { bytes, type, gzip: gzipSync(bytes, { level: 9 }), tag: `"${tagOf(bytes)}"` };
   };
   const js = 'text/javascript; charset=utf-8';
+  const ui = file(new URL('./bottle-ui.mjs', import.meta.url), js);
+  // bottle.js asks for this very bottle-ui.mjs, so a browser holding one of them from before a change never runs it with the other
+  const pinned = (bytes) => Buffer.from(bytes.toString('utf8').replace("'bottle-ui.mjs'", `'bottle-ui.mjs?v=${ui.tag.slice(1, -1)}'`));
   return {
-    'bottle.js': file(new URL('./bottle.js', import.meta.url), js),
-    'bottle-ui.mjs': file(new URL('./bottle-ui.mjs', import.meta.url), js),
+    'bottle.js': file(new URL('./bottle.js', import.meta.url), js, pinned),
+    'bottle-ui.mjs': ui,
     'shot.mjs': file(fileURLToPath(import.meta.resolve('modern-screenshot')), js),
     'admin.mjs': file(new URL('./admin.mjs', import.meta.url), js),
     'admin.css': file(new URL('./admin.css', import.meta.url), 'text/css; charset=utf-8')
@@ -172,9 +178,9 @@ export function outcomeFrom(state, body = {}) {
   return {};
 }
 
-/** A note as its writer sees it: held is theirs to wait on like any other, and only done and declined notes say what came of them. */
+/** A note as its writer sees it: held is waiting (it may yet be declined), and only done and declined notes say what came of them. */
 export function clientView(note) {
-  const state = note.state === 'held' ? 'in-progress' : note.state;
+  const state = note.state === 'held' ? 'waiting' : note.state;
   return {
     id: note.id, at: note.at, note: note.note, page: note.page?.url ?? '', state,
     ...(state === 'done' || state === 'closed' ? { what: note.outcome?.what ?? '' } : {}),
@@ -195,19 +201,30 @@ export function clientView(note) {
  * - `reader`: the admin key, for whoever looks after the sites: it adds sites and people and
  *   reads and marks the notes. Without one, only the owner's key does.
  * - `review`: the address of the home site's own sign-in page, such as /review, or null.
- * - `mail(message)`: sends an email ({ to, subject, text }). Without one, each is kept in the
- *   store's outbox instead (mail.mjs) and nothing is sent. `from` signs them.
+ * - `mail(message)`: sends an email ({ to, subject, text, replyTo }), resolving to { id }.
+ *   Without one, each is kept in the store's outbox instead (mail.mjs) and nothing is sent.
+ *   `from` signs them, and `replyTo` is where a reply to one goes.
+ * - `notify`: the address told when new notes come in on a site (none by the owner's own key),
+ *   in one email at most an hour for each site.
+ * - `hook`: the signing secret of a Resend webhook (whsec_...), sent to POST <prefix>/resend,
+ *   which says when an email bounced.
+ * - `quiet`, `gap`: what came of a person's notes is emailed once nothing has been marked for
+ *   them for `quiet` ms (10 minutes), and no sooner than `gap` (an hour) after the last; new
+ *   notes are told the same way. `every`: how often to look (a minute; 0 never, as tests do,
+ *   calling tell()).
  * - `caller(req)`: who is asking, for the rate limits (default: the connecting address).
  * - `perHour`, `perDay`: how many notes each person may leave an hour, and each site a day;
  *   `wrongPerHour`, how many wrong keys a caller may try; `signInsPerHour`, how many sign-in
  *   links a caller (or an address) may ask for.
  */
 export function createBottle({ store, key = '', reader = '', origins = [], home = { id: 'home', name: 'This site' }, owner = { id: 'owner', name: 'Owner' },
-  prefix = '/bottle', review = null, mail = null, from = '', caller = (req) => req.socket.remoteAddress ?? 'unknown',
-  perHour = 30, perDay = 200, wrongPerHour = 10, signInsPerHour = 5, log = () => {}, now = () => Date.now() } = {}) {
+  prefix = '/bottle', review = null, mail = null, from = '', replyTo = '', notify = '', hook = '', caller = (req) => req.socket.remoteAddress ?? 'unknown',
+  perHour = 30, perDay = 200, wrongPerHour = 10, signInsPerHour = 5, quiet = 10 * 60_000, gap = 3600_000, every = 60_000,
+  log = () => {}, now = () => Date.now() } = {}) {
   const served = files();
   const sites = new Sites({ store, home: { ...home, origins }, owner, ownerKey: key, now });
-  const send = mail ?? outbox(store, { now, log });
+  const sender = mail ?? outbox(store, { now, log });
+  const signs = { from, replyTo };
   const notes = new Window(perHour, 3600_000, now), noteCallers = new Window(perHour, 3600_000, now), daily = new Window(perDay, 86400_000, now);
   const wrong = new Window(wrongPerHour, 3600_000, now), signIns = new Window(signInsPerHour, 3600_000, now), signInsTo = new Window(3, 3600_000, now);
   const pending = new Set();
@@ -216,7 +233,32 @@ export function createBottle({ store, key = '', reader = '', origins = [], home 
   const later = (work) => {
     const job = Promise.resolve().then(work).catch((err) => log(`bottle: ${err.stack ?? err}`)).finally(() => pending.delete(job));
     pending.add(job);
+    return job;
   };
+
+  /** Runs `work` once everything given to it before is done, so two never change the same batch at once. */
+  let line = Promise.resolve();
+  const inTurn = (work) => {
+    const job = line.then(work);
+    line = job.catch(() => {});
+    return job;
+  };
+
+  /**
+   * Sends an email, and once it is sent (not before) keeps a note that it was, under
+   * bottles/sent/: to whom, the subject, when and why, but no words of it, so no link. Resend's
+   * id names it, so a webhook saying it bounced can find whose it was.
+   */
+  const deliver = async (message, about = {}) => {
+    const done = await sender(message);
+    if (!mail) return done;
+    const at = new Date(now()).toISOString(), id = /^[\w-]{1,100}$/.test(done?.id ?? '') ? done.id : `${at.replace(/[-:T.Z]/g, '')}-${randomBytes(3).toString('hex')}`;
+    await store.put(`bottles/sent/${id}/sent.json`, JSON.stringify({ id, at, to: message.to, subject: message.subject, ...about }, null, 2));
+    return done;
+  };
+
+  // once emails really go, the outbox kept before (with links in it) goes
+  if (mail && store.remove) later(async () => { if ((await store.folders('bottles/outbox')).length) { await store.remove('bottles/outbox'); log('bottle: the outbox was emptied, as emails are sent now'); } });
 
   /** Turns a caller away, or, if they keep getting keys wrong, away for an hour. */
   const refuse = (req, res, status, error) => {
@@ -285,14 +327,121 @@ export function createBottle({ store, key = '', reader = '', origins = [], home 
       .end(req.method === 'HEAD' ? undefined : html);
   };
 
+  /**
+   * Whether the key is right. A link's code is not a key: it answers 409 { code: true }, and is
+   * swapped for a key of the person's own (which the browser keeps instead) only when asked to
+   * with { "use": true }, which the page sends once its button is pressed. So a mail scanner
+   * that opens a link, even one that runs its script, does not use it up.
+   */
   async function check(req, res) {
     const given = req.headers['x-bottle-key'];
     const found = await sites.who(given);
     if (found && fromSite(req, found.site)) { json(res, 200, { ok: true }); return; }
-    // a sign-in link's code is swapped, once, for a key of the person's own, which this browser keeps instead
-    const redeemed = !found && (await sites.redeem(given));
-    if (redeemed && fromSite(req, redeemed.site)) { log(`bottle: ${redeemed.person.id} signed in on ${redeemed.site.id}`); json(res, 200, { ok: true, key: redeemed.key }); return; }
+    const code = !found && (await sites.peek(given));
+    if (code && fromSite(req, code.site)) {
+      if ((await readJson(req))?.use !== true) { json(res, 409, { code: true, error: 'That is a link\'s code: press the button to use it.' }); return; }
+      const redeemed = await sites.redeem(given);
+      if (redeemed) { log(`bottle: ${redeemed.person.id} switched the button on, on ${redeemed.site.id}, by ${code.kind}`); json(res, 200, { ok: true, key: redeemed.key }); return; }
+    }
     refuse(req, res, 403, 'That key is not right.');
+  }
+
+  /** The name of the site a page is on, for its /review page to say. */
+  async function siteName(req, res) {
+    const site = await sites.at(req.headers.origin);
+    if (!site) { json(res, 403, { error: 'Only from a site the notes are taken for.' }); return; }
+    json(res, 200, { name: site.name });
+  }
+
+  /**
+   * Adds `id` to the batch kept in `file` ({ notes, added, last }), which tell() sends once
+   * nothing has been added for `quiet` and `gap` has gone since the last was sent.
+   */
+  const batch = (file, id) => inTurn(async () => {
+    const kept = JSON.parse((await store.get(file)) ?? 'null') ?? { notes: [], last: null };
+    if (!kept.notes.includes(id)) kept.notes.push(id);
+    kept.added = now();
+    await store.put(file, JSON.stringify(kept));
+    soonest = Math.min(soonest, Math.max(kept.added + quiet, (kept.last ?? -Infinity) + gap));
+  });
+  const newsFile = (site, person) => `bottles/news/${site}/${person}/news.json`;
+  const arrivedFile = (site) => `bottles/arrived/${site}/arrived.json`;
+  /** When tell() next has something to send; 0 until it has looked once. */
+  let soonest = 0;
+
+  /**
+   * Sends every batch that is due: to each person, what came of their notes since the last
+   * email (a note is marked told only once that is sent, so one that fails goes next time), and
+   * to `notify`, the notes that came in on each site. A person turned off is sent nothing, and
+   * their news waits until they are on again.
+   */
+  const tell = () => inTurn(async () => {
+    const at = now();
+    let next = Infinity;
+    const due = (kept) => Math.max(kept.added + quiet, (kept.last ?? -Infinity) + gap);
+    const each = async (file, send) => {
+      const kept = JSON.parse((await store.get(file)) ?? 'null');
+      if (!kept?.notes?.length) return;
+      if (at < due(kept)) { next = Math.min(next, due(kept)); return; }
+      try {
+        if ((await send(kept)) === false) return;
+      } catch (err) {
+        log(`bottle: ${file} could not be sent, and is tried again in ${Math.round(quiet / 60_000)} minutes: ${err.message ?? err}`);
+        next = Math.min(next, at + quiet);
+        return;
+      }
+      await store.put(file, JSON.stringify({ notes: [], added: kept.added, last: kept.last }));
+    };
+    for (const siteId of await store.folders('bottles/news')) {
+      for (const personId of await store.folders(`bottles/news/${siteId}`)) {
+        await each(newsFile(siteId, personId), async (kept) => {
+          const found = await sites.person(siteId, personId);
+          if (found && (found.person.on === false || !found.person.email)) return false;
+          const notes = (await Promise.all(kept.notes.map(read))).filter((n) => n && !n.told && (n.state === 'done' || n.state === 'declined'));
+          if (!found || !notes.length) return;
+          await deliver(newsMail({ site: found.site, person: found.person, notes, ...signs }), { kind: 'news', site: siteId, person: personId, notes: notes.map((n) => n.id) });
+          // read again, as a note may have been marked while the email went
+          for (const n of notes) { const fresh = await read(n.id); if (fresh) await write({ ...fresh, told: new Date(at).toISOString() }); }
+          kept.last = at;
+          log(`bottle: ${personId} on ${siteId} was told what came of ${notes.length} notes`);
+        });
+      }
+    }
+    for (const siteId of await store.folders('bottles/arrived')) {
+      await each(arrivedFile(siteId), async (kept) => {
+        const site = await sites.get(siteId), notes = (await Promise.all(kept.notes.map(read))).filter(Boolean);
+        if (!site || !notes.length || !notify) return;
+        await deliver(arrivedMail({ to: notify, site, notes, queue: `${(origins[0] ?? '').replace(/\/$/, '')}${prefix}/admin#site=${encodeURIComponent(siteId)}` }), { kind: 'arrived', site: siteId });
+        kept.last = at;
+      });
+    }
+    soonest = next;
+  });
+  if (every > 0) setInterval(() => { if (now() >= soonest) tell().catch((err) => log(`bottle: ${err.stack ?? err}`)); }, every).unref();
+
+  /** A Resend webhook (signed as Svix signs them): a bounce or complaint is kept on the person it was for. */
+  async function resendHook(req, res) {
+    const bytes = hook ? await readBytes(req, 256 * 1024) : null;
+    const id = req.headers['svix-id'], stamp = Number(req.headers['svix-timestamp']);
+    const secret = Buffer.from(String(hook).replace(/^whsec_/, ''), 'base64');
+    const signed = bytes && typeof id === 'string' && Number.isFinite(stamp) && Math.abs(now() / 1000 - stamp) < 300
+      && String(req.headers['svix-signature'] ?? '').split(' ').some((part) => {
+        const [version, sig] = part.split(',');
+        const want = createHmac('sha256', secret).update(`${id}.${req.headers['svix-timestamp']}.`).update(bytes).digest();
+        const given = Buffer.from(sig ?? '', 'base64');
+        return version === 'v1' && given.length === want.length && timingSafeEqual(given, want);
+      });
+    if (!signed) { json(res, hook ? 400 : 404, { error: hook ? 'That is not signed.' : 'There is nothing here.' }); return; }
+    let event;
+    try { event = JSON.parse(bytes.toString('utf8')); } catch { json(res, 400, { error: 'That could not be read.' }); return; }
+    const state = { 'email.bounced': 'bounced', 'email.complained': 'complained', 'email.delivered': 'delivered' }[event?.type];
+    const sentId = String(event?.data?.email_id ?? '');
+    const sent = state && /^[\w-]{1,100}$/.test(sentId) ? JSON.parse((await store.get(`bottles/sent/${sentId}/sent.json`)) ?? 'null') : null;
+    if (sent?.site && sent.person) {
+      await sites.mailed(sent.site, sent.person, { kind: sent.kind, at: new Date(now()).toISOString(), state });
+      if (state !== 'delivered') log(`bottle: an email to ${sent.person} on ${sent.site} ${state}: "${sent.subject}"`);
+    }
+    json(res, 200, { ok: true });
   }
 
   async function leave(req, res) {
@@ -324,6 +473,7 @@ export function createBottle({ store, key = '', reader = '', origins = [], home 
     await write(note);
     log(`bottle: a note was left on ${site.id}, ${note.id}`);
     json(res, 201, { id: note.id });
+    if (notify && !who.owner) later(() => batch(arrivedFile(site.id), note.id));
   }
 
   async function mine(req, res, id) {
@@ -356,7 +506,8 @@ export function createBottle({ store, key = '', reader = '', origins = [], home 
     later(async () => {
       const made = await sites.code(site.id, email);
       if (!made) return;
-      await send(signInMail({ site: made.site, person: made.person, key: made.code, from }));
+      if (!made.code) { log(`bottle: ${made.person.id} on ${site.id} has been sent as many sign-in links as a day allows`); return; }
+      await deliver(signInMail({ site: made.site, person: made.person, code: made.code, ...signs }), { kind: 'sign-in', site: site.id, person: made.person.id });
       log(`bottle: a sign-in link was sent for ${made.person.id} on ${site.id}`);
     });
   }
@@ -383,14 +534,10 @@ export function createBottle({ store, key = '', reader = '', origins = [], home 
     note.outcome = { ...note.outcome, ...outcome };
     note.history = [...note.history, { at: new Date(now()).toISOString(), state: body.state, ...outcome, ...(answer ? { answer } : {}) }];
     await write(note);
-    // its writer hears when it is done, once
-    if (note.state === 'done' && was !== 'done' && !note.told) {
-      const found = note.person && (await sites.person(note.site, note.person));
-      if (found?.person.email && found.person.on !== false) {
-        note.told = new Date(now()).toISOString();
-        await write(note);
-        later(() => send(doneMail({ site: found.site, person: found.person, note, from })));
-      }
+    // its writer hears what came of it, done or declined, once, in the next email of news for them
+    if ((note.state === 'done' || note.state === 'declined') && was !== note.state && !note.told && note.person) {
+      const found = await sites.person(note.site, note.person);
+      if (found && !found.person.owner) await batch(newsFile(note.site, note.person), note.id);
     }
     json(res, 200, note);
   }
@@ -412,25 +559,38 @@ export function createBottle({ store, key = '', reader = '', origins = [], home 
       if (parts[1] !== 'people') { json(res, 404, { error: 'There is nothing here.' }); return; }
       if (!personId && method === 'POST') {
         const body = await readJson(req) ?? {};
-        const { person: added, key: made } = await sites.addPerson(siteId, body);
-        json(res, 201, { person: added, link: keyLink(await sites.get(siteId), made) });
+        const { person: added, code } = await sites.addPerson(siteId, body);
+        json(res, 201, { person: added, link: keyLink(await sites.get(siteId), code) });
         return;
       }
       const found = personId && (await sites.person(siteId, personId));
       if (!found) { json(res, 404, { error: 'There is nobody by that id on that site\'s list.' }); return; }
       if (!act && method === 'PATCH') {
         const body = await readJson(req);
-        if (typeof body?.on !== 'boolean') { json(res, 400, { error: 'Send { "on": true } or { "on": false }.' }); return; }
-        json(res, 200, await sites.turn(siteId, personId, body.on));
+        if (typeof body?.email === 'string') { json(res, 200, await sites.email(siteId, personId, body.email)); return; }
+        if (typeof body?.on !== 'boolean') { json(res, 400, { error: 'Send { "on": true }, { "on": false } or { "email": ... }.' }); return; }
+        const turned = await sites.turn(siteId, personId, body.on);
+        // news kept for them while they were off goes in the next email
+        if (turned.on) soonest = 0;
+        json(res, 200, turned);
         return;
       }
       if ((act === 'link' || act === 'invite') && method === 'POST' && !found.person.owner) {
-        const made = await sites.newKey(siteId, personId, act);
-        if (act === 'link') { json(res, 200, { link: keyLink(found.site, made) }); return; }
         const body = await readJson(req) ?? {};
-        const to = plainEmail(body.to) || found.person.email;
-        await send({ ...inviteMail({ site: found.site, person: found.person, key: made, from, path: review ?? '/review' }), to });
-        json(res, 200, { to, sent: Boolean(mail) });
+        const path = review ?? '/review';
+        // a preview to someone else carries no link, so a wrong address is sent nothing that works
+        if (act === 'invite' && body.to !== undefined) {
+          const to = plainEmail(body.to);
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(to)) { json(res, 400, { error: 'Give the address to send the preview to.' }); return; }
+          await deliver({ ...inviteMail({ site: found.site, person: found.person, code: null, ...signs, path }), to }, { kind: 'preview', site: siteId });
+          json(res, 200, { to, sent: Boolean(mail), preview: true });
+          return;
+        }
+        const { site, person: invited, code } = await sites.invite(siteId, personId);
+        if (act === 'link') { json(res, 200, { link: keyLink(site, code) }); return; }
+        await deliver(inviteMail({ site, person: invited, code, ...signs, path }), { kind: 'invitation', site: siteId, person: personId });
+        await sites.mailed(siteId, personId, { kind: 'invitation', at: new Date(now()).toISOString(), state: mail ? 'sent' : 'kept' });
+        json(res, 200, { to: invited.email, sent: Boolean(mail) });
         return;
       }
       json(res, 404, { error: 'There is nothing here.' });
@@ -471,8 +631,10 @@ export function createBottle({ store, key = '', reader = '', origins = [], home 
         return true;
       }
       // what a page asks, from its own site or another
-      if (['check', 'notes', 'signin', 'mine'].includes(rest) || rest.startsWith('mine/')) await welcome(req, res);
+      if (['check', 'notes', 'signin', 'mine', 'site'].includes(rest) || rest.startsWith('mine/')) await welcome(req, res);
       if (rest === 'check' && method === 'POST') { await check(req, res); return true; }
+      if (rest === 'site' && method === 'POST') { await siteName(req, res); return true; }
+      if (rest === 'resend' && method === 'POST') { await resendHook(req, res); return true; }
       if (rest === 'signin' && method === 'POST') { await signIn(req, res); return true; }
       if (rest === 'notes' && method === 'POST') { await leave(req, res); return true; }
       if (rest === 'mine' && method === 'GET') { await mine(req, res, null); return true; }
@@ -515,7 +677,7 @@ export function createBottle({ store, key = '', reader = '', origins = [], home 
   }
 
   /** Resolves once the work begun after an answer (an email to send) is done. */
-  const idle = async () => { while (pending.size) await Promise.all(pending); };
+  const idle = async () => { while (pending.size) await Promise.all(pending); await line; };
 
-  return { handle, idle, sites };
+  return { handle, idle, tell, sites };
 }

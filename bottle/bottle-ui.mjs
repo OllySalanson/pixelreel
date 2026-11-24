@@ -1,5 +1,7 @@
 // Message in a Bottle, the button and what it opens: loaded by bottle.js only when this
-// browser holds a key, and shown only once the service says the key is right. Press the
+// browser holds a key or was opened from a link, and shown only once the service says the key
+// is right. A link's code switches the button on only once its button is pressed, and a link
+// that has run out says so, never taking a key this browser already holds that works. Press the
 // button, click the part of the page the note is about (or choose the whole page), write or
 // say the note, send. My notes shows what came of each, and turns the button off. With it go a screenshot of what was on the
 // screen with that part outlined, the address, a CSS selector and the words of that part, the
@@ -11,7 +13,7 @@
 const CSS = `
 :host { all: initial; }
 * { box-sizing: border-box; }
-.dock button, .banner, .panel, .toast, .card {
+.dock button, .banner, .panel, .toast, .card, .notice {
   position: fixed; z-index: 2147483647; font: 18px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
   color: #f8f7dd; background: #13203a; border: 3px solid #ffcc4d; border-radius: 10px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
@@ -40,8 +42,8 @@ button:disabled { opacity: 0.6; cursor: wait; }
   box-shadow: 0 0 0 3px rgba(11, 18, 32, 0.85), 0 0 0 9999px rgba(11, 18, 32, 0.18); transition: all 60ms linear;
 }
 .ring span {
-  position: absolute; left: -3px; bottom: 100%; margin-bottom: 3px; padding: 0 6px; border-radius: 4px;
-  font: 700 14px/1.6 ui-monospace, Menlo, Consolas, monospace; color: #0b1220; background: #ffcc4d; white-space: nowrap;
+  position: absolute; left: -3px; bottom: 100%; margin-bottom: 3px; padding: 0 8px; border-radius: 4px;
+  font: 700 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; color: #0b1220; background: #ffcc4d; white-space: nowrap;
 }
 .ring.low span { bottom: auto; top: 100%; margin: 3px 0 0; }
 .panel {
@@ -87,11 +89,23 @@ button:disabled { opacity: 0.6; cursor: wait; }
 .card input:focus-visible { outline: 3px solid #7fd4ff; outline-offset: 2px; }
 .card .row { display: flex; flex-wrap: wrap; gap: 10px; }
 .card .row > * { flex: 1 1 auto; }
-.card a.go { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 6px 16px; border-radius: 8px; font-weight: 700; text-decoration: none; background: #ffcc4d; color: #0b1220; border: 2px solid #ffcc4d; }
-.card a.go:focus-visible { outline: 3px solid #7fd4ff; outline-offset: 2px; }
 .card .error { color: #ffb4a8; font-weight: 700; }
 .panel .error { margin: 0; color: #ffb4a8; font-weight: 700; }
-.toast { left: 50%; bottom: max(12px, env(safe-area-inset-bottom)); transform: translateX(-50%); padding: 10px 18px; font-weight: 700; }
+.toast { left: 50%; bottom: max(12px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: max-content; max-width: calc(100vw - 24px); text-align: center; padding: 10px 18px; font-weight: 700; }
+/* on a phone the toast sits above the buttons, not over them */
+@media (max-width: 640px) { .toast { bottom: calc(max(12px, env(safe-area-inset-bottom)) + 60px); } }
+.notice {
+  left: max(12px, env(safe-area-inset-left)); bottom: max(12px, env(safe-area-inset-bottom)); width: max-content; max-width: min(26rem, calc(100vw - 24px));
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;
+}
+.notice p { margin: 0; font-weight: 700; }
+.notice .row { display: flex; flex-wrap: wrap; gap: 10px; }
+.notice .row > * { flex: 1 1 auto; }
+.notice .error { color: #ffb4a8; }
+a.go { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 6px 16px; border-radius: 8px; font-weight: 700; text-decoration: none; background: #ffcc4d; color: #0b1220; border: 2px solid #ffcc4d; }
+a.go:focus-visible { outline: 3px solid #7fd4ff; outline-offset: 2px; }
+.list .where { color: #d9d8b8; font-size: 15px; }
+.card .sent { color: #8ee6a0; font-weight: 700; }
 [hidden] { display: none !important; }
 `;
 
@@ -149,11 +163,11 @@ export function selectorOf(el, doc = document) {
 const wordsOf = (el) => (el.innerText || el.getAttribute?.('aria-label') || el.getAttribute?.('alt') || el.getAttribute?.('title') || el.value || '')
   .replace(/\s+/g, ' ').trim().slice(0, 1000);
 
-/** What a part is, said briefly: its tag and the start of its words. */
+/** What a part is, said briefly: the start of its words. */
 const describe = (el, whole) => {
   if (whole) return 'The whole page';
   const words = wordsOf(el);
-  return `<${el.localName}>${words ? ` "${words.length > 60 ? `${words.slice(0, 60)}...` : words}"` : ''}`;
+  return words ? `"${words.length > 60 ? `${words.slice(0, 60)}...` : words}"` : 'This part';
 };
 
 /** Bytes as a data URL, for a font or picture the screenshot needs inside itself. */
@@ -256,28 +270,67 @@ const asker = (base, key) => (path, body) => fetch(new URL(path, base), {
   ...(body === undefined ? {} : { body: JSON.stringify(body) })
 });
 
-/**
- * Checks `key` with the service: 'right' (keeping it, or the key of the person's own it was
- * swapped for, if it came from a link), 'wrong' (forgetting it), or 'unknown' if the service
- * cannot be reached. Returns [what, the key to use].
- */
-async function checked(base, key, fresh, store) {
+/** What the service says `token` is: 'key' (a right one), 'code' (a link's, not used yet), 'wrong', or 'unknown' if it cannot be reached. */
+async function lookUp(base, token) {
   try {
-    const res = await asker(base, () => key)('check', {});
-    if (res.status === 403 || res.status === 404) {
-      try { localStorage.removeItem(store); } catch { /* nothing kept */ }
-      return ['wrong', key];
-    }
-    if (!res.ok) return ['unknown', key];
-    const given = (await res.json().catch(() => null))?.key;
-    if (given || fresh) {
-      try { localStorage.setItem(store, given || key); } catch { /* kept for this visit only */ }
-    }
-    return ['right', given || key];
+    const res = await asker(base, () => token)('check', {});
+    if (res.ok) return 'key';
+    if (res.status === 409) return 'code';
+    return res.status === 403 || res.status === 404 ? 'wrong' : 'unknown';
   } catch {
-    return ['unknown', key];
+    return 'unknown';
   }
 }
+
+/** Swaps a link's `code` for a key of this browser's own: the key, or null if the link has run out. Throws if the service cannot be reached. */
+async function useCode(base, code) {
+  const res = await asker(base, () => code)('check', { use: true });
+  if (res.ok) return (await res.json()).key ?? null;
+  if (res.status === 403 || res.status === 404) return null;
+  throw new Error(String(res.status));
+}
+
+const keep = (store, key) => { try { localStorage.setItem(store, key); } catch { /* kept for this visit only */ } };
+const forget = (store) => { try { localStorage.removeItem(store); } catch { /* nothing kept */ } };
+
+/**
+ * What to do with the `link` a page was opened from (a code or, from links sent before, a
+ * key) and the key this browser `kept`, given `look(token)`, which says what the service makes
+ * of one (lookUp). Returns { show, keep, forget, say, offer, runOut }: the key to show the
+ * button with, a key to keep, whether to forget the kept one, what to say once it shows, a
+ * link's code to offer to switch the button on with, or that the link has run out.
+ *
+ * A link never takes away a key that works: one that has run out, opened again in a browser
+ * already on, leaves it on and says so. A kept key is forgotten only when it is itself refused,
+ * and silently when no link came with it, since that browser could be anyone's.
+ */
+export async function decide({ link, kept, look }) {
+  if (link) {
+    const found = await look(link);
+    if (found === 'key') return { show: link, keep: link, ...(link === kept ? {} : { say: 'The note button is on.' }) };
+    if (found === 'code' || found === 'wrong') {
+      const was = kept && kept !== link ? await look(kept) : found;
+      if (was === 'key') return { show: kept, say: found === 'code' ? 'The note button is on already.' : 'This link has run out. The note button is still on.' };
+      const gone = Boolean(kept) && was === 'wrong';
+      return found === 'code' ? { offer: link, forget: gone } : { runOut: true, forget: gone };
+    }
+    // the service cannot be reached just now: as if there were no link
+  }
+  if (!kept) return {};
+  const was = await look(kept);
+  return was === 'key' ? { show: kept } : { forget: was === 'wrong' };
+}
+
+/** Does what decide() said about keys, and gives back the plan. */
+async function planned(base, store, link, kept) {
+  const plan = await decide({ link, kept, look: (token) => lookUp(base, token) });
+  if (plan.forget) forget(store);
+  if (plan.keep) keep(store, plan.keep);
+  return plan;
+}
+
+/** The address of this site's page for asking for a new link. */
+const reviewHref = () => new URL('/review', location.origin).href;
 
 /** A host on the page with a shadow root of its own, styled by CSS. */
 function shadowHost() {
@@ -290,13 +343,74 @@ function shadowHost() {
 }
 
 /** What a note's state is called to its writer. */
-const STATE_NAMES = { new: 'New', 'in-progress': 'Being done', declined: 'Not done', done: 'Done', closed: 'Done' };
+const STATE_NAMES = { new: 'New', 'in-progress': 'Being done', waiting: 'Waiting', declined: 'Not done', done: 'Done', closed: 'Done' };
 
-/** Shows the button, for a browser holding `key`, once the service says it is right. */
-export async function start({ key: given, base, fresh, store }) {
-  const [state, key] = await checked(base, given, fresh, store);
-  // only once the service says the key is right: if it cannot be reached just now, the button waits for the next page
-  if (state !== 'right') return;
+/** Which page a note was left on, and the day, said briefly. */
+function whereAndWhen(n) {
+  let page;
+  try { const url = new URL(n.page); page = url.pathname === '/' ? 'Home page' : decodeURIComponent(url.pathname); } catch { page = ''; }
+  const at = new Date(n.at);
+  const day = Number.isNaN(at.getTime()) ? '' : at.toLocaleDateString(document.documentElement.lang || undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+  return [page, day].filter(Boolean).join(' · ');
+}
+
+/**
+ * Shows the button for a browser that holds a key, or was opened from a link: once the service
+ * says the key is right, or once the link's button is pressed. A link that has run out says so,
+ * with a way to a new one. If the service cannot be reached just now, nothing shows until the
+ * next page.
+ */
+export async function start({ link, kept, base, store, key, fresh }) {
+  // as bottle.js asked before links held codes: its key, fresh from the address or kept
+  if (key !== undefined) [link, kept] = fresh ? [key, null] : [null, key];
+  const plan = await planned(base, store, link, kept);
+  if (plan.show) dock({ key: plan.show, base, store, said: plan.say });
+  else if (plan.offer) notice({ base, store, code: plan.offer });
+  else if (plan.runOut) notice({ base, store, code: null });
+}
+
+/**
+ * The small card a link shows: with a working `code`, a button that switches the note button
+ * on (so only a person, not a mail scanner opening the link, uses it up); without one, word
+ * that the link has run out, and the way to a new one.
+ */
+function notice({ base, store, code }) {
+  const { host, root } = shadowHost();
+  const card = make('div', { class: 'notice', role: 'region', 'aria-label': 'Note button' });
+  root.append(card);
+  document.body.append(host);
+  const close = make('button', { type: 'button' }, code ? 'Not now' : 'Close');
+  close.addEventListener('click', () => host.remove());
+  const ranOut = () => {
+    const again = make('a', { class: 'go', href: reviewHref() }, 'Get a new link');
+    card.replaceChildren(make('p', { role: 'status' }, 'This link has run out'), make('div', { class: 'row' }, again, close));
+    close.textContent = 'Close';
+    again.focus();
+  };
+  if (!code) { ranOut(); return; }
+  const on = make('button', { class: 'go', type: 'button' }, 'Switch on the note button');
+  const error = make('p', { class: 'error', role: 'alert', hidden: true });
+  on.addEventListener('click', async () => {
+    on.disabled = true;
+    error.hidden = true;
+    try {
+      const key = await useCode(base, code);
+      if (!key) { ranOut(); return; }
+      keep(store, key);
+      host.remove();
+      dock({ key, base, store, said: 'The note button is on.' });
+    } catch {
+      error.textContent = 'Check the connection and try again.';
+      error.hidden = false;
+      on.disabled = false;
+    }
+  });
+  card.replaceChildren(make('div', { class: 'row' }, on, close), error);
+  on.focus();
+}
+
+/** The button itself, and what it opens, for a browser holding `key`; `said` is shown once it is there. */
+function dock({ key, base, store, said }) {
   const send = asker(base, () => key);
 
   const { host, root } = shadowHost();
@@ -333,7 +447,7 @@ export async function start({ key: given, base, fresh, store }) {
     const r = el.getBoundingClientRect();
     Object.assign(ring.style, { left: `${r.left - 3}px`, top: `${r.top - 3}px`, width: `${r.width + 6}px`, height: `${r.height + 6}px` });
     ring.classList.toggle('low', r.top < 32);
-    ring.firstChild.textContent = el.localName;
+    ring.firstChild.textContent = 'this part';
     ring.hidden = false;
   };
 
@@ -478,6 +592,8 @@ export async function start({ key: given, base, fresh, store }) {
   /** One of this person's notes, as they see it: its state, their words, and what came of it. */
   const item = (n) => {
     const li = make('li', {}, make('span', { class: `chip ${n.state}` }, STATE_NAMES[n.state] ?? n.state), make('p', { class: 'words' }, n.note));
+    const where = whereAndWhen(n);
+    if (where) li.append(make('p', { class: 'where' }, where));
     const outcome = n.state === 'declined' ? n.reason : n.what;
     if (outcome) li.append(make('p', { class: 'said' }, outcome));
     if (n.state === 'done') {
@@ -535,59 +651,109 @@ export async function start({ key: given, base, fresh, store }) {
   closeList.addEventListener('click', closeMine);
   off.addEventListener('click', turnOff);
   addEventListener('keydown', onKey, true);
+  if (said) say(said);
 }
 
 /**
- * The site's /review page: whoever is on the site's list gives their email and is sent a link
- * that switches the button on; anyone else is told the same, and nothing more. A browser that
- * holds a key already is told the button is on, and can turn it off.
+ * The site's /review page, named for the site: whoever is on the site's list gives their email
+ * and is sent a link that switches the button on; anyone else is told the same, and nothing
+ * more. A browser that holds a key already is told the button is on, and can turn it off; one
+ * opened from a link is offered its button here too, or told the link has run out.
  */
-export async function review({ key, base, store }) {
+export async function review({ link = null, kept = null, base, store, key }) {
+  if (key !== undefined) kept = key;
   const { host, root } = shadowHost();
   const card = make('form', { class: 'card', 'aria-label': 'Review this website' });
   root.append(make('div', { class: 'review' }, card));
   document.body.append(host);
   let submit = null;
   card.addEventListener('submit', (event) => { event.preventDefault(); submit?.(); });
+  const ask = asker(base, () => null);
+  const [plan, name] = await Promise.all([
+    planned(base, store, link, kept),
+    ask('site', {}).then((res) => (res.ok ? res.json() : null)).then((site) => site?.name ?? null).catch(() => null)
+  ]);
+  const heading = () => make('h1', {}, name ? `Review ${name}` : 'Review this website');
+  if (name) card.setAttribute('aria-label', `Review ${name}`);
 
   const on = () => {
     submit = null;
     const off = make('button', { type: 'button' }, 'Turn off');
-    off.addEventListener('click', () => {
-      try { localStorage.removeItem(store); } catch { /* nothing kept */ }
-      ask();
-    });
+    off.addEventListener('click', () => { forget(store); asking(null); });
     const go = make('a', { class: 'go', href: '/' }, 'Go to the website');
     card.replaceChildren(make('h1', {}, 'The note button is on'), make('div', { class: 'row' }, go, off));
     go.focus();
   };
 
-  const ask = () => {
-    const email = make('input', { type: 'email', name: 'email', autocomplete: 'email', required: true, inputMode: 'email', maxLength: 254 });
+  const offer = (code) => {
+    const go = make('button', { class: 'go', type: 'submit' }, 'Switch on the note button');
     const error = make('p', { class: 'error', hidden: true, role: 'alert' });
+    submit = async () => {
+      if (go.disabled) return;
+      go.disabled = true;
+      try {
+        const key = await useCode(base, code);
+        if (!key) { asking('This link has run out.'); return; }
+        keep(store, key);
+        on();
+      } catch {
+        error.textContent = 'Check the connection and try again.';
+        error.hidden = false;
+        go.disabled = false;
+      }
+    };
+    card.replaceChildren(heading(), error, go);
+    go.focus();
+  };
+
+  /** Sends a link to `email`: true once the service has taken it, or a message saying why not. */
+  const sendLink = async (email) => {
+    try {
+      const res = await ask('signin', { email });
+      if (res.status === 202) return true;
+      return res.status === 429 ? 'Try again in a while.' : (await res.json().catch(() => null))?.error ?? 'That did not work. Try again in a while.';
+    } catch {
+      return 'Check the connection and try again.';
+    }
+  };
+
+  const sent = (address) => {
+    const again = make('button', { type: 'submit' }, 'Send again');
+    const status = make('p', { role: 'status' }, 'If that address is on the list, a link is on its way. It works once, for 30 minutes.');
+    const said = make('p', { class: 'sent', hidden: true, role: 'status' });
+    submit = async () => {
+      if (again.disabled) return;
+      again.disabled = true;
+      said.hidden = true;
+      const done = await sendLink(address);
+      said.className = done === true ? 'sent' : 'error';
+      said.textContent = done === true ? 'Sent again.' : done;
+      said.hidden = false;
+      again.disabled = false;
+    };
+    card.replaceChildren(make('h1', {}, 'Check your email'), status, said, again);
+    again.focus();
+  };
+
+  const asking = (problem) => {
+    const email = make('input', { type: 'email', name: 'email', autocomplete: 'email', required: true, inputMode: 'email', maxLength: 254 });
+    const error = make('p', { class: 'error', hidden: !problem, role: 'alert' }, problem ?? '');
     const go = make('button', { class: 'go', type: 'submit' }, 'Send me a link');
     submit = async () => {
       if (go.disabled) return;
       go.disabled = true;
       error.hidden = true;
-      try {
-        const res = await asker(base, () => null)('signin', { email: email.value });
-        if (res.status === 202) {
-          submit = null;
-          card.replaceChildren(make('h1', {}, 'Thank you'), make('p', { role: 'status' }, 'We\'ll be in touch by email.'));
-          return;
-        }
-        error.textContent = res.status === 429 ? 'Try again in a while.' : (await res.json().catch(() => null))?.error ?? 'That did not work. Try again in a while.';
-      } catch {
-        error.textContent = 'Check the connection and try again.';
-      }
+      const done = await sendLink(email.value);
+      if (done === true) { sent(email.value); return; }
+      error.textContent = done;
       error.hidden = false;
       go.disabled = false;
     };
-    card.replaceChildren(make('h1', {}, 'Review this website'), make('label', {}, 'Email', email), error, go);
+    card.replaceChildren(heading(), error, make('label', {}, 'Email', email), go);
     email.focus();
   };
 
-  if (key && (await checked(base, key, true, store))[0] === 'right') on();
-  else ask();
+  if (plan.show) on();
+  else if (plan.offer) offer(plan.offer);
+  else asking(plan.runOut ? 'This link has run out.' : null);
 }
