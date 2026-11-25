@@ -1755,3 +1755,29 @@ the bar across the top, which Version 80 mends.
 | The make page when its reel ends: four things to try, and My notes beside it |
 | --- |
 | ![The reel How to make a pixel reel has ended. Over its last picture: Try one, and four gold buttons, Why do cats knead blankets?, How does a plane stay up?, Why is yawning catching?, How do bees make honey?, and Watch it again. Beside it, My notes with its box, Speak, Add and Make my next reel.](log/v81-make-a-reel.jpg) |
+
+### Version 82
+
+The bar across the top, as Olly asked on 25 November 2026, to send people to making reels here:
+
+- **How it works, Examples, Questions, Your reels**, then a big gold **Make a pixel reel
+  now** (a full-size button now, not a small one), which opens the reel about making one.
+- **Add to Claude is a small box**, like Make it comfy beside it: a plug and the word Claude,
+  named "Add Pixel Reel to Claude" for a screen reader. It is not Claude's own mark:
+  Anthropic's trademark guidelines allow its marks only in what it has approved beforehand,
+  and no changes to them, so neither the real one nor one redrawn in pixels.
+- **Your reels has a page of its own**, `/yours`: the reels made or opened on this device,
+  the one opened last at the top. One made here can be renamed or deleted; one only opened
+  here (sent by someone) can be renamed or taken off the list. With none, it says "No reels
+  yet." and has the button to make one. Pixel Reel has no accounts, so the list is kept in
+  the browser only, as before.
+- **The home page leads with making one here**: Make a pixel reel now is the gold button
+  in the hero and at the foot of the page, and the end of the first reel; Add Pixel Reel to
+  Claude is the cream one beside it.
+
+Checked with `scripts/site-fit.js` on the home page, Your reels and the make page at 1366,
+1024, 768, 390 and 320 wide: all well at all 27 settings.
+
+| Your reels, with one reel that was opened here |
+| --- |
+| ![The bar across the top: How it works, Examples, Questions, Your reels, a big gold Make a pixel reel now, a small box with a plug and the word Claude, and the Aa box. Below, Your reels, with one reel, Why the sky is blue, kept until 25 December, with Rename and Remove.](log/v82-your-reels.jpg) |

@@ -9,7 +9,7 @@ import { ICONS } from '../src/icons.js';
 import { PALETTE } from '../src/palette.js';
 
 /** Each address the site answers, and the page in site/pages/ it shows. */
-export const SITE_PAGES = { '/': 'home', '/make': 'make', '/claude': 'claude', '/app': 'app', '/press': 'press', '/privacy': 'privacy', '/terms': 'terms', '/credits': 'credits', '/offline': 'offline' };
+export const SITE_PAGES = { '/': 'home', '/make': 'make', '/yours': 'yours', '/claude': 'claude', '/app': 'app', '/press': 'press', '/privacy': 'privacy', '/terms': 'terms', '/credits': 'credits', '/offline': 'offline' };
 
 /** Pages that are no use to a search engine: the one shown when there is no internet (see site/js/sw.js). */
 const UNLISTED_PAGES = new Set(['/offline']);

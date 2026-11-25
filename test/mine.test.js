@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { calledMine, deleteMine, forgetMine, MINE, MOST, readMine, rememberMine, updateMine } from '../site/js/mine.js';
+import { calledMine, deleteMine, forgetMine, MINE, MOST, openedMine, readMine, rememberMine, updateMine } from '../site/js/mine.js';
 
 /** Stands in for the browser's localStorage. */
 const fakeStorage = (kept = {}) => ({
@@ -12,14 +12,29 @@ const id = (n) => `reel${String(n).padStart(18, '0')}`;
 const NOW = Date.parse('2026-11-22T12:00:00Z'), LATER = '2026-12-22T12:00:00.000Z';
 
 describe('your reels, kept on this device', () => {
+  it('lists the reels opened here too, with no key, and puts the one opened last at the top', () => {
+    const storage = fakeStorage();
+    rememberMine(storage, { id: id(1), title: 'Mine', expires: LATER, key: 'key-one' }, NOW);
+    rememberMine(storage, { id: id(2), title: 'Mine too', expires: LATER, key: 'key-two' }, NOW + 1000);
+    // one someone was sent: on the list, at the top, with no key, so it can be taken off but not deleted
+    let reels = openedMine(storage, { id: id(3), title: 'Sent to me', expires: LATER }, NOW + 2000);
+    assert.deepEqual(reels.map((reel) => [reel.id, reel.key]), [[id(3), ''], [id(2), 'key-two'], [id(1), 'key-one']]);
+    // opening one made here brings it to the top, and keeps its key and its name
+    updateMine(storage, id(1), { name: 'Gas bill' }, NOW + 2500);
+    reels = openedMine(storage, { id: id(1), title: 'Mine', expires: LATER }, NOW + 3000);
+    assert.deepEqual(reels.map((reel) => reel.id), [id(1), id(3), id(2)]);
+    assert.deepEqual([reels[0].key, reels[0].name, reels[0].made, reels[0].seen], ['key-one', 'Gas bill', NOW, NOW + 3000]);
+    assert.deepEqual(openedMine(storage, { id: 'nonsense' }, NOW + 4000).length, 3, 'and nothing that is not a reel');
+  });
+
   it('lists the reels made here, newest first, each with the key that deletes it', () => {
     const storage = fakeStorage();
     assert.deepEqual(readMine(storage, NOW), []);
     rememberMine(storage, { id: id(1), watch: `/r/${id(1)}`, title: 'Your reel', expires: LATER, key: 'key-one' }, NOW);
     const reels = rememberMine(storage, { id: id(2), title: '  Tea,\n properly ', expires: LATER, key: 'key-two' }, NOW + 1000);
     assert.deepEqual(reels, [
-      { id: id(2), title: 'Tea, properly', name: '', key: 'key-two', made: NOW + 1000, expires: LATER },
-      { id: id(1), title: 'Your reel', name: '', key: 'key-one', made: NOW, expires: LATER }
+      { id: id(2), title: 'Tea, properly', name: '', key: 'key-two', made: NOW + 1000, seen: 0, expires: LATER },
+      { id: id(1), title: 'Your reel', name: '', key: 'key-one', made: NOW, seen: 0, expires: LATER }
     ]);
     assert.deepEqual(readMine(storage, NOW + 2000), reels, 'and it is there the next time the page is opened');
     assert.equal(rememberMine(storage, { id: id(1), title: 'Again', key: 'key-one' }, NOW + 3000)[0].id, id(1), 'one remembered twice is listed once, at the top');
@@ -66,7 +81,7 @@ describe('your reels, kept on this device', () => {
     assert.deepEqual(readMine(nowhere, NOW), []);
     for (const nonsense of ['{oops', '"words"', '{"a":1}', '[null, 7, {"id":"short"}, {"id":7}]']) assert.deepEqual(readMine(fakeStorage({ [MINE]: nonsense }), NOW), []);
     const odd = readMine(fakeStorage({ [MINE]: JSON.stringify([{ id: id(1), title: 7, name: ['x'], key: 9, made: 'then', expires: 'never' }]) }), NOW);
-    assert.deepEqual(odd, [{ id: id(1), title: 'A pixel reel', name: '', key: '', made: 0, expires: null }]);
+    assert.deepEqual(odd, [{ id: id(1), title: 'A pixel reel', name: '', key: '', made: 0, seen: 0, expires: null }]);
   });
 
   it('deletes a reel for good with its key, and only then takes it off the list', async () => {

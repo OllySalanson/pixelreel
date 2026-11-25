@@ -417,7 +417,7 @@ describe('when a reel ends', () => {
   const offer = (page) => /<\/noscript>\s*<\/div>\s*<div class="reel-end" hidden>([\s\S]*?)<\/div>/.exec(page)?.[1];
 
   it('offers something to do next, straight after the player, out of sight until then', () => {
-    for (const [name, wants] of [['home', /<a class="btn btn-gold" href="\/claude">Add Pixel Reel to Claude<\/a>/], ['reel', /<button class="btn btn-gold" type="button" data-send="Tea" data-says="#watch-sent">Send it to someone<\/button>/]]) {
+    for (const [name, wants] of [['home', /<a class="btn btn-gold" href="\/make">Make a pixel reel now<\/a>/], ['reel', /<button class="btn btn-gold" type="button" data-send="Tea" data-says="#watch-sent">Send it to someone<\/button>/]]) {
       assert.match(offer(html[name]) ?? '', wants, name);
       assert.match(offer(html[name]), /<button class="btn btn-paper" type="button" data-again>Watch it again<\/button>/, name);
     }
@@ -436,7 +436,7 @@ describe('when a reel ends', () => {
 describe('making a reel has a page of its own', () => {
   it('is in the menu across the top and at the foot of every page', () => {
     for (const name of pages) {
-      assert.match(html[name], /<a class="btn btn-gold btn-small top-make" href="\/make">/, `${name}: the first button across the top`);
+      assert.match(html[name], /<a class="btn btn-gold top-make" href="\/make">/, `${name}: the first button across the top`);
       assert.match(html[name], /<nav class="foot-nav"[^>]*>[\s\S]*?<a href="\/make">Make a pixel reel<\/a>/, `${name}: and at the foot`);
       assert.doesNotMatch(html[name], /href="\/?#make"/, `${name}: nothing still points at the old place on the home page`);
     }
@@ -514,7 +514,7 @@ describe('waiting for a reel that is being made', () => {
     assert.match(html.reel, /<a class="btn btn-gold" id="watch-retry" href="\/make" hidden>Try something else<\/a>/);
     // and a way back to the form from a reel that did work, shown only to whoever made it there
     assert.match(html.reel, /<a class="btn btn-paper" id="watch-another" href="\/make" hidden>Make another reel<\/a>/);
-    assert.match(readFileSync(root('site/js/watch.js'), 'utf8'), /if \(holder\.dataset\.here === 'on'\) \{[^}]*if \(readMine\(mine\)\.some\(\(reel\) => reel\.id === id\)\) document\.getElementById\('watch-another'\)\.hidden = false;/);
+    assert.match(readFileSync(root('site/js/watch.js'), 'utf8'), /if \(holder\.dataset\.here === 'on'\) \{[^}]*if \(readMine\(mine\)\.some\(\(reel\) => reel\.id === id && reel\.key\)\) document\.getElementById\('watch-another'\)\.hidden = false;/);
   });
 });
 
@@ -943,8 +943,10 @@ describe('before the page is drawn', () => {
     assert.ok(css.includes('.top-in[data-tight] .top-nav'));
     assert.ok(layout.indexOf('rel="stylesheet"') < layout.indexOf('/site/js/boot.js'), 'boot.js waits for the stylesheet only if it comes first');
     // one span round the words, so the button lays them out as one run of text with its usual spaces
-    assert.match(layout, /class="[^"]*top-add"[^>]*><span>Add<span class="top-add-more"> to Claude<\/span><\/span><\/a>/);
-    assert.match(layout, /class="[^"]*btn-gold[^"]*top-make" href="\/make"><span>Make<span class="top-make-what"> a<span class="top-make-more"> pixel<\/span> reel<\/span><span class="top-make-now"> now<\/span><\/span><\/a>/);
+    // Add to Claude is a small box like Make it comfy: a plug and the word, named in full for a screen reader, and never Claude's own mark
+    assert.match(layout, /<a class="top-add" href="\/claude" aria-label="Add Pixel Reel to Claude">\{\{icon:plug:2\}\}<span class="top-add-more">Claude<\/span><\/a>/);
+    assert.match(layout, /<nav class="top-nav" aria-label="Main">\s*<a href="\/#how">How it works<\/a>\s*<a href="\/#examples">Examples<\/a>\s*<a href="\/#questions">Questions<\/a>\s*<a href="\/yours">Your reels<\/a>\s*<\/nav>/);
+    assert.match(layout, /class="btn btn-gold top-make" href="\/make"><span>Make<span class="top-make-what"> a<span class="top-make-more"> pixel<\/span> reel<\/span><span class="top-make-now"> now<\/span><\/span><\/a>/);
     assert.match(layout, /<button class="top-comfort"[^>]*aria-label="Make it comfy[^"]*"><span class="aa" aria-hidden="true">Aa<\/span><\/button>/, 'a small box with Aa in it, named for a screen reader');
   });
 });
