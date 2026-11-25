@@ -8,6 +8,15 @@ export const ABOUT_MAX = 600;
 /** The most writing that may be pasted or dropped in: about 10,000 words, which is a long article. */
 export const TEXT_MAX = 60_000;
 
+/** My notes, on a reel's page: the longest one note may be, in letters (about a minute of speaking). */
+export const NOTE_MAX = 600;
+
+/** My notes: how many may be kept on one reel, and sent for the next. */
+export const NOTES_MAX = 12;
+
+/** My notes: how many reels back the next reel is told about, the newest first. Older ones are left out, which bounds what one reel costs. */
+export const CHAIN_MAX = 8;
+
 /** The biggest PDF, in bytes. How much of it Claude will read is counted in the service (service/writer.mjs). */
 export const PDF_MAX = 10 * 1024 * 1024;
 

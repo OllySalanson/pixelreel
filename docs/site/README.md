@@ -1656,3 +1656,31 @@ too. `site-press.js` caught it, and says all well since.
 
 - **The comfort box reads Aa**, a capital A and a small a, as Olly asked in a note on the
   home page. It read AA.
+
+### Version 77
+
+- **My notes, beside every shared reel.** Olly asked for it on 25 November 2026: the
+  player as it is, at the size it is, with a panel joined to its right (under it on a
+  phone) for writing down questions while watching. Typed, or said aloud with Speak, the
+  words appearing in the box as they are heard. Each note has an X, which asks "Remove
+  this note?" before it does.
+- **Make my next reel.** One gold button at the foot of the panel. Claude is told every
+  reel in the chain so far and the notes that led to each, so the new reel answers the
+  notes in context. Its page leads back: "< Before this: Why the sky is blue".
+- The player keeps exactly the width it had: the panel takes 23rem beside it where the
+  screen has room (62rem and wider), and the whole pair stays centred. The panel is as tall
+  as the player, and many notes scroll inside it.
+- No words of instruction in the panel: its name, the box's "Add a note", and the buttons.
+- On a narrow screen with the biggest letters, a note's X goes under it, so no word is cut in two.
+
+Checked in the headless browser at 1280 x 800, 1366 x 650, 390 x 844 and 320 x 700 with a
+stand-in service: adding, removing, the question before removing, making the next reel and
+its link back. `scripts/site-fit.js` says all well at 1366 and 390 at all 27 settings; at
+320 it finds only the bar across the top on two rows with OpenDyslexic at size 3, which
+every page does since Version 74. Speak was seen to appear in Chromium; nobody has
+dictated a note with it yet. One next reel was written by the real Claude API from four
+notes: it answered each.
+
+| My notes beside a reel, at 1280 x 800 |
+| --- |
+| ![The blue sky reel's player, and joined to its right a panel called My notes with three notes, each with an X, a box saying Add a note, Speak and Add buttons, and a gold Make my next reel button.](log/v77-my-notes.jpg) |

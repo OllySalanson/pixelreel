@@ -21,6 +21,9 @@ const ID = /^[A-Za-z0-9_-]{22}$/;
 /** The file, beside a reel's own, that holds what its owner's key hashes to (begin() and owns()). */
 const OWNER = 'owner.txt';
 
+/** The file, beside a reel made from notes, that holds the notes it was made from (begin() and chain()). */
+const NOTES = 'notes.json';
+
 /** A recording the recorder made and named itself (scripts/voices.mjs), which it will know again by its name. */
 const MADE_CLIP = /^[0-9a-f]{16}\.mp3$/;
 
@@ -190,9 +193,14 @@ export class Reels {
    * comes back has a `key` too, which is kept nowhere: whoever holds it may delete the reel
    * (owns()). Throws a BusyError if too many jobs are waiting.
    */
-  async begin(title, { owned = false } = {}) {
+  async begin(title, { owned = false, follows = null, notes = null } = {}) {
     if (this.queue.length >= this.maxQueue) throw new BusyError();
     const status = this.blank(title, 'writing');
+    // a reel made from the notes left on another: which one, and the notes, so that the reel after it can be told the whole chain (chain())
+    if (follows) {
+      status.follows = follows;
+      await this.store.put(`reels/${status.id}/${NOTES}`, JSON.stringify(notes ?? []));
+    }
     await this.save(status);
     if (!owned) return status;
     // The one who began it is given a key nobody else has, and only what the key hashes to
@@ -200,6 +208,30 @@ export class Reels {
     const key = randomBytes(24).toString('base64url');
     await this.store.put(`reels/${status.id}/${OWNER}`, createHash('sha256').update(key).digest('hex'));
     return { ...status, key };
+  }
+
+  /**
+   * The chain of reels that led to reel `id`, oldest first and `id` last: each reel was made
+   * from the notes left on the one before it (begin() with `follows`). Each is { id, title,
+   * scenes, notes }: its title, its scenes' titles and what is said in them, and the notes it
+   * was made from (null for the first, which was made some other way). At most `most` reels,
+   * the newest; a reel that has gone, or is not written, ends the chain there.
+   */
+  async chain(id, most) {
+    const found = [], seen = new Set();
+    for (let at = id; at && found.length < most && !seen.has(at);) {
+      seen.add(at);
+      const status = await this.status(at), raw = status && status.state !== 'writing' && status.state !== 'failed' ? await this.reel(at) : null;
+      if (!raw) break;
+      const notes = status.follows ? JSON.parse((await this.store.get(`reels/${at}/${NOTES}`)) ?? '[]') : null;
+      found.unshift({
+        id: at, title: String(raw.title ?? ''),
+        scenes: (raw.scenes ?? []).map((scene) => ({ title: scene.title ?? '', say: scene.say ?? scene.caption ?? '' })),
+        notes
+      });
+      at = status.follows ?? null;
+    }
+    return found;
   }
 
   /** True if `key` is the one begin() gave whoever began reel `id`. */

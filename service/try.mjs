@@ -2,9 +2,9 @@
 // or not it has been given a writer to write one (service/writer.mjs, which needs the Claude
 // API and so is only loaded when the feature is switched on). A visitor gives one thing to
 // explain: a link or a few words, some writing, a PDF or a picture.
-import { ABOUT_MAX, fileKind, isVideoLink, PDF_MAX, PICTURE_MAX, TEXT_MAX, VIDEO_SAYS } from '../site/js/given.js';
+import { ABOUT_MAX, CHAIN_MAX, fileKind, isVideoLink, NOTE_MAX, NOTES_MAX, PDF_MAX, PICTURE_MAX, TEXT_MAX, VIDEO_SAYS } from '../site/js/given.js';
 
-export { ABOUT_MAX, PDF_MAX, PICTURE_MAX, TEXT_MAX };
+export { ABOUT_MAX, CHAIN_MAX, NOTE_MAX, NOTES_MAX, PDF_MAX, PICTURE_MAX, TEXT_MAX };
 
 /** The most a request to /try may carry as JSON: the longest writing, in the widest letters, quoted. */
 export const MAX_WORDS_BODY = TEXT_MAX * 4 + 1024;
@@ -45,6 +45,20 @@ export function tidyText(text) {
 }
 
 /**
+ * The notes someone left on a reel (My notes), tidied, each to one line, or a TryError
+ * saying why they will not do: at least one, at most NOTES_MAX, none longer than NOTE_MAX.
+ */
+export function tidyNotes(notes) {
+  if (!Array.isArray(notes)) throw new TryError('Add a note first.');
+  if (notes.length > NOTES_MAX) throw new TryError(`That is too many notes for one reel: ${NOTES_MAX} at most.`);
+  const tidied = notes.map((note) => (typeof note === 'string' ? plain(note).replace(/\s+/g, ' ').trim() : ''));
+  if (tidied.some((note) => note.length > NOTE_MAX)) throw new TryError(`A note can be ${NOTE_MAX} letters at most.`);
+  const kept = tidied.filter(Boolean);
+  if (!kept.length) throw new TryError('Add a note first.');
+  return kept;
+}
+
+/**
  * The ways a reel can be asked for again, once it has been watched, and what Claude is told
  * for each: the rest of "Write it again, ...".
  */
@@ -56,15 +70,21 @@ export const AGAIN = {
 /**
  * What a request to /try asks to have explained, from its body, or a TryError saying why it
  * will not do. JSON brings { about } (a link or a few words: { kind: 'words', about }),
- * { text } (writing: { kind: 'text', text }) or { again, how } (a reel made earlier, to be
- * written again simpler or shorter: { kind: 'again', id, how }); anything else is a file's own bytes, which
- * must begin as a PDF ({ kind: 'pdf', data }) or a picture ({ kind: 'picture', type, data })
+ * { text } (writing: { kind: 'text', text }), { again, how } (a reel made earlier, to be
+ * written again simpler or shorter: { kind: 'again', id, how }) or { next, notes } (the notes
+ * left on a reel, for the next reel to answer: { kind: 'follow', id, notes }); anything else
+ * is a file's own bytes, which must begin as a PDF ({ kind: 'pdf', data }) or a picture ({ kind: 'picture', type, data })
  * does, whatever it is called. `data` is base64, as the Claude API takes it.
  */
 export function sourceOf(type, bytes) {
   if (/^application\/json\b/i.test(type ?? '')) {
     let body;
     try { body = JSON.parse(bytes.toString('utf8')); } catch { body = null; }
+    if (body?.next !== undefined) {
+      // the next reel, made from the notes left on this one (the service finds the chain of reels before it, in service/server.mjs)
+      if (typeof body.next !== 'string' || !/^[A-Za-z0-9_-]{22}$/.test(body.next)) throw new TryError('That reel cannot be followed.');
+      return { kind: 'follow', id: body.next, notes: tidyNotes(body.notes) };
+    }
     if (body?.again !== undefined) {
       // a reel to write again: which one, and how (the service finds the reel itself, in service/server.mjs)
       if (typeof body.again !== 'string' || !/^[A-Za-z0-9_-]{22}$/.test(body.again) || !Object.hasOwn(AGAIN, body.how)) throw new TryError('That reel cannot be made again.');

@@ -32,6 +32,7 @@ pages are drafts, still to be approved, and the privacy page still needs a conta
 - [Other narrators](#other-narrators)
 - [Playing while it records](#playing-while-it-records)
 - [Make it right here](#make-it-right-here)
+- [My notes](#my-notes)
 - [Limits](#limits)
 - [What it keeps, and for how long](#what-it-keeps-and-for-how-long)
 - [How it fits together](#how-it-fits-together)
@@ -469,6 +470,47 @@ How it is kept safe:
 which the service reads from there); `site/js/maker.js` is the box; `service/try.mjs` takes
 the request and `service/writer.mjs` asks Claude. The tests in `test/given.test.js` and
 `test/try.test.js` use a stand-in for Claude, so they cost nothing.
+
+## My notes
+
+**Where Make it right here is on, every reel's page has My notes beside the player** (under
+it on a phone). Whoever is watching writes down questions and thoughts as they come, then
+one button, **Make my next reel**, has Claude make the next reel from them. It is the main
+thing a shared reel offers; Add to Claude is still there for anyone with their own Claude.
+
+- **Typing.** The box says "Add a note". Enter saves it (Shift and Enter starts a new line);
+  so does Add. Each note has an X; pressed, it asks "Remove this note?" with "Yes, remove
+  it" and "No, keep it".
+- **Saying it.** Speak turns the microphone on: the words are written into the box as they
+  are heard, and pressing it again (it says Done then) or Enter saves the note. It uses the
+  browser's own speech recognition, which Chrome, Edge and Safari have, on a computer and a
+  phone. It is not offered in Brave, which has the name but nothing behind it (every go
+  ends in a network error), or in Firefox, which has none. Dictation built into the device
+  (Mac Dictation, Windows' Win+H, a phone keyboard's microphone) types into the box like
+  any other, in every browser.
+- **Kept on the device.** The notes for each reel are kept in the browser
+  (`pixelreel-notes:<id>`), at most 12, of up to 600 letters each, until they are sent.
+  They stay there afterwards, as notes on that reel.
+- **The whole chain.** `POST /try` with `{ next, notes }`. The new reel's status names the
+  one it `follows`, and its notes are kept beside it (`notes.json`), so a reel made from
+  that one can be told everything before it: `Reels.chain()` walks back, and Claude is
+  given each reel's title and what is said in each scene, oldest first, with the notes each
+  was made from, then the new notes to answer (`nextAsk` in `service/writer.mjs`). It
+  carries on in the language and the voice of the reel it follows.
+- **Back to the one before.** `play.json` gives `follows` (`id`, `title`, `watch`) while the
+  earlier reel is there, and the page shows "< Before this: <title>" over the player.
+- **What it costs.** Measured on 25 November 2026 with `claude-sonnet-5-5`: the next reel
+  after the site's blue sky reel, from four notes, took 4,334 tokens in and 979 out, about
+  2 cents, and answered every note in order. What one reel can cost is bounded: only the
+  newest 8 reels of a chain are told (`CHAIN_MAX` in `site/js/given.js`), with at most 12
+  notes of 600 letters each, so at most about 21,000 tokens in, about 6 cents. Each one
+  counts as one of Make it right here's reels: 5 an hour for each visitor, and 30 a day
+  for everyone together (`PIXELREEL_TRIES_PER_HOUR`, `PIXELREEL_TRIES_PER_DAY`), which caps
+  the day at about $1.80 even if every one were the dearest.
+- What a note says is given to Claude as the visitor's questions, never as instructions,
+  with no way to fetch a page.
+
+`site/js/notes.js` is the panel; `test/notes.test.js` and `test/try.test.js` cover it.
 
 ## Limits
 

@@ -616,6 +616,65 @@ html[data-paper="night"] .handset .px { filter: drop-shadow(var(--u) 0 0 var(--l
 .watch-sent:empty { display: none; }
 .watch-again { margin-top: 0.5rem; }
 .watch-again > p:first-child { flex-basis: 100%; font-weight: 500; color: var(--cream); }
+/* a reel made from the notes left on another: the way back to that one, over the player */
+.watch-before { max-width: none; margin: 0 0 0.75rem calc(var(--u) * 2); font-weight: 700; color: var(--cream); }
+.watch-before a { text-decoration-color: var(--gold); }
+.watch-before a > span:first-child { font-family: var(--pixel); font-size: 1.4em; line-height: 1; color: var(--gold); }
+
+/* My notes: beside the player where there is room, as tall as it is, with their frames
+   joined, so the two read as one thing; under it on a phone. The player keeps the size it
+   has without them. */
+.mynotes { position: relative; display: flex; flex-direction: column; gap: 0.75rem; margin: calc(var(--u) * -2) calc(var(--u) * 4) calc(var(--u) * 4) calc(var(--u) * 2); padding: 1rem 1.25rem 1.25rem; background: var(--navy); color: var(--cream);
+  box-shadow: 0 0 0 var(--u) var(--frame), 0 0 0 calc(var(--u) * 2) var(--deep), calc(var(--u) * 4) calc(var(--u) * 4) 0 0 rgba(3, 6, 12, 0.55); }
+@media (min-width: 62rem) {
+  .watch-in:has(> .watch-pair > .mynotes:not([hidden])) { width: min(100% - 2 * var(--gutter), var(--player, 60rem) + 23rem); --player: min(60rem, max(30rem, (100svh - 25rem) * 16 / 9)); }
+  .watch-pair:has(> .mynotes:not([hidden])) { display: grid; grid-template-columns: minmax(0, 1fr) 23rem; align-items: stretch; }
+  .watch-pair:has(> .mynotes:not([hidden])) > .reel { margin-right: 0; }
+  /* as tall as the player, and no taller: many notes scroll within it */
+  .watch-pair > .mynotes { contain: size; margin: calc(var(--u) * 2) calc(var(--u) * 4) calc(var(--u) * 4) calc(var(--u) * 2); }
+}
+.mynotes .mynotes-title { font: 2.125rem/1.1 var(--pixel); letter-spacing: 0.01em; color: var(--gold); }
+/* the notes fill the room between the name and the box, as in a chat, and scroll when there are many */
+.mynotes-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; align-content: start; gap: 0.6rem; margin-inline: calc(var(--u) * -1); padding: var(--u); scrollbar-color: var(--frame) var(--night); }
+.mynotes-note { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 0.5rem; padding: 0.55rem 0.55rem 0.55rem 0.85rem; background: #1d3050; font-size: 1.125rem; line-height: 1.45; }
+.mynotes-note > p { max-width: none; padding-top: 0.2rem; }
+.mynotes-note.is-asking { grid-template-columns: minmax(0, 1fr); }
+/* in a narrow panel, with big letters, a note has the whole width and its X goes under it, so no word is cut in two */
+.mynotes-list { container-type: inline-size; }
+@container (max-width: 19rem) {
+  .mynotes-note { grid-template-columns: minmax(0, 1fr); }
+  .mynotes-x { justify-self: end; }
+}
+@media (max-width: 30rem) { .mynotes { padding-inline: 0.85rem; } }
+.mynotes-sure { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 0.5rem; }
+.mynotes-sure > p { flex-basis: 100%; font-weight: 700; color: var(--gold); }
+.mynotes-sure .btn { margin-block: var(--u) calc(var(--u) * 3); }
+/* the buttons of My notes are drawn like the player's own */
+.mynotes-x, .mynotes-keys button { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 2.75rem; padding: 0.3rem 0.9rem; font-weight: 700; font-size: 1.125rem; line-height: 1.2; color: var(--cream); background: var(--dusk); border: 0; cursor: pointer;
+  box-shadow: 0 calc(var(--u) * -1) 0 0 var(--frame), 0 var(--u) 0 0 var(--frame), calc(var(--u) * -1) 0 0 0 var(--frame), var(--u) 0 0 0 var(--frame); }
+.mynotes-x:hover, .mynotes-keys button:hover { background: #2f5d8a; }
+.mynotes-x { width: 2.75rem; margin: var(--u); padding: 0; font: 1.75rem/1 var(--pixel); }
+.mynotes-add { display: grid; gap: 0.75rem; }
+.mynotes-box { width: 100%; min-height: 4.5rem; padding: 0.6rem 0.8rem; font: 400 1.125rem/1.45 var(--font); letter-spacing: var(--tracking); word-spacing: var(--wording); color: var(--cream); background: var(--night); border: 0; resize: none;
+  box-shadow: 0 calc(var(--u) * -1) 0 0 var(--frame), 0 var(--u) 0 0 var(--frame), calc(var(--u) * -1) 0 0 0 var(--frame), var(--u) 0 0 0 var(--frame); }
+.mynotes-box::placeholder { color: var(--mist); opacity: 1; }
+.mynotes-box:disabled::placeholder { color: var(--gold); }
+.mynotes-keys { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 3); padding-inline: var(--u); }
+.mynotes-keys button { flex: 1 0 auto; }
+.mynotes-keys button:disabled, .mynotes-x:disabled { opacity: 0.4; pointer-events: none; }
+.mynotes-mic .ico { width: 0.875rem; height: 1.125rem; fill: currentColor; }
+/* listening: the microphone is red, and the box it is writing into is framed in it */
+.mynotes-mic.on { color: #fff; background: var(--red); }
+.mynotes-mic.on:hover { background: #e04848; }
+.mynotes.is-listening .mynotes-box { box-shadow: 0 calc(var(--u) * -1) 0 0 var(--red), 0 var(--u) 0 0 var(--red), calc(var(--u) * -1) 0 0 0 var(--red), var(--u) 0 0 0 var(--red); }
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-motion="off"]) .mynotes-mic.on .ico { animation: mynotes-hear 1s steps(2) infinite; }
+}
+@keyframes mynotes-hear { 50% { opacity: 0.35; } }
+.mynotes-make { width: auto; margin: var(--u) var(--u) calc(var(--u) * 3); }
+.mynotes-make:disabled { --bg: var(--dusk); --lip: var(--deep); --fg: var(--mist); --edge: var(--deep); cursor: default; filter: none; }
+.mynotes-says { max-width: none; font-weight: 700; color: var(--gold); }
+.mynotes-says:empty { display: none; }
 
 /* ---------------------------------------------------------------- adding it to Claude, step by step */
 .walk { display: grid; gap: clamp(2.75rem, 5vw, 4.5rem); }
