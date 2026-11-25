@@ -30,7 +30,7 @@ Notes:
   close <id>                            its writer says it is right
 Sites and people:
   sites                                 every site, with its queue
-  site add <id> --name <name> --origin <address> [--origin <address>]
+  site add <id> --name <name> --origin <address> [--origin <address>] [--preview|--live]
   people <site>
   person add <site> --name <name> --email <address>   prints their invitation link (7 days)
   person off|on <site> <person>         off ends every link and key they have, for good
@@ -95,7 +95,7 @@ export async function main(argv, { env = process.env, fetch = globalThis.fetch, 
       options: {
         service: { type: 'string' }, prefix: { type: 'string', default: '/bottle' }, site: { type: 'string' }, state: { type: 'string' }, json: { type: 'boolean' },
         out: { type: 'string' }, what: { type: 'string' }, confidence: { type: 'string' }, conflict: { type: 'string' }, proposal: { type: 'string' }, reason: { type: 'string' },
-        name: { type: 'string' }, email: { type: 'string' }, origin: { type: 'string', multiple: true }, to: { type: 'string' },
+        name: { type: 'string' }, email: { type: 'string' }, preview: { type: 'boolean' }, live: { type: 'boolean' }, origin: { type: 'string', multiple: true }, to: { type: 'string' },
         'gcloud-secret': { type: 'string' }, project: { type: 'string' }, help: { type: 'boolean', short: 'h' }
       }
     });
@@ -176,14 +176,15 @@ export async function main(argv, { env = process.env, fetch = globalThis.fetch, 
         if (opt.json) return show(sites);
         for (const s of sites) {
           const counts = STATES.filter((st) => s.counts[st]).map((st) => `${s.counts[st]} ${st}`).join(', ') || 'no notes';
-          out(`${s.id.padEnd(16)} ${s.name}  ${s.page ?? s.origins.join(' ')}  ${s.people.length} on the list  ${counts}`);
+          out(`${s.id.padEnd(16)} ${s.name}${s.preview ? ' (preview)' : ''}  ${s.page ?? s.origins.join(' ')}  ${s.people.length} on the list  ${counts}`);
         }
         return 0;
       }
       case 'site': {
         if (rest[0] !== 'add' || !rest[1]) { out(usage); return 2; }
-        const site = await askJson('sites', { method: 'POST', body: { id: rest[1], name: opt.name, origins: opt.origin ?? [] } });
-        out(`${site.id} is ${site.name}, at ${site.origins.join(' ')}${site.page ? `; its links open ${site.page}` : ''}`);
+        const preview = opt.preview ? true : opt.live ? false : undefined;
+        const site = await askJson('sites', { method: 'POST', body: { id: rest[1], name: opt.name, origins: opt.origin ?? [], ...(preview === undefined ? {} : { preview }) } });
+        out(`${site.id} is ${site.name}, at ${site.origins.join(' ')}${site.page ? `; its links open ${site.page}` : ''}${site.preview ? '; a preview, with the button for anyone who gives their name' : ''}`);
         return 0;
       }
       case 'people': {
@@ -191,7 +192,7 @@ export async function main(argv, { env = process.env, fetch = globalThis.fetch, 
         const site = await askJson(`sites/${enc(rest[0])}`);
         if (opt.json) return show(site.people);
         if (!site.people.length) { out(`Nobody is on ${site.name}'s list.`); return 0; }
-        for (const p of site.people) out(`${p.id.padEnd(16)} ${(p.on ? 'on' : 'off').padEnd(4)} ${p.name}  ${p.email}${p.owner ? '  (the service\'s own key)' : ''}${personNews(p, now)}`);
+        for (const p of site.people) out(`${p.id.padEnd(16)} ${(p.on ? 'on' : 'off').padEnd(4)} ${p.name}  ${p.visitor ? '(gave their name on the preview)' : p.email}${p.owner ? '  (the service\'s own key)' : ''}${personNews(p, now)}`);
         return 0;
       }
       case 'person': {

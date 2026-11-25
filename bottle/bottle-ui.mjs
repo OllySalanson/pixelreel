@@ -81,12 +81,12 @@ button:disabled { opacity: 0.6; cursor: wait; }
 .card { position: static; width: min(28rem, 100%); padding: 22px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
 .card h1 { margin: 0; font-size: 26px; line-height: 1.25; color: #ffcc4d; }
 .card p { margin: 0; }
-.card label { display: flex; flex-direction: column; gap: 6px; font-weight: 700; }
-.card input {
+.card label, .notice label { display: flex; flex-direction: column; gap: 6px; font-weight: 700; }
+.card input, .notice input {
   font: 20px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; min-height: 48px; padding: 8px 12px; border-radius: 8px;
   color: #0b1220; background: #fdfcf0; border: 2px solid #ebeac5; width: 100%;
 }
-.card input:focus-visible { outline: 3px solid #7fd4ff; outline-offset: 2px; }
+.card input:focus-visible, .notice input:focus-visible { outline: 3px solid #7fd4ff; outline-offset: 2px; }
 .card .row { display: flex; flex-wrap: wrap; gap: 10px; }
 .card .row > * { flex: 1 1 auto; }
 .card .error { color: #ffb4a8; font-weight: 700; }
@@ -370,13 +370,60 @@ function whereAndWhen(n) {
  * with a way to a new one. If the service cannot be reached just now, nothing shows until the
  * next page.
  */
-export async function start({ link, kept, base, store, key, fresh }) {
+export async function start({ link, kept, base, store, key, fresh, preview = false }) {
   // as bottle.js asked before links held codes: its key, fresh from the address or kept
   if (key !== undefined) [link, kept] = fresh ? [key, null] : [null, key];
   const plan = await planned(base, store, link, kept);
   if (plan.show) dock({ key: plan.show, base, store, said: plan.say });
   else if (plan.offer) notice({ base, store, code: plan.offer });
   else if (plan.runOut) notice({ base, store, code: null });
+  else if (preview) await visit({ base, store });
+}
+
+/**
+ * The button on a site that is a preview (its line has data-preview, and the service has it
+ * marked as one), for anyone who opens its pages: the first press asks their name, which gets
+ * them a key of their own, kept like any other, and then it is the button as everyone else has
+ * it. On any other site, or if the service cannot be reached, nothing shows.
+ */
+export async function visit({ base, store }) {
+  const ask = asker(base, () => null);
+  const site = await ask('site', {}).then((res) => (res.ok ? res.json() : null)).catch(() => null);
+  if (!site?.preview) return;
+  const { host, root } = shadowHost();
+  const button = make('button', { class: 'bottle', type: 'button', title: 'Leave a note about this page' }, bottleIcon(), 'Note');
+  const bar = make('div', { class: 'dock' }, button);
+  const name = make('input', { type: 'text', name: 'name', autocomplete: 'name', maxLength: 80 });
+  const error = make('p', { class: 'error', role: 'alert', hidden: true });
+  const next = make('button', { class: 'go', type: 'submit' }, 'Next');
+  const cancel = make('button', { type: 'button' }, 'Cancel');
+  const card = make('form', { class: 'notice', 'aria-label': 'Your name', hidden: true }, make('label', {}, 'Your name', name), error, make('div', { class: 'row' }, next, cancel));
+  root.append(bar, card);
+  document.body.append(host);
+  const close = () => { card.hidden = true; bar.hidden = false; button.focus(); };
+  button.addEventListener('click', () => { bar.hidden = true; card.hidden = false; error.hidden = true; name.focus(); });
+  cancel.addEventListener('click', close);
+  card.addEventListener('keydown', (event) => { if (event.key === 'Escape') { event.preventDefault(); close(); } });
+  card.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (next.disabled) return;
+    const said = name.value.trim();
+    if (!said) { error.textContent = 'Write your name first.'; error.hidden = false; name.focus(); return; }
+    next.disabled = true;
+    error.hidden = true;
+    try {
+      const res = await ask('visit', { name: said });
+      const answer = await res.json().catch(() => null);
+      if (!res.ok || !answer?.key) throw new Error(res.status === 429 ? 'Try again in a while.' : answer?.error ?? 'That did not work. Try again in a while.');
+      keep(store, answer.key);
+      host.remove();
+      dock({ key: answer.key, base, store, pick: true });
+    } catch (err) {
+      error.textContent = err instanceof TypeError ? 'Check the connection and try again.' : err.message;
+      error.hidden = false;
+      next.disabled = false;
+    }
+  });
 }
 
 /**
@@ -419,8 +466,8 @@ function notice({ base, store, code }) {
   on.focus();
 }
 
-/** The button itself, and what it opens, for a browser holding `key`; `said` is shown once it is there. */
-function dock({ key, base, store, said }) {
+/** The button itself, and what it opens, for a browser holding `key`; `said` is shown once it is there, and with `pick` it starts choosing a part at once. */
+function dock({ key, base, store, said, pick = false }) {
   const send = asker(base, () => key);
 
   const { host, root } = shadowHost();
@@ -662,6 +709,7 @@ function dock({ key, base, store, said }) {
   off.addEventListener('click', turnOff);
   addEventListener('keydown', onKey, true);
   if (said) say(said);
+  if (pick) startPicking();
 }
 
 /**

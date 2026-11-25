@@ -66,7 +66,7 @@ export const slug = (name) => String(name).toLowerCase().normalize('NFKD').repla
 
 const shown = (person) => ({
   id: person.id, name: person.name, email: person.email ?? '', on: person.on !== false, added: person.added ?? null,
-  ...(person.owner ? { owner: true } : {}), ...(person.invite ? { invitedUntil: new Date(person.invite.until).toISOString() } : {}), ...(person.mail ? { mail: person.mail } : {})
+  ...(person.owner ? { owner: true } : {}), ...(person.visitor ? { visitor: true } : {}), ...(person.invite ? { invitedUntil: new Date(person.invite.until).toISOString() } : {}), ...(person.mail ? { mail: person.mail } : {})
 });
 const eraOf = (thing) => thing?.era ?? 0;
 
@@ -110,23 +110,28 @@ export class Sites {
 
   /** What a site is said to be, for whoever looks after them: no keys, and people as they are shown. */
   static shown(site) {
-    return { id: site.id, name: site.name, origins: site.origins, ...(site.page ? { page: site.page } : {}), people: site.people.map(shown) };
+    return { id: site.id, name: site.name, origins: site.origins, ...(site.page ? { page: site.page } : {}), ...(site.preview ? { preview: true } : {}), people: site.people.map(shown) };
   }
 
   /**
    * Adds a site (or changes the name and origins of one there already). An address given with a
    * path becomes the site's `page`, where its links open (the first such, if there are more).
+   * `preview` true makes it a preview, whose button is there for anyone who gives their name;
+   * false makes it a live site again, where only the people on its list have it.
    */
-  async add({ id, name, origins }) {
+  async add({ id, name, origins, preview }) {
     if (!ID.test(String(id))) throw new Said('A site\'s id is short, in lower case letters, numbers and dashes, such as civ-speak.');
     const given = (Array.isArray(origins) ? origins : [origins]).filter(Boolean);
     const list = given.map(originOf);
     const page = given.map(pageOf).find(Boolean);
-    if (!list.length && id !== this.home?.id) throw new Said('Name the site\'s address, such as https://civspeak.com.');
-    const site = (await this.get(id)) ?? { id, name: '', origins: [], people: [] };
+    const kept = await this.get(id);
+    if (!list.length && !kept && id !== this.home?.id) throw new Said('Name the site\'s address, such as https://civspeak.com.');
+    const site = kept ?? { id, name: '', origins: [], people: [] };
     site.name = typeof name === 'string' && name.trim() ? name.trim().slice(0, 80) : site.name || id;
     site.origins = [...new Set([...site.origins, ...list])];
     if (page) site.page = page;
+    if (preview === true) site.preview = true;
+    if (preview === false) delete site.preview;
     await this.save(site);
     return site;
   }
@@ -162,6 +167,24 @@ export class Sites {
     const code = await this.inviting(site, person);
     await this.save(site);
     return { person: shown(person), code };
+  }
+
+  /**
+   * Puts someone who opened a preview's page on its list by the name they gave, with no email,
+   * and gives back { person, key }: the key their browser keeps. Null if the site is not a
+   * preview. Two who give the same name are two people (sam, sam-2).
+   */
+  async addVisitor(siteId, name) {
+    const site = await this.get(siteId);
+    if (!site?.preview) return null;
+    const said = String(name ?? '').replace(/\s+/g, ' ').trim().slice(0, 80);
+    if (!said) throw new Said('Write your name first.');
+    let id = slug(said);
+    for (let n = 2; site.people.some((p) => p.id === id); n++) id = `${slug(said)}-${n}`;
+    const person = { id, name: said, email: '', on: true, visitor: true, added: new Date(this.now()).toISOString() };
+    site.people.push(person);
+    await this.save(site);
+    return { person: shown(person), key: await this.newKey(site.id, person.id, 'visit') };
   }
 
   /** A new invitation code for `person` (on `site`, saved by whoever calls), which retires the one before. */

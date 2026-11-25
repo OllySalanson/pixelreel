@@ -737,6 +737,67 @@ describe('word of new notes, to whoever looks after the sites', () => {
   });
 });
 
+describe('a site that is a preview', () => {
+  const ask = (t, path, body, origin = CLIENT) => t.call(`/bottle/${path}`, { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body });
+  const visitAs = async (t, name, origin = CLIENT) => { const res = await ask(t, 'visit', { name }, origin); return { status: res.status, body: await res.json() }; };
+
+  it('gives anyone on its pages who gives their name a key of their own, with no email, and takes their notes', async () => {
+    const t = await serve();
+    try {
+      const made = await t.admin('sites', 'POST', { id: 'client', name: 'Client Ltd', origins: [CLIENT], preview: true });
+      assert.equal(made.body.preview, true);
+      assert.deepEqual(await (await ask(t, 'site', {})).json(), { name: 'Client Ltd', preview: true }, 'its pages are told it is a preview');
+      const ann = await visitAs(t, '  Ann   Lee ');
+      assert.equal(ann.status, 201);
+      assert.equal(ann.body.name, 'Ann Lee');
+      assert.equal((await t.check(ann.body.key, CLIENT)).status, 200, 'the key is right, from its site');
+      assert.equal((await t.check(ann.body.key, HOME)).status, 403, 'and from nowhere else');
+      const left = await t.leave(note(), { origin: CLIENT, 'x-bottle-key': ann.body.key });
+      assert.equal(left.status, 201);
+      const kept = (await t.admin(`notes/${(await left.json()).id}`, 'GET')).body;
+      assert.deepEqual([kept.site, kept.person, kept.by], ['client', 'ann-lee', 'Ann Lee']);
+      // the same name again is someone else
+      assert.equal((await visitAs(t, 'Ann Lee')).status, 201);
+      const people = (await t.admin('sites/client', 'GET')).body.people;
+      assert.deepEqual(people.map((p) => [p.id, p.email, p.visitor]), [['ann-lee', '', true], ['ann-lee-2', '', true]]);
+      // nobody to email: no invitation, and no news of what came of their notes
+      assert.match((await t.admin('sites/client/people/ann-lee/invite', 'POST', {})).body.error, /no email address/);
+      await t.mark(kept.id, { state: 'done', what: 'Done.', confidence: 90 });
+      assert.deepEqual(await t.later(2 * HOUR), []);
+      assert.equal((await visitAs(t, '   ')).status, 400);
+    } finally { await t.close(); }
+  });
+
+  it('takes no names on a live site, and keeps the keys given once it stops being a preview', async () => {
+    const t = await serve();
+    try {
+      await t.admin('sites', 'POST', { id: 'client', name: 'Client Ltd', origins: [CLIENT] });
+      assert.deepEqual(await (await ask(t, 'site', {})).json(), { name: 'Client Ltd' });
+      assert.equal((await visitAs(t, 'Ann Lee')).status, 403);
+      assert.equal((await t.admin('sites', 'POST', { id: 'client', preview: true })).body.preview, true);
+      const ann = await visitAs(t, 'Ann Lee');
+      assert.equal((await t.admin('sites', 'POST', { id: 'client', preview: false })).body.preview, undefined);
+      assert.equal((await visitAs(t, 'Raj Patel')).status, 403);
+      assert.equal((await t.check(ann.body.key, CLIENT)).status, 200, 'Ann is on its list, as anyone added there is');
+      assert.equal((await visitAs(t, 'Ann Lee', 'https://elsewhere.example')).status, 403);
+    } finally { await t.close(); }
+  });
+
+  it('takes only so many names from one caller in an hour, and so many people in a day', async () => {
+    const t = await serve({ visitsPerHour: 2, visitsPerDay: 3, caller: (req) => req.headers['x-caller'] ?? 'one' });
+    try {
+      await t.admin('sites', 'POST', { id: 'client', name: 'Client Ltd', origins: [CLIENT], preview: true });
+      const from = (caller) => t.call('/bottle/visit', { method: 'POST', headers: { origin: CLIENT, 'content-type': 'application/json', 'x-caller': caller }, body: { name: 'Sam' } });
+      assert.deepEqual([(await from('one')).status, (await from('one')).status, (await from('one')).status], [201, 201, 429]);
+      assert.deepEqual([(await from('two')).status, (await from('two')).status], [201, 429], 'and three people in a day');
+      t.clock.now += HOUR + 1;
+      assert.equal((await from('three')).status, 429);
+      t.clock.now += 24 * HOUR;
+      assert.equal((await from('three')).status, 201);
+    } finally { await t.close(); }
+  });
+});
+
 describe('choosing the part of the page a note is about', () => {
   const link = { nodeType: 1, name: 'the link' }, under = { nodeType: 1, name: 'under the pointer' }, outlined = { nodeType: 1, name: 'outlined' };
   const at = (x, y) => (x === 120 && y === 340 ? under : null);

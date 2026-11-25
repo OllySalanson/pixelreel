@@ -215,11 +215,12 @@ export function clientView(note) {
  * - `caller(req)`: who is asking, for the rate limits (default: the connecting address).
  * - `perHour`, `perDay`: how many notes each person may leave an hour, and each site a day;
  *   `wrongPerHour`, how many wrong keys a caller may try; `signInsPerHour`, how many sign-in
- *   links a caller (or an address) may ask for.
+ *   links a caller (or an address) may ask for; `visitsPerHour`, `visitsPerDay`: how many names a
+ *   caller may give on a preview in an hour, and how many people a preview may take in a day.
  */
 export function createBottle({ store, key = '', reader = '', origins = [], home = { id: 'home', name: 'This site' }, owner = { id: 'owner', name: 'Owner' },
   prefix = '/bottle', review = null, mail = null, from = '', replyTo = '', notify = '', hook = '', caller = (req) => req.socket.remoteAddress ?? 'unknown',
-  perHour = 30, perDay = 200, wrongPerHour = 10, signInsPerHour = 5, quiet = 10 * 60_000, gap = 3600_000, every = 60_000,
+  perHour = 30, perDay = 200, wrongPerHour = 10, signInsPerHour = 5, visitsPerHour = 5, visitsPerDay = 50, quiet = 10 * 60_000, gap = 3600_000, every = 60_000,
   log = () => {}, now = () => Date.now() } = {}) {
   const served = files();
   const sites = new Sites({ store, home: { ...home, origins }, owner, ownerKey: key, now });
@@ -227,6 +228,7 @@ export function createBottle({ store, key = '', reader = '', origins = [], home 
   const signs = { from, replyTo };
   const notes = new Window(perHour, 3600_000, now), noteCallers = new Window(perHour, 3600_000, now), daily = new Window(perDay, 86400_000, now);
   const wrong = new Window(wrongPerHour, 3600_000, now), signIns = new Window(signInsPerHour, 3600_000, now), signInsTo = new Window(3, 3600_000, now);
+  const visits = new Window(visitsPerHour, 3600_000, now), visitsTo = new Window(visitsPerDay, 86400_000, now);
   const pending = new Set();
 
   /** Work done after the answer is sent, so how long it takes says nothing; idle() waits for it. */
@@ -350,7 +352,22 @@ export function createBottle({ store, key = '', reader = '', origins = [], home 
   async function siteName(req, res) {
     const site = await sites.at(req.headers.origin);
     if (!site) { json(res, 403, { error: 'Only from a site the notes are taken for.' }); return; }
-    json(res, 200, { name: site.name });
+    json(res, 200, { name: site.name, ...(site.preview ? { preview: true } : {}) });
+  }
+
+  /** Someone on a preview's page gives their name, and is given a key of their own. */
+  async function visit(req, res) {
+    const site = await sites.at(req.headers.origin);
+    if (!site?.preview) { json(res, 403, { error: 'Only from a preview the notes are taken for.' }); return; }
+    if (!visits.hit(caller(req)) || !visitsTo.hit(site.id)) { json(res, 429, { error: 'Try again in a while.' }); return; }
+    try {
+      const made = await sites.addVisitor(site.id, (await readJson(req))?.name);
+      log(`bottle: ${made.person.id} switched the button on, on ${site.id}, by giving their name`);
+      json(res, 201, { key: made.key, name: made.person.name });
+    } catch (err) {
+      if (!(err instanceof Said)) throw err;
+      json(res, 400, { error: err.message });
+    }
   }
 
   /**
@@ -586,6 +603,7 @@ export function createBottle({ store, key = '', reader = '', origins = [], home 
           json(res, 200, { to, sent: Boolean(mail), preview: true });
           return;
         }
+        if (act === 'invite' && !found.person.email) { json(res, 400, { error: `${found.person.name} has no email address: give them a link instead (person link).` }); return; }
         const { site, person: invited, code } = await sites.invite(siteId, personId);
         if (act === 'link') { json(res, 200, { link: keyLink(site, code) }); return; }
         await deliver(inviteMail({ site, person: invited, code, ...signs, path }), { kind: 'invitation', site: siteId, person: personId });
@@ -631,11 +649,12 @@ export function createBottle({ store, key = '', reader = '', origins = [], home 
         return true;
       }
       // what a page asks, from its own site or another
-      if (['check', 'notes', 'signin', 'mine', 'site'].includes(rest) || rest.startsWith('mine/')) await welcome(req, res);
+      if (['check', 'notes', 'signin', 'mine', 'site', 'visit'].includes(rest) || rest.startsWith('mine/')) await welcome(req, res);
       if (rest === 'check' && method === 'POST') { await check(req, res); return true; }
       if (rest === 'site' && method === 'POST') { await siteName(req, res); return true; }
       if (rest === 'resend' && method === 'POST') { await resendHook(req, res); return true; }
       if (rest === 'signin' && method === 'POST') { await signIn(req, res); return true; }
+      if (rest === 'visit' && method === 'POST') { await visit(req, res); return true; }
       if (rest === 'notes' && method === 'POST') { await leave(req, res); return true; }
       if (rest === 'mine' && method === 'GET') { await mine(req, res, null); return true; }
       const closing = /^mine\/([^/]+)\/closed$/.exec(rest);
