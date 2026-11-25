@@ -747,7 +747,7 @@ describe('the service over HTTP', async () => {
     assert.equal(page.headers.get('content-security-policy'), SITE_POLICY, "a reel's page loads only the service's own files");
     assert.equal(page.headers.get('cache-control'), 'no-store');
     assert.match(html, /<title>Tea - Pixel Reel<\/title>/);
-    assert.match(html, new RegExp(`<div class="wrap watch-in" id="watch" data-watch="${id}" data-here="off">`), 'the player on the page asks the service for this reel');
+    assert.match(html, new RegExp(`<div class="wrap watch-in" id="watch" data-watch="${id}" data-here="off" data-mic="off">`), 'the player on the page asks the service for this reel');
     assert.match(html, new RegExp(`<meta property="og:image" content="https://reels\\.example/r/${id}/card\\.png">`), 'a link sent in a message shows the reel\'s own picture');
     assert.match(html, /<meta property="og:image:alt" content="Tea: a pixel reel\. Press Play\.">/);
     const card = await fetch(`${local}/r/${id}/card.png`);

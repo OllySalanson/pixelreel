@@ -482,12 +482,18 @@ thing a shared reel offers; Add to Claude is still there for anyone with their o
   so does Add. Each note has an X; pressed, it asks "Remove this note?" with "Yes, remove
   it" and "No, keep it".
 - **Saying it.** Speak turns the microphone on: the words are written into the box as they
-  are heard, and pressing it again (it says Done then) or Enter saves the note. It uses the
-  browser's own speech recognition, which Chrome, Edge and Safari have, on a computer and a
-  phone. It is not offered in Brave, which has the name but nothing behind it (every go
-  ends in a network error), or in Firefox, which has none. Dictation built into the device
-  (Mac Dictation, Windows' Win+H, a phone keyboard's microphone) types into the box like
-  any other, in every browser.
+  are heard, and pressing it again (it says Done then, and One moment while the last words
+  are written down) or Enter saves the note. Two ways of hearing, one button:
+  - **The browser's own speech recognition** where it works: Chrome, Edge and Safari, on a
+    computer and a phone. It hears in the speaker's own English (`navigator.language`, so
+    en-IE for someone in Ireland).
+  - **The service's own** everywhere else, with `PIXELREEL_HEAR=1` (see
+    [Hearing what is said](#hearing-what-is-said)): Brave, which has the browser's name for
+    speech recognition with nothing behind it (every go ends in a network error), and
+    Firefox, which has none. A browser whose own recognition fails with a network error
+    switches to the service on the spot.
+  Dictation built into the device (Mac Dictation, Windows' Win+H, a phone keyboard's
+  microphone) also types into the box, in every browser.
 - **Kept on the device.** The notes for each reel are kept in the browser
   (`pixelreel-notes:<id>`), at most 12, of up to 600 letters each, until they are sent.
   They stay there afterwards, as notes on that reel.
@@ -511,6 +517,56 @@ thing a shared reel offers; Add to Claude is still there for anyone with their o
   with no way to fetch a page.
 
 `site/js/notes.js` is the panel; `test/notes.test.js` and `test/try.test.js` cover it.
+
+### Hearing what is said
+
+**On in the image; off from a checkout unless `PIXELREEL_HEAR=1` (it also needs Make it
+right here on, and faster-whisper in the service's Python).**
+
+Why the service, and not another company: Brave and Firefox give a page no speech
+recognition that works, so the words have to be written down somewhere else. A small Whisper
+model (faster-whisper's `base.en`, about 150 MB, built into the image) does it on the
+service's own machine. No new company sees what anyone says, nothing is paid for a word of
+it, and nothing said is kept.
+
+- **The page** (`site/js/hearing.js`) records the microphone (an AudioWorklet,
+  `site/js/hear-worklet.js`), makes it 16-bit samples at 16,000 a second, and every 1.2
+  seconds sends what has not been written down for good to `POST /hear`. The words so far
+  come back and are put in the box, and put right as more is heard. Past 7 seconds, what
+  is said is cut at the quietest moment of its last 3 and that much is written down for
+  good, so no piece sent is longer than about 7 seconds and each comes back quickly.
+  Silence is never sent.
+- **The service** (`service/hear.mjs`) hands each piece to one Python
+  (`scripts/hear.py --serve`), started the first time anyone speaks (about 5 seconds to
+  load) and stopped after 15 minutes unused, to give back its memory (about 300 MB). One
+  piece is heard at a time; with 6 waiting, more are turned away and the page says the
+  note could not be heard. Measured on a development machine with 2 threads: 5 seconds of
+  Peter's voice written down word for word in about 1.3 seconds (2.8 with the machine busy).
+  `PIXELREEL_HEAR_MODEL` chooses another model: `small.en` hears accents better, but took 4
+  seconds for the same 5, too slow to show words as they are said.
+- **Limits.** At most 12 seconds a piece (`HEAR_MAX_BYTES`), and 1,200 pieces an hour for
+  each visitor (about half an hour of speaking).
+- **Who may ask.** The website's own pages, and the pages of every site Message in a
+  Bottle is on (its list of sites, `bottles/sites/`), from their own address: `/hear`
+  answers those with `access-control-allow-origin` and takes their `OPTIONS` preflight.
+
+**For Message in a Bottle's Speak, on a site of its own.** Bottle cannot import from Pixel
+Reel, so it copies the approach: where `SpeechRecognition` is missing, or `navigator.brave`
+is there, or a go ends with the error `network`, record and send to the same endpoint.
+
+```
+POST https://pixelreel.pro/hear
+content-type: application/octet-stream
+body: mono 16-bit little-endian samples at 16,000 a second, at most 12 seconds
+-> 200 { "text": "what was said" }, or 503 { "error": "busy" } (say it could not be heard)
+```
+
+`Listener`, `downsample` and `recordForService({ onText, endpoint })` in
+`site/js/hearing.js` (with `hear-worklet.js`) are the whole of the page's side, and plain
+enough to copy: pass `endpoint: 'https://pixelreel.pro/hear'`. A site whose content security
+policy limits `connect-src` must allow `https://pixelreel.pro`, and the AudioWorklet's file
+must be served from the site itself (or the worklet written as a `blob:` URL, if its policy
+allows that).
 
 ## Limits
 

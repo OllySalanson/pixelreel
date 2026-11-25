@@ -1684,3 +1684,25 @@ notes: it answered each.
 | My notes beside a reel, at 1280 x 800 |
 | --- |
 | ![The blue sky reel's player, and joined to its right a panel called My notes with three notes, each with an X, a box saying Add a note, Speak and Add buttons, and a gold Make my next reel button.](log/v77-my-notes.jpg) |
+
+### Version 78
+
+- **Speak works in Brave and Firefox.** Olly uses Brave, where the button did not show,
+  because Brave's speech recognition has nothing behind it. There, and in Firefox, the
+  page now records what is said and the service writes it down with a small Whisper model
+  of its own (docs/service.md, "Hearing what is said"). The words appear in the box a
+  second or two after they are said, and are put right as more is heard.
+- **One moment.** After Done, the button says One moment while the last words are written
+  down, then the note is saved.
+- **Make my next reel waits for a note being said**, so a note is never left out.
+
+Checked in the headless browser with the page marked as Brave, Peter's recorded voice
+played in place of a microphone, and the real model on a stand-in service: the words came
+in as he spoke ("Why is this", then "Why is the sky blue? It is a very good question and
+the answer starts with the sun."), and Done saved them as a note. Nobody has said a note
+into a real microphone in Brave yet, or in a thick Irish accent.
+
+| Speaking a note in Brave: the words in the box as they are heard |
+| --- |
+| ![My notes beside the blue sky reel. The Speak button is red and says Done; the box, framed in red, holds the words heard so far: Why is the sky blue? It is a very good question and the answer starts with the sun.](log/v78-speak-brave.jpg) |
+
