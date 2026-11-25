@@ -56,7 +56,10 @@ before links held codes (`?bottle=<key>`) still work.
 ## Putting it on a site
 
 1. Add the site: `bottles site add civ-speak --name "Civ Speak" --origin https://civspeak.com`
-   (more than one `--origin` if it is at more than one address).
+   (more than one `--origin` if it is at more than one address). A site that lives under a path,
+   such as a preview at `https://example.com/preview/`, is added with that whole address: its
+   pages are known by their origin, as any site's, and its links open that page, not the
+   origin's home page.
 2. Put the one line on every page, the service's address in it:
 
    ```html
@@ -233,7 +236,7 @@ A screenshot bigger than 4 MB is not kept (the note still is), and no note may b
 | `GET /bottle/notes?state=new&site=<id>` | admin | `{ notes }`, oldest first. `state` is one of the states, `open` (new, in progress and held) or `all`. |
 | `GET /bottle/notes/<id>`, `.../shot.jpg` | admin | One note, or its screenshot. |
 | `PATCH /bottle/notes/<id>` | admin | `{ "state": "done", "what": ..., "confidence": 90 }` (held: `conflict`, `proposal`; declined: `reason`). What came of it is kept in the note's `outcome` and `history`. |
-| `GET /bottle/sites`, `POST /bottle/sites` | admin | Every site with its people and its counts by state; or adds one, `{ id, name, origins }`. |
+| `GET /bottle/sites`, `POST /bottle/sites` | admin | Every site with its people and its counts by state; or adds one, `{ id, name, origins }` (an address with a path is kept as its `page`, where its links open). |
 | `GET /bottle/sites/<site>` | admin | One site and its people. |
 | `POST /bottle/sites/<site>/people` | admin | `{ name, email }`: adds a person, and answers `{ person, link }`. |
 | `PATCH /bottle/sites/<site>/people/<person>` | admin | `{ "on": false }` turns them off, ending every key and link they have; `{ "email": ... }` corrects their address. |

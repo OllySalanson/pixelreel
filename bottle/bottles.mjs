@@ -176,14 +176,14 @@ export async function main(argv, { env = process.env, fetch = globalThis.fetch, 
         if (opt.json) return show(sites);
         for (const s of sites) {
           const counts = STATES.filter((st) => s.counts[st]).map((st) => `${s.counts[st]} ${st}`).join(', ') || 'no notes';
-          out(`${s.id.padEnd(16)} ${s.name}  ${s.origins.join(' ')}  ${s.people.length} on the list  ${counts}`);
+          out(`${s.id.padEnd(16)} ${s.name}  ${s.page ?? s.origins.join(' ')}  ${s.people.length} on the list  ${counts}`);
         }
         return 0;
       }
       case 'site': {
         if (rest[0] !== 'add' || !rest[1]) { out(usage); return 2; }
         const site = await askJson('sites', { method: 'POST', body: { id: rest[1], name: opt.name, origins: opt.origin ?? [] } });
-        out(`${site.id} is ${site.name}, at ${site.origins.join(' ')}`);
+        out(`${site.id} is ${site.name}, at ${site.origins.join(' ')}${site.page ? `; its links open ${site.page}` : ''}`);
         return 0;
       }
       case 'people': {

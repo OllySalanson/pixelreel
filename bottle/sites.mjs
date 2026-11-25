@@ -52,6 +52,15 @@ export function originOf(address) {
   return url.origin;
 }
 
+/**
+ * The page a site's links open, if its address was given with a path (a site that lives under
+ * one, such as https://example.com/preview/): that address without its query or #, or null.
+ */
+export function pageOf(address) {
+  const url = new URL(address);
+  return url.pathname === '/' ? null : `${url.origin}${url.pathname}`;
+}
+
 /** An id from a name: "Sam O'Neill" is sam-oneill. */
 export const slug = (name) => String(name).toLowerCase().normalize('NFKD').replace(/[̀-ͯ']/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32) || 'person';
 
@@ -101,17 +110,23 @@ export class Sites {
 
   /** What a site is said to be, for whoever looks after them: no keys, and people as they are shown. */
   static shown(site) {
-    return { id: site.id, name: site.name, origins: site.origins, people: site.people.map(shown) };
+    return { id: site.id, name: site.name, origins: site.origins, ...(site.page ? { page: site.page } : {}), people: site.people.map(shown) };
   }
 
-  /** Adds a site (or changes the name and origins of one there already). */
+  /**
+   * Adds a site (or changes the name and origins of one there already). An address given with a
+   * path becomes the site's `page`, where its links open (the first such, if there are more).
+   */
   async add({ id, name, origins }) {
     if (!ID.test(String(id))) throw new Said('A site\'s id is short, in lower case letters, numbers and dashes, such as civ-speak.');
-    const list = (Array.isArray(origins) ? origins : [origins]).filter(Boolean).map(originOf);
+    const given = (Array.isArray(origins) ? origins : [origins]).filter(Boolean);
+    const list = given.map(originOf);
+    const page = given.map(pageOf).find(Boolean);
     if (!list.length && id !== this.home?.id) throw new Said('Name the site\'s address, such as https://civspeak.com.');
     const site = (await this.get(id)) ?? { id, name: '', origins: [], people: [] };
     site.name = typeof name === 'string' && name.trim() ? name.trim().slice(0, 80) : site.name || id;
     site.origins = [...new Set([...site.origins, ...list])];
+    if (page) site.page = page;
     await this.save(site);
     return site;
   }

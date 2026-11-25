@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { createHmac } from 'node:crypto';
 import { after, before, describe, it } from 'node:test';
 import { main as bottles } from '../bottles.mjs';
-import { decide } from '../bottle-ui.mjs';
+import { decide, pressedPart } from '../bottle-ui.mjs';
 import { arrivedMail, inviteMail, newsMail, resend, signInMail } from '../mail.mjs';
 import { clientView, createBottle, MAX_BYTES, MAX_SHOT, noteFrom, outcomeFrom, shotFrom } from '../server.mjs';
 import { slug } from '../sites.mjs';
@@ -340,6 +340,23 @@ describe('sites and the people on their lists', () => {
   let s;
   before(async () => { s = await serve(); });
   after(() => s.close());
+
+  it('opens the links of a site that lives under a path on its own page, there for good', async () => {
+    const t = await serve();
+    try {
+      const made = await t.admin('sites', 'POST', { id: 'preview', name: 'A Preview', origins: ['https://host.example/laura/previews/index.html?x=1#top'] });
+      assert.equal(made.status, 201);
+      assert.deepEqual(made.body.origins, ['https://host.example'], 'its pages are known by their origin, as any site\'s');
+      assert.equal(made.body.page, 'https://host.example/laura/previews/index.html');
+      const ann = (await t.admin('sites/preview/people', 'POST', { name: 'Ann Lee', email: 'ann@host.example' })).body;
+      assert.match(ann.link, /^https:\/\/host\.example\/laura\/previews\/index\.html#bottle=[\w-]{32}$/);
+      assert.equal((await t.use(codeIn(ann.link), 'https://host.example')).status, 200, 'and it works there');
+      // giving the site another address with no path keeps the page its links open
+      assert.equal((await t.admin('sites', 'POST', { id: 'preview', origins: ['https://www.host.example'] })).body.page, 'https://host.example/laura/previews/index.html');
+      assert.match((await t.admin('sites/preview/people/ann-lee/link', 'POST', {})).body.link, /^https:\/\/host\.example\/laura\/previews\/index\.html#bottle=/);
+      assert.equal((await t.admin('sites', 'POST', { id: 'client', origins: [CLIENT] })).body.page, undefined, 'a site at its home page has none');
+    } finally { await t.close(); }
+  });
 
   it('adds a site and a person, whose link offers to switch the button on, and swaps its code for a key only when pressed, on that site only', async () => {
     const res0 = await s.admin('sites', 'POST', { id: 'client', name: 'Client Ltd', origins: [CLIENT] });
@@ -717,6 +734,21 @@ describe('word of new notes, to whoever looks after the sites', () => {
       assert.equal((await t.later(11 * MINUTE)).length, 1, 'not within the hour');
       assert.equal((await t.later(50 * MINUTE))[0].subject, 'Client Ltd: 1 new note');
     } finally { await t.close(); }
+  });
+});
+
+describe('choosing the part of the page a note is about', () => {
+  const link = { nodeType: 1, name: 'the link' }, under = { nodeType: 1, name: 'under the pointer' }, outlined = { nodeType: 1, name: 'outlined' };
+  const at = (x, y) => (x === 120 && y === 340 ? under : null);
+
+  it('takes the part under the pointer, or the one outlined if nothing is there', () => {
+    assert.equal(pressedPart({ detail: 1, target: link, clientX: 120, clientY: 340 }, at, outlined), under);
+    assert.equal(pressedPart({ detail: 1, target: link, clientX: 5, clientY: 5 }, at, outlined), outlined);
+  });
+
+  it('takes the element a click with no pointer was made on (Enter on a link), not the top corner of the page', () => {
+    // such a click is at 0, 0: it chose whatever was in the top left corner (the page's own bar on a preview)
+    assert.equal(pressedPart({ detail: 0, target: link, clientX: 0, clientY: 0 }, () => under, outlined), link);
   });
 });
 
