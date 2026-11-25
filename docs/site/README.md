@@ -1717,3 +1717,14 @@ into a real microphone in Brave yet, or in a thick Irish accent.
 Checked with `scripts/site-fit.js` at 1280, 390, 360 and 320 wide: whole words at all 27
 settings (at 320 it still finds the bar across the top on two rows with the biggest
 OpenDyslexic letters, as every page has since Version 74).
+
+### Version 80
+
+- **The bar across the top on one row on the narrowest phone, with the biggest letters.**
+  At 320 wide with OpenDyslexic at its biggest, the bar let go of all it could and still
+  went onto two rows: Reelie, Menu and Make were 5 pixels too wide together. A last step
+  makes Reelie a little smaller and the Menu button's sides a little narrower.
+
+Checked with `scripts/site-fit.js` at 320 wide on a reel's page and the home page: all well at
+all 27 settings. The make page there still has "Paste" cut in two at the two widest
+spacings; that form is being replaced.

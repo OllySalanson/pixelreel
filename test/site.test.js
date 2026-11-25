@@ -956,8 +956,8 @@ describe('before the page is drawn', () => {
 
   it('lets go of one thing at a time until the bar across the top is on one row', () => {
     assert.equal(boot().bar.dataset.tight, undefined, 'nothing goes when everything fits');
-    for (const step of [1, 2, 3, 4, 5, 6, 7, 8]) assert.equal(boot({ fitsFrom: step }).bar.dataset.tight, String(step));
-    assert.equal(boot({ fitsFrom: 9 }).bar.dataset.tight, '8', 'and stops at the last step');
+    for (const step of [1, 2, 3, 4, 5, 6, 7, 8, 9]) assert.equal(boot({ fitsFrom: step }).bar.dataset.tight, String(step));
+    assert.equal(boot({ fitsFrom: 10 }).bar.dataset.tight, '9', 'and stops at the last step');
   });
 
   it('fits the bar again when the room or the letters change', () => {
@@ -1591,7 +1591,7 @@ describe('the menu, where the bar has no room for its links', () => {
 
   it('holds Make it comfy and Add to Claude, the last two things the bar lets go of', () => {
     assert.match(menuOf(html.home), /<button type="button" data-open="comfort"><span class="aa" aria-hidden="true">Aa<\/span><span>Make it comfy<\/span><\/button>/);
-    assert.match(css, /\[data-tight="7"\], \[data-tight="8"\]\) \.top-comfort, \.top-in\[data-tight="8"\] \.top-add \{ display: none; \}/);
+    assert.match(css, /\[data-tight="7"\], \[data-tight="8"\], \[data-tight="9"\]\) \.top-comfort, \.top-in:is\(\[data-tight="8"\], \[data-tight="9"\]\) \.top-add \{ display: none; \}/);
     assert.match(css, /:where\(\.menu-list > \*\) \{ display: flex; \}/, 'a row that is no use on a home screen can still be hidden');
   });
 

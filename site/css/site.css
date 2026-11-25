@@ -93,13 +93,17 @@ button { font: inherit; letter-spacing: inherit; word-spacing: inherit; color: i
    (a Menu button takes their place, and opens them as a list), the "now" of "Make a pixel
    reel now", the name beside Reelie, the end of "Add to Claude", the "pixel", then the rest
    but "Make", then the comfort box, and last the Add button (the menu holds both). Each but
-   the last two is still there for a screen reader. */
-.top-in[data-tight] .top-nav, .top-in:is([data-tight="7"], [data-tight="8"]) .top-comfort, .top-in[data-tight="8"] .top-add { display: none; }
-.top-in:is([data-tight="2"], [data-tight="3"], [data-tight="4"], [data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"]) .top-make-now,
-.top-in:is([data-tight="3"], [data-tight="4"], [data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"]) .logo span,
-.top-in:is([data-tight="4"], [data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"]) .top-add-more,
-.top-in:is([data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"]) .top-make-more,
-.top-in:is([data-tight="6"], [data-tight="7"], [data-tight="8"]) .top-make-what { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+   the last two is still there for a screen reader. Last of all, with the biggest letters on
+   the narrowest phone, Reelie and the Menu button take a little less room. */
+.top-in[data-tight] .top-nav, .top-in:is([data-tight="7"], [data-tight="8"], [data-tight="9"]) .top-comfort, .top-in:is([data-tight="8"], [data-tight="9"]) .top-add { display: none; }
+.top-in:is([data-tight="2"], [data-tight="3"], [data-tight="4"], [data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"], [data-tight="9"]) .top-make-now,
+.top-in:is([data-tight="3"], [data-tight="4"], [data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"], [data-tight="9"]) .logo span,
+.top-in:is([data-tight="4"], [data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"], [data-tight="9"]) .top-add-more,
+.top-in:is([data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"], [data-tight="9"]) .top-make-more,
+.top-in:is([data-tight="6"], [data-tight="7"], [data-tight="8"], [data-tight="9"]) .top-make-what { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.top-in[data-tight="9"] .logo { padding-right: 0; }
+.top-in[data-tight="9"] .logo .px { width: 1.5rem; }
+.top-in[data-tight="9"] .top-menu { padding-inline: 0.25rem; }
 .top-menu { display: none; }
 .top-in[data-tight] .top-menu { display: inline-flex; }
 .top-nav { display: flex; gap: 0.25rem; }
