@@ -420,6 +420,8 @@ export function createService({ reels, baseUrl, log = () => {}, limits = null, t
   // Message in a Bottle: kept with the reels, under bottles/, which no page or listing of the reels ever reaches
   const bottles = createBottle({
     home: { id: 'pixelreel', name: 'Pixel Reel' }, owner: { id: 'olly', name: 'Olly' }, review: '/review', from: 'Olly',
+    // Speak where the browser cannot hear (Brave, Firefox): the button sends it to /hear, as My notes does
+    ...(hearing ? { hear: '/hear' } : {}),
     ...bottle, store: reels.store, origins: [context.baseUrl], caller: (req) => callerOf(req, context.trustProxy), log
   });
   const server = createServer(async (req, res) => {
