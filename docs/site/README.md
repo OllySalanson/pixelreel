@@ -1781,3 +1781,18 @@ Checked with `scripts/site-fit.js` on the home page, Your reels and the make pag
 | Your reels, with one reel that was opened here |
 | --- |
 | ![The bar across the top: How it works, Examples, Questions, Your reels, a big gold Make a pixel reel now, a small box with a plug and the word Claude, and the Aa box. Below, Your reels, with one reel, Why the sky is blue, kept until 25 December, with Rename and Remove.](log/v82-your-reels.jpg) |
+
+### Version 83
+
+- **The home page's reel about making one says how it works now.** "Make a pixel reel about
+  this", beside Make a pixel reel now, still described the old box (Paste, take a photo,
+  Make my reel). It now says to press Make a pixel reel now, put anything in My notes (typed,
+  said or pasted: a link, a meeting's transcript, a letter, a question), press Make my next
+  reel, and keep asking, with every reel under Your reels.
+- **Where reels are not made on the site**, its reel (`site-make`) no longer sends people to
+  a box that writes words for Claude, which has gone: it says to add Pixel Reel to Claude,
+  then ask Claude for a reel.
+
+Both were re-recorded here with Pocket TTS and their pictures timed to the recordings; their
+new lines came back from speech-to-text word for word but for sound-alikes ("reel" as
+"real"). Nobody has listened to them yet.

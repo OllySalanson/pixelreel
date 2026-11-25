@@ -15,14 +15,18 @@
     },
     {
       "title": "Anything wordy",
-      "caption": "A link, a letter, or just a question.",
-      "say": "It can be a link to an article. A letter you've been sent. Or just a question, like, how does a mortgage work.",
+      "caption": "A link, a transcript, a letter, a question.",
+      "say": "It can be a link to an article. The transcript of a meeting. A letter you've been sent. Or just a question, like, how do bees make honey.",
       "picture": {
         "type": "icons",
         "items": [
           {
             "icon": "phone",
             "label": "A link"
+          },
+          {
+            "icon": "speech",
+            "label": "A meeting"
           },
           {
             "icon": "letter",
@@ -33,33 +37,34 @@
             "label": "A question"
           }
         ],
-        "start": 0.3,
-        "every": 1.4
+        "start": 0.6,
+        "every": 1.6
       }
     },
     {
-      "title": "One big box",
-      "caption": "Paste a link. Or type. Or take a photo.",
-      "say": "On the make page there is one big box. Copy a link, press Paste, and in it goes. Or type a question. Or, for a letter, take a photo of it.",
+      "title": "My notes",
+      "caption": "Type it, say it, or paste it in.",
+      "say": "Press Make a pixel reel now. Beside me there is My notes. Type it in, say it out loud, or paste it in.",
       "picture": {
-        "type": "list",
-        "heading": "ONE BIG BOX",
-        "items": [
-          "Paste a link",
-          "Type a question",
-          "Take a photo"
+        "type": "chat",
+        "title": "My notes",
+        "messages": [
+          {
+            "from": "You",
+            "text": "How do bees make honey?"
+          }
         ],
-        "start": 2.4,
-        "every": 2.8
+        "start": 0.6,
+        "every": 1.8
       }
     },
     {
-      "title": "Make my reel",
-      "caption": "Press Make my reel. That is all.",
-      "say": "Then press Make my reel. Claude writes the scenes, I read them out, and it plays as soon as it is ready.",
+      "title": "Make my next reel",
+      "caption": "Press Make my next reel.",
+      "say": "Then press Make my next reel. Claude writes the scenes, I read them out, and it plays in about a minute.",
       "picture": {
         "type": "sprite",
-        "label": "MAKE MY REEL",
+        "label": "MAKE MY NEXT REEL",
         "rows": [
           ".kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.",
           "kcccccccccccccccccccccccccccccccck",
@@ -93,27 +98,23 @@
       }
     },
     {
-      "title": "Still too much?",
-      "caption": "Ask for it simpler, or shorter.",
-      "say": "Still too much to take in? Ask for it simpler, or shorter. And your reels are listed on the make page, to watch again, or to delete.",
+      "title": "Keep asking",
+      "caption": "Ask more. Find them all in Your reels.",
+      "say": "Every reel has My notes beside it too, so you can keep asking. And all your reels are under Your reels.",
       "picture": {
         "type": "icons",
         "items": [
           {
-            "icon": "lightbulb",
-            "label": "Simpler"
+            "icon": "question",
+            "label": "Ask more"
           },
           {
-            "icon": "clock",
-            "label": "Shorter"
-          },
-          {
-            "icon": "document",
+            "icon": "book",
             "label": "Your reels"
           }
         ],
-        "start": 2.5,
-        "every": 1
+        "start": 2.6,
+        "every": 1.3
       }
     }
   ]
