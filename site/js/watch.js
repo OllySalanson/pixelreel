@@ -2,7 +2,6 @@
 // Reelie while Claude is still writing it or Peter is still recording it, saying which and
 // how far along, then hands it to the player.
 import { calm, onComfortChange } from './calm.js';
-import { ASKED } from './maker.js';
 import { reelie } from './landscape.js';
 import { forgetMine, mineStorage, readMine, rememberMine, updateMine } from './mine.js';
 import { startNotes } from './notes.js';
@@ -146,11 +145,7 @@ export function startWatching() {
         notes?.ready();
         document.getElementById('watch-again').hidden = false;
         // whoever made it on the make page has just seen what one press does: the way back to make another is beside it
-        if (readMine(mine).some((reel) => reel.id === id)) {
-          document.getElementById('watch-another').hidden = false;
-          // and the box there starts empty: the words it kept were for a reel that could not be made, and this one could
-          try { sessionStorage.removeItem(ASKED); } catch { /* nowhere to keep them, so nothing was kept */ }
-        }
+        if (readMine(mine).some((reel) => reel.id === id)) document.getElementById('watch-another').hidden = false;
       }
       return;
     }

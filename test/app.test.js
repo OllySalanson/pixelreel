@@ -526,11 +526,10 @@ describe('something shared to Pixel Reel from a phone', () => {
     assert.ok(withFiles.params.files[0].accept.includes('application/pdf') && withFiles.params.files[0].accept.includes('image/*'));
   });
 
-  it('is handed to the make-one box by the page, after the box has been woken', () => {
+  it('is handed to My notes on the make page, once it is woken', () => {
     const main = readFileSync(root('site/js/main.js'), 'utf8');
-    assert.ok(main.indexOf('startMaker();') < main.indexOf('startShared();'), 'the box must be listening first');
-    const page = sitePage('make', ORIGIN);
-    for (const id of ['maker', 'maker-file', 'maker-said', 'here-said', 'ask-open']) assert.match(page, new RegExp(`id="${id}"`), `the page has the #${id} that shared.js looks for`);
+    assert.match(main, /startShared\(startMaking\(\)\);/, 'the notes must be listening first');
+    assert.match(sitePage('make', ORIGIN), /<aside class="mynotes" id="mynotes" aria-labelledby="mynotes-title" data-first hidden>/);
   });
 });
 

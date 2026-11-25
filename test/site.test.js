@@ -442,51 +442,20 @@ describe('making a reel has a page of its own', () => {
     }
   });
 
-  it('is a form to fill in, with nothing on the page that plays', () => {
-    assert.match(html.make, /<h1 id="make-title">Make a pixel reel<\/h1>/);
-    assert.match(html.make, /<form class="maker" id="maker" action="\/claude" data-here="off">/);
-    for (const id of ['maker-what', 'maker-paste', 'maker-read', 'maker-go', 'maker-photo', 'maker-choose', 'maker-file', 'mine', 'drop-over']) assert.match(html.make, new RegExp(`id="${id}"`), id);
-    // the part of the page that is the page's own: the bar, the foot and the theatre are on every page
-    const own = html.make.slice(html.make.indexOf('<main'), html.make.indexOf('</main>'));
-    assert.ok(own.includes('id="maker"'));
-    assert.doesNotMatch(own, /class="reel"|data-reels?=|<canvas/, 'no player, no reel button, no moving picture');
-  });
-
-  it('says what goes in its one big box, and has the big button straight after it', () => {
-    const form = html.make.slice(html.make.indexOf('<form class="maker"'), html.make.indexOf('</form>'));
-    // the box is named for the commonest thing put in it, with a picture of a link beside the words
-    // (a line of words that names the box, not a label: a label cannot be pressed to be read aloud)
-    assert.match(form, /<p class="maker-label" id="maker-label"><span class="tile tile-gold"><svg class="px"[^>]*>.*?<\/svg><\/span><span>Paste a link here<\/span><\/p>/);
-    assert.match(form, /<textarea id="maker-what" name="about" aria-labelledby="maker-label" /);
-    assert.doesNotMatch(form, /<label[^>]*for="maker-what"/);
-    assert.match(form, /<textarea id="maker-what" name="about" [^>]*enterkeyhint="go" placeholder="Or type a question"><\/textarea>\s*<div class="maker-box-keys">\s*<button class="btn btn-paper maker-paste" id="maker-paste" type="button" hidden><svg class="px"[^>]*>.*?<\/svg><span>Paste<\/span><\/button>/);
-    assert.match(form, /<button class="btn btn-paper maker-clear" id="maker-clear" type="button" hidden>Clear<\/button>\s*<\/div>\s*<\/div>/, 'and a way to empty the box, hidden while it is empty');
-    // in the order someone meets them: the box, who reads it (one line, folded shut), the big button, then every other way in
-    const order = ['id="maker-what"', 'id="maker-paste"', 'id="maker-clear"', '<details class="maker-read" id="maker-read" hidden>', 'id="maker-who"', 'id="maker-language"', 'id="maker-go"', 'id="maker-photo"', 'id="maker-choose"', 'class="tries"', 'id="maker-own-open"', 'id="ask-words"'];
-    const places = order.map((part) => form.indexOf(part));
-    assert.ok(places.every((at) => at >= 0), `all there: ${places}`);
-    assert.deepEqual(places, [...places].sort((a, b) => a - b), 'and in that order');
-    assert.doesNotMatch(form, /<details[^>]* open/, 'the choices start folded away, so there is nothing to decide before the big button');
-    // one thing between the box and the button, and that is a line of words, not a row of choices
-    const between = form.slice(form.indexOf('</details>'), form.indexOf('<button class="btn btn-gold btn-big" id="maker-go" type="submit">Make my reel</button>'));
-    assert.ok(between.length > 20 && between.length < 400, 'the big button is where it is looked for');
-    assert.doesNotMatch(between, /<button|<input|<fieldset/);
-    // a photo and a PDF have a button each, which says what it does, and the chooser shows only that kind
-    assert.match(form, /<button class="btn btn-paper" id="maker-photo" type="button" data-accept="image\/\*">/);
-    assert.match(form, /<button class="btn btn-paper" id="maker-choose" type="button" data-accept="application\/pdf,[^"]*">.*?<span>Choose a PDF<\/span><\/button>/);
-    for (const [, accept] of form.matchAll(/data-accept="([^"]*)"/g)) {
-      const whole = /<input id="maker-file" type="file" accept="([^"]*)"/.exec(form)[1].split(',');
-      for (const kind of accept.split(',')) assert.ok(whole.includes(kind), `${kind} is a kind the chooser takes`);
-    }
-  });
-
-  it('wakes the box with everything its script looks for, and reads the clipboard only on a press', () => {
-    const script = readFileSync(root('site/js/maker.js'), 'utf8');
-    const looked = [...script.matchAll(/\bid\('([a-z-]+)'\)/g)].map(([, id]) => id);
-    assert.ok(looked.length >= 12);
-    for (const id of looked) assert.ok(html.make.includes(` id="${id}"`), `the page has nothing called ${id}`);
-    assert.equal([...script.matchAll(/givenFromClipboard\(/g)].length, 1);
-    assert.match(script, /paste\.addEventListener\('click', async \(\) => \{\s*let given;\s*try \{\s*given = await givenFromClipboard\(navigator\.clipboard\);/, 'inside the press, where a browser allows it');
+  it('is a reel about making one, with My notes beside it, and things to try when it ends', () => {
+    assert.match(html.make, /<h1 class="sr-only" id="make-title">Make a pixel reel<\/h1>/);
+    assert.match(html.make, /<div class="reel" data-reel="site-how-to-make">/);
+    assert.match(html.make, /<aside class="mynotes" id="mynotes" aria-labelledby="mynotes-title" data-first hidden>/, 'hidden until the script wakes it');
+    assert.match(html.make, /<textarea class="mynotes-box" id="mynotes-box" rows="2" maxlength="60000"/, 'room for a pasted transcript');
+    assert.match(html.make, /<input id="mynotes-files" type="file" accept="application\/pdf,image\/\*" hidden>/);
+    // when the reel ends, the things to try, each a button
+    const end = html.make.slice(html.make.indexOf('<div class="reel-end" hidden>'), html.make.indexOf('<aside'));
+    const tries = [...end.matchAll(/<button class="btn btn-gold btn-small" type="button" data-suggest="([^"]+)">\1<\/button>/g)];
+    assert.ok(tries.length >= 4, 'four things to try');
+    assert.match(end, /data-again>Watch it again<\/button>/);
+    // the old form has gone
+    assert.doesNotMatch(html.make, /id="maker"|id="maker-what"/);
+    assert.match(html.make, /<p class="make-elsewhere" id="make-elsewhere" hidden><a class="btn btn-gold btn-big" href="\/claude">Add Pixel Reel to Claude<\/a><\/p>/, 'and where reels are not made here, the way to Claude');
   });
 
   it('is where "Want one of your own?" leads, under a reel and in the theatre, where the service makes reels itself', () => {
@@ -545,7 +514,7 @@ describe('waiting for a reel that is being made', () => {
     assert.match(html.reel, /<a class="btn btn-gold" id="watch-retry" href="\/make" hidden>Try something else<\/a>/);
     // and a way back to the form from a reel that did work, shown only to whoever made it there
     assert.match(html.reel, /<a class="btn btn-paper" id="watch-another" href="\/make" hidden>Make another reel<\/a>/);
-    assert.match(readFileSync(root('site/js/watch.js'), 'utf8'), /if \(holder\.dataset\.here === 'on'\) \{[^}]*if \(readMine\(mine\)\.some\(\(reel\) => reel\.id === id\)\) \{\s*document\.getElementById\('watch-another'\)\.hidden = false;[^}]*sessionStorage\.removeItem\(ASKED\)/, 'and the box it leads back to starts empty');
+    assert.match(readFileSync(root('site/js/watch.js'), 'utf8'), /if \(holder\.dataset\.here === 'on'\) \{[^}]*if \(readMine\(mine\)\.some\(\(reel\) => reel\.id === id\)\) document\.getElementById\('watch-another'\)\.hidden = false;/);
   });
 });
 
@@ -908,8 +877,6 @@ describe('who reads', () => {
     assert.equal(askFor('my gas bill', null, 'french'), 'Make me a pixel reel in French about this: my gas bill', 'and for the language that was chosen');
     assert.equal(askFor('https://example.com/a', 'Anna', 'spanish'), 'Make me a pixel reel in Spanish, read by Anna, about this page: https://example.com/a');
     assert.equal(askFor('my gas bill', 'Anna', null), 'Make me a pixel reel, read by Anna, about this: my gas bill');
-    const main = readFileSync(root('site/js/main.js'), 'utf8');
-    assert.ok(main.indexOf('startVoice();') < main.indexOf('startMaker();'), 'the choice is looked up before the box writes its first words');
   });
 
   it('names whoever is reading while a reel is recorded', () => {
@@ -956,8 +923,8 @@ describe('before the page is drawn', () => {
 
   it('lets go of one thing at a time until the bar across the top is on one row', () => {
     assert.equal(boot().bar.dataset.tight, undefined, 'nothing goes when everything fits');
-    for (const step of [1, 2, 3, 4, 5, 6, 7, 8]) assert.equal(boot({ fitsFrom: step }).bar.dataset.tight, String(step));
-    assert.equal(boot({ fitsFrom: 9 }).bar.dataset.tight, '8', 'and stops at the last step');
+    for (const step of [1, 2, 3, 4, 5, 6, 7, 8, 9]) assert.equal(boot({ fitsFrom: step }).bar.dataset.tight, String(step));
+    assert.equal(boot({ fitsFrom: 10 }).bar.dataset.tight, '9', 'and stops at the last step');
   });
 
   it('fits the bar again when the room or the letters change', () => {
@@ -1153,10 +1120,9 @@ describe('what the make-one box takes, on the home page', () => {
 
   it('promises nothing the make page does not take', () => {
     // each card stands for something the make page has: if one of these goes, so must its card
-    assert.match(html.make, /Paste a link here/, 'a link');
-    assert.match(html.make, /id="maker-choose"[^>]*data-accept="application\/pdf,text\/plain/, 'a letter, as a PDF or as writing');
-    assert.match(html.make, /id="maker-photo"[^>]*data-accept="image\/\*"/, 'a photo');
-    assert.match(html.make, /placeholder="Or type a question"/, 'a question');
+    // a link, a question or some writing go in My notes; a letter, as a PDF or a photo of it, in its own chooser
+    assert.match(html.make, /<textarea class="mynotes-box" id="mynotes-box"[^>]*maxlength="60000"/, 'a link, a question, or a letter\'s words');
+    assert.match(html.make, /<input id="mynotes-files" type="file" accept="application\/pdf,image\/\*" hidden>/, 'a PDF, or a photo');
   });
 });
 
@@ -1180,10 +1146,10 @@ describe('Make it comfy, tried on the home page', () => {
     assert.deepEqual(tiles.filter((tile) => tile[1]).map((tile) => tile[3] + tile[2]), ['onaloud'], 'the one that needs a voice is out of sight where the browser has none');
   });
 
-  it('leaves the make page\'s own "Or try one of these" buttons alone', () => {
+  it('leaves the make page\'s own things to try alone', () => {
     // Both once answered to data-try, so Make it comfy took the make page's four buttons for
     // its own and told a screen reader that each was a button that had been pressed.
-    const tries = [...html.make.matchAll(/<button type="button" data-try="([^"]+)">/g)];
+    const tries = [...html.make.matchAll(/<button [^>]*data-suggest="([^"]+)">/g)];
     assert.ok(tries.length >= 4, 'the make page still has them');
     for (const [button] of tries) assert.doesNotMatch(button, /aria-pressed/);
     const comfort = readFileSync(root('site/js/comfort.js'), 'utf8');
@@ -1266,7 +1232,7 @@ describe('press words to hear them', () => {
     assert.deepEqual(pressed(target({ block: question })), { block: details, words: '' });
   });
 
-  it('reads the make page\'s line about who reads, without the choices it opens', () => {
+  it('reads a line that opens choices, without the choices it opens', () => {
     const choice = (name) => el('LABEL', [el('INPUT'), el('SPAN', [name])]);
     const details = { ...el('DETAILS', [
       el('SUMMARY', [el('SPAN', ['Read by ', el('B', ['Peter']), ' in ', el('B', ['English'])])]),
@@ -1275,9 +1241,6 @@ describe('press words to hear them', () => {
     ]), open: false };
     const line = block('SUMMARY', 'Read by Peter in English', { parentElement: details });
     assert.deepEqual(pressed(target({ block: line })), { block: details, words: 'Read by Peter in English.' });
-    // and the name of its box is words that can be pressed, where a label could not
-    const page = sitePage('make', 'https://reels.example');
-    assert.match(page, /<p class="maker-label" id="maker-label">/);
     assert.equal(wordsOf(el('P', [el('SPAN', [el('SVG', ['a link'])]), el('SPAN', ['Paste a link here'])])), 'Paste a link here.');
   });
 
@@ -1591,7 +1554,7 @@ describe('the menu, where the bar has no room for its links', () => {
 
   it('holds Make it comfy and Add to Claude, the last two things the bar lets go of', () => {
     assert.match(menuOf(html.home), /<button type="button" data-open="comfort"><span class="aa" aria-hidden="true">Aa<\/span><span>Make it comfy<\/span><\/button>/);
-    assert.match(css, /\[data-tight="7"\], \[data-tight="8"\]\) \.top-comfort, \.top-in\[data-tight="8"\] \.top-add \{ display: none; \}/);
+    assert.match(css, /\[data-tight="7"\], \[data-tight="8"\], \[data-tight="9"\]\) \.top-comfort, \.top-in:is\(\[data-tight="8"\], \[data-tight="9"\]\) \.top-add \{ display: none; \}/);
     assert.match(css, /:where\(\.menu-list > \*\) \{ display: flex; \}/, 'a row that is no use on a home screen can still be hidden');
   });
 

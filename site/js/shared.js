@@ -1,9 +1,8 @@
 // Things shared to Pixel Reel from a phone's Share menu: Android offers it there once Pixel
 // Reel is on the home screen. The phone sends what was shared to /share, where the service
 // worker (sw.js) puts it by, on the device, and brings up the page with the make-one box
-// (/make). This hands it to the box the way a person would: a link or some words go in the box,
-// a file goes to the box's own file chooser. Where the box makes reels itself it starts at
-// once, as it does for a drop; where it writes words for Claude, they are ready to copy.
+// (/make). This hands it to My notes there: a link or some words become a note, a file is
+// made into a reel, and either way the reel is started at once.
 // Nothing that was shared leaves the device unless the box sends it.
 
 /** Where the service worker puts what was shared: the same name as SHARED in sw.js. */
@@ -33,34 +32,16 @@ export async function takeShared({ store = caches } = {}) {
   return words || file ? { words, file } : null;
 }
 
-/** Call after the make-one box has been woken (startMaker), so that it hears what it is handed. */
-export async function startShared() {
-  const form = document.getElementById('maker');
-  if (!form || !new URLSearchParams(location.search).has('shared') || !('caches' in window)) return;
+/**
+ * Call with My notes on the make page (startMaking in notes.js), once it is woken: a link or
+ * some words become a note, and the reel is made at once, as if Make my next reel were
+ * pressed; a file is made into a reel at once.
+ */
+export async function startShared(notes = null) {
+  if (!notes || !new URLSearchParams(location.search).has('shared') || !('caches' in window)) return;
   history.replaceState(null, '', location.pathname);   // so that coming back to the page does not look again
   const given = await takeShared().catch(() => null);
   if (!given) return;
-  const here = form.dataset.here === 'on', box = form.querySelector('textarea'), said = document.getElementById(here ? 'here-said' : 'maker-said');
-  if (given.file && here) {
-    // the box's own file chooser, as if the file had been chosen there
-    const chooser = document.getElementById('maker-file'), hand = new DataTransfer();
-    hand.items.add(given.file);
-    chooser.files = hand.files;
-    chooser.dispatchEvent(new Event('change', { bubbles: true }));
-    return;
-  }
-  if (!given.words) {
-    said.textContent = 'Pixel Reel can take a link or some words here. For a file, ask Claude.';
-    return;
-  }
-  box.value = given.words;
-  box.dispatchEvent(new Event('input', { bubbles: true }));   // the box writes its words for Claude again, and grows to fit
-  if (here) {
-    form.requestSubmit();   // shared to be made into a reel: no second press, as for a drop
-    return;
-  }
-  said.textContent = 'Here it is. Now press Copy, and open Claude.';
-  const next = document.getElementById('ask-open');
-  next.focus({ preventScroll: true });
-  next.scrollIntoView({ block: 'center' });   // what was shared is in the box above it, and what to press is in the middle of the screen
+  if (given.file) notes.file(given.file);
+  else if (given.words) notes.add(given.words, { andMake: true });
 }

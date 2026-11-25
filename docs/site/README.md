@@ -1717,3 +1717,41 @@ into a real microphone in Brave yet, or in a thick Irish accent.
 Checked with `scripts/site-fit.js` at 1280, 390, 360 and 320 wide: whole words at all 27
 settings (at 320 it still finds the bar across the top on two rows with the biggest
 OpenDyslexic letters, as every page has since Version 74).
+
+### Version 80
+
+- **The bar across the top on one row on the narrowest phone, with the biggest letters.**
+  At 320 wide with OpenDyslexic at its biggest, the bar let go of all it could and still
+  went onto two rows: Reelie, Menu and Make were 5 pixels too wide together. A last step
+  makes Reelie a little smaller and the Menu button's sides a little narrower.
+
+Checked with `scripts/site-fit.js` at 320 wide on a reel's page and the home page: all well at
+all 27 settings. The make page there still has "Paste" cut in two at the two widest
+spacings; that form is being replaced.
+
+### Version 81
+
+- **Make a pixel reel is a reel now, not a form.** Olly asked for it on 25 November 2026:
+  "instead of this old school form, ... it will just open a pixel reel and that pixel reel
+  will be how to make a pixel reel." The make page plays "How to make a pixel reel", with
+  My notes beside it, as on every reel's page. Peter says what to do (type, press Speak, paste
+  a link, a meeting's transcript or a question, then press Make my next reel), and the
+  visitor does it in the panel beside him.
+- **It ends with four things to try**, over its last picture, each a reel in one press: two
+  cute (cats kneading blankets, yawning being catching) and two "how does that happen?"
+  (a plane staying up, bees making honey).
+- **A letter or a bill** still has its button, "PDF or photo", under the box.
+- **Nothing to decide first.** The reel is in the browser's own language, if Peter reads it
+  here, and read by whoever was chosen on the home page. The old box's choice of language,
+  its Paste and Clear buttons and its words for Claude have gone.
+
+The reel was recorded here with Pocket TTS and its pictures timed to it; its six lines came
+back from speech-to-text word for word but for sound-alikes ("knead" as "need"). Checked in
+the headless browser at 1280 x 800 and 390 x 844 with a stand-in service: typing, a pasted
+transcript, a link, making a reel from them, and a suggestion making one in one press.
+`scripts/site-fit.js` says all well at 1280 and 390 at all 27 settings; at 320 it finds only
+the bar across the top, which Version 80 mends.
+
+| The make page when its reel ends: four things to try, and My notes beside it |
+| --- |
+| ![The reel How to make a pixel reel has ended. Over its last picture: Try one, and four gold buttons, Why do cats knead blankets?, How does a plane stay up?, Why is yawning catching?, How do bees make honey?, and Watch it again. Beside it, My notes with its box, Speak, Add and Make my next reel.](log/v81-make-a-reel.jpg) |

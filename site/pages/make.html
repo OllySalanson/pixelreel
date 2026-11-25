@@ -1,101 +1,56 @@
 <!--
 title: Make a pixel reel - Pixel Reel
-description: Give Pixel Reel a link, a letter, a photo or a question, and it comes back as a short cartoon that explains it, read aloud.
+description: Type, say or paste anything: a link, a meeting's transcript, a question. Pixel Reel turns it into a short cartoon, read aloud.
 -->
 
-<!-- The make-one box, on a page of its own: one big box to paste a link into, one big button, and nothing on the page that plays. -->
-<section class="section make" aria-labelledby="make-title" data-here="{{here}}">
-  <div class="wrap make-in">
-    <div class="head">
-      <h1 id="make-title">Make a pixel reel</h1>
-      <!-- where the service makes the reel itself, maker.js has the words say so (data-here-says) -->
-      <p class="lead" data-here-says="Give it anything wordy. Get back a short cartoon, read aloud.">Say what you want explained. We will write the words to give to Claude.</p>
-    </div>
-    <form class="maker" id="maker" action="/claude" data-here="{{here}}">
-      <!-- the one thing to do first: a big box that says what goes in it, and a button that pastes it in.
-           Its name is a line of words, not a label, so that a press can read it aloud (Press words to hear them, site/js/aloud.js) -->
-      <p class="maker-label" id="maker-label"><span class="tile tile-gold">{{sprite:link:3}}</span><span>Paste a link here</span></p>
-      <div class="maker-box">
-        <textarea id="maker-what" name="about" aria-labelledby="maker-label" rows="2" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Or type a question"></textarea>
-        <div class="maker-box-keys">
-          <!-- shown by maker.js, where the browser lets a page read what was copied on a press -->
-          <button class="btn btn-paper maker-paste" id="maker-paste" type="button" hidden>{{sprite:paste:2}}<span>Paste</span></button>
-          <!-- shown by maker.js while there is something in the box: one press empties it, with no selecting on a phone -->
-          <button class="btn btn-paper maker-clear" id="maker-clear" type="button" hidden>Clear</button>
+<!-- Making a reel: a reel about how to make one, with My notes beside it, as on every reel's page.
+     Whatever goes in My notes is what the visitor's own reel is made from. -->
+<section class="watch night make-watch" aria-labelledby="make-title" data-here="{{here}}">
+  <canvas class="scene" data-scene="cinema" aria-hidden="true"></canvas>
+  <div class="wrap watch-in" id="making" data-mic="{{mic}}">
+    <h1 class="sr-only" id="make-title">Make a pixel reel</h1>
+    <div class="watch-pair">
+      {{player:site-how-to-make}}
+      <!-- when it ends: things to try, each made into a reel with one press (notes.js), where the service makes reels itself -->
+      <div class="reel-end" hidden>
+        <p>Try one</p>
+        <div class="suggest" id="suggest">
+          <button class="btn btn-gold btn-small" type="button" data-suggest="Why do cats knead blankets?">Why do cats knead blankets?</button>
+          <button class="btn btn-gold btn-small" type="button" data-suggest="How does a plane stay up?">How does a plane stay up?</button>
+          <button class="btn btn-gold btn-small" type="button" data-suggest="Why is yawning catching?">Why is yawning catching?</button>
+          <button class="btn btn-gold btn-small" type="button" data-suggest="How do bees make honey?">How do bees make honey?</button>
         </div>
+        <button class="btn btn-paper" type="button" data-again>Watch it again</button>
       </div>
-      <!-- who reads the reel, and in which language: one line that says what is chosen, and opens when pressed, to change it.
-           Shown by maker.js, and only where there is a choice: more than English, or someone besides Peter. -->
-      <details class="maker-read" id="maker-read" hidden>
-        <summary><span class="maker-read-says" id="maker-read-says">Read by Peter</span></summary>
-        <fieldset class="pick maker-language" id="maker-who" hidden>
-          <legend>Read by</legend>
-          {{who}}
-        </fieldset>
-        <fieldset class="pick maker-language" id="maker-language" hidden>
-          <legend>Read it to me in</legend>
-          {{languages}}
-        </fieldset>
-      </details>
-      <!-- Make it right here: shown by maker.js, and only where the service can write a reel itself -->
-      <div class="maker-here" id="maker-here" hidden>
-        <p class="said" id="here-said" role="status"></p>
-        <button class="btn btn-gold btn-big" id="maker-go" type="submit">Make my reel</button>
-        <!-- the other things it takes: a photo and a PDF, a button each -->
-        <div class="maker-more">
-          <p class="maker-more-title" id="maker-more-title">Or give it a letter or a bill</p>
-          <div class="maker-more-ways" role="group" aria-labelledby="maker-more-title">
-            <button class="btn btn-paper" id="maker-photo" type="button" data-accept="image/*">{{icon:camera:2}}<span><span class="for-mouse">Choose a photo</span><span class="for-touch">Take a photo</span></span></button>
-            <button class="btn btn-paper" id="maker-choose" type="button" data-accept="application/pdf,text/plain,text/markdown,.pdf,.txt,.md">{{icon:document:2}}<span>Choose a PDF</span></button>
+      <!-- My notes, for a first reel: anything typed, said or pasted (a link, a transcript, questions), kept on
+           this device. notes.js wakes it where the service can write a reel itself -->
+      <aside class="mynotes" id="mynotes" aria-labelledby="mynotes-title" data-first hidden>
+        <h2 class="mynotes-title" id="mynotes-title">My notes</h2>
+        <ol class="mynotes-list" id="mynotes-list"></ol>
+        <form class="mynotes-add" id="mynotes-add">
+          <textarea class="mynotes-box" id="mynotes-box" rows="2" maxlength="60000" enterkeyhint="done" aria-label="Add a note" placeholder="Add a note"></textarea>
+          <div class="mynotes-keys">
+            <button class="mynotes-mic" id="mynotes-mic" type="button" aria-pressed="false" hidden><svg class="ico" viewBox="0 0 7 9" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><path d="M2 0h3v5h-3zM0 2h1v3h-1zM6 2h1v3h-1zM1 5h1v1h-1zM5 5h1v1h-1zM2 6h3v1h-3zM3 7h1v1h-1zM1 8h5v1h-5z"/></svg><span>Speak</span></button>
+            <button class="mynotes-save" type="submit">Add</button>
+            <!-- a letter or a bill: a PDF, or a photo of it, made into a reel at once (notes.js) -->
+            <button class="mynotes-file" id="mynotes-file" type="button">{{icon:document:2}}<span>PDF or photo</span></button>
           </div>
-          <p class="maker-more-drop for-mouse">Or drop it anywhere on this page.</p>
-          <input id="maker-file" type="file" accept="application/pdf,image/*,text/plain,text/markdown,.pdf,.txt,.md" hidden>
-        </div>
-        <div class="maker-wait" id="maker-wait" role="status" tabindex="-1" hidden>
-          <p class="maker-wait-title">Making your reel</p>
-          <p class="maker-wait-name" id="maker-wait-name"></p>
-          <div class="maker-wait-bar" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-          <p>Sending it to Pixel Reel. One moment.</p>
-        </div>
-      </div>
-      <div class="maker-tries">
-        <p id="tries-title">Or try one of these</p>
-        <ul class="tries" aria-labelledby="tries-title">
-          <li><button type="button" data-try="my gas bill">My gas bill</button></li>
-          <li><button type="button" data-try="how a mortgage works">How a mortgage works</button></li>
-          <li><button type="button" data-try="the offside rule">The offside rule</button></li>
-          <li><button type="button" data-try="why the sky is blue">Why the sky is blue</button></li>
-        </ul>
-      </div>
-      <!-- giving the words to their own Claude is still there, behind a button, where the service makes the reel itself -->
-      <p class="maker-other" id="maker-other" hidden><button class="plain-btn" id="maker-own-open" type="button" aria-expanded="false" aria-controls="maker-own">Use your own Claude instead</button></p>
-      <div class="maker-own" id="maker-own">
-        <div class="ask">
-          <p class="ask-label" id="ask-label">Say this to Claude</p>
-          <p class="ask-words" id="ask-words" aria-labelledby="ask-label">Make me a pixel reel about this: my gas bill</p>
-        </div>
-        <div class="row">
-          <button class="btn btn-gold" type="button" data-copy="#ask-words" data-says="#maker-said" data-copied="Copied. Now paste it into Claude.">Copy the words</button>
-          <a class="btn btn-paper" id="ask-open" href="https://claude.ai/new" target="_blank" rel="noopener" data-copy="#ask-words" data-says="#maker-said">Copy, and open Claude</a>
-        </div>
-        <p class="said" id="maker-said" role="status"></p>
-        <p class="maker-first">First time? <a href="/claude">Add Pixel Reel to Claude</a> first. It takes a minute.</p>
-      </div>
-    </form>
+          <input id="mynotes-files" type="file" accept="application/pdf,image/*" hidden>
+        </form>
+        <button class="btn btn-gold mynotes-make" id="mynotes-make" type="button" disabled>Make my next reel</button>
+        <p class="mynotes-says" id="mynotes-says" role="status"></p>
+      </aside>
+    </div>
+    <!-- where the service cannot write a reel itself, the way to make one is through Claude -->
+    <p class="make-elsewhere" id="make-elsewhere" hidden><a class="btn btn-gold btn-big" href="/claude">Add Pixel Reel to Claude</a></p>
   </div>
-  <!-- the reels made here, kept on this device only: mine.js fills it in, and shows it if there are any -->
+</section>
+
+<!-- the reels made here, kept on this device only: mine.js fills it in, and shows it if there are any -->
+<section class="section mine-part" id="yours" aria-labelledby="mine-title">
   <div class="wrap mine" id="mine" hidden>
-    <h3 id="mine-title">Your reels</h3>
-    <p class="mine-lead">The reels you have made here. This list is kept on this device only.</p>
+    <h2 id="mine-title">Your reels</h2>
     <ul class="mine-list" id="mine-list" aria-labelledby="mine-title"></ul>
     <p class="said" id="mine-said" role="status"></p>
-  </div>
-  <!-- shown over the whole page while something is dragged across it -->
-  <div class="drop-over" id="drop-over" aria-hidden="true" hidden>
-    <div class="drop-over-in">
-      {{icon:document:8}}
-      <p class="drop-over-title">Drop it here</p>
-      <p>We will turn it into a pixel reel.</p>
-    </div>
   </div>
 </section>

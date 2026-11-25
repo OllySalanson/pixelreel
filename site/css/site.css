@@ -93,13 +93,17 @@ button { font: inherit; letter-spacing: inherit; word-spacing: inherit; color: i
    (a Menu button takes their place, and opens them as a list), the "now" of "Make a pixel
    reel now", the name beside Reelie, the end of "Add to Claude", the "pixel", then the rest
    but "Make", then the comfort box, and last the Add button (the menu holds both). Each but
-   the last two is still there for a screen reader. */
-.top-in[data-tight] .top-nav, .top-in:is([data-tight="7"], [data-tight="8"]) .top-comfort, .top-in[data-tight="8"] .top-add { display: none; }
-.top-in:is([data-tight="2"], [data-tight="3"], [data-tight="4"], [data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"]) .top-make-now,
-.top-in:is([data-tight="3"], [data-tight="4"], [data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"]) .logo span,
-.top-in:is([data-tight="4"], [data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"]) .top-add-more,
-.top-in:is([data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"]) .top-make-more,
-.top-in:is([data-tight="6"], [data-tight="7"], [data-tight="8"]) .top-make-what { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+   the last two is still there for a screen reader. Last of all, with the biggest letters on
+   the narrowest phone, Reelie and the Menu button take a little less room. */
+.top-in[data-tight] .top-nav, .top-in:is([data-tight="7"], [data-tight="8"], [data-tight="9"]) .top-comfort, .top-in:is([data-tight="8"], [data-tight="9"]) .top-add { display: none; }
+.top-in:is([data-tight="2"], [data-tight="3"], [data-tight="4"], [data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"], [data-tight="9"]) .top-make-now,
+.top-in:is([data-tight="3"], [data-tight="4"], [data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"], [data-tight="9"]) .logo span,
+.top-in:is([data-tight="4"], [data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"], [data-tight="9"]) .top-add-more,
+.top-in:is([data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"], [data-tight="9"]) .top-make-more,
+.top-in:is([data-tight="6"], [data-tight="7"], [data-tight="8"], [data-tight="9"]) .top-make-what { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.top-in[data-tight="9"] .logo { padding-right: 0; }
+.top-in[data-tight="9"] .logo .px { width: 1.5rem; }
+.top-in[data-tight="9"] .top-menu { padding-inline: 0.25rem; }
 .top-menu { display: none; }
 .top-in[data-tight] .top-menu { display: inline-flex; }
 .top-nav { display: flex; gap: 0.25rem; }
@@ -621,6 +625,18 @@ html[data-paper="night"] .handset .px { filter: drop-shadow(var(--u) 0 0 var(--l
 .watch-before a { text-decoration-color: var(--gold); }
 .watch-before a > span:first-child { font-family: var(--pixel); font-size: 1.4em; line-height: 1; color: var(--gold); }
 
+/* The make page: the reel about making one, with My notes beside it. When it ends, things
+   to try, each one press from a reel of its own. */
+.make-watch .reel-end > p { margin-bottom: 0.2rem; }
+.suggest { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 0.75rem; max-width: 36rem; }
+.suggest .btn { margin-block: var(--u) calc(var(--u) * 3); }
+.make-elsewhere { max-width: none; margin-top: 1.5rem; text-align: center; }
+.mine-part { padding-block: clamp(2rem, 4vw, 3rem) clamp(3rem, 6vw, 5rem); }
+.mine-part:has(> .mine[hidden]) { display: none; }
+.mine-part .mine { margin-top: 0; }
+/* a long note (a pasted transcript, say) shows its first few lines; all of it is kept, and sent */
+.mynotes-note > p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; line-clamp: 6; overflow: hidden; white-space: pre-line; }
+
 /* My notes: beside the player where there is room, as tall as it is, with their frames
    joined, so the two read as one thing; under it on a phone. The player keeps the size it
    has without them. */
@@ -663,6 +679,7 @@ html[data-paper="night"] .handset .px { filter: drop-shadow(var(--u) 0 0 var(--l
 .mynotes-keys button { flex: 1 0 auto; }
 .mynotes-keys button:disabled, .mynotes-x:disabled { opacity: 0.4; pointer-events: none; }
 .mynotes-mic .ico { width: 0.875rem; height: 1.125rem; fill: currentColor; }
+.mynotes-file .px { width: 1.25rem; height: auto; }
 /* listening: the microphone is red, and the box it is writing into is framed in it */
 .mynotes-mic.on { color: #fff; background: var(--red); }
 .mynotes-mic.on:hover { background: #e04848; }
