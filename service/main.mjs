@@ -26,14 +26,14 @@
 // PIXELREEL_NARRATORS (such as anna,stuart) lets someone ask for a narrator other than Peter.
 // PIXELREEL_BOTTLE_KEY is Olly's own key to Message in a Bottle's note button (the link
 // #bottle=<key>), and PIXELREEL_BOTTLE_READER the admin key, which adds sites and people and
-// reads the notes (bottle/README.md). It sends email through Resend when PIXELREEL_RESEND_KEY
-// and PIXELREEL_BOTTLE_MAIL_FROM (an address on the account's sending domain) are both set;
-// otherwise each email is kept in its outbox and none is sent. PIXELREEL_BOTTLE_REPLY_TO is
-// Olly's own address: replies to its emails go there, and so does word of new notes.
+// reads the notes (the message-in-a-bottle package's README). It sends email through Resend
+// when PIXELREEL_RESEND_KEY and PIXELREEL_BOTTLE_MAIL_FROM (an address on the account's
+// sending domain) are both set; otherwise each email is kept in its outbox and none is sent.
+// PIXELREEL_BOTTLE_REPLY_TO is Olly's own address: replies to its emails go there, and so does word of new notes.
 // PIXELREEL_RESEND_WEBHOOK_SECRET is the signing secret of the Resend webhook that says when
 // an email bounced (docs/deploy.md).
 import { join } from 'node:path';
-import { resend } from '../bottle/mail.mjs';
+import { resend } from 'message-in-a-bottle/mail';
 import { CLAUDE_ADDRESSES, RateLimit } from './limits.mjs';
 import { NARRATORS, recordWith, Reels } from './reels.mjs';
 import { createService } from './server.mjs';
