@@ -557,7 +557,7 @@ The local tools (`npm run voices`, `page`, `video`) have no such limits.
   service's own files. The page names the reel and points at its first picture (so a link
   sent in a message shows what it is) but holds none of its words: the player fetches those.
 - Search engines are asked not to list any reel, its recordings or its video.
-- Notes left with Message in a Bottle's button ([bottle/README.md](../bottle/README.md)), which
+- Notes left with Message in a Bottle's button ([its README](https://github.com/OllySalanson/message-in-a-bottle#readme)), which
   only the people on a site's list ever see, are kept in the same place under `bottles/`,
   each with a screenshot of the page and the browser it was left from, with the sites, their
   people (names and email addresses) and a hash of each person's key. Only the admin key, or

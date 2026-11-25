@@ -12,8 +12,7 @@ export default [
       eqeqeq: ['error', 'smart']
     }
   },
-  { files: ['src/**/*.js', 'reels/**/*.js', 'scripts/templates/*.js', 'scripts/site-fit.js', 'scripts/site-press.js', 'service/app-bridge.js', 'site/js/*.js', 'bottle/bottle.js', 'bottle/bottle-ui.mjs', 'bottle/admin.mjs'], languageOptions: { globals: globals.browser } },
+  { files: ['src/**/*.js', 'reels/**/*.js', 'scripts/templates/*.js', 'scripts/site-fit.js', 'scripts/site-press.js', 'service/app-bridge.js', 'site/js/*.js'], languageOptions: { globals: globals.browser } },
   { files: ['site/js/sw.js'], languageOptions: { sourceType: 'script', globals: globals.serviceworker } },   // the service worker: not a module
-  { files: ['bottle/bottle.js'], languageOptions: { sourceType: 'script' } },   // the button: a plain script, so any page can load it
-  { files: ['scripts/**/*.mjs', 'service/**/*.mjs', 'bottle/server.mjs', 'bottle/sites.mjs', 'bottle/mail.mjs', 'bottle/bottles.mjs', 'bottle/test/*.js', 'test/**/*.js', 'eslint.config.js'], languageOptions: { globals: globals.node } }
+  { files: ['scripts/**/*.mjs', 'service/**/*.mjs', 'test/**/*.js', 'eslint.config.js'], languageOptions: { globals: globals.node } }
 ];

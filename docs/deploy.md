@@ -221,7 +221,14 @@ To switch it off again: `--update-env-vars PIXELREEL_TRY=0`.
 
 ### Message in a Bottle
 
-The note button ([bottle/README.md](../bottle/README.md)) is on when the service has its two
+The note button (Message in a Bottle, a package of its own in the private repository
+[OllySalanson/message-in-a-bottle](https://github.com/OllySalanson/message-in-a-bottle), [its README](https://github.com/OllySalanson/message-in-a-bottle#readme))
+is built into the image from the packed copy in `vendor/` that `package.json` names, so the
+build never needs to reach a private repository. To take a new version of it, tag it there and
+run `npm run bottle-update` (which clones it with your own git sign-in, runs its checks, and
+remakes the copy), then commit `vendor/`, `package.json` and `package-lock.json`.
+
+It is on when the service has its two
 keys: `PIXELREEL_BOTTLE_KEY`, Olly's own key (his link is `https://pixelreel.pro/#bottle=<key>`,
 after `#` so that no request log ever holds it,
 and with it in his browser `https://pixelreel.pro/bottle/admin` opens the page of queues), and

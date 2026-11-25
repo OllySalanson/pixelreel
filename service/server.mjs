@@ -6,7 +6,7 @@ import { createServer } from 'node:http';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { ReelError } from '../src/reel.js';
 import { LANG_CODES } from '../src/words.js';
-import { createBottle } from '../bottle/server.mjs';
+import { createBottle } from 'message-in-a-bottle';
 import { createMcpServer } from './mcp.mjs';
 import { BusyError, isId, languageName } from './reels.mjs';
 import { addressMeant, addToClaudeLink, appManifest, robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
@@ -370,7 +370,7 @@ async function sendWatchCard(req, res, name, { reels, cards, fresh, log }) {
  * `fresh` has browsers check for a newer copy of the site's files every time, for working on it;
  * `writer` (see service/writer.mjs) switches on Make it right here, which costs money a reel;
  * the server's written() resolves once every reel begun that way is written or given up on.
- * `bottle` ({ key, reader, mail, replyTo, notify, hook }, see bottle/README.md) is Message in a Bottle: the note
+ * `bottle` ({ key, reader, mail, replyTo, notify, hook }, see its README) is Message in a Bottle: the note
  * button for the people on each site's list, this one's and other sites', with this site's
  * /review page where they sign in; `key` is Olly's own, and `reader` the admin key.
  */

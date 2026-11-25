@@ -1,4 +1,4 @@
-// Message in a Bottle (bottle/, a package of its own with its own tests) as Pixel Reel uses
+// Message in a Bottle (the message-in-a-bottle package, with tests of its own) as Pixel Reel uses
 // it: on every page of the site, with its notes kept in the reels' store.
 import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
@@ -32,6 +32,8 @@ describe('in the Pixel Reel service', () => {
       assert.deepEqual(await reels.sweep(), [], 'the hourly sweep of old reels leaves notes alone');
       assert.equal((await fetch(`${base}/bottle/notes`, { method: 'POST', headers: { origin: 'https://elsewhere.example', 'x-bottle-key': KEY }, body: JSON.stringify(note()) })).status, 403);
       assert.equal((await fetch(`${base}/bottle/bottle.js`)).status, 200);
+      // the screenshot maker, found through the installed package as the image installs it
+      assert.match(await (await fetch(`${base}/bottle/shot.mjs`)).text(), /domToJpeg/);
 
       // the service's own key is Olly's, on Pixel Reel's list, and the admin key adds other sites and the people on them
       const admin = (path, body) => fetch(`${base}/bottle/${path}`, { method: body ? 'POST' : 'GET', headers: { authorization: `Bearer ${READER}` }, body: body && JSON.stringify(body) }).then((r) => r.json());

@@ -21,7 +21,9 @@ ARG VOICE_NAMES="anna vera stuart_bell charles paul"
 COPY scripts/setup-voices.sh scripts/setup-voices.sh
 RUN VOICE_LANGUAGES="$VOICE_LANGUAGES" VOICE_NAMES="$VOICE_NAMES" sh scripts/setup-voices.sh && chmod -R a+rX /opt/huggingface
 
+# vendor/ holds the packed copy of Message in a Bottle that package.json names (npm run bottle-update)
 COPY package.json package-lock.json ./
+COPY vendor vendor
 RUN npm ci --omit=dev --no-audit --no-fund
 
 COPY . .
