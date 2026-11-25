@@ -5,9 +5,10 @@ import { startAloud } from './aloud.js';
 import { startApp } from './app.js';
 import { startComfort } from './comfort.js';
 import { startKept } from './kept.js';
-import { startCopying, startHere, startMaker } from './maker.js';
+import { startCopying, startHere } from './maker.js';
 import { startMenu } from './menu.js';
 import { startMine } from './mine.js';
+import { startMaking } from './notes.js';
 import { ReelPlayer } from './player.js';
 import { startRuler } from './ruler.js';
 import { startScenes } from './scenery.js';
@@ -31,8 +32,7 @@ startTheatre();
 startHearing();
 startVoice();   // before the make-one box, so that its first words say who was chosen
 startHere();
-startMaker();
-startShared();   // after the box, so that it hears what it is handed
+startShared(startMaking());   // My notes on the make page, then what a phone shared to it
 startMine();
 startCopying();
 startSending();

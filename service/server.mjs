@@ -8,6 +8,7 @@ import { ReelError } from '../src/reel.js';
 import { LANG_CODES } from '../src/words.js';
 import { createBottle } from 'message-in-a-bottle';
 import { HEAR_MAX_BYTES, HearError } from './hear.mjs';
+import { languageFor } from '../site/js/given.js';
 import { createMcpServer } from './mcp.mjs';
 import { BusyError, isId, languageName } from './reels.mjs';
 import { addressMeant, addToClaudeLink, appManifest, robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
@@ -215,6 +216,11 @@ async function handleTry(req, res, context) {
     // the language and the narrator asked for come in the JSON, or beside a file; a reel written again keeps its own
     source.language = languageOf(source.language ?? req.headers['x-reel-language'], reels.languages);
     source.narrator = narratorOf(source.narrator ?? req.headers['x-reel-narrator'], reels.narrators);   // who reads it, chosen on the home page
+    // notes from the make page, where there is no choice of language to make: the one the browser says its reader prefers, if Peter reads it here
+    if (source.kind === 'notes' && !source.language) {
+      const preferred = String(req.headers['accept-language'] ?? '').split(',').map((tag) => tag.split(';')[0].trim()).filter(Boolean);
+      source.language = languageOf(languageFor(preferred, reels.languages), reels.languages);
+    }
   } catch (err) {
     if (!(err instanceof TryError)) throw err;
     sendJson(res, 400, { error: err.message });
@@ -249,7 +255,7 @@ async function handleTry(req, res, context) {
   try {
     await writer.fits?.(source);   // too long to read is said here and now, while what was given is still in front of them
     begun = await reels.begin(source.kind === 'reel' ? String(source.reel.title) : WRITING_TITLE, {   // one made again keeps its name while it waits
-      owned: true, ...(source.kind === 'next' ? { follows: source.follows, notes: source.notes } : {})
+      owned: true, ...(source.kind === 'next' ? { follows: source.follows, notes: source.notes } : source.kind === 'notes' ? { notes: source.notes } : {})
     });
   } catch (err) {
     limits?.tries.undo(caller);   // nothing has reached Claude yet

@@ -47,12 +47,16 @@ describe('My notes', () => {
     assert.equal(speechHere({ navigator: {} }), null);
   });
 
-  it('finds everything it looks for on a reel\'s page', () => {
+  it('finds everything it looks for on a reel\'s page and the make page', () => {
     const page = readFileSync(new URL('../site/pages/reel.html', import.meta.url), 'utf8');
-    for (const script of ['notes.js', 'watch.js']) {
-      const code = readFileSync(new URL(`../site/js/${script}`, import.meta.url), 'utf8');
-      const looked = [...code.matchAll(/getElementById\('([a-z-]+)'\)/g)].map(([, id]) => id);
-      for (const id of looked) assert.ok(page.includes(` id="${id}"`), `${script}: the page has nothing called ${id}`);
+    const make = readFileSync(new URL('../site/pages/make.html', import.meta.url), 'utf8');
+    const lookedIn = (script) => [...readFileSync(new URL(`../site/js/${script}`, import.meta.url), 'utf8').matchAll(/getElementById\('([a-z-]+)'\)/g)].map(([, id]) => id);
+    for (const id of lookedIn('watch.js')) assert.ok(page.includes(` id="${id}"`), `watch.js: the page has nothing called ${id}`);
+    // the panel's own parts are on both pages; the make page's own (its file chooser, the way to Claude) only there, and looked for with a ?
+    const own = ['mynotes-file', 'mynotes-files', 'make-elsewhere'];
+    for (const id of lookedIn('notes.js')) {
+      assert.ok(make.includes(` id="${id}"`), `notes.js: the make page has nothing called ${id}`);
+      if (!own.includes(id)) assert.ok(page.includes(` id="${id}"`), `notes.js: a reel's page has nothing called ${id}`);
     }
     assert.match(page, /<aside class="mynotes" id="mynotes" aria-labelledby="mynotes-title" hidden>/, 'hidden until the script wakes it');
     assert.match(page, new RegExp(`maxlength="${NOTE_MAX}"`));

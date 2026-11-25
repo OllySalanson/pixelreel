@@ -625,6 +625,18 @@ html[data-paper="night"] .handset .px { filter: drop-shadow(var(--u) 0 0 var(--l
 .watch-before a { text-decoration-color: var(--gold); }
 .watch-before a > span:first-child { font-family: var(--pixel); font-size: 1.4em; line-height: 1; color: var(--gold); }
 
+/* The make page: the reel about making one, with My notes beside it. When it ends, things
+   to try, each one press from a reel of its own. */
+.make-watch .reel-end > p { margin-bottom: 0.2rem; }
+.suggest { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 0.75rem; max-width: 36rem; }
+.suggest .btn { margin-block: var(--u) calc(var(--u) * 3); }
+.make-elsewhere { max-width: none; margin-top: 1.5rem; text-align: center; }
+.mine-part { padding-block: clamp(2rem, 4vw, 3rem) clamp(3rem, 6vw, 5rem); }
+.mine-part:has(> .mine[hidden]) { display: none; }
+.mine-part .mine { margin-top: 0; }
+/* a long note (a pasted transcript, say) shows its first few lines; all of it is kept, and sent */
+.mynotes-note > p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; line-clamp: 6; overflow: hidden; white-space: pre-line; }
+
 /* My notes: beside the player where there is room, as tall as it is, with their frames
    joined, so the two read as one thing; under it on a phone. The player keeps the size it
    has without them. */
@@ -667,6 +679,7 @@ html[data-paper="night"] .handset .px { filter: drop-shadow(var(--u) 0 0 var(--l
 .mynotes-keys button { flex: 1 0 auto; }
 .mynotes-keys button:disabled, .mynotes-x:disabled { opacity: 0.4; pointer-events: none; }
 .mynotes-mic .ico { width: 0.875rem; height: 1.125rem; fill: currentColor; }
+.mynotes-file .px { width: 1.25rem; height: auto; }
 /* listening: the microphone is red, and the box it is writing into is framed in it */
 .mynotes-mic.on { color: #fff; background: var(--red); }
 .mynotes-mic.on:hover { background: #e04848; }

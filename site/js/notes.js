@@ -3,8 +3,10 @@
 // service tells Claude the whole chain of reels that led here, with the notes each was made
 // from (service/writer.mjs), so the next reel answers them in context.
 import { deviceStorage, mineStorage, rememberMine } from './mine.js';
-import { NOTE_MAX, NOTES_MAX } from './given.js';
+import { givenFrom, NOTE_MAX, NOTES_MAX, requestFor, TEXT_MAX } from './given.js';
+import { shrinkPicture } from './maker.js';
 import { canRecord, recordForService } from './hearing.js';
+import { readNarrator } from './voice.js';
 
 /** Where a reel's notes are kept on this device. */
 const keyOf = (id) => `pixelreel-notes:${id}`;
@@ -30,8 +32,29 @@ export function writeNotes(storage, id, notes) {
   }
 }
 
-/** A note as it is kept: one line, no longer than a note may be. Empty for nothing worth keeping. */
-export const tidyNote = (words) => String(words ?? '').replace(/\s+/g, ' ').trim().slice(0, NOTE_MAX);
+/**
+ * A note as it is kept: one line, no longer than a note may be. Empty for nothing worth
+ * keeping. With `first` (the make page, where a note may be a pasted transcript), its lines
+ * are kept, and it may be as long as a piece of writing.
+ */
+export const tidyNote = (words, { first = false } = {}) => (first
+  ? String(words ?? '').replace(/\r\n?/g, '\n').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim().slice(0, TEXT_MAX)
+  : String(words ?? '').replace(/\s+/g, ' ').trim().slice(0, NOTE_MAX));
+
+/** Where the language last chosen for a reel is kept (the same as maker.js keeps it in). */
+const LANGUAGE = 'pixelreel-language';
+
+/**
+ * What to send to make a reel from `notes`: the next reel after reel `id`, or with `first`, a
+ * first reel from the make page, read by whoever was chosen on this device, in the language
+ * chosen last (the service keeps a reel it follows in that reel's own).
+ */
+export function noteRequest(id, notes, { first = false, storage = null } = {}) {
+  if (!first) return { next: id, notes };
+  let language = null;
+  try { language = storage?.getItem(LANGUAGE) || null; } catch { /* nothing kept */ }
+  return { notes, ...(language && language !== 'english' ? { language } : {}), ...(storage && readNarrator(storage) ? { narrator: readNarrator(storage) } : {}) };
+}
 
 /**
  * How the microphone hears a note, in this browser: the browser's own speech recognition,
@@ -48,7 +71,7 @@ export function speechHere(scope = globalThis) {
  * Wakes My notes on a reel's page, for reel `id`. Gives back { ready(), gone() }: the page
  * says when the reel can be followed (it is ready to play), or has gone or failed.
  */
-export function startNotes(id) {
+export function startNotes(id, { first = false } = {}) {
   const panel = document.getElementById('mynotes');
   if (!panel) return { ready() {}, gone() {} };
   const list = document.getElementById('mynotes-list'), form = document.getElementById('mynotes-add'), box = document.getElementById('mynotes-box');
@@ -100,7 +123,7 @@ export function startNotes(id) {
   }
 
   function save() {
-    const note = tidyNote(box.value);
+    const note = tidyNote(box.value, { first });
     box.value = '';
     grow();
     if (!note || full()) return;
@@ -141,7 +164,7 @@ export function startNotes(id) {
   mic.hidden = !(Speech || serviceHears);
   const micLabel = mic.querySelector('span');
   const show = (said) => {
-    box.value = `${before} ${said}`.trim().slice(0, NOTE_MAX);
+    box.value = `${before} ${said}`.trim().slice(0, first ? TEXT_MAX : NOTE_MAX);
     grow();
     box.scrollTop = box.scrollHeight;
   };
@@ -223,13 +246,13 @@ export function startNotes(id) {
     else listenInBrowser();
   });
 
-  // the next reel: made from these notes, with the chain that led here
-  make.addEventListener('click', async () => {
+  // the next reel: made from these notes, with the chain that led here (on the make page, the visitor's first)
+  async function makeFrom(given) {
     busy = true;
     settle();
     says.textContent = 'One moment.';
     try {
-      const res = await fetch('/try', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ next: id, notes }) });
+      const res = await fetch('/try', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(noteRequest(id, given, { first, storage })) });
       const answer = await res.json().catch(() => ({}));
       if (!res.ok || !answer.watch) throw new Error(answer.error || 'That did not work. Try again in a minute.');
       rememberMine(mineStorage(), answer);
@@ -239,7 +262,39 @@ export function startNotes(id) {
       busy = false;
       settle();
     }
+  }
+  make.addEventListener('click', () => makeFrom(notes));
+  // on the make page: a PDF or a photo, chosen (or taken, on a phone), made into a reel at once
+  const filer = document.getElementById('mynotes-file'), files = document.getElementById('mynotes-files');
+  filer?.addEventListener('click', () => files.click());
+  files?.addEventListener('change', () => {
+    const [file] = files.files;
+    files.value = '';   // so the same file can be chosen again
+    if (file) makeFromFile(file);
   });
+  // a PDF or a photo (shared from a phone, or dropped on the make page) is made into a reel at once, as it is
+  async function makeFromFile(file) {
+    busy = true;
+    settle();
+    says.textContent = 'One moment.';
+    try {
+      const { narrator, language } = noteRequest(id, [], { first: true, storage });
+      const request = await requestFor({ file }, { shrink: shrinkPicture, language, narrator });
+      const res = await fetch('/try', { method: 'POST', ...request });
+      const answer = await res.json().catch(() => ({}));
+      if (!res.ok || !answer.watch) throw new Error(answer.error || 'That did not work. Try again in a minute.');
+      rememberMine(mineStorage(), answer);
+      location.assign(answer.watch);
+    } catch (err) {
+      says.textContent = err instanceof TypeError ? 'That did not work. Try again in a minute.' : err.message;
+      busy = false;
+      settle();
+    }
+  }
+  // things to try, on the make page when its reel ends: one press makes a reel of that, and nothing else
+  for (const suggestion of document.querySelectorAll('button[data-suggest]')) {
+    suggestion.addEventListener('click', () => { if (!busy) makeFrom([suggestion.dataset.suggest]); });
+  }
   // coming back to this page with Back finds the button ready again
   addEventListener('pageshow', (e) => { if (e.persisted) { busy = false; says.textContent = ''; settle(); } });
 
@@ -247,6 +302,42 @@ export function startNotes(id) {
   grow();
   return {
     ready() { followable = true; settle(); },
-    gone() { stopListening(); panel.hidden = true; }
+    gone() { stopListening(); panel.hidden = true; },
+    /** Adds a note, as if it had been typed in and saved; with `andMake`, makes the reel at once. */
+    add(words, { andMake = false } = {}) {
+      box.value = words;
+      save();
+      if (andMake && notes.length) makeFrom(notes);
+    },
+    /** Makes a reel of a file at once (a PDF or a picture). */
+    file: makeFromFile
   };
+}
+
+/**
+ * The make page: a reel about how to make one, with My notes beside it. Where the service
+ * cannot write a reel itself, the way to make one is through Claude instead. Gives back the
+ * notes (see startNotes), or null.
+ */
+export function startMaking() {
+  const panel = document.getElementById('mynotes');
+  if (!panel?.hasAttribute('data-first')) return null;
+  if (panel.closest('[data-here]')?.dataset.here !== 'on') {
+    document.getElementById('make-elsewhere').hidden = false;
+    for (const suggestion of document.querySelectorAll('.suggest')) suggestion.hidden = true;
+    return null;
+  }
+  const notes = startNotes('make', { first: true });
+  notes.ready();
+  // anything dropped on the page: a file is made into a reel, a link or some words become a note
+  const page = panel.closest('section');
+  page.addEventListener('dragover', (e) => e.preventDefault());
+  page.addEventListener('drop', (e) => {
+    const given = givenFrom(e.dataTransfer);
+    if (!given) return;
+    e.preventDefault();
+    if (given.file) notes.file(given.file);
+    else notes.add(given.words);
+  });
+  return notes;
 }

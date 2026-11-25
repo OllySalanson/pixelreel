@@ -301,25 +301,32 @@ last line: it can use the same `play.json` fields.
 **Off unless you switch it on, because every reel it makes is paid for.** (It is on at
 pixelreel.pro.)
 
-Someone without Claude cannot use the connector. With this on, the form on the website's
-own page for making a reel ([/make](../site/pages/make.html), "Make a pixel reel" in the menu
-of every page) makes the reel itself. The visitor gives it one thing to explain, in
-whichever way is easiest for them:
+Someone without Claude cannot use the connector. With this on, the website's own page for
+making a reel ([/make](../site/pages/make.html), "Make a pixel reel" in the menu of every
+page) makes the reel itself. It is not a form: it is a reel, "How to make a pixel reel"
+(`reels/site-how-to-make`, Peter, about 43 seconds), with [My notes](#my-notes) beside it,
+as on every reel's page. Peter says what to do, and the visitor does it in the panel beside
+him:
 
-- **Paste a link** into the one big box, which says "Paste a link here". Its **Paste** button
-  puts in whatever was last copied, in one press, so nobody has to press and hold on a phone.
-  **Clear**, beside it once the box has something in it, empties it in one press.
-  Then press **Make my reel**, the big button straight under it.
-- **Type a question**, or a few words, into the same box.
-- **Paste some writing** (an email, a letter) into the box. It grows to hold it.
-- **Take a photo**, or **Choose a PDF**: a button each, under the big button, for a letter or
-  a bill.
-- **Drop** a link, a PDF, a picture or some writing **anywhere on the make page**. A panel says
-  "Drop it here" while it is dragged, and the reel is started as soon as it lands.
+- **Type**, or press **Speak** and say it, or **paste** anything into the box: a link, the
+  transcript of a meeting, some writing, a question. Enter (or Add) makes it a note. A note
+  here may be as long as a piece of writing (60,000 letters for all of them together), and
+  a long one shows its first six lines.
+- **PDF or photo**, a button under the box: a letter or a bill, chosen (or taken, on a
+  phone), is made into a reel at once.
+- **Drop** a link or some writing anywhere on the page and it becomes a note; drop a PDF or
+  a picture and it is made into a reel at once.
+- **Make my next reel** makes one reel from all the notes together (`POST /try` with
+  `{ notes }`, `firstAsk` in `service/writer.mjs`). A note that is a web address and nothing
+  else is read with Claude's page reader; a link inside some writing is not.
+- **When the reel ends**, it offers four things to try over its last picture, each a reel
+  with one press: "Why do cats knead blankets?", "How does a plane stay up?", "Why is
+  yawning catching?", "How do bees make honey?". The reel's last scene names them too.
 
-Who reads the reel, and in which language, is one line between the box and the big button
-("Read by Peter in English"). It opens when pressed, so there is nothing to decide before
-making a reel, and the choice made last time is kept.
+The reel it makes is read by whoever was chosen on the home page, and in the language last
+chosen on the device, or else the one the browser says its reader prefers (`Accept-Language`),
+if Peter reads it here. Its notes are kept with it, so a reel made from its own My notes is
+told them too (cut to a note's length each).
 
 With this on, "Want one of your own?" under every reel, on the pages of the site's own
 reels and in the player that opens over a page, leads to the make page ("Make a pixel
@@ -350,34 +357,31 @@ counts as one of the visitor's reels for the hour, and costs about as much as a 
 few words.
 
 **In the reader's own language.** Where Peter can read more than English
-([Other languages](#other-languages)), the box asks "Read it to me in" and offers English and
-each of those languages, called what its speakers call it (Français, Español). It starts on
-the language the browser says its reader prefers, if that is one on offer, and remembers the
-last one chosen on the device. The choice is there whether or not Make it right here is on:
-where it is off, the words the box writes for someone's own Claude name the language ("Make
-me a pixel reel in French about this: ..."). Where it is on, Claude is told to write every word of the reel in that
-language, whatever language what was given is in, so a letter in English can be explained in
-Spanish; the reel is recorded with that language's model. A reel made simpler or shorter
-stays in the language it is in. With no other language switched on, there is no choice and
-every reel is in English.
+([Other languages](#other-languages)), a reel made on the make page is in the language the
+browser says its reader prefers, if Peter reads it here, unless one was chosen on the device
+before. Claude is told to write every word of it in that language, whatever language the
+notes are in; the reel is recorded with that language's model. A reel made simpler or
+shorter, or made from the notes on another, stays in the language it is in. With no other
+language switched on, every reel is in English. (The make page used to ask "Read it to me
+in"; it now asks nothing.)
 
-**Read by whoever was chosen.** Where other narrators read ([Other narrators](#other-narrators)), the
-form asks "Read by" and offers each of them, and the cards under Meet Peter on the home
-page make the same choice: it is kept in one place on the device, so each shows what the
-other chose. A reel made in the form is read by that narrator: the choice goes with the request, is checked
-against the narrators the service offers, and Claude is told who will read, so that the
-narrator never says they are Peter. A reel made simpler or shorter keeps whoever read it.
+**Read by whoever was chosen.** Where other narrators read ([Other narrators](#other-narrators)),
+the cards under Meet Peter on the home page offer each of them, and the choice is kept on the
+device. A reel made on the make page is read by that narrator: the choice goes with the
+request, is checked against the narrators the service offers, and Claude is told who will
+read, so that the narrator never says they are Peter. A reel made simpler or shorter keeps
+whoever read it.
 
-**Your reels.** The make page lists the reels a visitor has made here, under the form, so
+**Your reels.** The make page lists the reels a visitor has made here, under its reel, so
 that they can find them again, call them what they like, and delete them. The list is kept
 in the visitor's own browser and never sent to the service. When a reel is begun, `/try`
 gives back a `key` with its id, which the service keeps only the hash of; `DELETE /r/<id>`
 with that key (`x-reel-key`) deletes the reel, its recordings and its video at once. Having
 a reel's link is enough to watch it, never to delete it.
 
-What can be known before Claude is asked is said in the box, before the visitor leaves it:
-nothing typed, a file Pixel Reel cannot read, too much of it, a PDF too long to read, too
-many reels in the last hour.
+What can be known before Claude is asked is said under the panel's button, before the
+visitor leaves the page: a file Pixel Reel cannot read, too much of it, a PDF too long to
+read, too many reels in the last hour.
 
 For a page that is waiting, `/r/<id>/play.json` gives the reel's `state` (`writing`, then
 `queued`, `recording` and `ready`, or `failed` with an `error`) and how far it has got:

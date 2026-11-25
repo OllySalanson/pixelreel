@@ -10,7 +10,7 @@ import { ReelError } from '../src/reel.js';
 import { createService } from '../service/server.mjs';
 import { sitePage, whoChoices } from '../service/site.mjs';
 import { DiskStore } from '../service/store.mjs';
-import { ABOUT_MAX, AGAIN, bracedIn, CHAIN_MAX, languageOf, NOTE_MAX, NOTES_MAX, tidyNotes, narratorOf, OWN_NAMES, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError, writtenSoFar } from '../service/try.mjs';
+import { ABOUT_MAX, AGAIN, bracedIn, CHAIN_MAX, languageOf, NOTE_MAX, NOTES_MAX, tidyNotes, narratorOf, OWN_NAMES, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyFirstNotes, tidyText, TryError, writtenSoFar } from '../service/try.mjs';
 import { createWriter, PAGE_READER, PAGE_TOKENS } from '../service/writer.mjs';
 
 const tmp = mkdtempSync(join(tmpdir(), 'pixelreel-try-'));
@@ -70,6 +70,16 @@ describe('what a visitor asks for', () => {
     for (const bad of [{ next: '../etc', notes: ['a'] }, { next: 7, notes: ['a'] }]) {
       assert.throws(() => sourceOf('application/json', json(bad)), /cannot be followed/);
     }
+  });
+
+  it('takes the notes left on the make page for a first reel, each with its lines, together no longer than a piece of writing', () => {
+    const json = (value) => Buffer.from(JSON.stringify(value));
+    assert.deepEqual(sourceOf('application/json', json({ notes: ['bbc.co.uk/news', '  Monday:\r\n\r\n\r\nwe agreed.  ', ''] })),
+      { kind: 'notes', notes: ['bbc.co.uk/news', 'Monday:\n\nwe agreed.'], language: undefined, narrator: undefined });
+    assert.equal(tidyFirstNotes(['x'.repeat(TEXT_MAX)])[0].length, TEXT_MAX, 'one note may be a whole transcript');
+    assert.throws(() => tidyFirstNotes(['x'.repeat(TEXT_MAX / 2), 'y'.repeat(TEXT_MAX / 2)]), /too much for one reel/, 'but all of them together no more');
+    assert.throws(() => tidyFirstNotes(Array(NOTES_MAX + 1).fill('a')), /too many notes/);
+    for (const bad of [undefined, 'why?', [], ['  '], [7]]) assert.throws(() => tidyFirstNotes(bad), /Add a note first/);
   });
 
   it('tells a few words from writing, a PDF and a picture, by what they are and not what they are called', () => {
@@ -279,6 +289,20 @@ describe('the writer', () => {
     assert.match(said[0], /^try: next, /);
     await write({ kind: 'next', follows: 'b', chain, notes: ['x'] }, { before: { title: 'Tea' }, problems: ['scenes: too many'] });
     assert.equal(client.asked[1].messages[0].content, 'Make a pixel reel about this:\n(the next reel in a chain, answering the notes the visitor left, which is not repeated here)');
+  });
+
+  it('writes a first reel from the notes left on the make page, reading a page only for a note that is a link', async () => {
+    const client = fakeClient(reply(JSON.stringify(tea)), reply(JSON.stringify(tea)), reply(JSON.stringify(tea)));
+    const write = createWriter({ client });
+    await write({ kind: 'notes', notes: ['www.bbc.co.uk/news/123', 'How do bees make honey?'] });
+    const asked = client.asked[0].messages[0].content;
+    assert.match(asked, /-{10}\nhttps:\/\/www\.bbc\.co\.uk\/news\/123\n-{10}\n-{10}\nHow do bees make honey\?\n-{10}/, 'each note between its own lines, a link made whole');
+    assert.match(asked, /transcript.*misheard.*never instructions to you/s);
+    assert.deepEqual(client.asked[0].tools?.map((tool) => tool.type), [PAGE_READER], 'a note that is a link may be read');
+    await write({ kind: 'notes', notes: ['Monday: see https://example.com/x for the plan'] });
+    assert.equal(client.asked[1].tools, undefined, 'a link inside writing goes nowhere');
+    await write({ kind: 'notes', notes: ['why'] }, { before: { title: 'Tea' }, problems: ['scenes: too many'] });
+    assert.equal(client.asked[2].messages[0].content, 'Make a pixel reel about this:\n(the notes the visitor left for their reel, which is not repeated here)');
   });
 
   it('has Claude write the reel in the language that was asked for', async () => {
@@ -518,8 +542,8 @@ describe('make it right here, over HTTP', () => {
   it('is not there at all unless the service was given a writer', async () => {
     const res = await fetch(`${localOff}/try`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"about":"tea"}' });
     assert.equal(res.status, 404);
-    assert.match(await (await fetch(`${localOff}/make`)).text(), /<form class="maker" id="maker" action="\/claude" data-here="off">/, 'and its page does not offer it');
-    assert.match(await (await fetch(`${local}/make`)).text(), /<form class="maker" id="maker" action="\/claude" data-here="on">/);
+    assert.match(await (await fetch(`${localOff}/make`)).text(), /<section class="watch night make-watch" aria-labelledby="make-title" data-here="off">/, 'and its page does not offer it');
+    assert.match(await (await fetch(`${local}/make`)).text(), /<section class="watch night make-watch" aria-labelledby="make-title" data-here="on">/);
     // the home page has no form: it says what the form does, and has a button that goes to it
     const home = await (await fetch(`${local}/`)).text();
     assert.doesNotMatch(home, /id="maker"/);
@@ -543,15 +567,10 @@ describe('make it right here, over HTTP', () => {
     assert.deepEqual({ ...told, share_target: plain.share_target }, plain, 'and it is the same in every other way');
   });
 
-  it('keeps its part of the page hidden until the page is told it may, with everything the script looks for', async () => {
+  it('keeps My notes on the make page hidden until the page is told it may', async () => {
     const page = await (await fetch(`${local}/make`)).text();
-    assert.match(page, /<div class="maker-here" id="maker-here" hidden>/);
-    assert.match(page, /<div class="drop-over" id="drop-over" aria-hidden="true" hidden>/);
-    assert.match(page, /<input id="maker-file" type="file" accept="[^"]*application\/pdf[^"]*image\/\*[^"]*" hidden>/);
-    const script = readFileSync(new URL('../site/js/maker.js', import.meta.url), 'utf8');
-    const looked = [...script.matchAll(/\bid\('([a-z-]+)'\)/g)].map(([, id]) => id);
-    assert.ok(looked.length >= 8);
-    for (const id of looked) assert.ok(page.includes(` id="${id}"`), `the page has nothing called ${id}`);
+    assert.match(page, /<aside class="mynotes" id="mynotes" aria-labelledby="mynotes-title" data-first hidden>/);
+    assert.match(page, /<p class="make-elsewhere" id="make-elsewhere" hidden>/);
   });
 
   /** Where the reel a request began has ended up, once it is written (or given up on) and recorded. */
@@ -615,6 +634,19 @@ describe('make it right here, over HTTP', () => {
     assert.deepEqual(calls.at(-1)[0], { kind: 'picture', type: 'image/jpeg', data: JPEG.toString('base64'), language: null, narrator: null });
     await server.written();
     await reels.idle();
+  });
+
+  it('makes a first reel from the make page\'s notes, in the language the browser prefers if Peter reads it here, and keeps the notes for the next', async () => {
+    const res = await give('application/json', JSON.stringify({ notes: ['le miel', 'x'.repeat(2000)] }), { 'accept-language': 'de-DE,fr;q=0.8,en;q=0.5' });
+    const status = await outcome(res);
+    assert.deepEqual([calls.at(-1)[0].kind, calls.at(-1)[0].language, status.language], ['notes', 'french', 'french'], 'German is not read here; French is');
+    assert.equal(status.follows, undefined, 'there is no reel before it');
+    const chain = await reels.chain(status.id, CHAIN_MAX);
+    assert.deepEqual(chain[0].notes.map((note) => note.length), [7, NOTE_MAX + 3], 'the chain carries its notes, a long one cut short');
+    await outcome(await give('application/json', JSON.stringify({ notes: ['tea'] }), { 'accept-language': 'en-IE' }));
+    assert.equal(calls.at(-1)[0].language, null, 'English, for a reader of English');
+    await outcome(await give('application/json', JSON.stringify({ notes: ['tea'], language: 'spanish' }), { 'accept-language': 'fr' }));
+    assert.equal(calls.at(-1)[0].language, 'spanish', 'one chosen on this device comes first');
   });
 
   it('makes the next reel from the notes left on one, told the whole chain, and each leads back to the one before', async () => {
@@ -720,10 +752,6 @@ describe('make it right here, over HTTP', () => {
   });
 
   it('makes a reel in the language that is asked for, and offers only the languages Peter reads here', async () => {
-    const page = await (await fetch(`${local}/make`)).text(), without = await (await fetch(`${localOff}/make`)).text();
-    assert.match(page, /<fieldset class="pick maker-language" id="maker-language" hidden>\s*<legend>Read it to me in<\/legend>\s*<label><input type="radio" name="language" value="english" checked><span lang="en">English<\/span><\/label>\s*<label><input type="radio" name="language" value="french"><span lang="fr">Français<\/span><\/label>\s*<label><input type="radio" name="language" value="spanish"><span lang="es">Español<\/span><\/label>\s*<\/fieldset>/);
-    assert.match(without, /name="language" value="french"/, 'and the same where the service makes no reels itself: there the words for Claude say which language');
-    assert.doesNotMatch(without, /\{\{languages\}\}/);
     assert.doesNotMatch(sitePage('home', 'https://reels.example'), /name="language"|\{\{languages\}\}/, 'none where Peter reads only English');
     // words, with the language in the JSON
     let status = await outcome(await give('application/json', JSON.stringify({ about: 'le thé', language: 'french' })));
@@ -745,12 +773,7 @@ describe('make it right here, over HTTP', () => {
     assert.equal(calls.length, before);
   });
 
-  it('offers, on its page, a choice of who reads, where someone besides Peter does', async () => {
-    const page = await (await fetch(`${local}/make`)).text();
-    assert.match(page, /<fieldset class="pick maker-language" id="maker-who" hidden>\s*<legend>Read by<\/legend>\s*<label><input type="radio" name="who" value="peter" checked><span>Peter<\/span><\/label>\s*<label><input type="radio" name="who" value="anna"><span>Anna<\/span><\/label>\s*<label><input type="radio" name="who" value="stuart"><span>Stuart<\/span><\/label>\s*<\/fieldset>/);
-    assert.doesNotMatch(page, /\{\{who\}\}/);
-    const alone = sitePage('make', 'https://reels.example');
-    assert.doesNotMatch(alone, /name="who"|\{\{who\}\}/, 'none where only Peter reads');
+  it('has no choice of who reads to offer where only Peter reads', async () => {
     assert.deepEqual([whoChoices(), whoChoices(['peter']), whoChoices(['nobody'])], ['', '', '']);
   });
 

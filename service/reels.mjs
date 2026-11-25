@@ -12,6 +12,7 @@ import { staysAhead } from './ahead.mjs';
 import { limitProblems, peterMs, reelMs, slipProblems } from './limits.mjs';
 import { paceReel } from './pacing.mjs';
 import { narrationMs, timeline } from '../src/timing.js';
+import { NOTE_MAX } from '../site/js/given.js';
 
 /** How long a reel is kept before it is deleted, unless someone deletes it sooner. */
 export const KEEP_DAYS = 30;
@@ -196,11 +197,9 @@ export class Reels {
   async begin(title, { owned = false, follows = null, notes = null } = {}) {
     if (this.queue.length >= this.maxQueue) throw new BusyError();
     const status = this.blank(title, 'writing');
-    // a reel made from the notes left on another: which one, and the notes, so that the reel after it can be told the whole chain (chain())
-    if (follows) {
-      status.follows = follows;
-      await this.store.put(`reels/${status.id}/${NOTES}`, JSON.stringify(notes ?? []));
-    }
+    // a reel made from notes: the ones it was made from, and the reel they were left on (if any), so that the reel after it can be told the whole chain (chain())
+    if (follows) status.follows = follows;
+    if (notes) await this.store.put(`reels/${status.id}/${NOTES}`, JSON.stringify(notes));
     await this.save(status);
     if (!owned) return status;
     // The one who began it is given a key nobody else has, and only what the key hashes to
@@ -223,7 +222,9 @@ export class Reels {
       seen.add(at);
       const status = await this.status(at), raw = status && status.state !== 'writing' && status.state !== 'failed' ? await this.reel(at) : null;
       if (!raw) break;
-      const notes = status.follows ? JSON.parse((await this.store.get(`reels/${at}/${NOTES}`)) ?? '[]') : null;
+      // the notes it was made from, each cut to a note's length: a first reel's may be a whole transcript, which the chain need not carry
+      const kept = await this.store.get(`reels/${at}/${NOTES}`);
+      const notes = kept ? JSON.parse(kept).map((note) => (note.length > NOTE_MAX ? `${note.slice(0, NOTE_MAX)}...` : note)) : null;
       found.unshift({
         id: at, title: String(raw.title ?? ''),
         scenes: (raw.scenes ?? []).map((scene) => ({ title: scene.title ?? '', say: scene.say ?? scene.caption ?? '' })),

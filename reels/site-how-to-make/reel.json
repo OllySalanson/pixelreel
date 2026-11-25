@@ -1,0 +1,112 @@
+{
+  "format": "pixelreel/1",
+  "title": "How to make a pixel reel",
+  "transition": "wipe",
+  "scenes": [
+    {
+      "title": "Your own reel",
+      "caption": "One box. One button.",
+      "say": "Want a pixel reel of your own? It takes one box, and one button. Here's how.",
+      "picture": {
+        "type": "title",
+        "text": "MAKE A REEL",
+        "sub": "One box. One button."
+      }
+    },
+    {
+      "title": "My notes",
+      "caption": "Type in My notes. Or press Speak, and talk.",
+      "say": "See My notes, right beside me? Type in it. Or press Speak, and just say it out loud.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "pencil",
+            "label": "Type it"
+          },
+          {
+            "icon": "speech",
+            "label": "Say it"
+          }
+        ],
+        "start": 1.6,
+        "every": 1.9
+      }
+    },
+    {
+      "title": "Anything",
+      "caption": "A link, a meeting transcript, a question.",
+      "say": "Put in anything. Paste a link to a page. The transcript of a meeting. Or a question you have always wondered about.",
+      "picture": {
+        "type": "chat",
+        "title": "My notes",
+        "messages": [
+          {
+            "from": "You",
+            "text": "bbc.co.uk/news/..."
+          },
+          {
+            "from": "You",
+            "text": "Monday's meeting, word for word"
+          },
+          {
+            "from": "You",
+            "text": "How do bees make honey?"
+          }
+        ],
+        "start": 0.6,
+        "every": 1.8
+      }
+    },
+    {
+      "title": "Make it",
+      "caption": "Press Make my next reel.",
+      "say": "Then press Make my next reel. Claude writes it, I read it out, and it plays in about a minute.",
+      "picture": {
+        "type": "big",
+        "text": "MAKE MY NEXT REEL"
+      }
+    },
+    {
+      "title": "Keep asking",
+      "caption": "Every reel has My notes too.",
+      "say": "Every reel you make has My notes beside it too. Ask more, and your next reel carries on from there.",
+      "picture": {
+        "type": "icons",
+        "items": [
+          {
+            "icon": "question",
+            "label": "Ask"
+          },
+          {
+            "icon": "eye",
+            "label": "Watch"
+          },
+          {
+            "icon": "question",
+            "label": "Ask more"
+          }
+        ],
+        "start": 0.3,
+        "every": 1.2
+      }
+    },
+    {
+      "title": "Try one",
+      "caption": "Not sure? Try one of these.",
+      "say": "Not sure where to start? Try one of these. Why do cats knead blankets? Or, how does a plane stay up?",
+      "picture": {
+        "type": "list",
+        "heading": "TRY ONE",
+        "items": [
+          "Why do cats knead?",
+          "How does a plane fly?",
+          "Why do we yawn?",
+          "How do bees make honey?"
+        ],
+        "start": 2.4,
+        "every": 1
+      }
+    }
+  ]
+}

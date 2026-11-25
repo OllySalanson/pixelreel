@@ -59,6 +59,22 @@ export function tidyNotes(notes) {
 }
 
 /**
+ * The notes someone left on the make page for their first reel (My notes beside the reel
+ * about making one), tidied, each with its lines kept, or a TryError saying why they will not
+ * do: there is no reel before it, so a note may be a link, a question, or a long piece of
+ * writing such as a meeting's transcript, so long as all of them together are no more than
+ * one piece of writing may be (TEXT_MAX).
+ */
+export function tidyFirstNotes(notes) {
+  if (!Array.isArray(notes)) throw new TryError('Add a note first.');
+  if (notes.length > NOTES_MAX) throw new TryError(`That is too many notes for one reel: ${NOTES_MAX} at most.`);
+  const kept = notes.filter((note) => typeof note === 'string' && note.trim()).map((note) => tidyText(note));
+  if (!kept.length) throw new TryError('Add a note first.');
+  if (kept.join('\n').length > TEXT_MAX) throw new TryError('That is too much for one reel. Give it less: a few pages at most.');
+  return kept;
+}
+
+/**
  * The ways a reel can be asked for again, once it has been watched, and what Claude is told
  * for each: the rest of "Write it again, ...".
  */
@@ -72,7 +88,8 @@ export const AGAIN = {
  * will not do. JSON brings { about } (a link or a few words: { kind: 'words', about }),
  * { text } (writing: { kind: 'text', text }), { again, how } (a reel made earlier, to be
  * written again simpler or shorter: { kind: 'again', id, how }) or { next, notes } (the notes
- * left on a reel, for the next reel to answer: { kind: 'follow', id, notes }); anything else
+ * left on a reel, for the next reel to answer: { kind: 'follow', id, notes }), or { notes }
+ * alone (the notes left on the make page, for a first reel: { kind: 'notes', notes }); anything else
  * is a file's own bytes, which must begin as a PDF ({ kind: 'pdf', data }) or a picture ({ kind: 'picture', type, data })
  * does, whatever it is called. `data` is base64, as the Claude API takes it.
  */
@@ -84,6 +101,10 @@ export function sourceOf(type, bytes) {
       // the next reel, made from the notes left on this one (the service finds the chain of reels before it, in service/server.mjs)
       if (typeof body.next !== 'string' || !/^[A-Za-z0-9_-]{22}$/.test(body.next)) throw new TryError('That reel cannot be followed.');
       return { kind: 'follow', id: body.next, notes: tidyNotes(body.notes) };
+    }
+    if (body?.notes !== undefined) {
+      // a first reel, from the notes left on the make page: there is no reel before it
+      return { kind: 'notes', notes: tidyFirstNotes(body.notes), language: body.language, narrator: body.narrator };
     }
     if (body?.again !== undefined) {
       // a reel to write again: which one, and how (the service finds the reel itself, in service/server.mjs)

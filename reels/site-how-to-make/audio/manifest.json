@@ -1,0 +1,36 @@
+{
+  "engine": "pocket",
+  "voice": "peter_yearsley",
+  "clips": [
+    {
+      "text": "Want a pixel reel of your own? It takes one box, and one button. Here's how.",
+      "file": "3ff5be54ab236990.mp3",
+      "seconds": 5.84
+    },
+    {
+      "text": "See My notes, right beside me? Type in it. Or press Speak, and just say it out loud.",
+      "file": "0fe6fc44f3740b66.mp3",
+      "seconds": 5.04
+    },
+    {
+      "text": "Put in anything. Paste a link to a page. The transcript of a meeting. Or a question you have always wondered about.",
+      "file": "877fae8c5a5b9134.mp3",
+      "seconds": 6.64
+    },
+    {
+      "text": "Then press Make my next reel. Claude writes it, I read it out, and it plays in about a minute.",
+      "file": "866624e933ade92d.mp3",
+      "seconds": 6
+    },
+    {
+      "text": "Every reel you make has My notes beside it too. Ask more, and your next reel carries on from there.",
+      "file": "16654f064e14e48d.mp3",
+      "seconds": 6.56
+    },
+    {
+      "text": "Not sure where to start? Try one of these. Why do cats knead blankets? Or, how does a plane stay up?",
+      "file": "de0d0cf36c37c50d.mp3",
+      "seconds": 6.24
+    }
+  ]
+}
