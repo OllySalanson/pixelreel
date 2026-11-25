@@ -321,6 +321,16 @@ export async function decide({ link, kept, look }) {
   return was === 'key' ? { show: kept } : { forget: was === 'wrong' };
 }
 
+/**
+ * The part of the page a click while choosing is about: the one under the pointer (`at(x, y)`),
+ * or the one last outlined. A click no pointer made (Enter or Space on a link or button, or a
+ * screen reader's press) has no place on the screen, so it is about the element it was made on.
+ */
+export function pressedPart(event, at, hovered) {
+  if (event.detail === 0 && event.target?.nodeType === 1) return event.target;
+  return at(event.clientX, event.clientY) ?? hovered;
+}
+
 /** Does what decide() said about keys, and gives back the plan. */
 async function planned(base, store, link, kept) {
   const plan = await decide({ link, kept, look: (token) => lookUp(base, token) });
@@ -462,7 +472,7 @@ function dock({ key, base, store, said }) {
     event.preventDefault();
     event.stopImmediatePropagation();
     if (event.type === 'pointerdown') onMove(event);
-    if (event.type === 'click') choose(document.elementFromPoint(event.clientX, event.clientY) ?? hovered, false);
+    if (event.type === 'click') choose(pressedPart(event, (x, y) => document.elementFromPoint(x, y), hovered), false);
   };
   const onKey = (event) => {
     if (event.key !== 'Escape') return;

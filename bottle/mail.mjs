@@ -10,11 +10,12 @@
 export const reviewAddress = (site, path = '/review') => `${new URL(site.origins[0]).host}${path}`;
 
 /**
- * The link that offers to switch the button on in whichever browser opens it. The code is in
+ * The link that offers to switch the button on in whichever browser opens it, on the site's
+ * page if it has one (a site that lives under a path), or else its home page. The code is in
  * the part after #, which a browser never sends to the site, so it is in none of the site's
  * logs, and the page takes it out of its address at once.
  */
-export const keyLink = (site, code) => `${site.origins[0]}/#bottle=${encodeURIComponent(code)}`;
+export const keyLink = (site, code) => `${site.page ?? `${site.origins[0]}/`}#bottle=${encodeURIComponent(code)}`;
 
 /** What stands in for a link in an email that must not carry one. */
 export const NO_LINK = '(link removed for preview)';
