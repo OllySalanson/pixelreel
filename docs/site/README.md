@@ -1706,3 +1706,14 @@ into a real microphone in Brave yet, or in a thick Irish accent.
 | --- |
 | ![My notes beside the blue sky reel. The Speak button is red and says Done; the box, framed in red, holds the words heard so far: Why is the sky blue? It is a very good question and the answer starts with the sun.](log/v78-speak-brave.jpg) |
 
+
+### Version 79
+
+- **A note's X beside it again on a computer.** Version 77 put the X under a note when the
+  panel is narrow, so no word is cut in two with big letters on a small phone. The panel on
+  a computer was just narrow enough to count, so every X went under its note there too,
+  leaving a gap beside a short one. It now goes under only below 16rem.
+
+Checked with `scripts/site-fit.js` at 1280, 390, 360 and 320 wide: whole words at all 27
+settings (at 320 it still finds the bar across the top on two rows with the biggest
+OpenDyslexic letters, as every page has since Version 74).
