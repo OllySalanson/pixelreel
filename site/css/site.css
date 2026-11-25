@@ -641,7 +641,7 @@ html[data-paper="night"] .handset .px { filter: drop-shadow(var(--u) 0 0 var(--l
 .mynotes-note.is-asking { grid-template-columns: minmax(0, 1fr); }
 /* in a narrow panel, with big letters, a note has the whole width and its X goes under it, so no word is cut in two */
 .mynotes-list { container-type: inline-size; }
-@container (max-width: 19rem) {
+@container (max-width: 16rem) {
   .mynotes-note { grid-template-columns: minmax(0, 1fr); }
   .mynotes-x { justify-self: end; }
 }
