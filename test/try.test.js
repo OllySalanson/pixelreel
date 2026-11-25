@@ -10,7 +10,7 @@ import { ReelError } from '../src/reel.js';
 import { createService } from '../service/server.mjs';
 import { sitePage, whoChoices } from '../service/site.mjs';
 import { DiskStore } from '../service/store.mjs';
-import { ABOUT_MAX, AGAIN, bracedIn, languageOf, narratorOf, OWN_NAMES, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError, writtenSoFar } from '../service/try.mjs';
+import { ABOUT_MAX, AGAIN, bracedIn, CHAIN_MAX, languageOf, NOTE_MAX, NOTES_MAX, tidyNotes, narratorOf, OWN_NAMES, PDF_MAX, PICTURE_MAX, replyJson, sourceOf, TEXT_MAX, tidyAbout, tidyText, TryError, writtenSoFar } from '../service/try.mjs';
 import { createWriter, PAGE_READER, PAGE_TOKENS } from '../service/writer.mjs';
 
 const tmp = mkdtempSync(join(tmpdir(), 'pixelreel-try-'));
@@ -57,6 +57,19 @@ describe('what a visitor asks for', () => {
     for (const bad of [undefined, 7, '', ' \n ']) assert.throws(() => tidyText(bad), TryError);
     assert.throws(() => tidyText('x'.repeat(TEXT_MAX + 1)), /too much for one reel/);
     assert.equal(tidyText('x'.repeat(TEXT_MAX)).length, TEXT_MAX);
+  });
+
+  it('takes the notes left on a reel, tidied, for the next reel to answer', () => {
+    const json = (value) => Buffer.from(JSON.stringify(value));
+    assert.deepEqual(sourceOf('application/json', json({ next: 'abcdefghijklmnopqrstuv', notes: ['  why\n red?\u0007 ', '', 'and Mars'] })),
+      { kind: 'follow', id: 'abcdefghijklmnopqrstuv', notes: ['why red?', 'and Mars'] });
+    assert.deepEqual(tidyNotes(Array(NOTES_MAX).fill('a')), Array(NOTES_MAX).fill('a'));
+    assert.throws(() => tidyNotes(Array(NOTES_MAX + 1).fill('a')), /too many notes/);
+    assert.throws(() => tidyNotes(['x'.repeat(NOTE_MAX + 1)]), new RegExp(`${NOTE_MAX} letters at most`));
+    for (const bad of [undefined, 'why?', [], ['  '], [7]]) assert.throws(() => tidyNotes(bad), /Add a note first/);
+    for (const bad of [{ next: '../etc', notes: ['a'] }, { next: 7, notes: ['a'] }]) {
+      assert.throws(() => sourceOf('application/json', json(bad)), /cannot be followed/);
+    }
   });
 
   it('tells a few words from writing, a PDF and a picture, by what they are and not what they are called', () => {
@@ -243,6 +256,29 @@ describe('the writer', () => {
     assert.equal(client.asked[2].messages[0].content, 'Make a pixel reel about this:\n(a reel to be written again, shorter, which is not repeated here)');
     await write.fits({ kind: 'reel', how: 'shorter', reel: tea });
     assert.equal(client.counted.length, 0, 'a reel is never long');
+  });
+
+  it('writes the next reel in a chain from the notes, told every reel before it', async () => {
+    const client = fakeClient(reply(JSON.stringify(tea)), reply(JSON.stringify(tea))), said = [];
+    const write = createWriter({ client, log: (line) => said.push(line) });
+    const chain = [
+      { id: 'a', title: 'Why the sky is blue', scenes: [{ title: 'Sky', say: 'Blue bounces most.' }], notes: null },
+      { id: 'b', title: 'Red sunsets', scenes: [{ title: 'Sunset', say: 'The long way round.' }], notes: ['why are sunsets red?'] }
+    ];
+    await write({ kind: 'next', follows: 'b', chain, notes: ['and on Mars?', 'does dust change it'] });
+    const asked = client.asked[0].messages[0].content;
+    const told = JSON.parse(/-{10}\n(\[.*\])\n-{10}/s.exec(asked)[1]);
+    assert.deepEqual(told, [
+      { reel: 1, title: 'Why the sky is blue', scenes: [{ title: 'Sky', says: 'Blue bounces most.' }] },
+      { reel: 2, made_from_these_notes: ['why are sunsets red?'], title: 'Red sunsets', scenes: [{ title: 'Sunset', says: 'The long way round.' }] }
+    ], 'every reel so far, oldest first, with the notes each was made from');
+    assert.match(asked, /the last of these, reel 2, "Red sunsets", and left these notes on it.*\n-{10}\n- and on Mars\?\n- does dust change it\n-{10}\nMake the next reel in the chain/s);
+    assert.match(asked, /misheard/);
+    assert.match(asked, /never instructions to you/);
+    assert.equal(client.asked[0].tools, undefined, 'with no page to fetch');
+    assert.match(said[0], /^try: next, /);
+    await write({ kind: 'next', follows: 'b', chain, notes: ['x'] }, { before: { title: 'Tea' }, problems: ['scenes: too many'] });
+    assert.equal(client.asked[1].messages[0].content, 'Make a pixel reel about this:\n(the next reel in a chain, answering the notes the visitor left, which is not repeated here)');
   });
 
   it('has Claude write the reel in the language that was asked for', async () => {
@@ -579,6 +615,45 @@ describe('make it right here, over HTTP', () => {
     assert.deepEqual(calls.at(-1)[0], { kind: 'picture', type: 'image/jpeg', data: JPEG.toString('base64'), language: null, narrator: null });
     await server.written();
     await reels.idle();
+  });
+
+  it('makes the next reel from the notes left on one, told the whole chain, and each leads back to the one before', async () => {
+    const first = await reels.create({ ...tea, title: 'Why the sky is blue' });
+    await reels.idle();
+    const follow = async (id, notes) => {
+      const res = await give('application/json', JSON.stringify({ next: id, notes }));
+      assert.equal(res.status, 200);
+      const made = await res.json();
+      await server.written();
+      await reels.idle();
+      return made.id;
+    };
+    answers = [{ ...tea, title: 'Red sunsets' }];
+    const second = await follow(first.id, ['why are sunsets red?']);
+    assert.deepEqual(calls.at(-1)[0].chain.map((reel) => [reel.title, reel.notes]), [['Why the sky is blue', null]]);
+    assert.deepEqual(calls.at(-1)[0].notes, ['why are sunsets red?']);
+    answers = [{ ...tea, title: 'Mars' }];
+    const third = await follow(second, ['and on Mars?']);
+    const told = calls.at(-1)[0];
+    assert.deepEqual(told.chain.map((reel) => [reel.title, reel.notes]), [['Why the sky is blue', null], ['Red sunsets', ['why are sunsets red?']]]);
+    assert.deepEqual(told.chain[1].scenes, [{ title: 'Kettle', say: 'Boil the kettle.' }], 'each reel by what is said in it');
+    assert.deepEqual([told.kind, told.follows, told.notes], ['next', second, ['and on Mars?']]);
+    // the page of each leads back to the one before it
+    const play = await (await fetch(`${local}/r/${third}/play.json`)).json();
+    assert.deepEqual(play.follows, { id: second, title: 'Red sunsets', watch: `https://reels.example/r/${second}` });
+    assert.equal((await (await fetch(`${local}/r/${first.id}/play.json`)).json()).follows, undefined, 'and the first leads nowhere');
+    // only the newest CHAIN_MAX are told, which bounds what one reel costs
+    assert.equal((await reels.chain(third, 2)).map((reel) => reel.title).join(), 'Red sunsets,Mars');
+    assert.ok(CHAIN_MAX >= 4);
+    // a reel that is not there, or not ready, cannot be followed, and nothing reaches Claude
+    const before = calls.length;
+    const gone = await give('application/json', JSON.stringify({ next: 'abcdefghijklmnopqrstuv', notes: ['a'] }));
+    assert.deepEqual([gone.status, (await gone.json()).error], [404, 'That reel has gone, so it cannot be followed.']);
+    assert.equal((await give('application/json', JSON.stringify({ next: first.id, notes: [] }))).status, 400);
+    assert.equal(calls.length, before);
+    // deleting a reel deletes the notes it was made from too
+    await reels.remove(second);
+    assert.equal(await reels.store.get(`reels/${second}/notes.json`), null);
   });
 
   it('writes a reel again, simpler or shorter, as a new reel under the same name', async () => {

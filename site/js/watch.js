@@ -5,6 +5,7 @@ import { calm, onComfortChange } from './calm.js';
 import { ASKED } from './maker.js';
 import { reelie } from './landscape.js';
 import { forgetMine, mineStorage, readMine, rememberMine, updateMine } from './mine.js';
+import { startNotes } from './notes.js';
 import { fitCanvas, ReelPlayer } from './player.js';
 import { showOf, waitingFor } from './reels.js';
 import { createKit, H, W } from '../../src/kit.js';
@@ -21,6 +22,17 @@ export function startWatching() {
   const big = root.querySelector('.reel-big'), words = root.querySelector('.reel-words p');
   const heading = document.getElementById('watch-title'), name = root.querySelector('.reel-title');
   const mine = mineStorage();
+  // My notes, beside the reel, where the service can write the next reel from them
+  const notes = holder.dataset.here === 'on' ? startNotes(id) : null;
+  // a reel made from the notes left on another leads back to that one
+  const before = document.getElementById('watch-before');
+  const leadBack = (follows) => {
+    if (!follows || !before.hidden) return;
+    const link = before.querySelector('a');
+    link.href = `/r/${follows.id}`;
+    link.lastElementChild.textContent = follows.title;
+    before.hidden = false;
+  };
   const keys = root.querySelectorAll('.reel-keys button');
   // nothing to play yet: the buttons say so by being switched off, and the words keep room for two lines
   const playable = (on) => {
@@ -107,6 +119,7 @@ export function startWatching() {
       play = { state: 'unreachable' };
     }
     called(play.title);
+    leadBack(play.follows);
     // if whoever is watching made this reel, their list of reels learns its name and how long it is kept; one that came to nothing comes off it
     if (play.state === 'failed' || play.state === 'gone') forgetMine(mine, id);
     else if (play.state !== 'unreachable' && play.state !== 'writing') updateMine(mine, id, { title: play.title, expires: play.expires });
@@ -130,6 +143,7 @@ export function startWatching() {
       }
       if (play.video) document.getElementById('watch-video').hidden = false;
       if (holder.dataset.here === 'on') {
+        notes?.ready();
         document.getElementById('watch-again').hidden = false;
         // whoever made it on the make page has just seen what one press does: the way back to make another is beside it
         if (readMine(mine).some((reel) => reel.id === id)) {
@@ -144,6 +158,7 @@ export function startWatching() {
       waiting = false;
       sorry = play.state === 'gone' ? 'THIS REEL HAS GONE' : 'NO REEL THIS TIME';
       root.classList.add('is-sorry');   // there is nothing to play, so the buttons that play it go
+      notes?.gone();   // nor anything to follow
       requestAnimationFrame(draw);
       for (const send of sends) send.hidden = true;   // nothing to pass on
       say(play.state === 'gone' ? 'This reel has gone. Every reel is deleted after 30 days.' : `Sorry, this reel could not be made. ${play.error ?? ''}`.trim());

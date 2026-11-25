@@ -11,7 +11,7 @@ import { createMcpServer } from './mcp.mjs';
 import { BusyError, isId, languageName } from './reels.mjs';
 import { addressMeant, addToClaudeLink, appManifest, robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
 import { sendBytes, sendSqueezed, sendStatic, squeezed, tagOf } from './static.mjs';
-import { languageOf, MAX_WORDS_BODY, narratorOf, OWN_NAMES, PDF_MAX, sourceOf, TryError } from './try.mjs';
+import { CHAIN_MAX, languageOf, MAX_WORDS_BODY, narratorOf, OWN_NAMES, PDF_MAX, sourceOf, TryError } from './try.mjs';
 
 /** The most a request to /mcp may carry. A long reel is a few kilobytes. */
 export const MAX_BODY = 256 * 1024;
@@ -147,6 +147,9 @@ async function handleReel(req, res, id, rest, context) {
     if (early) Object.assign(play, { reel: early.reel, clips: early.clips.map(clipAt), guesses: early.guesses, playable: early.playable });
     // while it is written, how many scenes so far, and its name once it has one; while it waits its turn, how many jobs are before it
     if (status.state === 'writing' || status.state === 'queued') Object.assign(play, reels.progress(id));
+    // a reel made from the notes left on another: the one before it, while it is there to go back to
+    const before = status.follows ? await reels.status(status.follows) : null;
+    if (before) play.follows = { id: before.id, title: before.title, watch: `${baseUrl}/r/${before.id}` };
     if (status.state === 'ready') {
       play.reel = await reels.reel(id);
       play.clips = ((await reels.manifest(id))?.clips ?? []).map(clipAt);
@@ -227,13 +230,26 @@ async function handleTry(req, res, context) {
       language: reels.languages.includes(first.language) ? first.language : null, narrator: reels.narrators.includes(first.narrator) ? first.narrator : null
     };
   }
+  if (source.kind === 'follow') {
+    // The next reel, from the notes left on this one: Claude is told the whole chain that led
+    // here (each reel's script, and the notes each was made from), so it answers them in context.
+    const first = await reels.status(source.id), chain = first?.state === 'ready' ? await reels.chain(source.id, CHAIN_MAX) : [];
+    if (!chain.length) { sendJson(res, 404, { error: 'That reel has gone, so it cannot be followed.' }); return; }
+    source = {
+      kind: 'next', follows: source.id, chain, notes: source.notes,
+      // it carries on in the language it is in, and with whoever read it
+      language: reels.languages.includes(first.language) ? first.language : null, narrator: reels.narrators.includes(first.narrator) ? first.narrator : null
+    };
+  }
   const caller = callerOf(req, trustProxy);
   const refused = limits?.tries.hit(caller);
   if (refused) { sendJson(res, 429, { error: `No more reels just now. ${refused}` }); return; }
   let begun;
   try {
     await writer.fits?.(source);   // too long to read is said here and now, while what was given is still in front of them
-    begun = await reels.begin(source.kind === 'reel' ? String(source.reel.title) : WRITING_TITLE, { owned: true });   // one made again keeps its name while it waits
+    begun = await reels.begin(source.kind === 'reel' ? String(source.reel.title) : WRITING_TITLE, {   // one made again keeps its name while it waits
+      owned: true, ...(source.kind === 'next' ? { follows: source.follows, notes: source.notes } : {})
+    });
   } catch (err) {
     limits?.tries.undo(caller);   // nothing has reached Claude yet
     if (!(err instanceof TryError || err instanceof BusyError)) throw err;

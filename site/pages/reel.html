@@ -10,11 +10,30 @@ imagealt: A pixel reel for you. Press Play. Reelie the film reel stands under a 
   <div class="wrap watch-in" id="watch" data-watch="{{reelid}}" data-here="{{here}}">
     <!-- the player says the reel's name, large, under its picture: said twice it only pushed the reel down the screen -->
     <h1 class="sr-only" id="watch-title">{{reeltitle}}</h1>
-    {{player:empty}}
-    <div class="reel-end" hidden>
-      <p>The end.</p>
-      <button class="btn btn-gold" type="button" data-send="{{reeltitle}}" data-says="#watch-sent">Send it to someone</button>
-      <button class="btn btn-paper" type="button" data-again>Watch it again</button>
+    <!-- a reel made from the notes left on another: the way back to that one. watch.js shows it -->
+    <p class="watch-before" id="watch-before" hidden><a href="/"><span aria-hidden="true">&lt;</span> Before this: <span></span></a></p>
+    <div class="watch-pair">
+      {{player:empty}}
+      <div class="reel-end" hidden>
+        <p>The end.</p>
+        <button class="btn btn-gold" type="button" data-send="{{reeltitle}}" data-says="#watch-sent">Send it to someone</button>
+        <button class="btn btn-paper" type="button" data-again>Watch it again</button>
+      </div>
+      <!-- My notes: questions and thoughts, typed or said, kept on this device, for the next reel to answer.
+           notes.js wakes it where the service can write a reel itself -->
+      <aside class="mynotes" id="mynotes" aria-labelledby="mynotes-title" hidden>
+        <h2 class="mynotes-title" id="mynotes-title">My notes</h2>
+        <ol class="mynotes-list" id="mynotes-list"></ol>
+        <form class="mynotes-add" id="mynotes-add">
+          <textarea class="mynotes-box" id="mynotes-box" rows="2" maxlength="600" enterkeyhint="done" aria-label="Add a note" placeholder="Add a note"></textarea>
+          <div class="mynotes-keys">
+            <button class="mynotes-mic" id="mynotes-mic" type="button" aria-pressed="false" hidden><svg class="ico" viewBox="0 0 7 9" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><path d="M2 0h3v5h-3zM0 2h1v3h-1zM6 2h1v3h-1zM1 5h1v1h-1zM5 5h1v1h-1zM2 6h3v1h-3zM3 7h1v1h-1zM1 8h5v1h-5z"/></svg><span>Speak</span></button>
+            <button class="mynotes-save" type="submit">Add</button>
+          </div>
+        </form>
+        <button class="btn btn-gold mynotes-make" id="mynotes-make" type="button" disabled>Make my next reel</button>
+        <p class="mynotes-says" id="mynotes-says" role="status"></p>
+      </aside>
     </div>
     <p class="sr-only" id="watch-says" role="status"></p>
     <div class="watch-foot" data-quiet>
