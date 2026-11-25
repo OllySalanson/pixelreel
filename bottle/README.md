@@ -17,7 +17,7 @@ of it, and the person who left it sees that under My notes, and is emailed what 
 their notes since the last email in one, at most an hour apart).
 
 Nobody else sees any of it. Every page loads `bottle.js`, but without a key or a link it does
-nothing: no button, no request. Search engines are kept out of everything it answers. The screenshot is made
+nothing: no button, no request (except on a preview, below, where the button is for anyone). Search engines are kept out of everything it answers. The screenshot is made
 in the browser by [modern-screenshot](https://github.com/qq15725/modern-screenshot) (MIT),
 served by the service itself, so no other company is involved.
 
@@ -52,6 +52,27 @@ out", with Get a new link to `/review`; opened in a browser whose key still work
 button on and says so. A kept key that stops working shows nothing, and the browser forgets it:
 that browser could be anyone's. `#bottle=off` on any page forgets the key as well. Links sent
 before links held codes (`?bottle=<key>`) still work.
+
+## A preview: the button for anyone
+
+A site can be marked as a preview (`bottles site add <id> --preview`; `--live` makes it a live
+site again). Its pages' line says so too, with `data-preview`:
+
+```html
+<script src="https://pixelreel.pro/bottle/bottle.js" data-preview defer></script>
+```
+
+Then anyone who opens one of its pages sees Note. The first press asks their name ("Your name",
+Next), which puts them on the site's list by that name, with no email, and gives their browser a
+key of its own, kept like any other; from then on it is the button as everyone else has it, My
+notes and all, and it never asks again in that browser. Nobody is emailed anything about a
+preview's notes, since nobody gave an address. A caller may give five names an hour, and a
+preview takes fifty people a day. Links and keys work there as on any site, so someone sent a
+link before keeps it.
+
+Both are needed: `data-preview` alone on a live site's pages does nothing (the service says the
+site is not a preview), and a site marked as a preview shows nothing to strangers on pages whose
+line lacks it, so a page with the line asks the service only where it was meant to.
 
 ## Putting it on a site
 
@@ -219,7 +240,9 @@ before giving anyone the short address.
 - `perHour` (30), `perDay` (200): notes each person may leave in an hour, and each site in a
   day; `wrongPerHour` (10): wrong keys a caller may try in an hour before being turned away;
   `signInsPerHour` (5): sign-in links a caller may ask for in an hour (and three for each address,
-  and five a day for each person on a list, counted in the store).
+  and five a day for each person on a list, counted in the store); `visitsPerHour` (5),
+  `visitsPerDay` (50): names a caller may give on a preview in an hour, and people a preview
+  takes in a day.
 
 A screenshot bigger than 4 MB is not kept (the note still is), and no note may be bigger than 6 MB.
 
@@ -228,7 +251,8 @@ A screenshot bigger than 4 MB is not kept (the note still is), and no note may b
 | `GET /bottle/bottle.js`, `bottle-ui.mjs`, `shot.mjs`, `admin.mjs`, `admin.css` | none | The files, to any site. |
 | `GET /review`, `/bottle/admin` | none | The sign-in page and the page of queues, with nothing on them until a script draws it. |
 | `POST /bottle/check` | `x-bottle-key` | 200 if the key is right, from that person's site. A link's code that still works answers 409 `{ code: true }`; with `{ "use": true }` it answers `{ key }`, a key of the person's own (a sign-in code once, an invitation's for 7 days). |
-| `POST /bottle/site` | none | `{ name }` of the site the page asking is on, for its `/review` page. |
+| `POST /bottle/site` | none | `{ name }` of the site the page asking is on, for its `/review` page, with `preview: true` for a preview. |
+| `POST /bottle/visit` | none | `{ "name": ... }` from a preview's page: 201 `{ key, name }`, a key of their own. 403 from any other site. |
 | `POST /bottle/signin` | none | `{ "email": ... }` from one of a site's pages: 202 whatever happens; someone on the list is emailed a link. |
 | `POST /bottle/notes` | `x-bottle-key` | 201 `{ id }`. The body is JSON, up to 6 MB with the screenshot (a JPEG data URL in `shot`). |
 | `GET /bottle/mine` | `x-bottle-key` | `{ notes }`: the person's own, newest first, as they may see them. |
@@ -236,7 +260,7 @@ A screenshot bigger than 4 MB is not kept (the note still is), and no note may b
 | `GET /bottle/notes?state=new&site=<id>` | admin | `{ notes }`, oldest first. `state` is one of the states, `open` (new, in progress and held) or `all`. |
 | `GET /bottle/notes/<id>`, `.../shot.jpg` | admin | One note, or its screenshot. |
 | `PATCH /bottle/notes/<id>` | admin | `{ "state": "done", "what": ..., "confidence": 90 }` (held: `conflict`, `proposal`; declined: `reason`). What came of it is kept in the note's `outcome` and `history`. |
-| `GET /bottle/sites`, `POST /bottle/sites` | admin | Every site with its people and its counts by state; or adds one, `{ id, name, origins }` (an address with a path is kept as its `page`, where its links open). |
+| `GET /bottle/sites`, `POST /bottle/sites` | admin | Every site with its people and its counts by state; or adds one, `{ id, name, origins, preview }` (an address with a path is kept as its `page`, where its links open; `preview` true or false changes what it is). |
 | `GET /bottle/sites/<site>` | admin | One site and its people. |
 | `POST /bottle/sites/<site>/people` | admin | `{ name, email }`: adds a person, and answers `{ person, link }`. |
 | `PATCH /bottle/sites/<site>/people/<person>` | admin | `{ "on": false }` turns them off, ending every key and link they have; `{ "email": ... }` corrects their address. |

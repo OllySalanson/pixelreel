@@ -3,8 +3,9 @@
 // signed in at the site's /review page) or the page was opened from such a link
 // (#bottle=<code>, or ?bottle=<code> in links sent before), so no other visitor ever sees the
 // button. Then it loads the rest (bottle-ui.mjs), which checks with the service before showing
-// anything. #bottle=off forgets the key again. A plain script, so any page on any site can load
-// it: <script src="https://<the service>/bottle/bottle.js" defer></script>
+// anything. #bottle=off forgets the key again. On a site that is a preview, its line says
+// data-preview and the button is there for anyone (bottle-ui.mjs asks the service first). A plain
+// script, so any page on any site can load it: <script src="https://<the service>/bottle/bottle.js" defer></script>
 (() => {
   const STORE = 'bottle-key';
   // a link opened in a tab already on its page changes only the part after #, which loads nothing: load it, so it is seen
@@ -37,6 +38,11 @@
     load((ui) => ui.review({ link, kept, base, store: STORE }));
     return;
   }
-  if (!link && !kept) return;
-  load((ui) => ui.start({ link, kept, base, store: STORE }));
+  // a site that is a preview (data-preview) offers the button to anyone, who gives their name once
+  const preview = Boolean(script?.hasAttribute('data-preview'));
+  if (!link && !kept) {
+    if (preview) load((ui) => ui.visit({ base, store: STORE }));
+    return;
+  }
+  load((ui) => ui.start({ link, kept, base, store: STORE, preview }));
 })();
