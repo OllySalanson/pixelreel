@@ -7,6 +7,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { ReelError } from '../src/reel.js';
 import { LANG_CODES } from '../src/words.js';
 import { createBottle } from 'message-in-a-bottle';
+import { HEAR_MAX_BYTES, HearError } from './hear.mjs';
 import { createMcpServer } from './mcp.mjs';
 import { BusyError, isId, languageName } from './reels.mjs';
 import { addressMeant, addToClaudeLink, appManifest, robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
@@ -126,7 +127,7 @@ async function handleReel(req, res, id, rest, context) {
     // watcher while the voice is still being recorded. It names the reel and points at
     // its own picture, so a link sent in a message shows what it is, but holds none of its words.
     const page = sitePage('reel', baseUrl, {
-      values: { reelid: id, reeltitle: escapeHtml(status.title), here: context.writer ? 'on' : 'off' }, title: `${status.title} - Pixel Reel`, path: `/r/${id}`,
+      values: { reelid: id, reeltitle: escapeHtml(status.title), here: context.writer ? 'on' : 'off', mic: context.hearing ? 'on' : 'off' }, title: `${status.title} - Pixel Reel`, path: `/r/${id}`,
       image: `${baseUrl}/r/${id}/card.png`, imagealt: `${status.title}: a pixel reel. Press Play.`
     });
     sendSqueezed(req, res, 200, squeezed(page), { ...SAFE, ...UNLISTED, 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': SITE_POLICY });
@@ -264,6 +265,41 @@ async function handleTry(req, res, context) {
   context.writing.add(job);
 }
 
+/**
+ * POST /hear: a few seconds of something said aloud (mono 16-bit samples at 16,000 a second,
+ * as site/js/hearing.js records them), written down: { text }. For browsers whose own speech
+ * recognition does not work (Brave, Firefox): My notes on a reel's page, and Message in a
+ * Bottle's Speak on any site it is on (`welcome` says which sites those are). Only where the
+ * service was given a Hearing, and each caller only so often.
+ */
+async function handleHear(req, res, { hearing, limits, trustProxy, baseUrl, log }, welcome) {
+  if (!hearing) { sendJson(res, 404, { error: 'Nothing here hears.' }); return; }
+  const origin = req.headers.origin, own = origin === new URL(baseUrl).origin;
+  // a page of one of Message in a Bottle's sites may ask from its own address
+  const cors = !own && origin && (await welcome(origin)) ? { 'access-control-allow-origin': origin, vary: 'origin' } : null;
+  if (req.method === 'OPTIONS' && cors) {
+    res.writeHead(204, { ...SAFE, ...cors, 'access-control-allow-methods': 'POST', 'access-control-allow-headers': 'content-type', 'access-control-max-age': '600' }).end();
+    return;
+  }
+  for (const [name, value] of Object.entries(cors ?? {})) res.setHeader(name, value);
+  if (req.method !== 'POST') { res.setHeader('allow', 'POST'); sendJson(res, 405, { error: 'Ask with POST.' }); return; }
+  const sameSite = own && (!req.headers['sec-fetch-site'] || req.headers['sec-fetch-site'] === 'same-origin');
+  if (!sameSite && !cors) { sendJson(res, 403, { error: 'Ask from the Pixel Reel website.' }); return; }
+  if (Number(req.headers['content-length']) > HEAR_MAX_BYTES) { res.setHeader('connection', 'close'); sendJson(res, 413, { error: 'Too long.' }); return; }
+  const pcm = await readBytes(req, HEAR_MAX_BYTES);
+  if (!pcm) { res.setHeader('connection', 'close'); sendJson(res, 413, { error: 'Too long.' }); return; }
+  if (pcm.length % 2) { sendJson(res, 400, { error: 'Not sound.' }); return; }
+  const caller = callerOf(req, trustProxy);
+  if (limits?.hearing?.hit(caller)) { sendJson(res, 429, { error: 'busy' }); return; }
+  try {
+    sendJson(res, 200, { text: await hearing.hear(pcm) });
+  } catch (err) {
+    if (!(err instanceof HearError)) throw err;
+    if (err.message !== 'busy') log(`hear: ${err.message}`);
+    sendJson(res, 503, { error: 'busy' });
+  }
+}
+
 /** A reel as it was before its recording timed its pictures (paceReel in service/pacing.mjs): the timings are the recording's, not the reel's. */
 const unpaced = (reel) => ({
   ...reel,
@@ -369,14 +405,16 @@ async function sendWatchCard(req, res, name, { reels, cards, fresh, log }) {
  * `listed` lets search engines list the website (never the reels), for once it is open to all;
  * `fresh` has browsers check for a newer copy of the site's files every time, for working on it;
  * `writer` (see service/writer.mjs) switches on Make it right here, which costs money a reel;
+ * `hearing` (a Hearing, service/hear.mjs) writes down notes said aloud, at POST /hear, for
+ * browsers that cannot do it themselves;
  * the server's written() resolves once every reel begun that way is written or given up on.
  * `bottle` ({ key, reader, mail, replyTo, notify, hook }, see its README) is Message in a Bottle: the note
  * button for the people on each site's list, this one's and other sites', with this site's
  * /review page where they sign in; `key` is Olly's own, and `reader` the admin key.
  */
-export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false, listed = false, fresh = false, writer = null, bottle = {} }) {
+export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false, listed = false, fresh = false, writer = null, hearing = null, bottle = {} }) {
   const context = {
-    reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, listed, fresh, writer, pages: new Map(), cards: new Map(), writing: new Set(),
+    reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, listed, fresh, writer, hearing, pages: new Map(), cards: new Map(), writing: new Set(),
     trustProxy: trustProxy === true ? 1 : Math.max(0, Math.floor(Number(trustProxy)) || 0), fewestForwarded: Infinity
   };
   // Message in a Bottle: kept with the reels, under bottles/, which no page or listing of the reels ever reaches
@@ -390,6 +428,7 @@ export function createService({ reels, baseUrl, log = () => {}, limits = null, t
       if (path === '/mcp') { await handleMcp(req, res, context); return; }
       if (await bottles.handle(req, res)) return;
       if (path === '/try') { await handleTry(req, res, context); return; }
+      if (path === '/hear') { await handleHear(req, res, context, (origin) => bottles.sites.allowed(origin)); return; }
       if (path === '/health') { res.writeHead(200, { ...SAFE, 'content-type': 'text/plain' }).end('ok'); return; }
       // a short address to say, type on a phone or print: straight to Claude's own box for adding a connector, with Pixel Reel filled in
       if (path === '/add') { res.writeHead(302, { ...SAFE, ...UNLISTED, location: addToClaudeLink(context.baseUrl), 'cache-control': 'no-store' }).end(); return; }

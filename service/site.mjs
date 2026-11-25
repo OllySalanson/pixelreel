@@ -373,7 +373,7 @@ export function sitePage(name, baseUrl, { listed = false, values = {}, title = n
   const markdown = !existsSync(siteFile(`pages/${name}.html`));
   const { facts, body } = pageFacts(readFileSync(siteFile(`pages/${name}.${markdown ? 'md' : 'html'}`), 'utf8'));
   // the connector's address is long and has no spaces: <wbr> lets a narrow screen break it before "/mcp", not mid-word
-  const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', languages: '', posters: postersHtml(), voices: narratorsHtml(narrators), who: whoChoices(narrators), whoreads: whoReads(narrators), scan: scanCode(body, 'scan', `${baseUrl}/app`, 'A QR code. It opens Pixel Reel on a phone.'), scanthis: scanCode(body, 'scanthis', `${baseUrl}${path}`, 'A QR code. It opens this page on a phone.'), ...values };
+  const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', mic: 'off', languages: '', posters: postersHtml(), voices: narratorsHtml(narrators), who: whoChoices(narrators), whoreads: whoReads(narrators), scan: scanCode(body, 'scan', `${baseUrl}/app`, 'A QR code. It opens Pixel Reel on a phone.'), scanthis: scanCode(body, 'scanthis', `${baseUrl}${path}`, 'A QR code. It opens this page on a phone.'), ...values };
   // "Want one of your own?" (under a reel, and in the theatre) leads to the form where the service makes reels itself,
   // which needs no Claude and no account. Where it does not, it leads to adding Pixel Reel to Claude, the only way to make one.
   Object.assign(links, links.here === 'on' ? { ownhref: '/make', owndo: 'Make a pixel reel' } : { ownhref: '/claude', owndo: 'Add Pixel Reel to Claude' });

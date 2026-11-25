@@ -21,6 +21,12 @@ ARG VOICE_NAMES="anna vera stuart_bell charles paul"
 COPY scripts/setup-voices.sh scripts/setup-voices.sh
 RUN VOICE_LANGUAGES="$VOICE_LANGUAGES" VOICE_NAMES="$VOICE_NAMES" sh scripts/setup-voices.sh && chmod -R a+rX /opt/huggingface
 
+# My notes' microphone, for browsers that cannot write down what is said themselves (Brave,
+# Firefox): faster-whisper and its base.en model, about 150 MB (scripts/hear.py, service/hear.mjs)
+RUN .venv/bin/python -m pip install --quiet "faster-whisper>=1.1,<2" \
+  && .venv/bin/python -c "from faster_whisper import WhisperModel; WhisperModel('base.en', device='cpu', compute_type='int8')" \
+  && chmod -R a+rX /opt/huggingface
+
 # vendor/ holds the packed copy of Message in a Bottle that package.json names (npm run bottle-update)
 COPY package.json package-lock.json ./
 COPY vendor vendor
@@ -31,7 +37,7 @@ RUN mkdir -p /data && chown node:node /data
 
 ENV NODE_ENV=production PORT=8787 PIXELREEL_DATA=/data PIXELREEL_TRUST_PROXY=1 THREADS=2
 # what the image can read, and in whose voice, is what it offers: the models and voices built in above
-ENV PIXELREEL_LANGUAGES=french,german,spanish,italian,portuguese,dutch PIXELREEL_NARRATORS=anna,vera,stuart,charles,paul
+ENV PIXELREEL_LANGUAGES=french,german,spanish,italian,portuguese,dutch PIXELREEL_NARRATORS=anna,vera,stuart,charles,paul PIXELREEL_HEAR=1
 USER node
 EXPOSE 8787
 VOLUME /data

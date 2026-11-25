@@ -34,6 +34,7 @@
 // an email bounced (docs/deploy.md).
 import { join } from 'node:path';
 import { resend } from 'message-in-a-bottle/mail';
+import { Hearing } from './hear.mjs';
 import { CLAUDE_ADDRESSES, RateLimit } from './limits.mjs';
 import { NARRATORS, recordWith, Reels } from './reels.mjs';
 import { createService } from './server.mjs';
@@ -81,7 +82,9 @@ const shared = { ranges, perHour: setting('PIXELREEL_CLAUDE_PER_HOUR', 60) };
 const limits = {
   reels: new RateLimit({ perHour: setting('PIXELREEL_REELS_PER_HOUR', 10), perDay: setting('PIXELREEL_REELS_PER_DAY', 300), shared }),
   videos: new RateLimit({ perHour: setting('PIXELREEL_VIDEOS_PER_HOUR', 10), perDay: setting('PIXELREEL_REELS_PER_DAY', 300), shared }),
-  tries: new RateLimit({ perHour: setting('PIXELREEL_TRIES_PER_HOUR', 5), perDay: setting('PIXELREEL_TRIES_PER_DAY', 30) })
+  tries: new RateLimit({ perHour: setting('PIXELREEL_TRIES_PER_HOUR', 5), perDay: setting('PIXELREEL_TRIES_PER_DAY', 30) }),
+  // pieces of a note said aloud, a few seconds each: about half an hour of speaking an hour, for each visitor
+  hearing: new RateLimit({ perHour: 1200, perDay: 20000 })
 };
 
 // Make it right here: off unless asked for, because each reel it writes is paid for
@@ -96,19 +99,28 @@ if (process.env.PIXELREEL_TRY === '1') {
   }
 }
 
+// My notes' microphone where the browser cannot hear (Brave, Firefox): a Whisper model on this
+// machine writes it down, loaded the first time someone speaks. Only where there are notes to
+// write it into (Make it right here), and only with PIXELREEL_HEAR=1, as it needs faster-whisper
+// and its model (about 150 MB; the image has them). PIXELREEL_HEAR_MODEL chooses another.
+const hearing = writer && process.env.PIXELREEL_HEAR === '1'
+  ? new Hearing({ model: process.env.PIXELREEL_HEAR_MODEL || undefined, threads: Number(process.env.THREADS) || 2, log })
+  : null;
+if (hearing) log(`My notes can hear in every browser, with ${hearing.model}`);
+
 const replyTo = process.env.PIXELREEL_BOTTLE_REPLY_TO ?? '';
 const bottle = { key: process.env.PIXELREEL_BOTTLE_KEY ?? '', reader: process.env.PIXELREEL_BOTTLE_READER ?? '', replyTo, notify: replyTo, hook: process.env.PIXELREEL_RESEND_WEBHOOK_SECRET ?? '' };
 const resendKey = process.env.PIXELREEL_RESEND_KEY ?? '', mailFrom = process.env.PIXELREEL_BOTTLE_MAIL_FROM ?? '';
 if (resendKey && mailFrom) bottle.mail = resend({ key: resendKey, from: mailFrom, log });
 else if (resendKey || mailFrom) log(`Message in a Bottle sends no email: ${resendKey ? 'PIXELREEL_BOTTLE_MAIL_FROM' : 'PIXELREEL_RESEND_KEY'} is not set, so each one is kept in its outbox`);
 if (bottle.key || bottle.reader) log(`Message in a Bottle is on${bottle.reader ? '' : ', but only Olly can read the notes: PIXELREEL_BOTTLE_READER is not set'}, ${bottle.mail ? 'sending email through Resend' : 'keeping its emails in the outbox'}`);
-const server = createService({ reels, baseUrl, log, limits, writer, bottle, trustProxy: Number(process.env.PIXELREEL_TRUST_PROXY) || 0, listed: process.env.PIXELREEL_LISTED === '1', fresh: process.env.NODE_ENV !== 'production' });
+const server = createService({ reels, baseUrl, log, limits, writer, hearing, bottle, trustProxy: Number(process.env.PIXELREEL_TRUST_PROXY) || 0, listed: process.env.PIXELREEL_LISTED === '1', fresh: process.env.NODE_ENV !== 'production' });
 server.listen(port, () => log(`Pixel Reel is at ${baseUrl}: connector ${baseUrl}/mcp, reels kept in ${store}`));
 
 const stop = () => {
   log('stopping: finishing the job in hand first');
   server.close();
-  reels.stop().then(() => { voice?.stop(); process.exit(0); });
+  reels.stop().then(() => { voice?.stop(); hearing?.stop(); process.exit(0); });
 };
 process.on('SIGINT', stop);
 process.on('SIGTERM', stop);

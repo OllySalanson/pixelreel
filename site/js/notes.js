@@ -4,6 +4,7 @@
 // from (service/writer.mjs), so the next reel answers them in context.
 import { deviceStorage, mineStorage, rememberMine } from './mine.js';
 import { NOTE_MAX, NOTES_MAX } from './given.js';
+import { canRecord, recordForService } from './hearing.js';
 
 /** Where a reel's notes are kept on this device. */
 const keyOf = (id) => `pixelreel-notes:${id}`;
@@ -34,8 +35,9 @@ export const tidyNote = (words) => String(words ?? '').replace(/\s+/g, ' ').trim
 
 /**
  * How the microphone hears a note, in this browser: the browser's own speech recognition,
- * or null where it has none that works. Brave has the name but no service behind it: every
- * go ends in a network error, so it is treated as having none.
+ * or null where it has none that works, and the service must hear it instead. Brave has the
+ * name but no service behind it: every go ends in a network error, so it is treated as
+ * having none.
  */
 export function speechHere(scope = globalThis) {
   if (scope.navigator?.brave) return null;
@@ -52,7 +54,7 @@ export function startNotes(id) {
   const list = document.getElementById('mynotes-list'), form = document.getElementById('mynotes-add'), box = document.getElementById('mynotes-box');
   const mic = document.getElementById('mynotes-mic'), make = document.getElementById('mynotes-make'), says = document.getElementById('mynotes-says');
   const storage = deviceStorage();
-  let notes = readNotes(storage, id), followable = false, busy = false;
+  let notes = readNotes(storage, id), followable = false, busy = false, listening = null;   // listening: the microphone, while it is on
   panel.hidden = false;
 
   const el = (tag, cls, text) => Object.assign(document.createElement(tag), cls ? { className: cls } : {}, text ? { textContent: text } : {});
@@ -61,7 +63,7 @@ export function startNotes(id) {
   const keep = () => writeNotes(storage, id, notes);
   const full = () => notes.length >= NOTES_MAX;
   function settle() {
-    make.disabled = busy || !followable || notes.length === 0;
+    make.disabled = busy || !followable || notes.length === 0 || Boolean(listening);   // a note being said is saved first
     box.disabled = full();
     box.placeholder = full() ? `${NOTES_MAX} notes is the most` : 'Add a note';
     for (const key of form.querySelectorAll('button')) key.disabled = full();
@@ -131,54 +133,98 @@ export function startNotes(id) {
   });
 
   // Said aloud: the words are written into the box as they are heard, and the note is
-  // saved when the microphone is pressed again, or Enter is
-  const Speech = speechHere();
-  let listening = null, before = '', saveAfter = false;
-  mic.hidden = !Speech;
+  // saved when the microphone is pressed again, or Enter is. The browser's own speech
+  // recognition hears it where it works; elsewhere (Brave, Firefox) the page records it and
+  // the service writes it down (site/js/hearing.js), where the service can.
+  const Speech = speechHere(), serviceHears = panel.closest('[data-mic]')?.dataset.mic === 'on' && canRecord();
+  let useService = !Speech, before = '', saveAfter = false;
+  mic.hidden = !(Speech || serviceHears);
   const micLabel = mic.querySelector('span');
+  const show = (said) => {
+    box.value = `${before} ${said}`.trim().slice(0, NOTE_MAX);
+    grow();
+    box.scrollTop = box.scrollHeight;
+  };
+  const NO_MIC = 'The microphone is switched off for this page. Type the note instead.', NOT_HEARD = 'That could not be heard. Type the note instead.';
   function stopListening({ thenSave = false } = {}) {
     saveAfter = saveAfter || thenSave;
     listening?.stop();
   }
   function stopped() {
     listening = null;
+    mic.disabled = false;
     mic.classList.remove('on');
     mic.setAttribute('aria-pressed', 'false');
     micLabel.textContent = 'Speak';
     panel.classList.remove('is-listening');
     if (saveAfter) save();
     saveAfter = false;
+    settle();
   }
-  mic.addEventListener('click', () => {
-    if (listening) { stopListening({ thenSave: true }); return; }
-    const heard = new Speech();
-    heard.lang = navigator.language || 'en-GB';   // the speaker's own English (en-IE, en-GB), which hears an accent better
-    heard.continuous = true;
-    heard.interimResults = true;
-    before = box.value.trim();
-    heard.onresult = (event) => {
-      const said = [...event.results].map((result) => result[0].transcript).join('').replace(/\s+/g, ' ').trim();
-      box.value = `${before} ${said}`.trim().slice(0, NOTE_MAX);
-      grow();
-      box.scrollTop = box.scrollHeight;
-    };
-    heard.onerror = (event) => {
-      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') says.textContent = 'The microphone is switched off for this page. Type the note instead.';
-      else if (event.error !== 'aborted' && event.error !== 'no-speech') says.textContent = 'That could not be heard. Type the note instead.';
-    };
-    heard.onend = () => { if (listening === heard) stopped(); };
-    try { heard.start(); } catch { return; }
-    listening = heard;
+  function on(listener) {
+    listening = listener;
     says.textContent = '';
     mic.classList.add('on');
     mic.setAttribute('aria-pressed', 'true');
     micLabel.textContent = 'Done';
     panel.classList.add('is-listening');
+    settle();
+  }
+
+  function listenInBrowser() {
+    const heard = new Speech();
+    heard.lang = navigator.language || 'en-GB';   // the speaker's own English (en-IE, en-GB), which hears an accent better
+    heard.continuous = true;
+    heard.interimResults = true;
+    heard.onresult = (event) => show([...event.results].map((result) => result[0].transcript).join('').replace(/\s+/g, ' '));
+    heard.onerror = (event) => {
+      // a browser with the name and no service behind it: the service hears instead, from now on
+      if (event.error === 'network' && serviceHears && !useService) { useService = true; heard.onend = null; listening = null; stopped(); listenWithService(); return; }
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') says.textContent = NO_MIC;
+      else if (event.error !== 'aborted' && event.error !== 'no-speech') says.textContent = NOT_HEARD;
+    };
+    heard.onend = () => { if (listening === heard) stopped(); };
+    try { heard.start(); } catch { return; }
+    on(heard);
+  }
+
+  async function listenWithService() {
+    mic.disabled = true;   // while the browser asks whether the microphone may be used
+    let recording, held = null;
+    try {
+      recording = await recordForService({ onText: (said) => { if (listening === held) show(said); } });
+    } catch (err) {
+      mic.disabled = false;
+      says.textContent = err?.name === 'NotAllowedError' || err?.name === 'SecurityError' ? NO_MIC : NOT_HEARD;
+      return;
+    }
+    mic.disabled = false;
+    held = {
+      stop: async () => {
+        if (held.stopping) return;
+        held.stopping = true;
+        mic.disabled = true;   // the last few words are still being written down
+        micLabel.textContent = 'One moment';
+        try {
+          show(await recording.stop());
+        } catch {
+          says.textContent = NOT_HEARD;
+        }
+        if (listening === held) stopped();
+      }
+    };
+    on(held);
+  }
+
+  mic.addEventListener('click', () => {
+    if (listening) { stopListening({ thenSave: true }); return; }
+    before = box.value.trim();
+    if (useService) listenWithService();
+    else listenInBrowser();
   });
 
   // the next reel: made from these notes, with the chain that led here
   make.addEventListener('click', async () => {
-    if (listening) stopListening({ thenSave: true });
     busy = true;
     settle();
     says.textContent = 'One moment.';
