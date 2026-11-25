@@ -53,4 +53,18 @@ describe('in the Pixel Reel service', () => {
       assert.match(await review.text(), /<meta name="robots" content="noindex/);
     } finally { await new Promise((ok) => server.close(ok)); }
   });
+
+  it('sends a note said aloud to the service\'s /hear where the browser cannot hear, when hearing is on', async () => {
+    const reels = new Reels({ store: new DiskStore(join(tmp, 'hear')) });
+    const heardIn = async (hearing) => {
+      const server = createService({ reels, baseUrl: 'https://reels.example', hearing, bottle: { key: KEY, reader: READER } });
+      await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
+      try {
+        const base = `http://127.0.0.1:${server.address().port}`;
+        return /const HEAR = ([^;]+);/.exec(await (await fetch(`${base}/bottle/bottle-ui.mjs`)).text())[1];
+      } finally { await new Promise((ok) => server.close(ok)); }
+    };
+    assert.equal(await heardIn({ hear: async () => '' }), '"/hear"');
+    assert.equal(await heardIn(null), 'null', 'without it, Speak is only where the browser hears');
+  });
 });
