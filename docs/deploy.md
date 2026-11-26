@@ -246,6 +246,11 @@ gcloud run services update pixelreel --region europe-west1 --project pixelreel-5
   --update-secrets PIXELREEL_BOTTLE_KEY=pixelreel-bottle-key:latest,PIXELREEL_BOTTLE_READER=pixelreel-bottle-reader:latest
 ```
 
+A person on a site's list can also send suggestions through Claude: `npm run bottles -- person
+claude <site> <person>` prints an address of theirs (`https://pixelreel.pro/bottle/mcp/<key>`)
+to add once in Claude as a custom connector (the package's README, "In Claude"). The key is in
+the address, so it is in Cloud Run's request logs; turning the person off ends it.
+
 Olly's key is `gcloud secrets versions access latest --secret pixelreel-bottle-key --project
 pixelreel-515501`. To change it, add a new version of `pixelreel-bottle-key` and redeploy;
 browsers holding the old one forget it. Everyone else's keys are kept (by their hash) in the
