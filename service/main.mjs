@@ -134,6 +134,17 @@ const resendKey = process.env.PIXELREEL_RESEND_KEY ?? '', mailFrom = process.env
 if (resendKey && mailFrom) bottle.mail = resend({ key: resendKey, from: mailFrom, log });
 else if (resendKey || mailFrom) log(`Message in a Bottle sends no email: ${resendKey ? 'PIXELREEL_BOTTLE_MAIL_FROM' : 'PIXELREEL_RESEND_KEY'} is not set, so each one is kept in its outbox`);
 if (bottle.key || bottle.reader) log(`Message in a Bottle is on${bottle.reader ? '' : ', but only Olly can read the notes: PIXELREEL_BOTTLE_READER is not set'}, ${bottle.mail ? 'sending email through Resend' : 'keeping its emails in the outbox'}`);
+// The day's summary for Olly (service/daybook.mjs): a page at /day for whoever holds the admin
+// key, and, where email is set up, an email each evening after 21:00 UTC, once a day. The service
+// may be asleep then (it sleeps when nobody uses it), so POST /day/send does the same for a schedule.
+if (bottle.mail && replyTo) {
+  const evening = async () => {
+    if (new Date().getUTCHours() < 21) return;
+    const { dayOf, sendSummary } = await import('./daybook.mjs');
+    await sendSummary(store, dayOf(Date.now()), { mail: bottle.mail, to: replyTo }).catch((err) => log(`the day's summary could not be sent: ${err.message}`));
+  };
+  setInterval(evening, 15 * 60_000).unref();
+}
 const server = createService({ reels, baseUrl, log, limits, writer, hearing, bottle, trustProxy: Number(process.env.PIXELREEL_TRUST_PROXY) || 0, listed: process.env.PIXELREEL_LISTED === '1', fresh: process.env.NODE_ENV !== 'production' });
 server.listen(port, () => log(`Pixel Reel is at ${baseUrl}: connector ${baseUrl}/mcp, reels kept in ${store}`));
 

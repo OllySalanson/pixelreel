@@ -1,6 +1,7 @@
 // The Pixel Reel service over HTTP: the MCP connector at /mcp, the website, and for each reel
 // a page to watch it (/r/<id>), its recordings and its MP4. Nothing here is specific to one host; it
 // needs a folder (or store) for the reels, and the address people reach it at.
+import { handleDaybook } from './daybook.mjs';
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
@@ -440,6 +441,7 @@ export function createService({ reels, baseUrl, log = () => {}, limits = null, t
     try {
       const path = new URL(req.url, 'http://localhost').pathname;
       if (path === '/mcp') { await handleMcp(req, res, context); return; }
+      if (await handleDaybook(req, res, { store: reels.store, reader: bottle.reader ?? '', mail: bottle.mail ?? null, to: bottle.notify ?? bottle.replyTo ?? '' })) return;
       if (await bottles.handle(req, res)) return;
       if (path === '/try') { await handleTry(req, res, context); return; }
       if (path === '/hear') { await handleHear(req, res, context, (origin) => bottles.sites.allowed(origin)); return; }

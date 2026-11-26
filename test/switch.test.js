@@ -76,9 +76,12 @@ describe('the pictures switch', () => {
     const kept = await reels.reel(id);
     assert.equal(kept.wishes, undefined, 'the wishes are not part of the reel');
     assert.ok(kept.scenes[1].picture.moves.every((m) => typeof m.at === 'number'), 'each move is timed');
-    const wishes = (await store.list('wishes')).filter((key) => key.endsWith(`${id}.json`));
-    assert.equal(wishes.length, 1);
-    assert.deepEqual(JSON.parse(await store.get(wishes[0])).wishes, ['gas meter', 'smart meter']);
+    const noted = (await store.list('daybook')).filter((key) => key.endsWith(`${id}.json`));
+    assert.equal(noted.length, 1);
+    const entry = JSON.parse(await store.get(noted[0]));
+    assert.deepEqual(entry.wishes, ['gas meter', 'smart meter']);
+    assert.equal(entry.how, 'connector');
+    assert.ok(!JSON.stringify(entry).includes(reel.scenes[1].say), 'the day book keeps none of its words');
     const again = await client.callTool({ name: 'get_reel', arguments: { id } });
     assert.ok(again.structuredContent.reel.scenes[1].picture.moves.every((m) => m.at === undefined), 'get_reel gives the moves as written');
     assert.equal(format, 'pixelreel/1');
