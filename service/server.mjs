@@ -375,11 +375,11 @@ export const languageChoices = (languages = []) => (languages.length ? ['english
   `<label><input type="radio" name="language" value="${language}"${language === 'english' ? ' checked' : ''}><span lang="${LANG_CODES[language] ?? 'en'}">${escapeHtml(OWN_NAMES[language] ?? languageName(language))}</span></label>`).join('\n          ') : '');
 
 
-function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages, writer, reels }, extra = {}) {
+function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages, writer, hearing, reels }, extra = {}) {
   let page = fresh ? null : pages.get(name);
   if (!page) {
     // "watch/<reel>" is the page of one of the site's own reels
-    const html = name.startsWith('watch/') ? watchPage(name.slice(6), baseUrl, { listed, here: Boolean(writer) }) : sitePage(name, baseUrl, { listed, narrators: reels.narrators ?? [], values: { here: writer ? 'on' : 'off', languages: languageChoices(reels.languages ?? []) } });
+    const html = name.startsWith('watch/') ? watchPage(name.slice(6), baseUrl, { listed, here: Boolean(writer) }) : sitePage(name, baseUrl, { listed, narrators: reels.narrators ?? [], values: { here: writer ? 'on' : 'off', mic: hearing ? 'on' : 'off', languages: languageChoices(reels.languages ?? []) } });   // mic: whether the service hears, for My notes on the make page in a browser that cannot (Brave, Firefox)
     page = squeezed(html);
     page.tag = tagOf(page.bytes);
     if (!fresh) pages.set(name, page);

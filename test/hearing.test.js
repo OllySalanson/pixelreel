@@ -172,6 +172,11 @@ describe('POST /hear', () => {
     assert.equal((await send(new Uint8Array(100), 'https://reels.example', localOff)).status, 404, 'and is not there at all without a Hearing');
   });
 
+  it('tells the make page whether it hears, so that My notes there has its microphone in Brave and Firefox', async () => {
+    assert.match(await (await fetch(`${local}/make`)).text(), /<div class="wrap watch-in" id="making" data-mic="on">/);
+    assert.match(await (await fetch(`${localOff}/make`)).text(), /<div class="wrap watch-in" id="making" data-mic="off">/);
+  });
+
   it('tells a reel\'s page whether it hears', async () => {
     const made = await reels.create({ format: 'pixelreel/1', title: 'Tea', scenes: [{ title: 'Kettle', caption: 'Boil it.', say: 'Boil the kettle.', picture: { type: 'big', text: 'BOIL' } }] });
     assert.match(await (await fetch(`${local}/r/${made.id}`)).text(), /data-here="on" data-mic="on"/);
