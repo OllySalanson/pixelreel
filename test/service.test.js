@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import { CLAUDE_ADDRESSES, inRanges, LIMITS, limitProblems, peterMs, RateLimit, reelMs, slipProblems } from '../service/limits.mjs';
-import { EXAMPLE_REEL, formatGuide, playerHtml, reelId } from '../service/mcp.mjs';
+import { EXAMPLE_REEL, EXAMPLE_STAGE_REEL, formatGuide, playerHtml, reelId } from '../service/mcp.mjs';
 import { promptList, promptMessages } from '../service/prompts.mjs';
 import { BusyError, isId, KEEP_DAYS, languageName, NARRATORS, newId, Reels } from '../service/reels.mjs';
 import { reelFromData } from '../src/format.js';
@@ -682,7 +682,7 @@ describe('the service over HTTP', async () => {
     assert.equal(properties.images, undefined, 'no pictures from elsewhere, so none are offered');
     assert.match($defs.scene.properties.say.description, /12 to 25 words/);
     const pictures = $defs.picture.oneOf;
-    assert.deepEqual(pictures.map((p) => p.title), ['title', 'list', 'terminal', 'code', 'chat', 'big', 'icons', 'flow', 'compare', 'table', 'sprite']);
+    assert.deepEqual(pictures.map((p) => p.title), ['title', 'list', 'terminal', 'code', 'chat', 'big', 'icons', 'flow', 'compare', 'table', 'sprite', 'stage']);
     for (const picture of pictures) {
       assert.equal(picture.properties.every ?? picture.properties.start, undefined, `${picture.title}: the service does the timing, so Claude is not asked to guess it`);
     }
@@ -697,7 +697,14 @@ describe('the service over HTTP', async () => {
   });
 
   it('gives a guide with a finished reel in it, which is itself a good reel', async () => {
-    const guide = formatGuide();
+    // with the stage, its example is a stage reel, within the limits here
+    const staged = formatGuide(), stageExample = JSON.parse(staged.slice(staged.indexOf('{"format"')));
+    assert.deepEqual(stageExample, EXAMPLE_STAGE_REEL);
+    assert.deepEqual(limitProblems(reelFromData(stageExample), stageExample), []);
+    assert.ok(stageExample.scenes.filter((s) => s.picture.type === 'stage').length >= stageExample.scenes.length / 2, 'most of its scenes are a stage');
+    for (const scene of stageExample.scenes) for (const m of scene.picture.moves ?? []) assert.ok(scene.say.includes(m.cue), `"${m.cue}" is said in scene "${scene.title}"`);
+    // and with the cards alone, the cards' example, as before the stage
+    const guide = formatGuide([], [], { pictures: 'cards' });
     const example = JSON.parse(guide.slice(guide.indexOf('{"format"')));
     assert.deepEqual(example, EXAMPLE_REEL);
     assert.deepEqual(limitProblems(reelFromData(example), example), []);

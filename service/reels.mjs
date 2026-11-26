@@ -7,6 +7,7 @@ import { mkdtemp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { reelFromData } from '../src/format.js';
+import { PICTURES } from '../src/pictures.js';
 import { clipLookup, ReelError } from '../src/reel.js';
 import { staysAhead } from './ahead.mjs';
 import { limitProblems, peterMs, reelMs, slipProblems } from './limits.mjs';
@@ -85,9 +86,10 @@ export class Reels {
    * @param {(raw: object) => Promise<Uint8Array>} [options.picture]   draws a reel's picture for link previews, as a PNG
    * @param {string[]} [options.languages]   the languages besides English the narrator can read here (those whose voice models are to hand)
    * @param {string[]} [options.narrators]   the narrators besides Peter that may be asked for here, by first name (see NARRATORS)
+   * @param {string} [options.pictures]   'stage', or 'cards' to take only the cards, as before the stage (PIXELREEL_PICTURES; PICTURE_MODES in mcp.mjs)
    */
-  constructor({ store, record = recordWith(), video = drawVideo, picture = drawPicture, now = () => Date.now(), keepDays = KEEP_DAYS, maxQueue = 20, languages = [], narrators = [], log = () => {} }) {
-    Object.assign(this, { store, record, video, picture, now, keepDays, maxQueue, languages, narrators, log });
+  constructor({ store, record = recordWith(), video = drawVideo, picture = drawPicture, now = () => Date.now(), keepDays = KEEP_DAYS, maxQueue = 20, languages = [], narrators = [], pictures = 'stage', log = () => {} }) {
+    Object.assign(this, { store, record, video, picture, now, keepDays, maxQueue, languages, narrators, pictures, log });
     this.queue = [];
     this.running = null;
     this.notes = new Map();   // how far each reel that is still being written has got: note()
@@ -98,6 +100,9 @@ export class Reels {
    * the service's limits. With `slips`, a slip in one of its drawings is a problem too.
    */
   check(raw, { slips = false } = {}) {
+    // with the cards alone, a stage is not a picture here, just as before there was one
+    const staged = this.pictures === 'cards' && Array.isArray(raw?.scenes) ? raw.scenes.map((scene, i) => (scene?.picture?.type === 'stage' ? i : -1)).filter((i) => i >= 0) : [];
+    if (staged.length) throw new ReelError(staged.map((i) => `scene ${i + 1}: picture.type must be one of: ${Object.keys(PICTURES).filter((type) => type !== 'stage').join(', ')}`));
     const reel = reelFromData(raw);
     const over = [...limitProblems(reel, raw), ...(slips ? slipProblems(raw) : [])];
     if (over.length) throw new ReelError(over);
@@ -133,7 +138,7 @@ export class Reels {
    * `language` is the language its words are in, for the narrator to read it in: one of `languages`, or English.
    * `narrator` is who reads it, by first name: one of `narrators`, or Peter.
    */
-  async create(raw, { improves = null, language = null, narrator = null } = {}) {
+  async create(raw, { improves = null, language = null, narrator = null, wishes = null } = {}) {
     const reel = this.check(raw, { slips: true });   // whoever sent it can mend it and send it again, at no cost
     const who = narrator && narrator !== 'peter' ? narrator : null;
     if (who && !(this.narrators.includes(who) && NARRATORS[who])) {
@@ -151,6 +156,7 @@ export class Reels {
     if (spoken) status.language = spoken;
     if (who) status.narrator = who;
     await this.save(status);
+    await this.wish(status.id, wishes);
     this.enqueue({ id: status.id, kind: 'voice' });
     // with nothing else in hand its recording has begun already, and whoever asked is told so
     return this.running?.id === status.id ? { ...status, state: 'recording' } : status;
@@ -251,7 +257,11 @@ export class Reels {
    * `languages`, or English; `narrator` is who reads it: one of `narrators`, or Peter. Null
    * if the reel has gone, or is no longer waiting for its scenes.
    */
-  async write(id, raw, { language = null, narrator = null } = {}) {
+  async write(id, given, { language = null, narrator = null } = {}) {
+    // with the stage, the things the writer wished the library had come with the reel, and are kept apart from it
+    const takes = this.pictures !== 'cards' && given !== null && typeof given === 'object' && Object.hasOwn(given, 'wishes');
+    const { wishes = null, ...rest } = takes ? given : {};
+    const raw = takes ? rest : given;
     const reel = this.check(raw);
     const status = await this.status(id);
     if (status?.state !== 'writing') return null;
@@ -261,8 +271,22 @@ export class Reels {
     if (narrator && narrator !== 'peter' && this.narrators.includes(narrator) && NARRATORS[narrator]) written.narrator = narrator;
     await this.store.put(`reels/${id}/reel.json`, JSON.stringify(raw));
     await this.save(written);
+    await this.wish(id, wishes);
     this.enqueue({ id, kind: 'voice' });
     return written;
+  }
+
+  /**
+   * Keeps what reel `id` wished the library had (a few short names, such as "gas meter"), for the
+   * weekly sheet (docs/library.md): under wishes/, by day, so they outlive the reel itself. Only
+   * names are kept, never the reel's words. Anything that is not a short name is left out.
+   */
+  async wish(id, wishes) {
+    const names = (Array.isArray(wishes) ? wishes : []).filter((w) => typeof w === 'string').map((w) => w.trim().toLowerCase().replace(/\s+/g, ' '))
+      .filter((w) => w && w.length <= 40 && /^[\p{L}\p{N} '-]+$/u.test(w)).slice(0, 5);
+    if (!names.length) return;
+    const day = new Date(this.now()).toISOString().slice(0, 10);
+    await this.store.put(`wishes/${day}/${id}.json`, JSON.stringify({ id, wishes: [...new Set(names)] }));
   }
 
   /** Gives up on a reel started with begin(), saying why in words for whoever is waiting on its page. */

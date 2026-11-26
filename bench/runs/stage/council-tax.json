@@ -1,0 +1,268 @@
+{
+ "topic": "council-tax",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "pictures": "stage",
+ "seconds": 9.1,
+ "rounds": 1,
+ "tokens": {
+  "in": 7572,
+  "out": 1474
+ },
+ "wishes": [],
+ "cents": 3,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Council Tax reminder",
+  "transition": "fade",
+  "scenes": [
+   {
+    "title": "Reminder",
+    "caption": "A reminder about your Council Tax.",
+    "say": "A reminder notice has come from your council about Council Tax. Here's what it says, and what to do.",
+    "picture": {
+     "type": "title",
+     "text": "COUNCIL TAX",
+     "sub": "Reminder notice"
+    }
+   },
+   {
+    "title": "Missed one",
+    "caption": "The November instalment was not paid.",
+    "say": "The council's records show the November instalment of one hundred and forty eight pounds, due on the first, has not been paid.",
+    "picture": {
+     "type": "stage",
+     "place": "street",
+     "things": [
+      {
+       "id": "home",
+       "is": "house",
+       "spot": "left",
+       "label": "Your home"
+      },
+      {
+       "id": "council",
+       "is": "town-hall",
+       "spot": "right",
+       "label": "Council"
+      }
+     ],
+     "moves": [
+      {
+       "do": "send",
+       "what": "letter",
+       "from": "council",
+       "to": "home",
+       "cue": "records show"
+      },
+      {
+       "do": "count",
+       "on": "home",
+       "to": 148,
+       "before": "£",
+       "cue": "one hundred and forty eight pounds"
+      },
+      {
+       "do": "mark",
+       "on": "council",
+       "with": "cross",
+       "cue": "has not been paid"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Pay now",
+    "caption": "Pay £148.00 within 7 days of the notice.",
+    "say": "What to do is simple. Pay the one hundred and forty eight pounds within seven days, and you can carry on paying in instalments.",
+    "picture": {
+     "type": "stage",
+     "place": "street",
+     "things": [
+      {
+       "id": "home",
+       "is": "house",
+       "spot": "left",
+       "label": "Your home"
+      },
+      {
+       "id": "clock",
+       "is": "clock",
+       "spot": "middle",
+       "up": true
+      },
+      {
+       "id": "council",
+       "is": "town-hall",
+       "spot": "right",
+       "label": "Council"
+      }
+     ],
+     "moves": [
+      {
+       "do": "send",
+       "what": "banknote",
+       "from": "home",
+       "to": "council",
+       "cue": "Pay the one hundred"
+      },
+      {
+       "do": "mark",
+       "on": "clock",
+       "with": "clock",
+       "cue": "within seven days"
+      },
+      {
+       "do": "mark",
+       "on": "council",
+       "with": "tick",
+       "cue": "carry on paying"
+      }
+     ]
+    }
+   },
+   {
+    "title": "If you don't",
+    "caption": "The whole year's bill falls due at once.",
+    "say": "Miss that, and you lose the instalments. The rest of the year, seven hundred and forty pounds, is due all at once.",
+    "picture": {
+     "type": "stage",
+     "place": "street",
+     "things": [
+      {
+       "id": "home",
+       "is": "house",
+       "spot": "left",
+       "label": "Your home"
+      },
+      {
+       "id": "council",
+       "is": "town-hall",
+       "spot": "right",
+       "label": "Council"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "home",
+       "with": "warning",
+       "cue": "Miss that"
+      },
+      {
+       "do": "pile",
+       "on": "home",
+       "count": 10,
+       "cue": "seven hundred and forty pounds"
+      },
+      {
+       "do": "count",
+       "on": "council",
+       "to": 740,
+       "before": "£",
+       "cue": "due all at once"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Court costs",
+    "caption": "Court action could add £85.00 in costs.",
+    "say": "If it's still unpaid, the council may go to the magistrates' court, and eighty five pounds of costs get added.",
+    "picture": {
+     "type": "table",
+     "columns": [
+      "Step",
+      "Amount"
+     ],
+     "rows": [
+      [
+       "Instalment due",
+       "£148.00"
+      ],
+      [
+       "Rest of year",
+       "£740.00"
+      ],
+      [
+       "Court costs",
+       "£85.00"
+      ]
+     ]
+    }
+   },
+   {
+    "title": "How to pay",
+    "caption": "Online, by phone, or at a Post Office.",
+    "say": "You can pay online, by phone at any hour, or at a Post Office or PayPoint with the barcode on your bill.",
+    "picture": {
+     "type": "icons",
+     "items": [
+      {
+       "icon": "computer",
+       "label": "Online"
+      },
+      {
+       "icon": "phone",
+       "label": "By phone"
+      },
+      {
+       "icon": "letter",
+       "label": "Post Office"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Need help?",
+    "caption": "Struggling? Contact the council straight away.",
+    "say": "Already paid? Ignore it. Struggling? Contact the council at once. There may be help with the cost, and Citizens Advice is free. Check with the council.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "council",
+       "is": "woman",
+       "wears": "suit",
+       "spot": "right",
+       "label": "Council"
+      },
+      {
+       "id": "reelie",
+       "is": "reelie",
+       "spot": "far-right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "you",
+       "with": "tick",
+       "cue": "Already paid"
+      },
+      {
+       "do": "wave",
+       "from": "you",
+       "to": "council",
+       "cue": "Contact the council"
+      },
+      {
+       "do": "say",
+       "who": "council",
+       "text": "We can help",
+       "cue": "help with the cost"
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

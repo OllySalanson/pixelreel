@@ -58,6 +58,7 @@ npm run service
 | `PIXELREEL_NARRATORS` | none (all five in the image) | Narrators besides Peter that may be asked for, such as `anna,stuart`. Off, Peter reads every reel. See [Other narrators](#other-narrators). |
 | `PIXELREEL_WARM_VOICE` | on | `0` loads the voice afresh for each reel, instead of once when the service starts. Saves about 1 GB of memory, and makes every reel wait longer. |
 | `PIXELREEL_KEEP_LANGUAGES` | `2` | How many languages besides English the loaded voice holds at once. Each is about 450 MB of memory; fewer means a reel in a language not held waits for its model to load. |
+| `PIXELREEL_PICTURES` | `stage` | `cards` switches the pictures back to the cards alone, exactly as before the stage: what Claude is told, and what `make_reel` and Make it right here take. Reels already made with a stage still play. See [The stage, and switching back](#the-stage-and-switching-back). |
 
 It records one reel at a time, and carries on with any waiting after a restart. Stopping it
 (Ctrl+C) finishes the job in hand first. To put it online, see [deploy.md](deploy.md).
@@ -689,3 +690,21 @@ The local tools (`npm run voices`, `page`, `video`) have no such limits.
 
 A job copies its reel out of the store into a folder of its own, runs the same
 `npm run voices` and `npm run video` code as on your machine, and puts the results back.
+
+## The stage, and switching back
+
+Most pictures Claude makes here are a **stage** (`src/stage.js`): a place, the people and
+things in it from the library (`src/library.js`, docs/library.md), and moves between them,
+each timed to the words Peter says (`paceStage` in `service/pacing.mjs`). Claude is told to ask
+of every scene "what is happening here?" and to use a card only for what a card is for
+(`STAGE_GUIDE` in `service/mcp.mjs`). A reel may say which things it wished the library had
+(`wishes`); they are kept under `wishes/` in the store, names only, for the weekly sheet.
+
+To switch back to the cards alone, with no new build and nothing to move:
+
+    gcloud run services update pixelreel --region europe-west1 --project pixelreel-515501 --update-env-vars PIXELREEL_PICTURES=cards
+
+Claude is then told exactly what it was told before the stage (`test/fixtures/cards-told.json`
+holds it to the letter), a stage sent to `make_reel` is turned away as it was then, and every
+reel already made, stage or not, still plays. `--update-env-vars PIXELREEL_PICTURES=stage` (or
+`--remove-env-vars PIXELREEL_PICTURES`) switches the stage back on.

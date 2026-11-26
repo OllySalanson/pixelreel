@@ -5,7 +5,7 @@
 import { HAIRS, ICON_NAMES, PERSON_ICONS, PICTURES, SKINS, SPRITE_MAX, TABLE_MAX } from './pictures.js';
 import { PALETTE } from './palette.js';
 import { PEOPLE, THINGS, WEARS } from './library.js';
-import { CAST, MARKS, MOVES, PLACES, SIZES, SPOTS, STAGE_MAX } from './stage.js';
+import { CAST, MARKS, MOVES, OWN_MAX, PLACES, SIZES, SPOTS, STAGE_MAX } from './stage.js';
 import { CAPTION_STYLES, LANGUAGES, normalizeReel, ReelError } from './reel.js';
 import { TRANSITIONS } from './transitions.js';
 
@@ -171,9 +171,11 @@ const STAGE_SCHEMAS = {
     items: {
       type: 'object',
       additionalProperties: false,
-      required: ['id', 'is', 'spot'],
+      required: ['id', 'spot'],
       properties: {
         id: { ...TEXT, description: 'A short name of its own, for the moves to use.' },
+        rows: { type: 'array', minItems: 1, maxItems: OWN_MAX.rows, items: { type: 'string', maxLength: OWN_MAX.cols }, description: `Instead of "is", for a thing the library does not have: your own drawing, rows of palette letters (as a sprite's), up to ${OWN_MAX.cols} by ${OWN_MAX.rows}, every row the same length.` },
+        colours: KIND_SCHEMAS.colours,
         is: { enum: [...new Set([...CAST, ...Object.keys(PEOPLE), ...Object.keys(THINGS), ...ICON_NAMES])], description: `What it is: ${CAST.join(', ')} (the cast), a person, a thing in the library, or an icon.` },
         spot: { enum: Object.keys(SPOTS), description: 'Where it stands, left to right.' },
         up: { type: 'boolean', description: 'True to have it in the air (a cloud, the sun, a plane), not on the ground.' },

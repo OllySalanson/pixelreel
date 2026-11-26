@@ -3,7 +3,7 @@
 // writer and drawn side by side, so a change to the pictures, or to what Claude is told, is
 // seen and not guessed. See bench/README.md.
 //
-//   npm run bench -- write <run> [--model m] [--effort e] [--only topic,topic]
+//   npm run bench -- write <run> [--pictures stage|cards] [--model m] [--effort e] [--only topic,topic]
 //       has the writer (service/writer.mjs) write every topic, with the service's own checks
 //       and its one round of putting a reel right, and keeps each reel, its time and its
 //       cost in bench/runs/<run>/. It costs money: about 2 to 10 US cents a topic. It needs
@@ -62,33 +62,38 @@ export function benchProblems(raw) {
   }
 }
 
+/** A reel the writer gave, and the things it wished the library had, apart. */
+const apart = ({ wishes = [], ...reel }) => ({ reel, wishes });
+
 /** The kinds of picture a reel chose, a scene at a time. */
 export const kindsOf = (reel) => (reel?.scenes ?? []).map((scene) => scene.picture?.type ?? 'card');
 
-async function write(run, { model, effort, only }) {
+async function write(run, { model, effort, only, pictures }) {
   const { createWriter } = await import('../service/writer.mjs');
   const dir = join(RUNS, run);
   mkdirSync(dir, { recursive: true });
   for (const topic of only ?? topicNames()) {
     const text = readFileSync(join(TOPICS, `${topic}.txt`), 'utf8');
     const logs = [];
-    const writer = createWriter({ model, effort, log: (line) => logs.push(line) });
+    const writer = createWriter({ model, effort, pictures, log: (line) => logs.push(line) });
     const source = { kind: 'text', text };
     const started = Date.now();
-    let reel = null, problems = [], rounds = 1, error = null;
+    let reel = null, problems = [], rounds = 1, error = null, wishes = [], firstProblems = [];
     try {
       reel = await writer(source);
+      ({ reel, wishes } = apart(reel));
       problems = benchProblems({ format: 'pixelreel/1', ...reel });
       if (problems.length) {
         rounds = 2;   // as the service does: one chance to put it right
-        reel = await writer(source, { before: reel, problems });
+        firstProblems = problems;
+        ({ reel, wishes } = apart(await writer(source, { before: reel, problems })));
         problems = benchProblems({ format: 'pixelreel/1', ...reel });
       }
     } catch (err) {
       error = err.message;
     }
     const seconds = Math.round((Date.now() - started) / 100) / 10, tokens = tokensFrom(logs);
-    const kept = { topic, model, effort, seconds, rounds, tokens, cents: cents(model, tokens), problems, ...(error ? { error } : {}), reel: reel && { format: 'pixelreel/1', ...reel } };
+    const kept = { topic, model, effort, pictures, seconds, rounds, firstProblems, tokens, wishes, cents: cents(model, tokens), problems, ...(error ? { error } : {}), reel: reel && { format: 'pixelreel/1', ...reel } };
     writeFileSync(join(dir, `${topic}.json`), `${JSON.stringify(kept, null, 1)}\n`);
     console.log(`${topic.padEnd(20)} ${String(seconds).padStart(5)} s ${String(kept.cents).padStart(5)} c  ${error ? `FAILED: ${error}` : `${kindsOf(reel).join(' ')}${problems.length ? `  (${problems.length} problems left)` : ''}`}`);
   }
@@ -156,7 +161,7 @@ async function sheet(runs, { out, only }) {
 async function main() {
   const { positionals, values } = parseArgs({
     allowPositionals: true,
-    options: { model: { type: 'string', default: 'claude-sonnet-5-5' }, effort: { type: 'string', default: 'low' }, only: { type: 'string' }, out: { type: 'string' } }
+    options: { pictures: { type: 'string', default: 'stage' }, model: { type: 'string', default: 'claude-sonnet-5-5' }, effort: { type: 'string', default: 'low' }, only: { type: 'string' }, out: { type: 'string' } }
   });
   const [command, ...names] = positionals, only = values.only?.split(',').map((t) => t.trim()).filter(Boolean);
   for (const topic of only ?? []) if (!topicNames().includes(topic)) throw new Error(`there is no topic called ${topic}; there are ${topicNames().join(', ')}`);

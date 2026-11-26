@@ -1,0 +1,273 @@
+{
+ "topic": "bank-scam",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "pictures": "stage",
+ "seconds": 9.1,
+ "rounds": 1,
+ "tokens": {
+  "in": 7511,
+  "out": 1491
+ },
+ "wishes": [],
+ "cents": 3,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Bank phone scams",
+  "transition": "wipe",
+  "scenes": [
+   {
+    "title": "Bank scams",
+    "caption": "How to spot a fake call from your bank.",
+    "say": "Your bank has warned about a phone scam. Here's how it works, and what to do about it.",
+    "picture": {
+     "type": "title",
+     "text": "PHONE SCAM",
+     "sub": "Spot it and stop it"
+    }
+   },
+   {
+    "title": "The call",
+    "caption": "Criminals pretend to be the bank's fraud team.",
+    "say": "Someone rings, or texts, or emails, saying they're from your bank's fraud team. The number on your phone may even look right.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "phone",
+       "is": "phone",
+       "spot": "middle",
+       "up": true
+      },
+      {
+       "id": "crook",
+       "is": "person",
+       "spot": "right",
+       "label": "Fake caller"
+      }
+     ],
+     "moves": [
+      {
+       "do": "wave",
+       "from": "crook",
+       "to": "you",
+       "cue": "Someone rings"
+      },
+      {
+       "do": "pulse",
+       "on": "phone",
+       "cue": "look right"
+      },
+      {
+       "do": "mark",
+       "on": "crook",
+       "with": "warning",
+       "cue": "fraud team"
+      }
+     ]
+    }
+   },
+   {
+    "title": "The trick",
+    "caption": "They say your money is at risk.",
+    "say": "They say your account is in danger, and you must move your money to a safe account straight away. They may know your name and address.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "crook",
+       "is": "person",
+       "spot": "middle",
+       "label": "Fake caller"
+      },
+      {
+       "id": "safe",
+       "is": "piggy-bank",
+       "spot": "right",
+       "label": "Safe account"
+      }
+     ],
+     "moves": [
+      {
+       "do": "say",
+       "who": "crook",
+       "text": "Move it now!",
+       "cue": "straight away"
+      },
+      {
+       "do": "send",
+       "what": "banknote",
+       "from": "you",
+       "to": "safe",
+       "cue": "move your money"
+      },
+      {
+       "do": "mark",
+       "on": "safe",
+       "with": "cross",
+       "cue": "safe account"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Never",
+    "caption": "Your bank will never ask for these things.",
+    "say": "Your bank will never ask you to move money to a safe account. Nor for your full PIN, your password, or a code from a text.",
+    "picture": {
+     "type": "list",
+     "heading": "Your bank never asks for",
+     "items": [
+      "A safe account move",
+      "Your full PIN",
+      "Your online password",
+      "A code from a text"
+     ]
+    }
+   },
+   {
+    "title": "Hang up",
+    "caption": "Hang up. Do not trust the number on screen.",
+    "say": "If a call like this comes, just hang up. Don't trust the number on your screen.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "phone",
+       "is": "phone",
+       "spot": "middle",
+       "up": true
+      },
+      {
+       "id": "crook",
+       "is": "person",
+       "spot": "right",
+       "label": "Fake caller"
+      }
+     ],
+     "moves": [
+      {
+       "do": "block",
+       "from": "crook",
+       "to": "you",
+       "cue": "hang up"
+      },
+      {
+       "do": "mark",
+       "on": "phone",
+       "with": "question",
+       "cue": "number on your screen"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Call the bank",
+    "caption": "Wait five minutes, then use the number on your card.",
+    "say": "Wait five minutes, or use a different phone. Then call the number on the back of your card. If money has gone, call at once, or ring 159.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "card",
+       "is": "card",
+       "spot": "middle",
+       "label": "Number on back"
+      },
+      {
+       "id": "bank",
+       "is": "bank",
+       "spot": "right",
+       "label": "Your bank"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "you",
+       "with": "clock",
+       "cue": "five minutes"
+      },
+      {
+       "do": "wave",
+       "from": "you",
+       "to": "bank",
+       "cue": "call the number"
+      },
+      {
+       "do": "mark",
+       "on": "bank",
+       "with": "tick",
+       "cue": "ring 159"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Take your time",
+    "caption": "A real bank never rushes you. It's fine to say no.",
+    "say": "Remember, a real bank will never rush you. Take your time. It's perfectly fine to say no.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "reelie",
+       "is": "reelie",
+       "spot": "far-right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "say",
+       "who": "you",
+       "text": "No, thank you",
+       "cue": "say no"
+      },
+      {
+       "do": "mark",
+       "on": "you",
+       "with": "heart",
+       "cue": "Take your time"
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

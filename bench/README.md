@@ -16,3 +16,4 @@ one round of putting a reel right, and keeps each reel with its time and cost in
 
 Keep the topics as they are: a run is only worth comparing with another on the same words.
 `runs/cards` is the site as it was on 26 Nov 2026, before the stage: every picture a card.
+`runs/stage` is the first run with the stage and its library (`--pictures stage`, the default).

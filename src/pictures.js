@@ -455,7 +455,7 @@ export function stageLook(th) {
   if (!person) return null;
   const h = hash(String(th.label ?? th.id ?? th.is).trim().toLowerCase()), wears = WEARS[th.wears] ?? null;
   const clothes = { C: wears?.C ?? TOPS[Math.floor(h / 7) % TOPS.length], T: wears?.T ?? LEGS[Math.floor(h / 61) % LEGS.length], U: INK, ...(wears?.A ? { A: wears.A } : {}) };
-  if (person.outline) return { C: wears?.C ?? '#8fa6bf' };
+  if (person.outline) return { C: wears?.C ?? TOPS[Math.floor(h / 7) % TOPS.length] };
   const skin = th.skin ?? Object.keys(SKINS)[h % 3], hairs = person.older ? ['grey'] : HAIR_FOR[skin];
   return { S: SKINS[skin], H: HAIRS[th.hair ?? hairs[Math.floor(h / 3) % hairs.length]], ...clothes };
 }

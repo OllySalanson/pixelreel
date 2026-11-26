@@ -5,7 +5,6 @@ import { createKit } from '../src/kit.js';
 import { pictureProblems } from '../src/pictures.js';
 import { GROUND, MOVES, moveTimes, PLACES, SPOTS, stageProblems } from '../src/stage.js';
 import { paceStage, pacePicture } from '../service/pacing.mjs';
-import { formatGuide, toolList } from '../service/mcp.mjs';
 import { fakeContext } from './fake-canvas.js';
 
 const stage = (more = {}) => ({
@@ -36,8 +35,10 @@ describe('the stage', () => {
   });
 
   it('keeps a big thing clear of its neighbours, and the air apart from the ground', () => {
-    const things = [{ id: 'a', is: 'house', spot: 'left', size: 'big' }, { id: 'b', is: 'car', spot: 'middle' }];
-    assert.ok(stageProblems(stage({ things, moves: [{ do: 'pulse', on: 'a' }] })).some((p) => p.includes('room either side')));
+    const things = [{ id: 'a', is: 'house', spot: 'left' }, { id: 'b', is: 'car', spot: 'middle' }];
+    assert.ok(stageProblems(stage({ things, moves: [{ do: 'pulse', on: 'a' }] })).some((p) => p.includes('too wide to stand side by side')));
+    const apart = [{ id: 'a', is: 'house', spot: 'left' }, { id: 'b', is: 'woman', spot: 'middle' }, { id: 'c', is: 'car', spot: 'far-right' }];
+    assert.deepEqual(stageProblems(stage({ things: apart, moves: [{ do: 'pulse', on: 'a' }] })), [], 'a house beside a person is fine');
     const air = [{ id: 'a', is: 'house', spot: 'left' }, { id: 'b', is: 'cloud', spot: 'left', up: true }];
     assert.deepEqual(stageProblems(stage({ things: air, moves: [{ do: 'pulse', on: 'a' }] })), []);
   });
@@ -101,10 +102,5 @@ describe('the stage', () => {
   it('is in the format\'s schema', () => {
     const pictures = reelSchema().$defs.picture.oneOf.map((p) => p.title);
     assert.ok(pictures.includes('stage'));
-  });
-
-  it('is not told of to Claude yet', () => {
-    assert.ok(!formatGuide().includes('stage'));
-    assert.ok(!JSON.stringify(toolList()).includes('"stage"'));
   });
 });

@@ -1,0 +1,233 @@
+{
+ "topic": "school-trip",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "pictures": "stage",
+ "seconds": 9,
+ "rounds": 1,
+ "tokens": {
+  "in": 7597,
+  "out": 1398
+ },
+ "wishes": [],
+ "cents": 2.9,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Year 4 trip to the Science Museum",
+  "transition": "slide",
+  "scenes": [
+   {
+    "title": "The trip",
+    "caption": "Year 4 visits the Science Museum.",
+    "say": "Year 4 is off to the Science Museum on Friday the eleventh of December. Here's what parents need to know.",
+    "picture": {
+     "type": "title",
+     "text": "SCIENCE TRIP",
+     "sub": "Year 4 - 11 December"
+    }
+   },
+   {
+    "title": "The day",
+    "caption": "Be in class by 8.30am. Back about 3.45pm.",
+    "say": "Children must be in class by half past eight, as the coach leaves at quarter to nine. Collect them from the main hall about quarter to four.",
+    "picture": {
+     "type": "table",
+     "columns": [
+      "What",
+      "Time"
+     ],
+     "rows": [
+      [
+       "In class",
+       "8.30am"
+      ],
+      [
+       "Coach leaves",
+       "8.45am"
+      ],
+      [
+       "Back at school",
+       "3.45pm"
+      ]
+     ]
+    }
+   },
+   {
+    "title": "The cost",
+    "caption": "£14.50 a child, paid on ParentPay.",
+    "say": "The trip costs fourteen pounds fifty a child. Please pay on ParentPay by Friday the twenty seventh of November.",
+    "picture": {
+     "type": "stage",
+     "place": "school",
+     "things": [
+      {
+       "id": "parent",
+       "is": "person",
+       "spot": "left",
+       "label": "Parent"
+      },
+      {
+       "id": "school",
+       "is": "school",
+       "spot": "right",
+       "label": "School"
+      },
+      {
+       "id": "reelie",
+       "is": "reelie",
+       "spot": "far-right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "send",
+       "what": "banknote",
+       "from": "parent",
+       "to": "school",
+       "cue": "pay on ParentPay"
+      },
+      {
+       "do": "count",
+       "on": "school",
+       "to": 14.5,
+       "before": "£",
+       "cue": "fourteen pounds fifty"
+      },
+      {
+       "do": "mark",
+       "on": "school",
+       "with": "clock",
+       "cue": "twenty seventh of November"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Free meals",
+    "caption": "Free school meals: the trip is free.",
+    "say": "If you get free school meals, the trip is free, and the school will give your child a packed lunch.",
+    "picture": {
+     "type": "stage",
+     "place": "school",
+     "things": [
+      {
+       "id": "child",
+       "is": "girl",
+       "wears": "school-uniform",
+       "spot": "left",
+       "label": "Your child"
+      },
+      {
+       "id": "lunch",
+       "is": "plate",
+       "spot": "middle",
+       "label": "Packed lunch"
+      },
+      {
+       "id": "school",
+       "is": "school",
+       "spot": "right",
+       "label": "School"
+      }
+     ],
+     "moves": [
+      {
+       "do": "send",
+       "what": "parcel",
+       "from": "school",
+       "to": "child",
+       "cue": "give your child a packed lunch"
+      },
+      {
+       "do": "mark",
+       "on": "child",
+       "with": "heart",
+       "cue": "the trip is free"
+      }
+     ]
+    }
+   },
+   {
+    "title": "What to bring",
+    "caption": "Packed lunch, coat, uniform. No money or phones.",
+    "say": "Bring a packed lunch with no glass bottles or nuts, a waterproof coat, and school uniform. No money, phones or toys.",
+    "picture": {
+     "type": "compare",
+     "heading": "For the trip",
+     "bad": {
+      "icon": "phone",
+      "label": "Phones, toys"
+     },
+     "good": {
+      "icon": "bag",
+      "label": "Lunch, coat"
+     }
+    }
+   },
+   {
+    "title": "Helpers, medicine",
+    "caption": "Helpers and medicine: tell school by 27 November.",
+    "say": "They need four parent helpers with a school DBS check. Tell the class teacher. Medicine must be in school, labelled with your child's name.",
+    "picture": {
+     "type": "icons",
+     "heading": "Tell the school",
+     "items": [
+      {
+       "icon": "people",
+       "label": "Four helpers"
+      },
+      {
+       "icon": "pill",
+       "label": "Medicine, named"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Consent slip",
+    "caption": "No consent slip on ParentPay, no trip.",
+    "say": "Last thing. Fill in the consent slip on ParentPay. Without it, your child cannot go. For any questions, ask the school.",
+    "picture": {
+     "type": "stage",
+     "place": "school",
+     "things": [
+      {
+       "id": "parent",
+       "is": "person",
+       "spot": "left",
+       "label": "Parent"
+      },
+      {
+       "id": "form",
+       "is": "form",
+       "spot": "middle",
+       "label": "Consent slip"
+      },
+      {
+       "id": "school",
+       "is": "school",
+       "spot": "right",
+       "label": "School"
+      }
+     ],
+     "moves": [
+      {
+       "do": "send",
+       "what": "form",
+       "from": "parent",
+       "to": "school",
+       "cue": "Fill in the consent slip"
+      },
+      {
+       "do": "mark",
+       "on": "school",
+       "with": "tick",
+       "cue": "Without it"
+      }
+     ]
+    }
+   }
+  ]
+ }
+}
