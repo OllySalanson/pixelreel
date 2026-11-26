@@ -4,6 +4,7 @@
 // Pure: no DOM, so the same checks run in the browser, in the tools and in the tests.
 import { HAIRS, ICON_NAMES, PERSON_ICONS, PICTURES, SKINS, SPRITE_MAX, TABLE_MAX } from './pictures.js';
 import { PALETTE } from './palette.js';
+import { PEOPLE, THINGS, WEARS } from './library.js';
 import { CAST, MARKS, MOVES, PLACES, SIZES, SPOTS, STAGE_MAX } from './stage.js';
 import { CAPTION_STYLES, LANGUAGES, normalizeReel, ReelError } from './reel.js';
 import { TRANSITIONS } from './transitions.js';
@@ -173,13 +174,15 @@ const STAGE_SCHEMAS = {
       required: ['id', 'is', 'spot'],
       properties: {
         id: { ...TEXT, description: 'A short name of its own, for the moves to use.' },
-        is: { enum: [...CAST, ...ICON_NAMES], description: `What it is: ${CAST.join(', ')} (the cast), or an icon.` },
+        is: { enum: [...new Set([...CAST, ...Object.keys(PEOPLE), ...Object.keys(THINGS), ...ICON_NAMES])], description: `What it is: ${CAST.join(', ')} (the cast), a person, a thing in the library, or an icon.` },
         spot: { enum: Object.keys(SPOTS), description: 'Where it stands, left to right.' },
         up: { type: 'boolean', description: 'True to have it in the air (a cloud, the sun, a plane), not on the ground.' },
         size: { enum: Object.keys(SIZES), description: 'medium unless said; a big thing needs the spots either side of it clear.' },
         label: { ...TEXT, description: `${STAGE_MAX.label} words at most.` },
         flip: { type: 'boolean', description: 'True to face it the other way.' },
-        ...LOOK_SCHEMAS
+        wears: { enum: Object.keys(WEARS), description: `For a person: what they wear, which says what they do (${Object.entries(WEARS).filter(([, w]) => w).map(([name, w]) => `${name}: ${w.says}`).join('; ')}).` },
+        skin: { ...LOOK_SCHEMAS.skin, description: 'For a person: their skin. Leave it out when you do not know, and they get a look of their own.' },
+        hair: { ...LOOK_SCHEMAS.hair, description: 'For a person: their hair. Leave it out when you do not know.' }
       }
     }
   },
@@ -200,7 +203,7 @@ const STAGE_SCHEMAS = {
         on: { type: 'string', description: 'The id of the thing it happens on.' },
         from: { type: 'string', description: 'The id of the thing it starts from.' },
         to: { type: ['string', 'number'], description: 'The id of the thing it goes to; a spot for walk; a number for count, or 0 to 1 for meter.' },
-        what: { enum: ICON_NAMES, description: 'The icon that is sent.' },
+        what: { enum: [...new Set([...Object.keys(THINGS), ...ICON_NAMES])], description: 'The thing that is sent.' },
         count: { type: 'integer', minimum: 1, maximum: STAGE_MAX.coins, description: 'How many coins.' },
         with: { enum: MARKS, description: 'The badge.' },
         text: { ...TEXT, description: `What is said, ${STAGE_MAX.say} words at most.` },
