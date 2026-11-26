@@ -4,7 +4,7 @@
 // Plain data, like every other picture, so it is checked before it is played and nothing in
 // it ever runs. Pure: no DOM. pictures.js draws it and checks it; pacing.mjs times its moves.
 import { ICONS } from './icons.js';
-import { PEOPLE, THINGS, WEARS } from './library.js';
+import { PEOPLE, personRows, THINGS, WEARS } from './library.js';
 
 const INK = '#1a1a1a', CREAM = '#ebeac5', LIGHT = '#fdf6e3', GOLD = '#ffcc4d', TEAL = '#55d6be';
 const RED = '#d63a3a', GREEN = '#3fa34d', NAVY = '#13203a';
@@ -21,6 +21,12 @@ export const PLACES = {
   surgery: 'A doctors\u2019 surgery or a hospital: a pale wall with a red cross, and a clean floor.',
   shop: 'Inside a shop: shelves of goods along the back.',
   school: 'A classroom: a blackboard and a wooden floor.',
+  kitchen: 'A kitchen: tiles, cupboards and a worktop along the back.',
+  bedroom: 'A bedroom at night: a window with the moon, and a rug.',
+  cafe: 'A cafe: a counter, a menu board and a striped awning.',
+  park: 'A park: trees, a path and a bench along the back.',
+  festival: 'A festival field: tents, flags and a stage far off, at dusk.',
+  station: 'A railway station: the platform edge, a clock and a train shelter.',
   outside: 'Outdoors by day: sky, sun and green hills.',
   street: 'A street by day: houses along the back and a pavement.',
   night: 'Outdoors at night: stars, a moon and dark hills.',
@@ -75,6 +81,9 @@ export const isThingName = (name) => CAST.includes(name) || Object.hasOwn(PEOPLE
 export function drawingOf(name) {
   return PEOPLE[name] ?? THINGS[name] ?? (Object.hasOwn(ICONS, name) ? { rows: ICONS[name] } : null);
 }
+
+/** What a thing on a stage is drawn from: a person dressed as they are, or the library's drawing, or an icon's. */
+const drawingFor = (th) => (Object.hasOwn(PEOPLE, th.is) ? { rows: personRows(th.is, th.wears ?? null) } : drawingOf(th.is));
 
 /** The keys a thing and each move may have. */
 const THING_KEYS = ['id', 'is', 'spot', 'up', 'size', 'label', 'flip', 'skin', 'hair', 'wears'];
@@ -225,6 +234,62 @@ function place(t, px, kind) {
     px.rect('#7a4a24', 64, 58, 192, 4);
     px.rect('#a36a3a', 0, GROUND, W, H - GROUND); px.rect('#8a5a34', 0, GROUND, W, 2);
     for (let x = 0; x < W; x += 32) px.rect('#8a5a34', x, GROUND + 2, 1, H - GROUND - 2);
+  } else if (kind === 'kitchen') {
+    px.rect('#f1ead8', 0, 0, W, GROUND);
+    for (let y = 40; y < GROUND - 24; y += 8) for (let x = (y / 8) % 2 ? 0 : 4; x < W; x += 8) px.rect('#e2d9c2', x, y, 7, 7);
+    for (let x = 8; x < W - 8; x += 52) { px.rect(INK, x, 6, 46, 28); px.rect('#7fb3a0', x + 1, 7, 44, 26); px.rect('#6a9a88', x + 22, 7, 2, 26); px.rect(INK, x + 18, 18, 2, 4); px.rect(INK, x + 26, 18, 2, 4); }
+    px.rect(INK, 0, GROUND - 25, W, 1); px.rect('#c9ced6', 0, GROUND - 24, W, 4); px.rect('#7fb3a0', 0, GROUND - 20, W, 20);
+    for (let x = 30; x < W; x += 60) px.rect(INK, x, GROUND - 18, 1, 18);
+    px.rect('#d8cfb8', 0, GROUND, W, H - GROUND);
+    for (let x = 0; x < W; x += 16) for (let y = GROUND; y < H; y += 16) if (((x + y) / 16) % 2) px.rect('#c4b99e', x, y, 16, 16);
+  } else if (kind === 'bedroom') {
+    px.rect('#3c4a7a', 0, 0, W, GROUND); px.rect('#34406b', 0, GROUND - 20, W, 20);
+    px.window(36, 10, 60, 46, '#13203a'); px.circle('#fdf6e3', 76, 26, 7); px.circle('#13203a', 79, 24, 6);
+    for (const [x, y] of [[46, 18], [58, 40], [88, 46], [50, 32]]) px.rect(LIGHT, x, y, 1, 1);
+    px.rect(INK, 65, 10, 2, 46); px.rect(INK, 36, 32, 60, 2);
+    px.rect(INK, 230, 12, 40, 30); px.rect('#ffcc4d', 231, 13, 38, 28); px.rect('#3fa34d', 236, 28, 28, 10); px.circle('#d63a3a', 250, 22, 4);
+    px.rect('#5a3a6a', 0, GROUND, W, H - GROUND); px.rect('#7a4a8a', 60, GROUND + 6, 200, H - GROUND - 12);
+    for (let x = 64; x < 256; x += 8) px.rect('#9a6aaa', x, GROUND + 9, 4, 2);
+  } else if (kind === 'cafe') {
+    px.rect('#f3e6cf', 0, 0, W, GROUND);
+    for (let x = 0; x < W; x += 20) { px.rect(x % 40 ? '#d63a3a' : LIGHT, x, 0, 20, 14); }
+    px.rect(INK, 0, 14, W, 1);
+    for (let x = 0; x < W; x += 20) px.rect(x % 40 ? '#d63a3a' : LIGHT, x + 4, 15, 12, 4);
+    px.rect(INK, 200, 26, 96, 50); px.rect('#24333a', 201, 27, 94, 48);
+    for (const [y, w] of [[34, 60], [44, 48], [54, 70], [64, 40]]) { px.rect('#e8e2d0', 208, y, w, 2); px.rect(GOLD, 284, y, 6, 2); }
+    px.rect(INK, 20, 30, 40, 40); px.rect('#8fd3ff', 21, 31, 38, 38); px.rect(INK, 39, 30, 2, 40); px.rect(INK, 20, 49, 40, 2);
+    px.rect('#8a5a34', 0, GROUND - 24, W, 24); px.rect('#a36a3a', 0, GROUND - 26, W, 3); px.rect(INK, 0, GROUND - 27, W, 1);
+    px.rect('#6a4228', 0, GROUND, W, H - GROUND);
+    for (let x = 0; x < W; x += 24) px.rect('#5a3820', x, GROUND, 1, H - GROUND);
+  } else if (kind === 'park') {
+    px.sky('#4a90c2', '#a8d4ef'); px.clouds(t, 12, 4);
+    px.hills('#5ab45a', GROUND - 18, 14, 0, 3);
+    for (const [x, r] of [[24, 18], [92, 14], [228, 20], [300, 15]]) { px.rect('#6a4a24', x - 2, GROUND - 40, 5, 26); px.circle(INK, x, GROUND - 46, r + 1); px.circle('#2a7a35', x, GROUND - 46, r); px.circle('#3fa34d', x - 3, GROUND - 49, r - 5); }
+    px.rect('#3fa34d', 0, GROUND - 14, W, 14);
+    px.rect(INK, 140, GROUND - 26, 44, 3); px.rect('#a36a3a', 141, GROUND - 25, 42, 1); px.rect(INK, 140, GROUND - 20, 44, 3); px.rect(INK, 143, GROUND - 17, 2, 6); px.rect(INK, 179, GROUND - 17, 2, 6);
+    px.rect('#d8c49a', 0, GROUND, W, H - GROUND); px.rect('#c4ad7e', 0, GROUND, W, 2);
+    px.rect('#2a7a35', 0, GROUND + 20, W, H - GROUND - 20);
+  } else if (kind === 'festival') {
+    px.sky('#2a2a5a', '#e0785a'); px.stars(t);
+    // the main stage far off, its lights swinging
+    px.rect(INK, 118, 52, 84, 46); px.rect('#2b2b33', 120, 54, 80, 42); px.rect('#13203a', 126, 62, 68, 34);
+    for (let i = 0; i < 3; i++) { const sx = 136 + i * 24, sw = Math.round(Math.sin(t * 1.6 + i) * 10); px.line(['#ffcc4d', '#55d6be', '#ff7eb6'][i], sx, 62, sx + sw, 94); }
+    for (const [x, c] of [[20, '#d63a3a'], [60, '#1f4e9c'], [250, '#ffcc4d'], [290, '#3fa34d']]) {
+      px.rect(INK, x - 14, GROUND - 30, 28, 1);
+      for (let k = 0; k < 14; k++) px.rect(c, x - k, GROUND - 30 + k, 2 * k + 1, 1);
+    }
+    px.line(INK, 0, 36, W, 44);
+    for (let x = 8; x < W; x += 18) { const y = 36 + Math.round(x * 8 / W); px.rect(['#d63a3a', '#ffcc4d', '#1f4e9c', '#3fa34d'][(x / 18 | 0) % 4], x, y + 1, 7, 5); }
+    px.rect('#3a7a35', 0, GROUND - 16, W, 16); px.rect('#2a5a28', 0, GROUND, W, H - GROUND); px.rect('#4a8a40', 0, GROUND, W, 2);
+  } else if (kind === 'station') {
+    px.sky('#7a9ab8', '#c8d8e6');
+    px.rect(INK, 0, 26, W, 3); px.rect('#24476b', 0, 22, W, 4);
+    for (let x = 20; x < W; x += 70) px.rect('#24476b', x, 26, 4, GROUND - 26);
+    px.circle(INK, 160, 46, 11); px.circle(LIGHT, 160, 46, 10); px.rect(INK, 159, 39, 2, 8); px.rect(INK, 159, 45, 6, 2); px.rect(INK, 159, 34, 2, 2);
+    px.rect('#c8c2b0', 0, GROUND - 12, W, 12); px.rect('#f2e12b', 0, GROUND - 2, W, 2);
+    px.rect('#8a8478', 0, GROUND, W, H - GROUND);
+    for (let x = 0; x < W; x += 12) px.rect('#5a5448', x, GROUND + 12, 6, 3);
+    px.rect('#6a6458', 0, GROUND + 10, W, 1); px.rect('#6a6458', 0, GROUND + 17, W, 1);
   } else if (kind === 'plain') {
     px.rect(NAVY, 0, 0, W, H);
     for (let y = 4; y < H; y += 8) for (let x = 4; x < W; x += 8) px.rect('#1a2b47', x, y, 1, 1);
@@ -273,7 +338,7 @@ function reelie(px, cx, feet, r, t, talking) {
 function layout(t, p, times) {
   const things = new Map();
   for (const th of p.things) {
-    const sc = SIZES[th.size ?? 'medium'], cast = CAST.includes(th.is), rows = cast ? null : drawingOf(th.is).rows;
+    const sc = SIZES[th.size ?? 'medium'], cast = CAST.includes(th.is), rows = cast ? null : drawingFor(th).rows;
     const w = cast ? 14 * sc : Math.max(...rows.map((r) => r.length)) * sc, h = cast ? 15 * sc + 2 : rows.length * sc;
     things.set(th.id, { ...th, sc, w, h, x: SPOTS[th.spot], feet: th.up ? AIR : GROUND, from: 0, gone: Infinity, walking: false });
   }
@@ -314,7 +379,7 @@ function drawThing(t, px, th, look, index) {
   if (!th.up && drop === 0) px.rect('rgba(0,0,0,0.25)', x + 4, th.feet - 1, th.w - 8, 2);   // a shadow, so it stands on the ground
   if (th.is === 'reelie') reelie(px, Math.round(th.x), th.feet + drop + bob, Math.round(th.w / 2) - 1, t, true);
   else {
-    const drawing = drawingOf(th.is), own = look(th, index);
+    const drawing = drawingFor(th), own = look(th, index);
     px.sprite(drawing.rows, x, y, th.sc, th.flip === true || th.facing === -1, own || drawing.colours ? { ...drawing.colours, ...own } : null);
   }
   if (fade > 0) px.dither('#13203a', x - 2, y - 2, th.w + 4, th.h + 4, fade);

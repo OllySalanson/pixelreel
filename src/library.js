@@ -209,15 +209,96 @@ export const PEOPLE = {
   }
 };
 
-/** What a person can wear, which says what they do: the colours of their top and trousers. */
+/** Hats, as rows drawn over the top of a person's head: A and Z are the hat's own colours. */
+const HATS = {
+  chef: ['.kkkkk.', 'kwwwwwk', 'kwwwwwk', 'kwwwwwk', '.kwwwk.', 'kkkkkkk'],
+  'hard-hat': ['..kkkkk..', '.kyyyyyk.', 'kyyyyyyyk', 'kkkkkkkkk'],
+  helmet: ['..kkkkk...', '.kyyyyyk..', 'kyyykyyyk.', 'kkkkkkkkkk'],
+  peaked: ['.kkkkkkk.', 'kBBBBBBBk', 'kwkwkwkwk', 'kkkkkkkkk'],
+  woolly: ['...kk...', '..kwwk..', '.kkggkk.', 'kgggGggk', 'kGGGGGGk'],
+  cap: ['..kkkk...', '.kAAAAk..', 'kAAAAAAkk', 'kkkkkkkkk'],
+  'sun-hat': ['...kkkkk...', '..kyyyyyk..', '.kkrrrrrkk.', 'kyyyyyyyyyk', '.kkkkkkkkk.']
+};
+
+/**
+ * What a person can wear, which says what they do: the colours of their top (C) and trousers or
+ * skirt (T), an accent (A) where the clothes have one, what is added (a long coat, an apron, a
+ * stripe, a tie, a collar, straps), and a hat. A person with no `wears` is in everyday clothes.
+ */
 export const WEARS = {
   everyday: null,
-  'doctor-coat': { C: '#f4f4ee', T: '#2b3a52', says: 'a doctor' },
-  scrubs: { C: '#3aa6a0', T: '#3aa6a0', says: 'a nurse, or anyone at a hospital' },
-  'hi-vis': { C: '#ff8c2a', T: '#2b3a52', says: 'an engineer or a builder' },
-  suit: { C: '#24476b', T: '#1c2f4a', says: 'someone at work in an office or a bank' },
-  uniform: { C: '#1f2d4a', T: '#1f2d4a', says: 'a police officer, or anyone in a uniform' }
+  'doctor-coat': { C: '#f4f4ee', T: '#2b3a52', add: ['coat'], says: 'a doctor' },
+  nurse: { C: '#2b5fa8', T: '#2b3a52', A: '#f4f4ee', add: ['collar'], says: 'a nurse' },
+  scrubs: { C: '#3aa6a0', T: '#3aa6a0', says: 'anyone working at a hospital, a dentist or a vet' },
+  'hi-vis': { C: '#f2e12b', T: '#2b3a52', A: '#8a96a8', add: ['stripe'], says: 'someone working by a road or a railway, a steward' },
+  builder: { C: '#ff8c2a', T: '#4a4f5a', A: '#c9ced6', add: ['stripe'], hat: 'hard-hat', says: 'a builder or an engineer on a site' },
+  suit: { C: '#24476b', T: '#1c2f4a', A: '#d63a3a', add: ['tie'], says: 'someone at work in an office, a bank or a council' },
+  chef: { C: '#f4f4ee', T: '#3a3a44', hat: 'chef', says: 'a chef or a cook' },
+  apron: { A: '#2f7d5a', add: ['apron'], says: 'someone serving in a shop, a cafe or a kitchen' },
+  overalls: { T: '#3b6fb6', add: ['straps'], says: 'a mechanic, a farmer, a plumber, someone doing a job with their hands' },
+  police: { C: '#1f2d4a', T: '#1f2d4a', A: '#f4f4ee', add: ['collar'], hat: 'peaked', says: 'a police officer' },
+  firefighter: { C: '#2b2b33', T: '#2b2b33', A: '#f2e12b', add: ['stripe'], hat: 'helmet', says: 'a firefighter' },
+  postie: { C: '#d63a3a', T: '#1f2d4a', says: 'someone delivering the post or parcels' },
+  'school-uniform': { C: '#24476b', T: '#5a5f6a', A: '#d63a3a', add: ['tie'], says: 'a pupil at school' },
+  'winter-coat': { C: '#7a4a24', add: ['coat'], hat: 'woolly', says: 'someone out in the cold' },
+  'sports-kit': { C: '#d63a3a', T: '#f4f4ee', says: 'someone playing sport' },
+  cap: { A: '#1f4e9c', hat: 'cap', says: 'everyday clothes and a cap' },
+  'sun-hat': { hat: 'sun-hat', says: 'everyday clothes and a sun hat: summer, a festival, the beach' }
 };
+
+/** The columns of `row` holding any of `letters`: [first, last], or null. */
+function span(row, letters) {
+  let first = -1, last = -1;
+  [...row].forEach((ch, i) => { if (letters.includes(ch)) { if (first < 0) first = i; last = i; } });
+  return first < 0 ? null : [first, last];
+}
+
+const dressedRows = new Map();
+
+/** A person's rows as they look in what they wear: the clothes added, and their hat on. Kept once made. */
+export function personRows(name, wears = null) {
+  const key = `${name} ${wears}`;
+  if (dressedRows.has(key)) return dressedRows.get(key);
+  const outfit = WEARS[wears] ?? null;
+  let rows = PEOPLE[name].rows.map((r) => [...r]);
+  const torso = rows.map((r, i) => (r.includes('C') ? i : -1)).filter((i) => i >= 0);
+  const legs = rows.map((r, i) => (r.includes('T') ? i : -1)).filter((i) => i >= 0);
+  const set = (i, j, ch) => { if (rows[i]?.[j] !== undefined) rows[i][j] = ch; };
+  for (const add of outfit?.add ?? []) {
+    const chest = torso[0], mid = Math.round(rows[chest].reduce((sum, ch, j) => sum + (ch === 'C' ? j : 0), 0) / rows[chest].filter((ch) => ch === 'C').length);
+    if (add === 'coat') for (const i of legs.slice(0, 3)) rows[i] = rows[i].map((ch) => (ch === 'T' ? 'C' : ch));
+    // a band across the middle of the top: low on a grown-up, on the last row of a child's short top
+    if (add === 'stripe') for (const i of torso.slice(Math.min(3, torso.length - 1), Math.min(3, torso.length - 1) + 2)) rows[i] = rows[i].map((ch) => (ch === 'C' ? 'A' : ch));
+    if (add === 'collar') { set(chest, mid - 1, 'A'); set(chest, mid, 'A'); set(chest, mid + 1, 'A'); }
+    if (add === 'tie') { set(chest, mid - 1, 'w'); set(chest, mid + 1, 'w'); for (const i of torso.slice(0, 4)) set(i, mid, 'A'); }
+    if (add === 'apron' || add === 'straps') {
+      for (const [n, i] of [...torso, ...legs].entries()) {
+        const [l, r] = span(rows[i].join(''), 'CT') ?? [0, -1];
+        for (let j = l + 2; j <= r - 2; j++) {
+          if (add === 'apron' && n >= 1) set(i, j, rows[i][j] === 'C' || rows[i][j] === 'T' ? 'A' : rows[i][j]);
+          if (add === 'straps' && torso.includes(i)) {
+            const k = torso.indexOf(i);
+            if (k >= 3 || j === l + 2 || j === r - 2) set(i, j, rows[i][j] === 'C' ? 'T' : rows[i][j]);
+          }
+        }
+      }
+    }
+  }
+  const hat = HATS[outfit?.hat];
+  if (hat) {
+    const top = rows.findIndex((r) => r.some((ch) => ch !== '.'));
+    const cols = rows.slice(top, top + 3).flatMap((r) => r.map((ch, j) => (ch === '.' ? -1 : j)).filter((j) => j >= 0));
+    const cx = (Math.min(...cols) + Math.max(...cols)) / 2, hw = hat[0].length;
+    let left = Math.round(cx - (hw - 1) / 2), hatTop = top + 1 - (hat.length - 1);
+    const padL = Math.max(0, -left), padR = Math.max(0, left + hw - rows[0].length), padT = Math.max(0, -hatTop);
+    rows = [...Array.from({ length: padT }, () => Array(rows[0].length).fill('.')), ...rows].map((r) => [...Array(padL).fill('.'), ...r, ...Array(padR).fill('.')]);
+    left += padL; hatTop += padT;
+    hat.forEach((line, i) => [...line].forEach((ch, j) => { if (ch !== '.') rows[hatTop + i][left + j] = ch; }));
+  }
+  const done = rows.map((r) => r.join(''));
+  dressedRows.set(key, done);
+  return done;
+}
 
 /** Everyday tops, one chosen for each person by their name so they look the same in every scene. */
 export const TOPS = ['#55d6be', '#8e5bd6', '#d63a3a', '#1f4e9c', '#ff8c2a', '#3fa34d', '#ffcc4d', '#ff7eb6'];
@@ -1026,44 +1107,6 @@ export const THINGS = {
     ],
     colours: { e: '#d8cfb8', 8: '#8fd3ff' }
   },
-  bus: {
-    group: 'Out and about', says: 'a bus',
-    rows: [
-      '.kkkkkkkkkkkkkkkkkkkkkkkkkkk.',
-      'krrrrrrrrrrrrrrrrrrrrrrrrrrrk',
-      'krkkkkkkkkkkkkkkkkkkkkkkkkkrk',
-      'krk88k88k88k88k88k88k88k888rk',
-      'krkkkkkkkkkkkkkkkkkkkkkkkkkrk',
-      'krrrrrrrrrrrrrrrrrrrrrrrrrrrk',
-      'krkkkkkkkkkkkkkkkkkkkkkkkkkrk',
-      'krk88k88k88k88k88k88kk88kk8rk',
-      'krkkkkkkkkkkkkkkkkkkkk88kkkrk',
-      'krrrrrrrrrrrrrrrrrrrrk88krrrk',
-      'krrrrrrrrrrrrrrrrrrrrk88krryk',
-      'kkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
-      '....kkkkk..........kkkkk.....',
-      '....kkekk..........kkekk.....',
-      '.....kkk............kkk......'
-    ],
-    colours: { 8: '#8fd3ff' }
-  },
-  car: {
-    group: 'Out and about', says: 'a car',
-    rows: [
-      '.......kkkkkkkkkk.......',
-      '......k88888k88888k.....',
-      '.....k888888k888888k....',
-      '..kkkkkkkkkkkkkkkkkkkkk.',
-      '.kbbbbbbbbbbbbbbbbbbbbbk',
-      'kybbbbbbbbbbbbbbbbbbbbrk',
-      'kbbbbbbbbbbbbbbbbbbbbbbk',
-      'kkkkkkkkkkkkkkkkkkkkkkkk',
-      '...kkkkk........kkkkk...',
-      '...kkekk........kkekk...',
-      '....kkk..........kkk....'
-    ],
-    colours: { 8: '#8fd3ff' }
-  },
   van: {
     group: 'Out and about', says: 'a van: a delivery, or an engineer coming round',
     rows: [
@@ -1118,6 +1161,742 @@ export const THINGS = {
       'kwekwekwekwwwk',
       'kwwwwwwwwwwwwk',
       'kkkkkkkkkkkkkk'
+    ]
+  },
+  // ----- drawn after the first sheet, 26 Nov 2026
+  car: {
+    group: 'Out and about', says: 'a car',
+    rows: [
+      '........kkkkkkkkk.........',
+      '.......k88888k8888k.......',
+      '......k888888k88888k......',
+      '.....k8888888k888888kk....',
+      '.kkkkkkkkkkkkkkkkkkkkkkkk.',
+      'kbbbbbbbbbbbkbbbbbbbbbbbbk',
+      'kRbbbbbbbbbbkbbbbbbbbbbbyk',
+      'kRbbbbbbbbbbkbbbbbbbbbbbbk',
+      'kbbbbbbbbbbbbbbbbbbbbbbbbk',
+      'kkbkkkkkbbbbbbbbbbbkkkkkkk',
+      '..kkeeekk.........kkeeekk.',
+      '..kkeeekk.........kkeeekk.',
+      '...kkkkk...........kkkkk..'
+    ],
+    colours: { '8': '#8fd3ff' }
+  },
+  bus: {
+    group: 'Out and about', says: 'a bus',
+    rows: [
+      '.kkkkkkkkkkkkkkkkkkkkkkkkkkkk.',
+      'krrrrrrrrrrrrrrrrrrrrrrkkkkkkk',
+      'krrrrrrrrrrrrrrrrrrrrrrkyyyyyk',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+      'kr888kk888kk888kk888kk8888888k',
+      'kr888kk888kk888kk888kk8888888k',
+      'kr888kk888kk888kk888kk8888888k',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+      'krrrrrrrrrrrrrrrrrk88krrrrrrrk',
+      'kwwwwwwwwwwwwwwwwwk88kwwwwwwwk',
+      'krrrrrrrrrrrrrrrrrk88krrrrrryk',
+      'kRRRRRRRRRRRRRRRRRk88kRRRRRRRk',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+      '...kkeeekk..........kkeeekk...',
+      '...kkeeekk..........kkeeekk...',
+      '....kkkkk............kkkkk....'
+    ],
+    colours: { '8': '#8fd3ff' }
+  },
+  guitar: {
+    group: 'Music and festivals', says: 'a guitar',
+    rows: [
+      '....kkkk....',
+      '....kNNk....',
+      '....kNNk....',
+      '....kkkk....',
+      '.....kk.....',
+      '.....kk.....',
+      '.....kk.....',
+      '.....kk.....',
+      '.....kk.....',
+      '...kkkkkk...',
+      '..koookook..',
+      '..kookkook..',
+      '..kookkook..',
+      '...koookk...',
+      '..koooooook.',
+      '.kooookooooo',
+      '.kooookkoook',
+      '.koooooooooo',
+      '.koookkkoook',
+      '..kooooooook',
+      '...kkkkkkkk.'
+    ],
+    colours: { o: '#d98a3a' }
+  },
+  drums: {
+    group: 'Music and festivals', says: 'a drum kit',
+    rows: [
+      '....kkkk..........kkkk...',
+      '...kyyyyk........kyyyyk..',
+      '....kkkk..........kkkk...',
+      '.....kk............kk....',
+      '.....kk..kkkkkkk...kk....',
+      '..kkkkkkkwwwwwwwkkkkkkk..',
+      '..kwwwwwkwwwwwwwkwwwwwk..',
+      '..krrrrrkwwwwwwwkrrrrrk..',
+      '..krrrrrkrrrrrrrkrrrrrk..',
+      '..kkkkkkkrrwwwrrkkkkkkk..',
+      '...k...krrwwwwwrrk...k...',
+      '...k...krrwwwwwrrk...k...',
+      '...k...krrrwwwrrrk...k...',
+      '..kkk..kkrrrrrrrkk..kkk..',
+      '.........kkkkkkk.........'
+    ]
+  },
+  keyboard: {
+    group: 'Music and festivals', says: 'a keyboard: a piano you plug in',
+    rows: [
+      'kkkkkkkkkkkkkkkkkkkkkkkkkkk',
+      'kBBBBBBBBBBBBBBBBBBBBBBBBBk',
+      'kBgBrByBBBBBBBBBBBBBBkkkkBk',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkkk',
+      'kwkwkkwkwkwkkwkwkkwkwkwkkwk',
+      'kwkwkkwkwkwkkwkwkkwkwkwkkwk',
+      'kwwwwwwwwwwwwwwwwwwwwwwwwwk',
+      'kwkwkwkwkwkwkwkwkwkwkwkwkwk',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkkk',
+      '..k....................k...',
+      '..k....................k...',
+      '.kkk..................kkk..'
+    ],
+    colours: { B: '#2b2b33' }
+  },
+  microphone: {
+    group: 'Music and festivals', says: 'a microphone on a stand: singing, speaking',
+    rows: [
+      '...kkkk...',
+      '..keeeek..',
+      '..kekeek..',
+      '..keekek..',
+      '..keeeek..',
+      '...kkkk...',
+      '....kk....',
+      '....kk....',
+      '....kk....',
+      '....kk....',
+      '....kk....',
+      '....kk....',
+      '....kk....',
+      '....kk....',
+      '....kk....',
+      '....kk....',
+      '...kkkk...',
+      '.kkk..kkk.',
+      'kk......kk'
+    ]
+  },
+  speaker: {
+    group: 'Music and festivals', says: 'a loudspeaker: music, loud sound',
+    rows: [
+      'kkkkkkkkkkkk',
+      'kBBBBBBBBBBk',
+      'kBBBkkkkBBBk',
+      'kBBkeeeekBBk',
+      'kBBkekkekBBk',
+      'kBBkeeeekBBk',
+      'kBBBkkkkBBBk',
+      'kBBBBBBBBBBk',
+      'kBBkkkkkkBBk',
+      'kBkeeeeeekBk',
+      'kBkekkkkekBk',
+      'kBkekeekekBk',
+      'kBkekkkkekBk',
+      'kBkeeeeeekBk',
+      'kBBkkkkkkBBk',
+      'kBBBBBBBBBBk',
+      'kkkkkkkkkkkk'
+    ],
+    colours: { B: '#2b2b33' }
+  },
+  headphones: {
+    group: 'Music and festivals', says: 'headphones: listening',
+    rows: [
+      '...kkkkkkkk...',
+      '..kBBBBBBBBk..',
+      '.kBkkkkkkkkBk.',
+      '.kBk......kBk.',
+      'kBk........kBk',
+      'kBk........kBk',
+      'kkkk......kkkk',
+      'krrk......krrk',
+      'krrk......krrk',
+      'krrk......krrk',
+      'kkkk......kkkk'
+    ],
+    colours: { B: '#2b2b33' }
+  },
+  tent: {
+    group: 'Music and festivals', says: 'a tent: camping, a festival',
+    rows: [
+      '.........kk.........',
+      '.........kk.........',
+      '........kggk........',
+      '.......kgggGk.......',
+      '......kggggGGk......',
+      '.....kgggggGGGk.....',
+      '....kggggkkGGGGk....',
+      '...kgggggkkGGGGGk...',
+      '..kgggggkNNkGGGGGk..',
+      '.kgggggkNNNNkGGGGGk.',
+      'kgggggkNNNNNNkGGGGGk',
+      'kkkkkkkkkkkkkkkkkkkk'
+    ],
+    colours: { N: '#3a2a1a' }
+  },
+  'festival-stage': {
+    group: 'Music and festivals', says: 'a festival stage, with its lights',
+    rows: [
+      'kkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+      'kBBBBBBBBBBBBBBBBBBBBBBBBBBk',
+      'kBkyykkkkkrrkkkkkkttkkkkyykB',
+      'kBk..y....r........t...y..Bk',
+      'kBk...y...r.......t...y...Bk',
+      'kBk....y..r......t...y....Bk',
+      'kBk.....y.r.....t...y.....Bk',
+      'kBk......yr....t...y......Bk',
+      'kBk.......................Bk',
+      'kBk.......................Bk',
+      'kBk.......................Bk',
+      'kBk.......................Bk',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+      'kNNNNNNNNNNNNNNNNNNNNNNNNNNk',
+      'kNNNNNNNNNNNNNNNNNNNNNNNNNNk',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkkkk'
+    ],
+    colours: { B: '#2b2b33', N: '#5a3418' }
+  },
+  wristband: {
+    group: 'Music and festivals', says: 'a festival wristband: a ticket you wear',
+    rows: [
+      '...kkkkkkkk...',
+      '..kppppppppk..',
+      '.kpk......kpk.',
+      'kpk........kpk',
+      'kpk........kkk',
+      'kpk........kwy',
+      'kpk........kkk',
+      '.kpk......kpk.',
+      '..kppppppppk..',
+      '...kkkkkkkk...'
+    ]
+  },
+  bunting: {
+    group: 'Music and festivals', says: 'bunting: flags for a party or a festival',
+    rows: [
+      'kk......................kk',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkk',
+      'k.krrk.kyyk.kbbk.kggk.kppk',
+      '..krrk.kyyk.kbbk.kggk.kppk',
+      '...kk...kk...kk...kk...kk.',
+      '...k....k....k....k....k..'
+    ]
+  },
+  ticket: {
+    group: 'Music and festivals', says: 'a ticket: for a gig, a show, a match or a train',
+    rows: [
+      'kkkkkkkkkkkkkkkkk',
+      'kyyyyyyyyyykyyyyk',
+      'yykkkkkkkyyyyyyyy',
+      'kyyyyyyyyyykyyyyk',
+      'kykkkkkyyyyyyyyyk',
+      'kyyyyyyyyyykyyyyk',
+      'kkkkkkkkkkkkkkkkk'
+    ]
+  },
+  plate: {
+    group: 'Food and drink', says: 'a plate of food: a meal',
+    rows: [
+      '....kkkkkkkkk....',
+      '..kkwwwwwwwwwkk..',
+      '.kwwGGgwwnnnwwwk.',
+      'kwwGgggwnnnnnyywk',
+      'kwwwGgwwwnnnyyywk',
+      '.kwwwwwwwwwwwwwk.',
+      '..kkwwwwwwwwwkk..',
+      '....kkkkkkkkk....'
+    ]
+  },
+  mug: {
+    group: 'Food and drink', says: 'a mug of tea or coffee',
+    rows: [
+      '...e..e.....',
+      '..e..e......',
+      '...e..e.....',
+      'kkkkkkkkk...',
+      'kwwwwwwwkkk.',
+      'kwrrwwwwk.k.',
+      'kwrrwwwwk.k.',
+      'kwwwwwwwkkk.',
+      'kwwwwwwwk...',
+      '.kkkkkkk....'
+    ]
+  },
+  pizza: {
+    group: 'Food and drink', says: 'a pizza',
+    rows: [
+      '....kkkkkkkk....',
+      '..kkyyyyyyyykk..',
+      '.kyyrryyyyrryyk.',
+      'kyyyrryyggyrryyk',
+      'kyggyyyyggyyyyyk',
+      'kyggyyrryyyyggyk',
+      'kyyyyyrryyyyggyk',
+      '.kyrryyyyyrryyk.',
+      '..kkyyyyyyyykk..',
+      '....kkkkkkkk....'
+    ],
+    colours: { y: '#f0c060' }
+  },
+  burger: {
+    group: 'Food and drink', says: 'a burger',
+    rows: [
+      '...kkkkkkkk...',
+      '.kkooooooookk.',
+      'koowoooowooooo',
+      'kkkkkkkkkkkkkk',
+      'kggggggggggggk',
+      'kyyyyyyyyyyyyk',
+      'kNNNNNNNNNNNNk',
+      'kkkkkkkkkkkkkk',
+      'kooooooooooooo',
+      '.kkkkkkkkkkkk.'
+    ],
+    colours: { o: '#d99a4a', N: '#6a3a1a' }
+  },
+  cake: {
+    group: 'Food and drink', says: 'a birthday cake',
+    rows: [
+      '...y...y...y...',
+      '...r...r...r...',
+      '...k...k...k...',
+      '.kkkkkkkkkkkkk.',
+      'kwwwwwwwwwwwwwk',
+      'kwpwwpwwwpwwpwk',
+      'kpppppppppppppp',
+      'kppppppppppppkk',
+      'kwwwwwwwwwwwwwk',
+      'kppppppppppppkk',
+      'kkkkkkkkkkkkkkk',
+      'eeeeeeeeeeeeeee'
+    ],
+    colours: { p: '#ff9fc4' }
+  },
+  'ice-cream': {
+    group: 'Food and drink', says: 'an ice cream',
+    rows: [
+      '...kkkk...',
+      '..kppppk..',
+      '.kppppppk.',
+      '.kwwwwwwk.',
+      'kwwwwwwwwk',
+      'kkkkkkkkkk',
+      '.kyoyoyok.',
+      '.koyoyoyk.',
+      '..kyoyok..',
+      '..koyoyk..',
+      '...kyok...',
+      '...kkkk...'
+    ],
+    colours: { p: '#ff9fc4', y: '#f0c060', o: '#c98a3a' }
+  },
+  fridge: {
+    group: 'In the kitchen', says: 'a fridge',
+    rows: [
+      'kkkkkkkkkkkk',
+      'kwwwwwwwwwwk',
+      'kwwwwwwwwkwk',
+      'kwwwwwwwwkwk',
+      'kwwwwwwwwwwk',
+      'kkkkkkkkkkkk',
+      'kwwwwwwwwwwk',
+      'kwwwwwwwwkwk',
+      'kwwwwwwwwkwk',
+      'kwwwwwwwwkwk',
+      'kwwwwwwwwwwk',
+      'kwwwwwwwwwwk',
+      'kwwwwwwwwwwk',
+      'kwwwwwwwwwwk',
+      'kkkkkkkkkkkk',
+      '.kk......kk.'
+    ]
+  },
+  cooker: {
+    group: 'In the kitchen', says: 'a cooker: an oven and hob',
+    rows: [
+      '.kk..kk..kk..kk.',
+      'kkkkkkkkkkkkkkkk',
+      'keeeeeeeeeeeeeek',
+      'kekkekkekkekkeek',
+      'kkkkkkkkkkkkkkkk',
+      'kwwwwwwwwwwwwwwk',
+      'kwkkkkkkkkkkkkwk',
+      'kwkBBBBBBBBBBkwk',
+      'kwkBBooBBBBBBkwk',
+      'kwkBBBBBBBBBBkwk',
+      'kwkkkkkkkkkkkkwk',
+      'kwwwwwwwwwwwwwwk',
+      'kkkkkkkkkkkkkkkk'
+    ],
+    colours: { B: '#2b2b33' }
+  },
+  'washing-machine': {
+    group: 'In the kitchen', says: 'a washing machine',
+    rows: [
+      'kkkkkkkkkkkkkk',
+      'kwwwwwwwwwkgwk',
+      'kwekeeewwwwwwk',
+      'kkkkkkkkkkkkkk',
+      'kwwwwkkkkwwwwk',
+      'kwwwkbbbbkwwwk',
+      'kwwkbtbbbbkwwk',
+      'kwwkbbtbbbkwwk',
+      'kwwkbbbbbbkwwk',
+      'kwwwkbbbbkwwwk',
+      'kwwwwkkkkwwwwk',
+      'kwwwwwwwwwwwwk',
+      'kkkkkkkkkkkkkk'
+    ]
+  },
+  briefcase: {
+    group: 'Work and tools', says: 'a briefcase: work, an office job',
+    rows: [
+      '.....kkkkkk.....',
+      '.....kk..kk.....',
+      'kkkkkkkkkkkkkkkk',
+      'knnnnnnnnnnnnnnk',
+      'knnnnnnyynnnnnnk',
+      'kNNNNNNyyNNNNNNk',
+      'knnnnnnnnnnnnnnk',
+      'knnnnnnnnnnnnnnk',
+      'knnnnnnnnnnnnnnk',
+      'kkkkkkkkkkkkkkkk'
+    ]
+  },
+  toolbox: {
+    group: 'Work and tools', says: 'a toolbox: repairs, a trade',
+    rows: [
+      '.....kkkkkk.....',
+      '.....k....k.....',
+      '..kkkkkkkkkkkk..',
+      '.krrrrrrrrrrrrk.',
+      'kkkkkkkkkkkkkkkk',
+      'krrrrrrrrrrrrrrk',
+      'krrrrrrkkrrrrrrk',
+      'krrrrrrkkrrrrrrk',
+      'kRRRRRRRRRRRRRRk',
+      'kkkkkkkkkkkkkkkk'
+    ]
+  },
+  spanner: {
+    group: 'Work and tools', says: 'a spanner: fixing something',
+    rows: [
+      'kk....kk',
+      'kek..kek',
+      'keekkeek',
+      '.keeeek.',
+      '..keek..',
+      '..keek..',
+      '..keek..',
+      '..keek..',
+      '..keek..',
+      '..keek..',
+      '.keeeek.',
+      'keekkeek',
+      'kek..kek',
+      'kk....kk'
+    ]
+  },
+  ladder: {
+    group: 'Work and tools', says: 'a ladder',
+    rows: [
+      'kk......kk',
+      'kek....kek',
+      'kekkkkkkek',
+      'keeeeeeeek',
+      'kekkkkkkek',
+      'kek....kek',
+      'kekkkkkkek',
+      'keeeeeeeek',
+      'kekkkkkkek',
+      'kek....kek',
+      'kekkkkkkek',
+      'keeeeeeeek',
+      'kekkkkkkek',
+      'kek....kek',
+      'kekkkkkkek',
+      'keeeeeeeek',
+      'kekkkkkkek',
+      'kek....kek',
+      'kek....kek',
+      'kkk....kkk'
+    ],
+    colours: { e: '#c9ced6' }
+  },
+  suitcase: {
+    group: 'Travel', says: 'a suitcase: a trip, a holiday',
+    rows: [
+      '.....kkkk.....',
+      '.....k..k.....',
+      '.kkkkkkkkkkkk.',
+      'kbbbbbbbbbbbbk',
+      'kbbkbbbbbbkbbk',
+      'kbbkbbbbbbkbbk',
+      'kbbkbbbbbbkbbk',
+      'kbbkbbbbbbkbbk',
+      'kbbkbbbbbbkbbk',
+      'kbbbbbbbbbbbbk',
+      '.kkkkkkkkkkkk.',
+      '.kk........kk.'
+    ],
+    colours: { b: '#2f7d9a' }
+  },
+  bike: {
+    group: 'Travel', says: 'a bike',
+    rows: [
+      '..........kkkk.......',
+      '.....kkk....k........',
+      '......k.....k........',
+      '.....kkkkkkkk........',
+      '....kkk.....kk.......',
+      '..kkkkkkk..kkkkkk....',
+      '.k..k..k.kk.k.k..k...',
+      'k...k...kk.k...k...k.',
+      'k..kkk..k..k..kkk..k.',
+      'k...k...k..k...k...k.',
+      '.k..k..k....k..k..k..',
+      '..kkkkk......kkkkk...'
+    ]
+  },
+  train: {
+    group: 'Travel', says: 'a train',
+    rows: [
+      '..kkkkkkkkkkkkkkkkkkkkkkkk..',
+      '.kggggggggggggggggggggggkk..',
+      'kggk88kk88kk88kk88kk88gg8k..',
+      'kggk88kk88kk88kk88kk88gg88k.',
+      'kggkkkkkkkkkkkkkkkkkkkkgg8k.',
+      'kyyyyyyyyyyyyyyyyyyyyyyyyyyk',
+      'kggggggggggggggggggggggggggk',
+      'kggggggggggggggggggggggggggk',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+      '..kkkk..kkkk......kkkk..kkkk',
+      '..keek..keek......keek..keek',
+      '...kk....kk........kk....kk.'
+    ],
+    colours: { '8': '#8fd3ff' }
+  },
+  taxi: {
+    group: 'Travel', says: 'a taxi',
+    rows: [
+      '...........kkkk...........',
+      '...........kyyk...........',
+      '........kkkkkkkkk.........',
+      '.......k88888k8888k.......',
+      '......k888888k88888k......',
+      '.kkkkkkkkkkkkkkkkkkkkkkkk.',
+      'kBBBBBBBBBBBkBBBBBBBBBBBBk',
+      'kRBBBBBBBBBBkBBBBBBBBBBByk',
+      'kBBBBBBBBBBBBBBBBBBBBBBBBk',
+      'kkBkkkkkBBBBBBBBBBBkkkkkkk',
+      '..kkeeekk.........kkeeekk.',
+      '...kkkkk...........kkkkk..'
+    ],
+    colours: { '8': '#8fd3ff', B: '#2b2b33' }
+  },
+  plane: {
+    group: 'Travel', says: 'an aeroplane: flying',
+    rows: [
+      '...kk.....................',
+      '...kbk....................',
+      '...kbbk...................',
+      '...kbbbk..........kkk.....',
+      '.kkkkkkkkkkkkkkkkkwwwkk...',
+      'kwwwwwwwwwwwwwwwwwwwwwwkk.',
+      'kwkbkbkbkbkbkbkbkbkbkk8wk.',
+      'kwwwwwwwwwwwwwwwwwwwwwwwwk',
+      '.kkkkkkkkkkkwwwwkkkkkkkkk.',
+      '...........kwwwk..........',
+      '..........kwwwk...........',
+      '..........kkkk............'
+    ],
+    colours: { '8': '#8fd3ff' }
+  },
+  football: {
+    group: 'Sport and play', says: 'a football',
+    rows: [
+      '...kkkkkk...',
+      '..kwwkkwwk..',
+      '.kwwkkkkwwk.',
+      'kwwwwkkwwwwk',
+      'kkwwwwwwwwkk',
+      'kkkwwwwwwkkk',
+      'kkwwwwwwwwkk',
+      'kwwwwkkwwwwk',
+      '.kwwkkkkwwk.',
+      '..kwwkkwwk..',
+      '...kkkkkk...'
+    ]
+  },
+  'games-controller': {
+    group: 'Sport and play', says: 'a games controller: video games',
+    rows: [
+      '..kkkkkkkkkkkkk..',
+      '.kBBBBBBBBBBBBBk.',
+      'kBBkBBBBBBBBrBBBk',
+      'kBkkkBBBBBBgBbBBk',
+      'kBBkBBBkBkBBBrBBk',
+      'kBBBBBBBBBBBBBBBk',
+      'kBBBBkkkkkkkBBBBk',
+      '.kBBk.......kBBk.',
+      '..kk.........kk..'
+    ],
+    colours: { B: '#4a4f5a' }
+  },
+  goal: {
+    group: 'Sport and play', says: 'a football goal and its net',
+    rows: [
+      'kkkkkkkkkkkkkkkkkkkkkk',
+      'kwwwwwwwwwwwwwwwwwwwwk',
+      'kwekekekekekekekekekwk',
+      'kwkekekekekekekekekewk',
+      'kwekekekekekekekekekwk',
+      'kwkekekekekekekekekewk',
+      'kwekekekekekekekekekwk',
+      'kwkekekekekekekekekewk',
+      'kwekekekekekekekekekwk',
+      'kwkekekekekekekekekewk',
+      'kwk................kwk',
+      'kkk................kkk'
+    ]
+  },
+  tree: {
+    group: 'Nature and the garden', says: 'a tree',
+    rows: [
+      '......kkkkkk......',
+      '....kkggggggkk....',
+      '...kggggggGgggk...',
+      '..kgggGggggggggk..',
+      '.kggggggggggGgggk.',
+      '.kgggggGggggggggk.',
+      'kgggGgggggggGggggk',
+      'kggggggggGggggggGk',
+      '.kgggGggggggggggk.',
+      '..kkgggggggGggkk..',
+      '....kkkknnkkkk....',
+      '.......knnk.......',
+      '.......knnk.......',
+      '.......knnk.......',
+      '......knnnnk......',
+      '.....kkkkkkkk.....'
+    ]
+  },
+  flowers: {
+    group: 'Nature and the garden', says: 'flowers',
+    rows: [
+      '..kk.....kk.....kk..',
+      '.kyyk...krrk...kppk.',
+      'kyooyk.krrrrk.kpyypk',
+      '.kyyk...krrk...kppk.',
+      '..kk.....kk.....kk..',
+      '..kg.....kg.....kg..',
+      '.kgg....kgg.....kgk.',
+      '..kg..kk.kg.kk..kg..',
+      '..kgkkgk.kgkgk..kg..',
+      '..kggg...kgg....kg..'
+    ]
+  },
+  'plant-pot': {
+    group: 'Nature and the garden', says: 'a plant in a pot',
+    rows: [
+      '...kk..kk...',
+      '..kggkkggk..',
+      '.kggggggggk.',
+      '..kgggGggk..',
+      '...kkggkk...',
+      '....kggk....',
+      'kkkkkkkkkkkk',
+      'kooooooooook',
+      '.koooooooook',
+      '.kooooooook.',
+      '..kooooook..',
+      '..kkkkkkkk..'
+    ],
+    colours: { o: '#c8643a' }
+  },
+  umbrella: {
+    group: 'Nature and the garden', says: 'an umbrella: rain',
+    rows: [
+      '.......kk.......',
+      '....kkkkkkkk....',
+      '..kkrrrrwwwwkk..',
+      '.krrrrrwwwwwrrk.',
+      'krrrrrwwwwwrrrrk',
+      'kkkkkkkkkkkkkkkk',
+      '.......kk.......',
+      '.......kk.......',
+      '.......kk.......',
+      '.......kk.......',
+      '....kk.kk.......',
+      '.....kkk........'
+    ]
+  },
+  backpack: {
+    group: 'School', says: 'a school bag',
+    rows: [
+      '....kkkkk....',
+      '...kk...kk...',
+      '..kkkkkkkkk..',
+      '.kbbbbbbbbbk.',
+      'kbbbbbbbbbbbk',
+      'kbbkkkkkkkbbk',
+      'kbkbbbbbbbkbk',
+      'kbkbbyybbbkbk',
+      'kbkkkkkkkkkbk',
+      'kbbbbbbbbbbbk',
+      'kBBBBBBBBBBBk',
+      '.kkkkkkkkkkk.'
+    ]
+  },
+  books: {
+    group: 'School', says: 'a pile of books: reading, learning',
+    rows: [
+      '..kkkkkkkkkkkkk.',
+      '..kbbbbbbbbbbbwk',
+      '..kkkkkkkkkkkkkk',
+      'kkkkkkkkkkkkkk..',
+      'krrrrrrrrrrrrwk.',
+      'kkkkkkkkkkkkkkk.',
+      '.kkkkkkkkkkkkkkk',
+      '.kgggggggggggggk',
+      '.kggggggggggggwk',
+      '.kkkkkkkkkkkkkkk'
+    ]
+  },
+  balloons: {
+    group: 'Celebrations', says: 'balloons: a party',
+    rows: [
+      '..kkk.....kkk...kkk.',
+      '.krrrk...kyyyk.kbbbk',
+      'krrwrrk.kyywyk.kbwbk',
+      'krrrrrk.kyyyyk.kbbbk',
+      'krrrrrk.kyyyyk..kbk.',
+      '.krrrk...kyyyk...k..',
+      '..kkk.....kkk....k..',
+      '...k.......k....k...',
+      '....k......k...k....',
+      '.....k.....k..k.....',
+      '......k....k.k......',
+      '.......kk..kk.......',
+      '.........kk.........'
     ]
   }
 };

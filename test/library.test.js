@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { createKit } from '../src/kit.js';
-import { LEGS, PEOPLE, THING_GROUPS, THINGS, TOPS, WEARS } from '../src/library.js';
+import { LEGS, PEOPLE, personRows, THING_GROUPS, THINGS, TOPS, WEARS } from '../src/library.js';
 import { PALETTE } from '../src/palette.js';
 import { HAIRS, pictureProblems, SKINS, stageLook } from '../src/pictures.js';
 import { SPOTS } from '../src/stage.js';
@@ -24,7 +24,7 @@ describe('the library', () => {
   it('says what every thing is, and groups them', () => {
     for (const [name, thing] of Object.entries(THINGS)) assert.ok(thing.says && thing.group, name);
     assert.deepEqual(Object.values(THING_GROUPS).flat().sort(), Object.keys(THINGS).sort());
-    assert.ok(Object.keys(THINGS).length >= 40, 'a starter library of about forty things');
+    assert.ok(Object.keys(THINGS).length >= 80, 'a library of eighty things and more');
   });
 
   it('draws people as who they are, in any skin and hair, and the same person the same every time', () => {
@@ -48,8 +48,15 @@ describe('the library', () => {
   it('dresses people for what they do, and in everyday clothes otherwise', () => {
     for (const [wears, colours] of Object.entries(WEARS)) {
       const look = stageLook({ id: 'a', is: 'man', wears });
-      if (colours) assert.equal(look.C, colours.C, wears);
-      else assert.ok(TOPS.includes(look.C) && LEGS.includes(look.T));
+      assert.equal(look.C, colours?.C ?? look.C, wears);
+      if (!colours?.C) assert.ok(TOPS.includes(look.C), `${wears}: an everyday top`);
+      if (!colours?.T) assert.ok(LEGS.includes(look.T), `${wears}: everyday trousers`);
+      for (const name of ['woman', 'man', 'girl', 'boy', 'older-woman', 'older-man']) {
+        const rows = personRows(name, wears === 'everyday' ? null : wears);
+        assert.equal(new Set(rows.map((r) => r.length)).size, 1, `${name} in ${wears}: rows of one length`);
+        assert.ok(rows.length * 2 <= 60, `${name} in ${wears} is not too tall`);
+        if (colours?.A) assert.ok(rows.join('').includes('A') || colours.hat, `${name} in ${wears} shows its accent`);
+      }
     }
     assert.ok(pictureProblems({ type: 'stage', place: 'home', things: [{ id: 'h', is: 'house', spot: 'left', wears: 'suit' }], moves: [{ do: 'pulse', on: 'h' }] })
       .some((p) => p.includes('only a person wears')));

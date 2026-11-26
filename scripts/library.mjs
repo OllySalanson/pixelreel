@@ -3,7 +3,7 @@
 // to before it goes in (docs/library.md). Drawn in Node with the player's own kit, so what is
 // on the sheet is what a reel shows.
 //
-//   npm run library -- sheet [--only name,name] [--out sheet.html] [--title "..."]
+//   npm run library -- sheet [--only name,name] [--new name,name] [--out sheet.html] [--title "..."]
 //       one page: the people in every skin and in their work clothes, the places, and each
 //       thing on a stage, with its number, its name and what it is.
 import { writeFileSync } from 'node:fs';
@@ -55,7 +55,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&
 const SPOTS3 = ['left', 'middle', 'right'];
 
 /** The sheet as one page of HTML. `things` are the names of the things on it (all, unless asked). */
-export async function sheetHtml({ things = Object.keys(THINGS), people = Object.keys(PEOPLE), places = Object.keys(PLACES), title = 'New drawings for Pixel Reel' } = {}) {
+export async function sheetHtml({ things = Object.keys(THINGS), people = Object.keys(PEOPLE), places = Object.keys(PLACES), title = 'New drawings for Pixel Reel', fresh = [] } = {}) {
   let n = 0;
   const cards = [];
   // the people: each in the three skins, then in each thing they can wear
@@ -67,10 +67,13 @@ export async function sheetHtml({ things = Object.keys(THINGS), people = Object.
     const png = await stagePng({ type: 'stage', place: 'plain', things: crowd, moves: [{ do: 'pulse', on: 'p0', at: 99 }] }, { scale: 3, top: 84, height: 82 });
     peopleRows.push({ n: ++n, name: is, says: outline ? 'anyone at all: a plain outline' : `${is.replace('-', ' ')}, in each skin, with hair of their own`, png });
   }
-  const wears = Object.entries(WEARS).filter(([, w]) => w);
-  const dressed = wears.slice(0, 5).map(([name], i) => ({ id: `w${i}`, is: i % 2 ? 'man' : 'woman', spot: ['far-left', 'left', 'middle', 'right', 'far-right'][i], wears: name, label: name, skin: Object.keys(SKINS)[i % 3] }));
-  const wearsPng = await stagePng({ type: 'stage', place: 'plain', things: dressed, moves: [{ do: 'pulse', on: 'w0', at: 99 }] }, { scale: 3, top: 84, height: 82 });
-  peopleRows.push({ n: ++n, name: 'work clothes', says: wears.map(([name, w]) => `${name}: ${w.says}`).join('. '), png: wearsPng });
+  const wears = Object.entries(WEARS).filter(([, w]) => w), slots = ['far-left', 'left', 'middle', 'right', 'far-right'];
+  for (let i = 0; i < wears.length; i += 5) {
+    const five = wears.slice(i, i + 5);
+    const dressed = five.map(([name], k) => ({ id: `w${k}`, is: ['woman', 'man', 'girl', 'older-man', 'boy', 'older-woman'][(i + k) % 6], spot: slots[k], wears: name, label: name, skin: Object.keys(SKINS)[(i + k) % 3] }));
+    const png = await stagePng({ type: 'stage', place: 'plain', things: dressed, moves: [{ do: 'pulse', on: 'w0', at: 99 }] }, { scale: 3, top: 76, height: 90 });
+    peopleRows.push({ n: ++n, name: 'what people wear', says: five.map(([name, w]) => `${name}: ${w.says}`).join('. '), png });
+  }
   for (const name of things) {
     const thing = THINGS[name];
     const png = await thingPng(thing);
@@ -82,7 +85,7 @@ export async function sheetHtml({ things = Object.keys(THINGS), people = Object.
     placeCards.push({ n: ++n, name: place, says: PLACES[place], png });
   }
   const groups = [...new Set(cards.map((c) => c.group))];
-  const card = (c, wide = false) => `<figure class="${wide ? 'wide' : ''}"><span class="n">${c.n}</span><img src="${c.png}" alt="${esc(c.name)}"><figcaption><b>${esc(c.name)}</b> ${esc(c.says)}</figcaption></figure>`;
+  const card = (c, wide = false) => `<figure class="${wide ? 'wide' : ''}"><span class="n">${c.n}</span>${fresh.includes(c.name) || c.says.split('. ').some((bit) => fresh.includes(bit.split(':')[0])) ? '<span class="new">new</span>' : ''}<img src="${c.png}" alt="${esc(c.name)}"><figcaption><b>${esc(c.name)}</b> ${esc(c.says)}</figcaption></figure>`;
   return `<!doctype html>
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
@@ -100,11 +103,12 @@ export async function sheetHtml({ things = Object.keys(THINGS), people = Object.
   figure img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
   figcaption { padding: 8px 12px 10px; font-size: 16px; color: var(--faint); }
   figcaption b { display: block; color: var(--ink); font-size: 18px; }
+  .new { position: absolute; top: 8px; right: 8px; padding: 2px 8px; background: #55d6be; color: #1a1a1a; font-weight: bold; border-radius: 4px; }
   .n { position: absolute; top: 8px; left: 8px; min-width: 36px; padding: 2px 8px; background: var(--gold); color: #1a1a1a; font-weight: bold; text-align: center; border-radius: 4px; }
 </style></head>
 <body><main>
 <h1>${esc(title)}</h1>
-<p>${n} drawings. Say yes to the sheet, or give the numbers to draw again.</p>
+<p>${n} drawings${fresh.length ? ', the new ones marked' : ''}. Say yes to the sheet, or give the numbers to draw again.</p>
 <h2>People</h2>
 <div class="grid wide">${peopleRows.map((c) => card(c, true)).join('')}</div>
 ${groups.map((group) => `<h2>${esc(group)}</h2>\n<div class="grid">${cards.filter((c) => c.group === group).map((c) => card(c)).join('')}</div>`).join('\n')}
@@ -114,7 +118,7 @@ ${placeCards.length ? `<h2>Places</h2>\n<div class="grid wide">${placeCards.map(
 }
 
 async function main() {
-  const { positionals, values } = parseArgs({ allowPositionals: true, options: { only: { type: 'string' }, out: { type: 'string', default: 'library-sheet.html' }, title: { type: 'string' } } });
+  const { positionals, values } = parseArgs({ allowPositionals: true, options: { only: { type: 'string' }, new: { type: 'string' }, out: { type: 'string', default: 'library-sheet.html' }, title: { type: 'string' } } });
   if (positionals[0] !== 'sheet') {
     console.error('npm run library -- sheet [--only name,name] [--out sheet.html] [--title "..."]');
     process.exitCode = 2;
@@ -124,7 +128,8 @@ async function main() {
   for (const name of only ?? []) if (!THINGS[name] && !PEOPLE[name] && !PLACES[name]) throw new Error(`there is nothing called ${name} in the library`);
   const html = await sheetHtml({
     ...(only ? { things: only.filter((x) => THINGS[x]), people: only.filter((x) => PEOPLE[x]), places: only.filter((x) => PLACES[x]) } : {}),
-    ...(values.title ? { title: values.title } : {})
+    ...(values.title ? { title: values.title } : {}),
+    fresh: values.new?.split(',').map((x) => x.trim()).filter(Boolean) ?? []
   });
   writeFileSync(values.out, html);
   console.log(values.out);
