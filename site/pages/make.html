@@ -24,22 +24,7 @@ description: Type, say or paste anything: a link, a meeting's transcript, a ques
       </div>
       <!-- My notes, for a first reel: anything typed, said or pasted (a link, a transcript, questions), kept on
            this device. notes.js wakes it where the service can write a reel itself -->
-      <aside class="mynotes" id="mynotes" aria-labelledby="mynotes-title" data-first hidden>
-        <h2 class="mynotes-title" id="mynotes-title">My notes</h2>
-        <ol class="mynotes-list" id="mynotes-list"></ol>
-        <form class="mynotes-add" id="mynotes-add">
-          <textarea class="mynotes-box" id="mynotes-box" rows="2" maxlength="60000" enterkeyhint="done" aria-label="Add a note" placeholder="Add a note"></textarea>
-          <div class="mynotes-keys">
-            <button class="mynotes-mic" id="mynotes-mic" type="button" aria-pressed="false" hidden><svg class="ico" viewBox="0 0 7 9" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><path d="M2 0h3v5h-3zM0 2h1v3h-1zM6 2h1v3h-1zM1 5h1v1h-1zM5 5h1v1h-1zM2 6h3v1h-3zM3 7h1v1h-1zM1 8h5v1h-5z"/></svg><span>Speak</span></button>
-            <button class="mynotes-save" type="submit">Add</button>
-            <!-- a letter or a bill: a PDF, or a photo of it, made into a reel at once (notes.js) -->
-            <button class="mynotes-file" id="mynotes-file" type="button">{{icon:document:2}}<span>PDF or photo</span></button>
-          </div>
-          <input id="mynotes-files" type="file" accept="application/pdf,image/*" hidden>
-        </form>
-        <button class="btn btn-gold mynotes-make" id="mynotes-make" type="button" disabled>Make my next reel</button>
-        <p class="mynotes-says" id="mynotes-says" role="status"></p>
-      </aside>
+      {{mynotes:first}}
     </div>
     <!-- where the service cannot write a reel itself, the way to make one is through Claude -->
     <p class="make-elsewhere" id="make-elsewhere" hidden><a class="btn btn-gold btn-big" href="/claude">Add Pixel Reel to Claude</a></p>

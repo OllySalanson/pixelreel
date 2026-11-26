@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { ABOUT_MAX, canTake, fileKind, GivenError, givenFrom, givenFromClipboard, isLink, isVideoLink, languageFor, linkWithTitle, nameOf, PDF_MAX, PICTURE_MAX, requestFor, SHRINK_OVER, TEXT_MAX } from '../site/js/given.js';
+import { ABOUT_MAX, base64Of, canTake, fileGiven, fileKind, GivenError, givenFrom, givenFromClipboard, isLink, isVideoLink, languageFor, linkWithTitle, nameOf, PDF_MAX, PICTURE_MAX, requestFor, SHRINK_OVER, TEXT_MAX } from '../site/js/given.js';
 
 const PDF = Buffer.from('%PDF-1.7\n1 0 obj\n');
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 16, 0x4a, 0x46, 0x49, 0x46, 0, 1]);
@@ -113,6 +113,32 @@ describe('what someone gives the page', () => {
     assert.equal(nameOf({ words: '  my   gas\nbill ' }), 'my gas bill');
     const long = nameOf({ words: 'word '.repeat(40) });
     assert.ok(long.length <= 60 && long.endsWith('...'), long);
+  });
+});
+
+describe('a file, as it will be sent', () => {
+  it('is a PDF or a picture by what it is, the picture made smaller when it is a big one, and plain writing is its words', async () => {
+    const pdf = file('letter.pdf', 'application/pdf', PDF);
+    assert.deepEqual(await fileGiven(pdf), { type: 'application/pdf', file: pdf });
+    const shot = file('called-a.pdf', 'application/pdf', PNG);
+    assert.deepEqual(await fileGiven(shot), { type: 'image/png', file: shot }, 'whatever it is called');
+    const small = new Blob([JPEG], { type: 'image/jpeg' }), shrunk = [];
+    const shrink = async (picture) => { shrunk.push(picture); return small; };
+    assert.deepEqual(await fileGiven(shot, { shrink }), { type: 'image/png', file: shot }, 'a small picture goes as it is');
+    const photo = file('IMG_0001.jpg', 'image/jpeg', JPEG, SHRINK_OVER + 1);
+    assert.deepEqual(await fileGiven(photo, { shrink }), { type: 'image/jpeg', file: small });
+    assert.deepEqual(shrunk, [photo]);
+    assert.deepEqual(await fileGiven(new File(['Dear Sam,\nPay up.'], 'letter.txt', { type: 'text/plain' })), { words: 'Dear Sam,\nPay up.' });
+    for (const [bad, why] of [[file('a.zip', 'application/zip', Buffer.from('PK\u0003\u0004')), /PDF, a photo, or plain writing/], [file('big.pdf', 'application/pdf', PDF, PDF_MAX + 1), /PDF is too big/], [file('big.png', 'image/png', PNG, PICTURE_MAX + 1), /picture is too big/]]) {
+      await assert.rejects(fileGiven(bad), (err) => err instanceof GivenError && why.test(err.message));
+    }
+  });
+
+  it('is written as base64 to go inside JSON, however big it is', async () => {
+    assert.equal(await base64Of(new Blob([PDF])), PDF.toString('base64'));
+    assert.equal(await base64Of(new Blob([])), '');
+    const big = Buffer.alloc(100_000, 0xab);   // more than can be handed over in one piece
+    assert.equal(await base64Of(new Blob([big])), big.toString('base64'));
   });
 });
 

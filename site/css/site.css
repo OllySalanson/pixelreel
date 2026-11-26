@@ -654,46 +654,75 @@ html[data-paper="night"] .handset .px { filter: drop-shadow(var(--u) 0 0 var(--l
   .watch-pair > .mynotes { contain: size; margin: calc(var(--u) * 2) calc(var(--u) * 4) calc(var(--u) * 4) calc(var(--u) * 2); }
 }
 .mynotes .mynotes-title { font: 2.125rem/1.1 var(--pixel); letter-spacing: 0.01em; color: var(--gold); }
-/* the notes fill the room between the name and the box, as in a chat, and scroll when there are many */
-.mynotes-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; align-content: start; gap: 0.6rem; margin-inline: calc(var(--u) * -1); padding: var(--u); scrollbar-color: var(--frame) var(--night); }
-.mynotes-note { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 0.5rem; padding: 0.55rem 0.55rem 0.55rem 0.85rem; background: #1d3050; font-size: 1.125rem; line-height: 1.45; }
-.mynotes-note > p { max-width: none; padding-top: 0.2rem; }
+/* The notes fill the room between the name and the line, as in a chat: the newest sits just
+   above the line it was written in, and they scroll when there are many. (The first one's
+   margin, not an alignment, pushes them down, so that the top of a long list can still be reached.) */
+.mynotes-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: calc(var(--u) * 2); margin-inline: calc(var(--u) * -1); padding: var(--u); scrollbar-color: var(--frame) var(--night); }
+.mynotes-list > :first-child { margin-top: auto; }
+.mynotes-note { flex: none; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; padding: var(--u) var(--u) var(--u) calc(var(--u) * 3); background: #1d3050; font-size: 1.125rem; line-height: 1.45; }
+.mynotes-note > p { max-width: none; padding-block: 0.25rem; }
 .mynotes-note.is-asking { grid-template-columns: minmax(0, 1fr); }
 /* in a narrow panel, with big letters, a note has the whole width and its X goes under it, so no word is cut in two */
 .mynotes-list { container-type: inline-size; }
 @container (max-width: 16rem) {
-  .mynotes-note { grid-template-columns: minmax(0, 1fr); }
-  .mynotes-x { justify-self: end; }
+  .mynotes-note:not(.is-file) { grid-template-columns: minmax(0, 1fr); }
+  .mynotes-note:not(.is-file) .mynotes-x { justify-self: end; }
 }
 @media (max-width: 30rem) { .mynotes { padding-inline: 0.85rem; } }
 .mynotes-sure { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 0.5rem; }
 .mynotes-sure > p { flex-basis: 100%; font-weight: 700; color: var(--gold); }
 .mynotes-sure .btn { margin-block: var(--u) calc(var(--u) * 3); }
-/* the buttons of My notes are drawn like the player's own */
-.mynotes-x, .mynotes-keys button { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 2.75rem; padding: 0.3rem 0.9rem; font-weight: 700; font-size: 1.125rem; line-height: 1.2; color: var(--cream); background: var(--dusk); border: 0; cursor: pointer;
+/* a photo or a PDF waiting with the notes: a small picture of it, what it is, and its X */
+.mynotes-note.is-file { grid-template-columns: auto minmax(0, 1fr) auto; padding-block: calc(var(--u) * 2); }
+.mynotes-note.is-file > p { white-space: nowrap; text-overflow: ellipsis; -webkit-line-clamp: none; line-clamp: none; display: block; }
+.mynotes-thumb { width: 2.25rem; height: 2.25rem; margin: var(--u); box-shadow: 0 0 0 var(--u) var(--frame); }
+.mynotes-note.is-file > .px { width: 2rem; height: auto; margin-block: 0.375rem; }
+/* in that narrow panel, what a photo or a PDF is called goes under its picture */
+@container (max-width: 16rem) {
+  .mynotes-note.is-file { grid-template-columns: minmax(0, 1fr) auto; }
+  .mynotes-note.is-file > p { grid-row: 2; grid-column: 1 / -1; }
+}
+/* The keys of My notes are small and plain: a picture each, no frame, a finger's width to press. */
+.mynotes-key { display: grid; place-items: center; flex: none; width: 2.75rem; height: 2.75rem; padding: 0; color: var(--cream); background: none; border: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.mynotes-key:focus-visible { outline-offset: calc(var(--u) * -1); }
+.mynotes-key:disabled { opacity: 0.4; pointer-events: none; }
+/* each key's picture sits in a square a little smaller than the key, which is what lights up */
+.mynotes-key .ico { box-sizing: content-box; fill: currentColor; }
+.mynotes-x .ico { width: 1.25rem; height: 1.25rem; padding: 0.5rem; }
+.mynotes-file .ico, .mynotes-mic .ico { width: 1.25rem; height: 1.75rem; padding: 0.25rem 0.5rem; }
+/* the arrow that adds the note: the one key that is a block of colour, as the send key of a chat is */
+.mynotes-save .ico { width: 1.25rem; height: 1.375rem; padding: 0.4375rem 0.5rem; fill: var(--night); background: var(--cream); }
+/* only where there is a mouse to hold over a key: on a phone it would stay lit after a press */
+@media (hover: hover) {
+  .mynotes-key:hover .ico { background: var(--dusk); }
+  .mynotes-save:hover .ico { background: #fff; }
+}
+/* One line to write in, in a frame with its keys: a paperclip before it, and after it the
+   microphone, or the arrow once there are words. The line grows as it fills. */
+.mynotes-add { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: end; margin: calc(var(--u) * -1) var(--u) 0; background: var(--night); container-type: inline-size;
   box-shadow: 0 calc(var(--u) * -1) 0 0 var(--frame), 0 var(--u) 0 0 var(--frame), calc(var(--u) * -1) 0 0 0 var(--frame), var(--u) 0 0 0 var(--frame); }
-.mynotes-x:hover, .mynotes-keys button:hover { background: #2f5d8a; }
-.mynotes-x { width: 2.75rem; margin: var(--u); padding: 0; font: 1.75rem/1 var(--pixel); }
-.mynotes-add { display: grid; gap: 0.75rem; }
-.mynotes-box { width: 100%; min-height: 4.5rem; padding: 0.6rem 0.8rem; font: 400 1.125rem/1.45 var(--font); letter-spacing: var(--tracking); word-spacing: var(--wording); color: var(--cream); background: var(--night); border: 0; resize: none;
-  box-shadow: 0 calc(var(--u) * -1) 0 0 var(--frame), 0 var(--u) 0 0 var(--frame), calc(var(--u) * -1) 0 0 0 var(--frame), var(--u) 0 0 0 var(--frame); }
+.mynotes-box { grid-column: 2; grid-row: 1; width: 100%; min-height: 2.75rem; padding: 0.55rem 0.25rem; font: 400 1.125rem/1.45 var(--font); letter-spacing: var(--tracking); word-spacing: var(--wording); color: var(--cream); background: none; border: 0; border-radius: 0; resize: none; }
+.mynotes-file { grid-column: 1; grid-row: 1; }
+.mynotes-mic, .mynotes-save { grid-column: 3; grid-row: 1; }
 .mynotes-box::placeholder { color: var(--mist); opacity: 1; }
 .mynotes-box:disabled::placeholder { color: var(--gold); }
-.mynotes-keys { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 3); padding-inline: var(--u); }
-.mynotes-keys button { flex: 1 0 auto; }
-.mynotes-keys button:disabled, .mynotes-x:disabled { opacity: 0.4; pointer-events: none; }
-.mynotes-mic .ico { width: 0.875rem; height: 1.125rem; fill: currentColor; }
-.mynotes-file .px { width: 1.25rem; height: auto; }
-/* listening: the microphone is red, and the box it is writing into is framed in it */
-.mynotes-mic.on { color: #fff; background: var(--red); }
-.mynotes-mic.on:hover { background: #e04848; }
-.mynotes.is-listening .mynotes-box { box-shadow: 0 calc(var(--u) * -1) 0 0 var(--red), 0 var(--u) 0 0 var(--red), calc(var(--u) * -1) 0 0 0 var(--red), var(--u) 0 0 0 var(--red); }
-@media (prefers-reduced-motion: no-preference) {
-  html:not([data-motion="off"]) .mynotes-mic.on .ico { animation: mynotes-hear 1s steps(2) infinite; }
+/* the line being written in: its own frame turns white, so that nothing round it moves or is crowded */
+@supports selector(:has(*)) {
+  .mynotes-add:has(.mynotes-box:focus-visible) { box-shadow: 0 calc(var(--u) * -1) 0 0 var(--focus), 0 var(--u) 0 0 var(--focus), calc(var(--u) * -1) 0 0 0 var(--focus), var(--u) 0 0 0 var(--focus); }
+  .mynotes-box:focus-visible { outline: none; }
 }
-@keyframes mynotes-hear { 50% { opacity: 0.35; } }
-.mynotes-make { width: auto; margin: var(--u) var(--u) calc(var(--u) * 3); }
-.mynotes-make:disabled { --bg: var(--dusk); --lip: var(--deep); --fg: var(--mist); --edge: var(--deep); cursor: default; filter: none; }
+/* where the frame is narrow and the letters big, the line has the whole width and the keys go under it */
+@container (max-width: 16rem) {
+  .mynotes-box { grid-column: 1 / -1; padding-inline: 0.7rem; }
+  .mynotes-file, .mynotes-mic, .mynotes-save { grid-row: 2; }
+}
+/* listening: the microphone is white on red, and the frame it is writing into is red too. Nothing flashes: the words arriving show that it hears. */
+.mynotes-mic.on .ico { fill: #fff; background: var(--red); }
+:root .mynotes.is-listening .mynotes-add { box-shadow: 0 calc(var(--u) * -1) 0 0 var(--red), 0 var(--u) 0 0 var(--red), calc(var(--u) * -1) 0 0 0 var(--red), var(--u) 0 0 0 var(--red); }
+/* the one button with words: as wide as the line's frame, and readable before there is anything to make */
+.mynotes .mynotes-make { width: auto; margin: var(--u) 0 calc(var(--u) * 3); }   /* (.mynotes is there to outweigh the width a button has on a phone) */
+.mynotes-make:disabled, .mynotes-make[aria-disabled="true"] { --bg: var(--dusk); --lip: var(--deep); --fg: var(--cream); --edge: var(--deep); opacity: 1; cursor: default; filter: none; }
+.mynotes-make[aria-disabled="true"]:active { transform: none; box-shadow: 0 calc(var(--u) * -1) 0 0 var(--edge), calc(var(--u) * -1) 0 0 0 var(--edge), var(--u) 0 0 0 var(--edge), 0 var(--u) 0 0 var(--lip), calc(var(--u) * -1) var(--u) 0 0 var(--edge), var(--u) var(--u) 0 0 var(--edge), 0 calc(var(--u) * 2) 0 0 var(--edge); }
 .mynotes-says { max-width: none; font-weight: 700; color: var(--gold); }
 .mynotes-says:empty { display: none; }
 
