@@ -12,6 +12,7 @@ import { clipLookup, ReelError } from '../src/reel.js';
 import { staysAhead } from './ahead.mjs';
 import { limitProblems, peterMs, reelMs, slipProblems } from './limits.mjs';
 import { paceReel } from './pacing.mjs';
+import { DAYBOOK, dayOf, entryOf, plainName } from './daybook.mjs';
 import { narrationMs, timeline } from '../src/timing.js';
 import { NOTE_MAX } from '../site/js/given.js';
 
@@ -157,7 +158,7 @@ export class Reels {
     if (spoken) status.language = spoken;
     if (who) status.narrator = who;
     await this.save(status);
-    await this.wish(status.id, wishes);
+    await this.book(status.id, raw, { how: 'connector', wishes });
     this.enqueue({ id: status.id, kind: 'voice' });
     // with nothing else in hand its recording has begun already, and whoever asked is told so
     return this.running?.id === status.id ? { ...status, state: 'recording' } : status;
@@ -272,22 +273,34 @@ export class Reels {
     if (narrator && narrator !== 'peter' && this.narrators.includes(narrator) && NARRATORS[narrator]) written.narrator = narrator;
     await this.store.put(`reels/${id}/reel.json`, JSON.stringify(raw));
     await this.save(written);
-    await this.wish(id, wishes);
+    await this.book(id, raw, { how: 'website', wishes });
     this.enqueue({ id, kind: 'voice' });
     return written;
   }
 
   /**
-   * Keeps what reel `id` wished the library had (a few short names, such as "gas meter"), for the
-   * weekly sheet (docs/library.md): under wishes/, by day, so they outlive the reel itself. Only
-   * names are kept, never the reel's words. Anything that is not a short name is left out.
+   * Notes reel `id` in the day book (daybook.mjs), with the things it wished the library had:
+   * never its words. `how` it was made: by the connector or the website. Never throws.
    */
-  async wish(id, wishes) {
-    const names = (Array.isArray(wishes) ? wishes : []).filter((w) => typeof w === 'string').map((w) => w.trim().toLowerCase().replace(/\s+/g, ' '))
-      .filter((w) => w && w.length <= 40 && /^[\p{L}\p{N} '-]+$/u.test(w)).slice(0, 5);
-    if (!names.length) return;
-    const day = new Date(this.now()).toISOString().slice(0, 10);
-    await this.store.put(`wishes/${day}/${id}.json`, JSON.stringify({ id, wishes: [...new Set(names)] }));
+  async book(id, raw, { how, wishes = null } = {}) {
+    try {
+      const status = await this.status(id), day = dayOf(Date.parse(status?.created ?? '') || this.now());
+      await this.store.put(`${DAYBOOK}/${day}/${id}.json`, JSON.stringify({ id, at: new Date(this.now()).toISOString(), ...entryOf(raw, { how, wishes }) }));
+    } catch (err) {
+      this.log(`${id}: could not be noted in the day book: ${err.message}`);
+    }
+  }
+
+  /** Adds what the critic made of reel `id` to its line in the day book. Never throws. */
+  async bookLook(id, looked) {
+    try {
+      const status = await this.status(id), key = `${DAYBOOK}/${dayOf(Date.parse(status?.created ?? '') || this.now())}/${id}.json`;
+      const entry = JSON.parse(await this.store.get(key));
+      entry.critic = { faults: looked.faults.length, mended: looked.mended, wishes: [...new Set((looked.wishes ?? []).map(plainName).filter(Boolean))].slice(0, 5) };
+      await this.store.put(key, JSON.stringify(entry));
+    } catch (err) {
+      this.log(`${id}: the critic's look could not be noted in the day book: ${err.message}`);
+    }
   }
 
   /** Gives up on a reel started with begin(), saying why in words for whoever is waiting on its page. */
@@ -532,6 +545,7 @@ export class Reels {
           const looked = await looking;
           if (looked?.faults?.length) this.log(`${id}: the critic found ${looked.faults.length}: ${looked.faults.join(' | ')}`);
           if (looked && looked.raw !== written && (await this.status(id))) await this.store.put(`reels/${id}/reel.json`, JSON.stringify(looked.raw));
+          if (looked) await this.bookLook(id, { faults: looked.faults ?? [], mended: looked.raw !== written, wishes: looked.wishes });
           // now the voice has a length, the pictures are timed to it: the page, the player in the chat and the video all play this
           const manifest = await this.manifest(id), raw = paceReel(await this.reel(id), manifest);
           await this.store.put(`reels/${id}/reel.json`, JSON.stringify(raw));

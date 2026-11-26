@@ -723,3 +723,6 @@ play is dropped, and the scene keeps its own. Whatever goes wrong, the reel goes
 Each look is logged as `critic:` with what it took. On the test bench it found faults in all
 ten reels and mended them, at about 5 cents and 11 seconds a look, inside the time Peter takes
 to record. It is off with `PIXELREEL_PICTURES=cards`.
+
+The day book, the daily summary for Olly and the weekly sheet of new drawings are in
+[library.md](library.md).

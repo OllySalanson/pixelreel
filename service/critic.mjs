@@ -74,7 +74,7 @@ Mend only what is wrong. Keep what works.
 
 The rules for pictures, and the library, are below. Change pictures only: never a scene's title, caption or say, and never the number or order of the scenes.
 
-Reply with one JSON object and nothing else: {"faults": ["scene 2: ...", ...], "pictures": [one picture for each scene, in order]}. If nothing is wrong, reply {"faults": [], "pictures": []}.
+Reply with one JSON object and nothing else: {"faults": ["scene 2: ...", ...], "pictures": [one picture for each scene, in order], "wishes": [short names of things a picture needed that the library does not have, such as "gas meter"]}. If nothing is wrong, reply {"faults": [], "pictures": [], "wishes": []}.
 
 ${pictureRules()}`;
 
@@ -100,7 +100,7 @@ export function mendedReel(raw, reply, { partly = false } = {}) {
 
 /**
  * A critic: look(raw) draws reel `raw` (reel.json, parsed), runs the free checks, shows Claude
- * the frames, and resolves to { raw, faults }: the reel with its pictures mended, or as it was
+ * the frames, and resolves to { raw, faults, wishes }: the reel with its pictures mended, or as it was
  * when nothing needed mending or the reply would not do. It never throws: whatever goes wrong,
  * the reel goes on as it was. `perDay` bounds how many looks a day there are; `log` is told what
  * each cost.
@@ -122,13 +122,14 @@ export function createCritic({ client = new Anthropic({ timeout: 120_000, maxRet
       });
       content.push({ type: 'text', text: `${checks.length ? `The free checks found:\n- ${checks.join('\n- ')}\n\n` : ''}The reel, as JSON:\n${JSON.stringify(raw)}` });
       const messages = [{ role: 'user', content }], took = { in: 0, out: 0 };
-      let faults = [], mended = null, problems = [];
+      let faults = [], mended = null, problems = [], wishes = [];
       for (let round = 1; round <= 2; round++) {
         const response = await client.messages.create({ model, max_tokens: 12000, output_config: { effort }, system: CRITIC, messages });
         took.in += response.usage.input_tokens; took.out += response.usage.output_tokens; took.model = response.model;
         const text = response.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
         const reply = replyJson(text);
         if (round === 1) faults = Array.isArray(reply.faults) ? reply.faults.filter((f) => typeof f === 'string') : [];
+        if (Array.isArray(reply.wishes)) wishes = reply.wishes.filter((w) => typeof w === 'string').slice(0, 5);
         if (!faults.length) break;
         ({ mended = null, problems = [] } = mendedReel(raw, reply));
         // the second time, every picture that plays is kept, and a scene whose picture still would not keeps its own
@@ -139,7 +140,7 @@ export function createCritic({ client = new Anthropic({ timeout: 120_000, maxRet
       }
       const kept = mended && problems.length ? `, all but ${problems.length === 1 ? 'one picture' : 'some pictures'} that would not do (${problems.slice(0, 3).join('; ')})` : '';
       log(`critic: ${id} ${took.in} tokens in, ${took.out} out (${took.model}); ${faults.length} faults${faults.length && !mended ? `, but its pictures would not do (${problems.slice(0, 3).join('; ')}), so the reel stays as it was` : kept}`);
-      return { raw: mended ?? raw, faults };
+      return { raw: mended ?? raw, faults, wishes };
     } catch (err) {
       log(`critic: ${id} could not look: ${err.message}`);
       return { raw, faults: checks };
