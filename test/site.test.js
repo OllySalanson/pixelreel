@@ -940,7 +940,10 @@ describe('before the page is drawn', () => {
     const css = readFileSync(root('site/css/site.css'), 'utf8'), layout = readFileSync(root('site/layout.html'), 'utf8');
     const steps = Number(/const STEPS = (\d+);/.exec(readFileSync(root('site/js/boot.js'), 'utf8'))[1]);
     for (let step = 2; step <= steps; step++) assert.ok(css.includes(`[data-tight="${step}"]`), `step ${step}`);
-    assert.ok(css.includes('.top-in[data-tight] .top-nav'));
+    // the "now" goes first, so the links stay where a little room is all that is short; then the links, for the Menu button
+    assert.ok(css.includes('.top-in[data-tight] .top-make-now'));
+    assert.match(css, /\.top-in:is\(\[data-tight="2"\],[^)]*\[data-tight="9"\]\) \.top-nav,/);
+    assert.match(css, /\.top-in:is\(\[data-tight="2"\],[^)]*\[data-tight="9"\]\) \.top-menu \{ display: inline-flex; \}/);
     assert.ok(layout.indexOf('rel="stylesheet"') < layout.indexOf('/site/js/boot.js'), 'boot.js waits for the stylesheet only if it comes first');
     // one span round the words, so the button lays them out as one run of text with its usual spaces
     // Add to Claude is a small box like Make it comfy: a plug and the word, named in full for a screen reader, and never Claude's own mark
@@ -1534,7 +1537,7 @@ describe('the menu, where the bar has no room for its links', () => {
   it('has a Menu button on every page, shown only when the links are not', () => {
     for (const name of pages) assert.match(html[name], /<a class="top-menu" href="#more" data-open="menu">Menu<\/a>/, name);
     assert.match(css, /\n\.top-menu \{ display: none; \}/, 'out of sight while the links have room');
-    assert.match(css, /\.top-in\[data-tight\] \.top-menu \{ display: inline-flex; \}/, 'there when boot.js lets go of the links');
+    assert.match(css, /\.top-in:is\(\[data-tight="2"\],[^)]*\) \.top-menu \{ display: inline-flex; \}/, 'there when boot.js lets go of the links');
     // every rule that hides the links for a width of screen shows the button in the same breath
     const hidden = [...css.matchAll(/\n {2}\.top-nav \{ display: none; \}\n( {2}\.top-menu \{ display: inline-flex; \})?/g)];
     assert.ok(hidden.length > 0);
