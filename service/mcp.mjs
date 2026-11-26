@@ -64,6 +64,12 @@ const WHEN = 'Use it when someone asks for a pixel reel, or wants something expl
 const HAND_OVER = 'Many people who ask for a reel find reading hard work, so once it is made, answer in one or two short sentences, ' +
   'with the link on a line of its own. Do not list the scenes.';
 
+/**
+ * Pictures Claude is not told of: an image (no pictures from elsewhere, limits.mjs), and, until
+ * what Claude is told of it is written, the stage.
+ */
+const UNTOLD = ['image', 'stage'];
+
 /** The timing fields, which a reel made here has no use for: the service times every picture to the voice (pacing.mjs). */
 const TIMING = ['every', 'start'];
 
@@ -83,7 +89,7 @@ function reelInput(languages = [], narrators = []) {
   scene.caption.description = 'One short sentence on screen, 12 words at most. Not the same words as say.';
   scene.say.description = 'What Peter, the narrator, says: one or two short sentences, 12 to 25 words, written to be said aloud. Leave it out to read the caption aloud.';
   reel.$defs.picture.description = 'A ready-made picture. Give every scene one, and mix them so the reel moves.';
-  reel.$defs.picture.oneOf = reel.$defs.picture.oneOf.filter((picture) => picture.title !== 'image');
+  reel.$defs.picture.oneOf = reel.$defs.picture.oneOf.filter((picture) => !UNTOLD.includes(picture.title));
   for (const picture of reel.$defs.picture.oneOf) for (const key of TIMING) delete picture.properties[key];
   // where Claude picks an icon, what an icon is for: left to itself it made an apple stand for cracking an egg
   for (const picture of reel.$defs.picture.oneOf) {
@@ -237,7 +243,7 @@ function exampleJson() {
 
 /** The guide reel_format returns: built from the pictures themselves, so it never drifts. `languages` are the ones besides English that Peter can read here. */
 export function formatGuide(languages = [], narrators = []) {
-  const pictures = Object.entries(PICTURES).filter(([type]) => type !== 'image').map(([type, { fields }]) => {
+  const pictures = Object.entries(PICTURES).filter(([type]) => !UNTOLD.includes(type)).map(([type, { fields }]) => {
     const list = Object.entries(fields).filter(([key]) => !TIMING.includes(key)).map(([key, kind]) => `${key}${kind.endsWith('?') ? ' (optional)' : ''}`).join(', ');
     return `- ${type}: ${PICTURE_NOTES[type]} Fields: ${list}.`;
   });

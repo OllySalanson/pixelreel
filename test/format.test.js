@@ -69,7 +69,7 @@ describe('reelFromData', () => {
       'scene 1: draw is code, which a reel.json cannot hold; give the scene a picture instead',
       'title: give the reel a title',
       'scene 1: needs a caption',
-      'scene 1: picture.type must be one of: title, list, terminal, code, chat, big, image, icons, flow, compare, table, sprite'
+      'scene 1: picture.type must be one of: title, list, terminal, code, chat, big, image, icons, flow, compare, table, sprite, stage'
     ]);
   });
 
