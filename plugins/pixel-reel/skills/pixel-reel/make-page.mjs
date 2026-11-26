@@ -144,39 +144,39 @@ const ICONS = {
   ],
   person: [
     '................',
-    '.....nnnnnn.....',
-    '....nnnnnnnn....',
-    '....nssssssn....',
-    '....skssssks....',
-    '....ssssssss....',
-    '....sssrrsss....',
-    '.....ssssss.....',
-    '......ssss......',
-    '...tttttttttt...',
-    '..tttttttttttt..',
-    '..tttttttttttt..',
-    '..sstttttttss...',
-    '....tttttttt....',
-    '....bbbbbbbb....',
-    '....bbbb.bbb....'
+    '......kkkk......',
+    '.....kttttk.....',
+    '....kttttttk....',
+    '....kttttttk....',
+    '....kttttttk....',
+    '....kttttttk....',
+    '.....kttttk.....',
+    '......kkkk......',
+    '................',
+    '....kkkkkkkk....',
+    '...kttttttttk...',
+    '..kttttttttttk..',
+    '..kttttttttttk..',
+    '..kttttttttttk..',
+    '..kkkkkkkkkkkk..'
   ],
   people: [
     '................',
-    '..nnnn....yyyy..',
-    '.nnnnnn..yyyyyy.',
-    '.nssssn..yssssy.',
-    '.skssks..skssks.',
-    '.ssssss..ssssss.',
-    '.ssrrss..ssrrss.',
-    '..ssss....ssss..',
-    '.tttttt..pppppp.',
-    '.tttttt..pppppp.',
-    'sttttttsspppppps',
-    '.tttttt..pppppp.',
-    '.bbbbbb..pppppp.',
-    '.bb..bb..pppppp.',
-    '.bb..bb...s..s..',
-    '.kk..kk...k..k..'
+    '..kkkk....nnnn..',
+    '.kkkkkk..nnnnnn.',
+    'kkddddkk.nssssn.',
+    'kdkddkdk.skssks.',
+    'kddddddk.ssssss.',
+    'kddrrddk.ssrrss.',
+    'kkddddkk..ssss..',
+    'kkppppkk.tttttt.',
+    '.pppppp..tttttt.',
+    'dppppppdstttttts',
+    '.pppppp..tttttt.',
+    'pppppppp.bbbbbb.',
+    'pppppppp.bb..bb.',
+    '..d..d...bb..bb.',
+    '..k..k...kk..kk.'
   ],
   heart: [
     '................',
@@ -1347,13 +1347,103 @@ const ICONS = {
     '...kk......kk...',
     '................',
     '................'
+  ],
+  woman: [
+    '................',
+    '.....nnnnnn.....',
+    '....nnnnnnnn....',
+    '...nnssssssnn...',
+    '...nskssssksn...',
+    '...nssssssssn...',
+    '...nsssrrsssn...',
+    '...nnssssssnn...',
+    '...nnnssssnnn...',
+    '...nnppppppnn...',
+    '...pppppppppp...',
+    '..spppppppppps..',
+    '....pppppppp....',
+    '...pppppppppp...',
+    '..pppppppppppp..',
+    '.....kk..kk.....'
+  ],
+  man: [
+    '................',
+    '.....nnnnnn.....',
+    '....nnnnnnnn....',
+    '....nssssssn....',
+    '....skssssks....',
+    '....ssssssss....',
+    '....sssrrsss....',
+    '.....ssssss.....',
+    '......ssss......',
+    '...tttttttttt...',
+    '..tttttttttttt..',
+    '..tttttttttttt..',
+    '..s.tttttttt.s..',
+    '....bbbbbbbb....',
+    '....bbb..bbb....',
+    '....kkk..kkk....'
+  ],
+  girl: [
+    '................',
+    '................',
+    '.....nnnnnn.....',
+    '....nnnnnnnn....',
+    '..nnskssssksnn..',
+    '..nnssssssssnn..',
+    '..n.sssrrsss.n..',
+    '..n..ssssss..n..',
+    '.....oooooo.....',
+    '....oooooooo....',
+    '...soooooooos...',
+    '....oooooooo....',
+    '...oooooooooo...',
+    '.....s....s.....',
+    '.....s....s.....',
+    '....kk....kk....'
+  ],
+  boy: [
+    '................',
+    '................',
+    '.....nnnnnn.....',
+    '....nnnnnnnn....',
+    '....skssssks....',
+    '....ssssssss....',
+    '....sssrrsss....',
+    '.....ssssss.....',
+    '.....gggggg.....',
+    '....gggggggg....',
+    '...sggggggggs...',
+    '....gggggggg....',
+    '....bbbbbbbb....',
+    '....bbb..bbb....',
+    '.....s....s.....',
+    '....kk....kk....'
+  ],
+  children: [
+    '................',
+    '................',
+    '..kkkk....yyyy..',
+    '.kkkkkk..yyyyyy.',
+    'kSkSSkSk.skssks.',
+    'kSSSSSSk.ssssss.',
+    '.SSrrSS..ssrrss.',
+    '..SSSS....ssss..',
+    '.oooooo..gggggg.',
+    'SooooooSsggggggs',
+    '.oooooo..gggggg.',
+    'oooooooo.bbbbbb.',
+    '..S..S...bb..bb.',
+    '..S..S....s..s..',
+    '..k..k....s..s..',
+    '..........k..k..'
   ]
 };
 
 /** The icons by what they are about, for the guides people and agents choose from. Every icon is in one group. */
 const ICON_GROUPS = {
   'Paperwork and money': ['letter', 'document', 'money', 'card', 'bank', 'calendar', 'clock', 'hourglass', 'bag', 'basket', 'gift', 'chart'],
-  'People and home': ['person', 'people', 'baby', 'heart', 'house', 'bed', 'key', 'lock', 'bin', 'cup', 'apple', 'egg', 'bread', 'bowl', 'bottle', 'pan', 'tap', 'shirt', 'tooth', 'pill', 'thermometer', 'dog', 'cat'],
+  'People and home': ['person', 'people', 'woman', 'man', 'girl', 'boy', 'children', 'baby', 'heart', 'house', 'bed', 'key', 'lock', 'bin', 'cup', 'apple', 'egg', 'bread', 'bowl', 'bottle', 'pan', 'tap', 'shirt', 'tooth', 'pill', 'thermometer', 'dog', 'cat'],
   'Out and about': ['car', 'bus', 'train', 'plane', 'pin', 'world', 'flag', 'ball', 'trophy', 'music', 'book', 'pencil'],
   Technology: ['phone', 'computer', 'camera', 'wifi', 'battery', 'plug', 'cog', 'search', 'speech', 'bell', 'eye', 'shield', 'rocket'],
   'Weather and nature': ['sun', 'moon', 'cloud', 'rain', 'water', 'fire', 'bolt', 'tree'],
@@ -1371,8 +1461,9 @@ __m['palette.js'] = (() => {
 const PALETTE = {
   k: '#1a1a1a', s: '#f2c194', b: '#1f4e9c', B: '#163a75', y: '#ffcc4d', w: '#fdf6e3', r: '#d63a3a', R: '#a52222',
   n: '#7a4a24', N: '#5a3418', g: '#3fa34d', G: '#2a7a35', e: '#9fb3c8', o: '#ff8c2a', p: '#8e5bd6', t: '#55d6be',
-  c: '#ebeac5'
+  c: '#ebeac5', S: '#c68642', d: '#8d5524'
 };
+
 
 return { PALETTE };
 })();
@@ -1665,6 +1756,33 @@ function arrow(px, x, y, len, c = GOLD) {
   }
 }
 
+/** The icons that are one person, whom an item can give a skin and a hair colour. */
+const PERSON_ICONS = ['woman', 'man', 'girl', 'boy', 'baby'];
+/** The skins and hair colours a person icon can have. */
+const SKINS = { light: PALETTE.s, medium: PALETTE.S, deep: PALETTE.d };
+const HAIRS = { black: '#2a1d14', brown: PALETTE.n, blonde: PALETTE.y, ginger: '#c2452d', grey: '#c3c9d0' };
+/** The hair a person is given, by skin, when an item does not say. */
+const HAIR_FOR = { light: ['brown', 'blonde', 'black', 'ginger'], medium: ['black', 'brown'], deep: ['black'] };
+
+function hash(str) {
+  let h = 7;
+  for (const ch of str) h = (Math.imul(h, 31) + ch.codePointAt(0)) >>> 0;
+  return h;
+}
+
+/**
+ * The colours a person icon is drawn in, for px.sprite: the skin and hair its item says, or,
+ * where it says nothing, a look of its own chosen from its label (or its place, unlabelled).
+ * So nobody is drawn one colour by default, and the same person looks the same in every scene.
+ * Null for an icon that is not one person.
+ */
+function personLook(item, i = 0) {
+  if (!PERSON_ICONS.includes(item.icon)) return null;
+  const h = hash((item.label ?? `${item.icon} ${i}`).trim().toLowerCase());
+  const skin = item.skin ?? Object.keys(SKINS)[h % 3], hairs = HAIR_FOR[skin];
+  return { s: SKINS[skin], n: HAIRS[item.hair ?? hairs[Math.floor(h / 3) % hairs.length]] };
+}
+
 /** Icons in a row, arriving one by one with their labels; `arrows` joins each to the next. */
 function iconRow(t, px, p, arrows) {
   const { W, H } = px;
@@ -1687,7 +1805,7 @@ function iconRow(t, px, p, arrows) {
     }
     if (t < at) return;
     const drop = Math.round(px.tween(t, at, 0.6, -size - y0, 0, 'bounce'));
-    px.sprite(ICONS[item.icon], cx - size / 2, y0 + drop + (t > at + 0.6 ? px.bob(t + i, 2, 1) : 0), sc);
+    px.sprite(ICONS[item.icon], cx - size / 2, y0 + drop + (t > at + 0.6 ? px.bob(t + i, 2, 1) : 0), sc, false, personLook(item, i));
     if (item.label) px.text(item.label, cx, y0 + size + 8, labelSize, i === latest && t < at + every + 1 ? GOLD : CREAM, 'center', INK);
   });
 }
@@ -1715,7 +1833,7 @@ function compare(t, px, p) {
     px.sprite(ICONS[mark], x + w / 2 - 8, y + 3, 1);
     const sc = 4, size = ICON_SIZE * sc, room = h - 22 - (side.label ? labelSize + 10 : 0);
     const iy = y + 22 + Math.max(2, Math.round((room - size) / 2));
-    px.sprite(ICONS[side.icon], x + w / 2 - size / 2, iy + (t > at + 0.5 ? px.bob(t + i * 2, 2, 1) : 0), sc);
+    px.sprite(ICONS[side.icon], x + w / 2 - size / 2, iy + (t > at + 0.5 ? px.bob(t + i * 2, 2, 1) : 0), sc, false, personLook(side, i));
     if (side.label) px.text(side.label, x + w / 2, y + h - labelSize - 8, labelSize, INK, 'center');
   });
 }
@@ -1831,9 +1949,11 @@ function spriteLetters(p) {
   return [];
 }
 
+const LOOKS = { skin: SKINS, hair: HAIRS };
 const isIconItem = (v, labelled) => v !== null && typeof v === 'object' && !Array.isArray(v) && ICON_NAMES.includes(v.icon) &&
-  (labelled ? isText(v.label) : v.label === undefined || isText(v.label)) && Object.keys(v).every((k) => k === 'icon' || k === 'label');
-const iconHelp = `icons: ${Object.keys(ICONS).join(', ')}`;
+  (labelled ? isText(v.label) : v.label === undefined || isText(v.label)) &&
+  Object.entries(v).every(([k, x]) => k === 'icon' || k === 'label' || (k in LOOKS && PERSON_ICONS.includes(v.icon) && Object.hasOwn(LOOKS[k], x)));
+const iconHelp = `icons: ${Object.keys(ICONS).join(', ')}. A ${PERSON_ICONS.join(', ')} can also take skin (${Object.keys(SKINS).join(', ')}) and hair (${Object.keys(HAIRS).join(', ')})`;
 
 const isText = (v) => typeof v === 'string' && v.trim() !== '';
 /** One row of a table: a few short cells of text. */
@@ -1911,7 +2031,7 @@ function noSignal(t, px) {
   px.sign('Have you tried turning it off and on again?', W / 2, 82, 12, NIGHT, CREAM);
 }
 
-return { highlight, TABLE_MAX, PICTURES, ICON_NAMES, SPRITE_MAX, pictureProblems, drawPicture, noSignal };
+return { highlight, PERSON_ICONS, SKINS, HAIRS, personLook, TABLE_MAX, PICTURES, ICON_NAMES, SPRITE_MAX, pictureProblems, drawPicture, noSignal };
 })();
 
 __m['transitions.js'] = (() => {
@@ -2327,7 +2447,7 @@ __m['format.js'] = (() => {
 // a reel can be written by a tool, an AI agent or a web service and played safely, since
 // nothing in it ever runs. Every picture comes from the ready-made ones (pictures.js).
 // Pure: no DOM, so the same checks run in the browser, in the tools and in the tests.
-const { ICON_NAMES, PICTURES, SPRITE_MAX, TABLE_MAX } = __m['pictures.js'];
+const { HAIRS, ICON_NAMES, PERSON_ICONS, PICTURES, SKINS, SPRITE_MAX, TABLE_MAX } = __m['pictures.js'];
 const { PALETTE } = __m['palette.js'];
 const { CAPTION_STYLES, LANGUAGES, normalizeReel, ReelError } = __m['reel.js'];
 const { TRANSITIONS } = __m['transitions.js'];
@@ -2425,6 +2545,11 @@ function parseReelJson(text, options) {
 }
 
 const TEXT = { type: 'string', pattern: '\\S' };
+/** How a person icon looks; only woman, man, girl, boy and baby take them (reelFromData checks). */
+const LOOK_SCHEMAS = {
+  skin: { enum: Object.keys(SKINS), description: `For a ${PERSON_ICONS.join(', ')}: their skin. Leave it out when you do not know, and they get a look of their own.` },
+  hair: { enum: Object.keys(HAIRS), description: `For a ${PERSON_ICONS.join(', ')}: their hair. Leave it out when you do not know.` }
+};
 const KIND_SCHEMAS = {
   text: TEXT,
   list: { type: 'array', minItems: 1, items: { type: 'string' } },
@@ -2440,13 +2565,13 @@ const KIND_SCHEMAS = {
     type: 'object',
     additionalProperties: false,
     required: ['icon', 'label'],
-    properties: { icon: { enum: ICON_NAMES }, label: TEXT }
+    properties: { icon: { enum: ICON_NAMES }, label: TEXT, ...LOOK_SCHEMAS }
   },
   items: {
     type: 'array',
     minItems: 1,
     maxItems: 4,
-    items: { type: 'object', additionalProperties: false, required: ['icon'], properties: { icon: { enum: ICON_NAMES }, label: TEXT } }
+    items: { type: 'object', additionalProperties: false, required: ['icon'], properties: { icon: { enum: ICON_NAMES }, label: TEXT, ...LOOK_SCHEMAS } }
   },
   cells: {
     type: 'array',

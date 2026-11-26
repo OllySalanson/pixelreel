@@ -716,6 +716,11 @@ describe('the service over HTTP', async () => {
     assert.match(guide, /^- table: A small table for things set out in rows and columns \(a timetable, a bill, prices, dates\): rows arrive one by one, the newest lit\. Fields: rows, columns \(optional\), heading \(optional\)\.$/m);
     assert.match(guide, /"rows" is 1 to 5 rows, each a list of 2 to 4 short cells, every row the same length, such as \[\["High Street", "9:05"\], \["Station", "9:20"\]\]/);
     assert.match(guide, /Do not make icons stand for days, times or amounts: put them in a table\./);
+    // people are drawn as who they are, never a man (or white) by default (Olly, 26 November 2026)
+    assert.match(guide, /woman, man, girl and boy are one person each, and an item can give them "skin" \(light, medium, deep\) and "hair" \(black, brown, blonde, ginger, grey\)/);
+    assert.match(guide, /A woman, or anyone called she, is a woman/);
+    assert.match(guide, /When you do not know who someone is, do not make them a man: use person/);
+    assert.match(guide, /s S d skin \(light, medium, deep\)/);
     // the big word is for once in a reel, not the usual second scene (Olly, 22 November 2026)
     assert.match(guide, /If the person asks for a number of scenes or a length \("three scenes", "under half a minute"\), give them that, not more\./);
     assert.match(guide, /A big picture is for the one number or word the whole reel turns on \(the amount to pay, the date\): use it once at most, where that number is said, and not as the usual second scene\./);

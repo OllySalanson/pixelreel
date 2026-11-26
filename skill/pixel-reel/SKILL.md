@@ -108,7 +108,7 @@ one. For any other language, write the reel in it and leave `language` out.
 The icons, by what they are about:
 
 - **Paperwork and money:** `letter`, `document`, `money`, `card`, `bank`, `calendar`, `clock`, `hourglass`, `bag`, `basket`, `gift`, `chart`
-- **People and home:** `person`, `people`, `baby`, `heart`, `house`, `bed`, `key`, `lock`, `bin`, `cup`, `apple`, `egg`, `bread`, `bowl`, `bottle`, `pan`, `tap`, `shirt`, `tooth`, `pill`, `thermometer`, `dog`, `cat`
+- **People and home:** `person`, `people`, `woman`, `man`, `girl`, `boy`, `children`, `baby`, `heart`, `house`, `bed`, `key`, `lock`, `bin`, `cup`, `apple`, `egg`, `bread`, `bowl`, `bottle`, `pan`, `tap`, `shirt`, `tooth`, `pill`, `thermometer`, `dog`, `cat`
 - **Out and about:** `car`, `bus`, `train`, `plane`, `pin`, `world`, `flag`, `ball`, `trophy`, `music`, `book`, `pencil`
 - **Technology:** `phone`, `computer`, `camera`, `wifi`, `battery`, `plug`, `cog`, `search`, `speech`, `bell`, `eye`, `shield`, `rocket`
 - **Weather and nature:** `sun`, `moon`, `cloud`, `rain`, `water`, `fire`, `bolt`, `tree`
@@ -117,13 +117,22 @@ The icons, by what they are about:
 Pick the one that means the thing, and keep labels to two or three words. If no icon means
 it, do not make one stand for it: use a `list`, a `table` or a `sprite` instead.
 
+Show people as who they are. `woman`, `man`, `girl`, `boy` and `baby` are one person each,
+and their item can give them `skin` (`light`, `medium`, `deep`) and `hair` (`black`, `brown`,
+`blonde`, `ginger`, `grey`), such as `{ "icon": "woman", "label": "Laura", "hair": "ginger" }`.
+A woman, or anyone called she, is a woman. Set skin and hair only from what you were told or
+shown; otherwise leave them out and each person gets a look of their own, the same in every
+scene. When you do not know who someone is, do not make them a man: use `person` (anyone, a
+plain outline), `people` (a woman and a man) or `children` (a girl and a boy).
+
 A `sprite` is drawn from rows of letters, one letter a pixel, up to 40 rows of up to 64: `k`
 black, `w` white, `r` red, `g` green, `b` blue, `y` yellow, `o` orange, `p` purple, `t` teal,
-`s` skin, `n` brown, `e` grey, `c` cream, capitals `B`, `R`, `N`, `G` for darker blue, red,
-brown and green, and `.` for see-through. `colours` adds letters of your own, such as
-`{ "h": "#6b3e2e" }`. Keep sprites small and bold (about 8 to 16 pixels across): a face, a
-sun, a simple object. Make every row the same length: a stray space or letter pushes the
-rest of that row sideways.
+`s`, `S` and `d` skin (light, medium, deep), `n` brown, `e` grey, `c` cream, capitals `B`,
+`R`, `N`, `G` for darker blue, red, brown and green, and `.` for see-through. `colours` adds
+letters of your own, such as `{ "h": "#6b3e2e" }`. Keep sprites small and bold (about 8 to
+16 pixels across): a face, a sun, a simple object. A person in a sprite is drawn as the people
+icons are: who they are at a glance, with their skin and hair as you were told. Make every
+row the same length: a stray space or letter pushes the rest of that row sideways.
 
 A scene with no `picture` shows its title on a plain card. Mix the pictures so the reel
 moves: open with `title`, use `icons` or `list` for what is involved, `flow` for steps that
