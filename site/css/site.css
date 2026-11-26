@@ -89,14 +89,14 @@ button { font: inherit; letter-spacing: inherit; word-spacing: inherit; color: i
 .top-in { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; width: min(100% - 2 * var(--gutter), 82rem); margin-inline: auto; min-height: 4.5rem; }
 .logo { display: inline-flex; align-items: center; gap: 0.6rem; white-space: nowrap; font-weight: 800; font-size: 1.5rem; letter-spacing: -0.01em; text-decoration: none; color: var(--cream); margin-right: auto; }
 .logo .px { width: 2.5rem; height: auto; }
-/* When the bar would not fit on one row, boot.js lets go of one thing at a time: its links
-   (a Menu button takes their place, and opens them as a list), the "now" of "Make a pixel
-   reel now", the name beside Reelie, the word Claude beside its plug, the "pixel", then the rest
+/* When the bar would not fit on one row, boot.js lets go of one thing at a time: the "now"
+   of "Make a pixel reel now", then its links (a Menu button takes their place, and opens them
+   as a list), the name beside Reelie, the word Claude beside its plug, the "pixel", then the rest
    but "Make", then the comfort box, and last the Add button (the menu holds both). Each but
    the last two is still there for a screen reader. Last of all, with the biggest letters on
    the narrowest phone, Reelie and the Menu button take a little less room. */
-.top-in[data-tight] .top-nav, .top-in:is([data-tight="7"], [data-tight="8"], [data-tight="9"]) .top-comfort, .top-in:is([data-tight="8"], [data-tight="9"]) .top-add { display: none; }
-.top-in:is([data-tight="2"], [data-tight="3"], [data-tight="4"], [data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"], [data-tight="9"]) .top-make-now,
+.top-in:is([data-tight="2"], [data-tight="3"], [data-tight="4"], [data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"], [data-tight="9"]) .top-nav, .top-in:is([data-tight="7"], [data-tight="8"], [data-tight="9"]) .top-comfort, .top-in:is([data-tight="8"], [data-tight="9"]) .top-add { display: none; }
+.top-in[data-tight] .top-make-now,
 .top-in:is([data-tight="3"], [data-tight="4"], [data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"], [data-tight="9"]) .logo span,
 .top-in:is([data-tight="4"], [data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"], [data-tight="9"]) .top-add-more,
 .top-in:is([data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"], [data-tight="9"]) .top-make-more,
@@ -105,7 +105,7 @@ button { font: inherit; letter-spacing: inherit; word-spacing: inherit; color: i
 .top-in[data-tight="9"] .logo .px { width: 1.5rem; }
 .top-in[data-tight="9"] .top-menu { padding-inline: 0.25rem; }
 .top-menu { display: none; }
-.top-in[data-tight] .top-menu { display: inline-flex; }
+.top-in:is([data-tight="2"], [data-tight="3"], [data-tight="4"], [data-tight="5"], [data-tight="6"], [data-tight="7"], [data-tight="8"], [data-tight="9"]) .top-menu { display: inline-flex; }
 .top-nav { display: flex; gap: 0.25rem; }
 .top-nav a { padding: 0.5rem 0.8rem; font-size: 1.0625rem; font-weight: 500; text-decoration: none; color: var(--mist); }
 .top-nav a:hover { color: var(--cream); text-decoration: underline; text-decoration-color: var(--gold); }
