@@ -13,7 +13,7 @@ import { createMcpServer } from './mcp.mjs';
 import { BusyError, isId, languageName } from './reels.mjs';
 import { addressMeant, addToClaudeLink, appManifest, robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
 import { sendBytes, sendSqueezed, sendStatic, squeezed, tagOf } from './static.mjs';
-import { CHAIN_MAX, languageOf, MAX_WORDS_BODY, narratorOf, OWN_NAMES, PDF_MAX, sourceOf, TryError } from './try.mjs';
+import { CHAIN_MAX, languageOf, MAX_JSON_BODY, narratorOf, OWN_NAMES, PDF_MAX, sourceOf, TryError } from './try.mjs';
 
 /** The most a request to /mcp may carry. A long reel is a few kilobytes. */
 export const MAX_BODY = 256 * 1024;
@@ -177,6 +177,12 @@ async function handleReel(req, res, id, rest, context) {
 const sendJson = (res, status, value) => res.writeHead(status, { ...SAFE, 'content-type': 'application/json', 'cache-control': 'no-store' }).end(JSON.stringify(value));
 
 /**
+ * The notes kept with a reel that was made from them, for the reels after it to be told
+ * (Reels.chain). A file clipped to them is never kept, so the notes say that there was one.
+ */
+const keptNotes = (source) => [...source.notes, ...(source.file ? [`(with a ${source.file.kind === 'pdf' ? 'document' : 'picture'} they gave)`] : [])];
+
+/**
  * Make it right here: a visitor with no Claude of their own gives one thing to explain (a
  * link or a few words, some writing, a PDF or a picture: sourceOf in service/try.mjs). They
  * are given a reel's page to go to straight away, and the service's writer has Claude write
@@ -200,7 +206,7 @@ async function handleTry(req, res, context) {
     res.once('finish', () => req.socket.destroy());
     sendJson(res, 413, { error: words ? 'That is too much for one reel. Give it less: a few pages at most.' : 'That file is too big. Give it a shorter one, or only the pages that matter.' });
   };
-  const most = words ? MAX_WORDS_BODY : PDF_MAX;
+  const most = words ? MAX_JSON_BODY : PDF_MAX;   // words may have a file clipped to them (sourceOf)
   if (Number(req.headers['content-length']) > most) { tooBig(); return; }
   const bytes = await readBytes(req, most);
   if (!bytes) { tooBig(); return; }
@@ -243,7 +249,7 @@ async function handleTry(req, res, context) {
     const first = await reels.status(source.id), chain = first?.state === 'ready' ? await reels.chain(source.id, CHAIN_MAX) : [];
     if (!chain.length) { sendJson(res, 404, { error: 'That reel has gone, so it cannot be followed.' }); return; }
     source = {
-      kind: 'next', follows: source.id, chain, notes: source.notes,
+      kind: 'next', follows: source.id, chain, notes: source.notes, ...(source.file ? { file: source.file } : {}),
       // it carries on in the language it is in, and with whoever read it
       language: reels.languages.includes(first.language) ? first.language : null, narrator: reels.narrators.includes(first.narrator) ? first.narrator : null
     };
@@ -255,7 +261,7 @@ async function handleTry(req, res, context) {
   try {
     await writer.fits?.(source);   // too long to read is said here and now, while what was given is still in front of them
     begun = await reels.begin(source.kind === 'reel' ? String(source.reel.title) : WRITING_TITLE, {   // one made again keeps its name while it waits
-      owned: true, ...(source.kind === 'next' ? { follows: source.follows, notes: source.notes } : source.kind === 'notes' ? { notes: source.notes } : {})
+      owned: true, ...(source.kind === 'next' ? { follows: source.follows, notes: keptNotes(source) } : source.kind === 'notes' ? { notes: keptNotes(source) } : {})
     });
   } catch (err) {
     limits?.tries.undo(caller);   // nothing has reached Claude yet
