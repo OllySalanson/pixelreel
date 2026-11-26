@@ -144,7 +144,7 @@ export async function sendSummary(store, day, { mail, to }) {
  */
 export async function handleDaybook(req, res, { store, reader, mail = null, to = '', now = () => Date.now() }) {
   const url = new URL(req.url, 'http://localhost'), path = url.pathname;
-  if (path !== '/day' && !path.startsWith('/day/')) return false;
+  if (!/^\/day(?:\.json)?(?:\/|$)/.test(path)) return false;
   const send = (status, type, body) => res.writeHead(status, { 'content-type': type, 'cache-control': 'no-store', 'x-robots-tag': 'noindex', 'x-content-type-options': 'nosniff' }).end(body);
   const json = (status, body) => send(status, 'application/json; charset=utf-8', JSON.stringify(body));
   if (!reader) { json(404, { error: 'There is no day book here.' }); return true; }

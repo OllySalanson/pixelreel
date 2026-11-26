@@ -64,10 +64,12 @@ describe('the day book', () => {
     assert.equal(page.status, 200);
     assert.match(page.body, /<title>Pixel Reel, 2026-11-26<\/title>/);
     assert.equal(page.headers['cache-control'], 'no-store');
+    assert.equal(JSON.parse((await ask(store, '/day.json')).body).reels, 2, 'today, as JSON');
     const json = JSON.parse((await ask(store, '/day/2026-11-24.json')).body);
     assert.equal(json.reels, 1);
     assert.equal(JSON.parse((await ask(store, '/day/wanted?days=3')).body).wanted[0].name, 'inhaler');
     assert.equal((await ask(store, '/reels')).handled, false);
+    assert.equal((await ask(store, '/daylight')).handled, false);
   });
 
   it('emails the summary once a day where email is set up, and says what is needed where it is not', async () => {
