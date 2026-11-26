@@ -54,6 +54,28 @@ describe('in the Pixel Reel service', () => {
     } finally { await new Promise((ok) => server.close(ok)); }
   });
 
+  it('answers Claude at /bottle/mcp/<key> for a person on a site\'s list, beside its own /mcp', async () => {
+    const reels = new Reels({ store: new DiskStore(join(tmp, 'claude')) });
+    const server = createService({ reels, baseUrl: 'https://reels.example', bottle: { key: KEY, reader: READER } });
+    await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
+    try {
+      const base = `http://127.0.0.1:${server.address().port}`;
+      const admin = (path, body) => fetch(`${base}/bottle/${path}`, { method: 'POST', headers: { authorization: `Bearer ${READER}` }, body: JSON.stringify(body) }).then((r) => r.json());
+      await admin('sites', { id: 'harbour', name: 'Harbour Bakery', origins: ['https://harbour.example'] });
+      await admin('sites/harbour/people', { name: 'Laura', email: 'laura@harbour.example' });
+      const { address } = await admin('sites/harbour/people/laura/claude', {});
+      assert.match(address, /^https:\/\/reels\.example\/bottle\/mcp\/[\w-]{32}$/);
+      const ask = (message) => fetch(address.replace('https://reels.example', base), { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' }, body: JSON.stringify(message) }).then((r) => r.json());
+      const sent = await ask({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'suggest_change', arguments: { change: 'Happy to be messaged on WhatsApp.' } } });
+      assert.match(sent.result.content[0].text, /^Sent\. It is in the Harbour Bakery queue/);
+      const { notes } = await fetch(`${base}/bottle/notes?state=all&site=harbour`, { headers: { authorization: `Bearer ${READER}` } }).then((r) => r.json());
+      assert.deepEqual(notes.map((n) => [n.note, n.via, n.by]), [['Happy to be messaged on WhatsApp.', 'claude', 'Laura']]);
+      // Pixel Reel's own connector is still its own
+      const own = await fetch(`${base}/mcp`, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }) }).then((r) => r.json());
+      assert.ok(own.result.tools.some((tool) => tool.name === 'make_reel'));
+    } finally { await new Promise((ok) => server.close(ok)); }
+  });
+
   it('sends a note said aloud to the service\'s /hear where the browser cannot hear, when hearing is on', async () => {
     const reels = new Reels({ store: new DiskStore(join(tmp, 'hear')) });
     const heardIn = async (hearing) => {
