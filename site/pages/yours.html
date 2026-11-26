@@ -1,0 +1,20 @@
+<!--
+title: Your reels - Pixel Reel
+description: The pixel reels you have made or opened, on this device.
+-->
+
+<!-- Your reels: the ones made or opened on this device, the latest first. mine.js fills the list in from the
+     browser's own storage, which is never sent anywhere; Pixel Reel has no accounts. -->
+<section class="section yours" aria-labelledby="mine-title">
+  <div class="wrap">
+    <h1 id="mine-title">Your reels</h1>
+    <div class="mine" id="mine" hidden>
+      <ul class="mine-list" id="mine-list" aria-labelledby="mine-title"></ul>
+      <p class="said" id="mine-said" role="status"></p>
+    </div>
+    <div class="mine-none" id="mine-none">
+      <p>No reels yet.</p>
+      <a class="btn btn-gold btn-big" href="/make">Make a pixel reel</a>
+    </div>
+  </div>
+</section>

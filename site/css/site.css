@@ -91,7 +91,7 @@ button { font: inherit; letter-spacing: inherit; word-spacing: inherit; color: i
 .logo .px { width: 2.5rem; height: auto; }
 /* When the bar would not fit on one row, boot.js lets go of one thing at a time: its links
    (a Menu button takes their place, and opens them as a list), the "now" of "Make a pixel
-   reel now", the name beside Reelie, the end of "Add to Claude", the "pixel", then the rest
+   reel now", the name beside Reelie, the word Claude beside its plug, the "pixel", then the rest
    but "Make", then the comfort box, and last the Add button (the menu holds both). Each but
    the last two is still there for a screen reader. Last of all, with the biggest letters on
    the narrowest phone, Reelie and the Menu button take a little less room. */
@@ -109,13 +109,16 @@ button { font: inherit; letter-spacing: inherit; word-spacing: inherit; color: i
 .top-nav { display: flex; gap: 0.25rem; }
 .top-nav a { padding: 0.5rem 0.8rem; font-size: 1.0625rem; font-weight: 500; text-decoration: none; color: var(--mist); }
 .top-nav a:hover { color: var(--cream); text-decoration: underline; text-decoration-color: var(--gold); }
-.top-comfort, .top-menu { align-items: center; justify-content: center; gap: 0.5rem; min-height: 2.75rem; padding: 0.25rem 0.8rem; font: 500 1.0625rem/1.2 var(--font); letter-spacing: inherit; color: var(--cream); background: transparent; border: 0; cursor: pointer;
+.top-comfort, .top-menu, .top-add { align-items: center; justify-content: center; gap: 0.5rem; min-height: 2.75rem; padding: 0.25rem 0.8rem; font: 500 1.0625rem/1.2 var(--font); letter-spacing: inherit; color: var(--cream); background: transparent; border: 0; cursor: pointer;
   box-shadow: 0 calc(var(--u) * -1) 0 0 #3b5173, 0 var(--u) 0 0 #3b5173, calc(var(--u) * -1) 0 0 0 #3b5173, var(--u) 0 0 0 #3b5173; margin: var(--u); }
 .top-comfort { display: inline-flex; min-width: 2.75rem; padding-inline: 0.25rem; }
-.top-comfort:hover, .top-menu:hover { background: var(--navy); }
+/* Add to Claude: a small box beside Make it comfy, with a plug and the word Claude (the word goes first when room is short) */
+.top-add { display: inline-flex; min-width: 2.75rem; padding-inline: 0.6rem; gap: 0.45rem; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.top-add .px { width: 1.75rem; height: auto; margin-inline: -0.2rem; }
+.top-comfort:hover, .top-menu:hover, .top-add:hover { background: var(--navy); }
 .top-menu { text-decoration: none; }   /* it is written as a link (to the foot's links, for a page whose scripts never ran) */
 .top-comfort .aa { font-weight: 800; font-size: 1.25rem; color: var(--gold); letter-spacing: 0; }
-.top :is(.top-make, .top-add) { margin-block: 0 calc(var(--u) * 2); white-space: nowrap; }
+.top .top-make { margin-block: 0 calc(var(--u) * 2); white-space: nowrap; }
 
 /* ---------------------------------------------------------------- night bands, and their scenery */
 .night { position: relative; background: var(--night); color: var(--cream); }
@@ -631,9 +634,10 @@ html[data-paper="night"] .handset .px { filter: drop-shadow(var(--u) 0 0 var(--l
 .suggest { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 0.75rem; max-width: 36rem; }
 .suggest .btn { margin-block: var(--u) calc(var(--u) * 3); }
 .make-elsewhere { max-width: none; margin-top: 1.5rem; text-align: center; }
-.mine-part { padding-block: clamp(2rem, 4vw, 3rem) clamp(3rem, 6vw, 5rem); }
-.mine-part:has(> .mine[hidden]) { display: none; }
-.mine-part .mine { margin-top: 0; }
+.yours { padding-block: clamp(2rem, 4vw, 3rem) clamp(4rem, 8vw, 7rem); }
+.yours .mine { margin-top: 1rem; }
+.mine-none { display: grid; justify-items: start; gap: 1rem; margin-top: 1.5rem; }
+.mine-none[hidden] { display: none; }
 /* a long note (a pasted transcript, say) shows its first few lines; all of it is kept, and sent */
 .mynotes-note > p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; line-clamp: 6; overflow: hidden; white-space: pre-line; }
 
@@ -957,10 +961,11 @@ html[data-aloud="on"] :is(h1, h2, h3, p, li, summary, dt, dd, figcaption):not(:i
   .logo { font-size: 1.0625rem; gap: 0.4rem; padding-right: 0.375rem; }
   .logo .px { width: 1.875rem; }
   .top-comfort, .top-menu { padding-inline: 0.5rem; min-height: 2.75rem; }
-  .top :is(.top-make, .top-add) { min-height: 2.75rem; padding: 0.3rem 0.45rem; font-size: 0.9375rem; white-space: nowrap; }
+  .top .top-make { min-height: 2.75rem; padding: 0.3rem 0.45rem; font-size: 0.9375rem; white-space: nowrap; }
+  .top-add { padding-inline: 0.4rem; }
   .btn { width: calc(100% - var(--u) * 2); font-size: 1.125rem; padding-inline: 1rem; }
   .btn-big { font-size: 1.25rem; min-height: 4rem; }
-  .btn-small, .top-make, .top-add { width: auto; }
+  .btn-small, .top-make { width: auto; }
   /* the make page: the box and its big button fit a phone's first screen, so the box starts at one line of words (it grows) */
   .make { padding-top: 1.5rem; }
   .make .head { margin-bottom: 1.1rem; }

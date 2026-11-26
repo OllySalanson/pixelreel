@@ -614,7 +614,7 @@ describe('the site pages', () => {
   });
 
   it('has a page for each address', () => {
-    assert.deepEqual(Object.keys(SITE_PAGES), ['/', '/make', '/claude', '/app', '/press', '/privacy', '/terms', '/credits', '/offline']);
+    assert.deepEqual(Object.keys(SITE_PAGES), ['/', '/make', '/yours', '/claude', '/app', '/press', '/privacy', '/terms', '/credits', '/offline']);
   });
 });
 

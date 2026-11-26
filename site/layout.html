@@ -43,11 +43,13 @@
       <a href="/#how">How it works</a>
       <a href="/#examples">Examples</a>
       <a href="/#questions">Questions</a>
+      <a href="/yours">Your reels</a>
     </nav>
     <!-- shown when the bar has no room for its links: they are in the menu it opens (menu.js). Without that script it is a link to the links at the foot -->
     <a class="top-menu" href="#more" data-open="menu">Menu</a>
-    <a class="btn btn-gold btn-small top-make" href="/make"><span>Make<span class="top-make-what"> a<span class="top-make-more"> pixel</span> reel</span><span class="top-make-now"> now</span></span></a>
-    <a class="btn btn-teal btn-small top-add" href="/claude"><span>Add<span class="top-add-more"> to Claude</span></span></a>
+    <a class="btn btn-gold top-make" href="/make"><span>Make<span class="top-make-what"> a<span class="top-make-more"> pixel</span> reel</span><span class="top-make-now"> now</span></span></a>
+    <!-- a small box, as Make it comfy is: a plain plug and the word, never Claude's own mark (Anthropic allows that only with its approval) -->
+    <a class="top-add" href="/claude" aria-label="Add Pixel Reel to Claude">{{icon:plug:2}}<span class="top-add-more">Claude</span></a>
     <button class="top-comfort" type="button" data-open="comfort" aria-haspopup="dialog" aria-label="Make it comfy: change how this site looks"><span class="aa" aria-hidden="true">Aa</span></button>
   </div>
 </header>
@@ -169,6 +171,7 @@
       <a href="/#how">{{icon:lightbulb:3}}<span>How it works</span></a>
       <a href="/#examples">{{icon:star:3}}<span>Examples</span></a>
       <a href="/#questions">{{icon:question:3}}<span>Questions</span></a>
+      <a href="/yours">{{icon:book:3}}<span>Your reels</span></a>
       <a href="/app" data-not-app>{{icon:phone:3}}<span>Add to your phone</span></a>
       <button type="button" data-open="comfort"><span class="aa" aria-hidden="true">Aa</span><span>Make it comfy</span></button>
     </nav>

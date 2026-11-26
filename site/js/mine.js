@@ -1,7 +1,8 @@
-// Your reels: the reels someone has made on this website, listed on their own device so
-// that they can find them again, call them what they like, and delete them for good. The
-// list is kept in the browser and never sent anywhere. Each reel in it has the key the
-// service gave when it was begun, which is what lets its maker, and nobody else, delete it.
+// Your reels: the reels someone has made or opened on this website, listed on their own
+// device, the latest first, so that they can find them again, call them what they like, and
+// delete the ones they made for good (or take one they were sent off the list). The list is
+// kept in the browser and never sent anywhere. A reel they made has the key the service gave
+// when it was begun, which is what lets its maker, and nobody else, delete it.
 // The top half touches no page, so Node can test it.
 import { forgetReel } from './kept.js';
 
@@ -14,7 +15,7 @@ export const MOST = 30;
 const isId = (id) => typeof id === 'string' && /^[A-Za-z0-9_-]{22}$/.test(id);
 const words = (value, most) => (typeof value === 'string' ? value.replace(/\s+/g, ' ').trim().slice(0, most) : '');
 
-/** One reel of the list, tidied, or null if it is not one: { id, title, name, key, made, expires }. */
+/** One reel of the list, tidied, or null if it is not one: { id, title, name, key, made, seen, expires }. `seen` is when it was last opened. */
 function tidy(reel) {
   if (!reel || !isId(reel.id)) return null;
   const expires = typeof reel.expires === 'string' && !Number.isNaN(Date.parse(reel.expires)) ? reel.expires : null;
@@ -24,6 +25,7 @@ function tidy(reel) {
     name: words(reel.name, 80),   // what its maker calls it, if they have named it
     key: typeof reel.key === 'string' ? reel.key.slice(0, 200) : '',
     made: Number.isFinite(reel.made) ? reel.made : 0,
+    seen: Number.isFinite(reel.seen) ? reel.seen : 0,
     expires
   };
 }
@@ -38,7 +40,7 @@ export function readMine(storage, now = Date.now()) {
   const seen = new Set();
   return (Array.isArray(kept) ? kept : []).map(tidy)
     .filter((reel) => reel && !seen.has(reel.id) && seen.add(reel.id) && !(reel.expires && Date.parse(reel.expires) <= now))
-    .sort((a, b) => b.made - a.made).slice(0, MOST);
+    .sort((a, b) => Math.max(b.made, b.seen) - Math.max(a.made, a.seen)).slice(0, MOST);
 }
 
 /** Keeps `reels` as the list. Says whether it could. */
@@ -72,6 +74,19 @@ export function updateMine(storage, id, changes, now = Date.now()) {
   // nothing is written when nothing has changed: a page that is waiting asks every two seconds
   if (JSON.stringify(changed) !== JSON.stringify(reels[at])) { reels[at] = changed; writeMine(storage, reels); }
   return reels;
+}
+
+/**
+ * Notes that a reel has been opened, on its own page: it goes to the top of the list, and
+ * joins it if it was not there (one someone was sent, say), with no key, so it can be taken
+ * off the list but not deleted. Gives back the list.
+ */
+export function openedMine(storage, reel, now = Date.now()) {
+  const reels = readMine(storage, now), at = reels.findIndex((each) => each.id === reel.id);
+  const opened = tidy(at < 0 ? { ...reel, key: '', made: 0, seen: now } : { ...reels[at], ...(reel.title ? { title: reel.title } : {}), expires: reel.expires ?? reels[at].expires, seen: now });
+  if (!opened) return reels;
+  writeMine(storage, [opened, ...reels.filter((each) => each.id !== opened.id)]);
+  return readMine(storage, now);
 }
 
 /** Takes a reel off the list. Gives back the list. */
@@ -118,8 +133,8 @@ export async function deleteMine(storage, reel, { ask = fetch } = {}) {
 const DAY = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long' });
 
 /**
- * Shows the list on the home page, in the block <div id="mine"> (hidden while it is
- * empty): each reel a link to its page, with the day it is kept until, a button to call it
+ * Shows the list on the page of your reels (/yours), in the block <div id="mine">, with
+ * #mine-none instead while it is empty: each reel a link to its page, with the day it is kept until, a button to call it
  * something else and a button to delete it, which asks once more before it does.
  */
 export function startMine() {
@@ -131,10 +146,13 @@ export function startMine() {
 
   function draw(reels = readMine(storage)) {
     block.hidden = reels.length === 0;
+    const none = document.getElementById('mine-none');
+    if (none) none.hidden = reels.length > 0;
     list.replaceChildren(...reels.map((reel) => {
       const item = el('li', 'mine-reel'), name = Object.assign(el('a', 'mine-name', calledMine(reel)), { href: `/r/${reel.id}` });
       const until = el('span', 'mine-until', reel.expires ? `Kept until ${DAY.format(new Date(reel.expires))}` : '');
-      const keys = el('span', 'mine-keys'), rename = button('Rename'), remove = button('Delete');
+      // one made here can be deleted for good; one only opened here can be taken off the list
+      const keys = el('span', 'mine-keys'), rename = button('Rename'), remove = button(reel.key ? 'Delete' : 'Remove');
       keys.append(rename, remove);
       item.append(name, until, keys);
 
@@ -165,6 +183,19 @@ export function startMine() {
       // delete it for good: asked twice, since it cannot be put back
       remove.addEventListener('click', () => {
         said.textContent = '';
+        if (!reel.key) {
+          const sure = el('span', 'mine-sure'), yes = button('Yes, remove it', 'btn btn-gold btn-small'), no = button('No, keep it');
+          sure.append(el('span', null, 'Take it off your list?'), yes, no);
+          keys.replaceWith(sure);
+          yes.focus();
+          no.addEventListener('click', () => { said.textContent = ''; draw(); });
+          yes.addEventListener('click', () => {
+            forgetMine(storage, reel.id);
+            said.textContent = `Removed: ${calledMine(reel)}.`;
+            draw();
+          });
+          return;
+        }
         const sure = el('span', 'mine-sure'), yes = button('Yes, delete it', 'btn btn-gold btn-small'), no = button('No, keep it');
         sure.append(el('span', null, 'Delete it for good?'), yes, no);
         keys.replaceWith(sure);

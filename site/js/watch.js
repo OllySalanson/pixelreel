@@ -3,7 +3,7 @@
 // how far along, then hands it to the player.
 import { calm, onComfortChange } from './calm.js';
 import { reelie } from './landscape.js';
-import { forgetMine, mineStorage, readMine, rememberMine, updateMine } from './mine.js';
+import { forgetMine, mineStorage, openedMine, readMine, rememberMine, updateMine } from './mine.js';
 import { startNotes } from './notes.js';
 import { fitCanvas, ReelPlayer } from './player.js';
 import { showOf, waitingFor } from './reels.js';
@@ -124,6 +124,7 @@ export function startWatching() {
     else if (play.state !== 'unreachable' && play.state !== 'writing') updateMine(mine, id, { title: play.title, expires: play.expires });
     if (play.state === 'ready') {
       waiting = false;
+      openedMine(mine, { id, title: play.title, expires: play.expires });   // to the top of Your reels, made here or not
       says.textContent = '';
       // the recordings come from this address, wherever the service says it lives
       const clips = play.clips.map((clip) => ({ ...clip, file: new URL(clip.file).pathname }));
@@ -145,7 +146,7 @@ export function startWatching() {
         notes?.ready();
         document.getElementById('watch-again').hidden = false;
         // whoever made it on the make page has just seen what one press does: the way back to make another is beside it
-        if (readMine(mine).some((reel) => reel.id === id)) document.getElementById('watch-another').hidden = false;
+        if (readMine(mine).some((reel) => reel.id === id && reel.key)) document.getElementById('watch-another').hidden = false;
       }
       return;
     }
