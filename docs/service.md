@@ -59,6 +59,9 @@ npm run service
 | `PIXELREEL_WARM_VOICE` | on | `0` loads the voice afresh for each reel, instead of once when the service starts. Saves about 1 GB of memory, and makes every reel wait longer. |
 | `PIXELREEL_KEEP_LANGUAGES` | `2` | How many languages besides English the loaded voice holds at once. Each is about 450 MB of memory; fewer means a reel in a language not held waits for its model to load. |
 | `PIXELREEL_PICTURES` | `stage` | `cards` switches the pictures back to the cards alone, exactly as before the stage: what Claude is told, and what `make_reel` and Make it right here take. Reels already made with a stage still play. See [The stage, and switching back](#the-stage-and-switching-back). |
+| `PIXELREEL_CRITIC` | on, with the stage and a credential for the Claude API | `0` turns the critic off: nobody looks at a reel's pictures before it is watched. See [The critic](#the-critic). |
+| `PIXELREEL_CRITIC_PER_DAY` | `100` | How many reels the critic looks at in a day, which bounds what it costs: about 5 US cents a look. |
+| `PIXELREEL_CRITIC_MODEL` | `claude-sonnet-5-5` | The model that looks. |
 
 It records one reel at a time, and carries on with any waiting after a restart. Stopping it
 (Ctrl+C) finishes the job in hand first. To put it online, see [deploy.md](deploy.md).
@@ -708,3 +711,15 @@ Claude is then told exactly what it was told before the stage (`test/fixtures/ca
 holds it to the letter), a stage sent to `make_reel` is turned away as it was then, and every
 reel already made, stage or not, still plays. `--update-env-vars PIXELREEL_PICTURES=stage` (or
 `--remove-env-vars PIXELREEL_PICTURES`) switches the stage back on.
+
+## The critic
+
+While Peter records a reel, the critic (`service/critic.mjs`) looks at its pictures. First the
+free checks: a move whose cue Peter never says, a label too long for its place, the cast moving
+spots between scenes. Then one look: Claude is shown every scene drawn twice as it will play,
+with what Peter says, and mends the pictures that show the wrong thing or are hard to read. It
+changes pictures only, never a word, so the recording stands; a mended picture that would not
+play is dropped, and the scene keeps its own. Whatever goes wrong, the reel goes on as it was.
+Each look is logged as `critic:` with what it took. On the test bench it found faults in all
+ten reels and mended them, at about 5 cents and 11 seconds a look, inside the time Peter takes
+to record. It is off with `PIXELREEL_PICTURES=cards`.

@@ -459,11 +459,13 @@ export function drawStage(t, px, p, look = () => null) {
         px.rect(INK, x - 3, y - 3, 6, 6); px.rect(TEAL, x - 2, y - 2, 4, 4);
       }
     } else if (m.do === 'wave') {
+      // a wave back the other way, an answer to one already there, runs a little lower so both are seen
+      const back = p.moves.some((o, j) => j < i && o.do === 'wave' && o.from === m.to && o.to === m.from) ? 10 : 0;
       const dir = Math.sign(b.x - a.x) || 1, x0 = a.x + dir * (a.w / 2 + 4), x1 = b.x - dir * (b.w / 2 + 4);
       const reach = px.clamp((t - times[i]) / 1.0, 0, 1), span = (x1 - x0) * reach;
       for (let d = 0; Math.abs(d) < Math.abs(span); d += dir * 4) {
-        const k = d / (x1 - x0 || 1), y = px.lerp(a.cy, b.cy, k), h = 3 + Math.round(Math.abs(Math.sin(t * 7 + d * 0.3)) * 10);
-        px.rect(GOLD, x0 + d, Math.round(y - h / 2), 2, h);
+        const k = d / (x1 - x0 || 1), y = px.lerp(a.cy, b.cy, k) + back, h = 3 + Math.round(Math.abs(Math.sin(t * 7 + d * 0.3)) * 10);
+        px.rect(back ? TEAL : GOLD, x0 + d, Math.round(y - h / 2), 2, h);
       }
     }
   });
@@ -491,7 +493,8 @@ export function drawStage(t, px, p, look = () => null) {
     }
     if (!th) return;
     if (m.do === 'pile') {
-      const n = Math.min(m.count, Math.floor((t - at) / 0.3) + 1), x = Math.round(th.x + th.w / 2 + 4);
+      // beside the thing, on whichever side has room
+      const n = Math.min(m.count, Math.floor((t - at) / 0.3) + 1), x = th.x + th.w / 2 + 20 <= px.W ? Math.round(th.x + th.w / 2 + 4) : Math.round(th.x - th.w / 2 - 18);
       for (let c = 0; c < n; c++) { const y = th.feet - 5 - c * 5; px.rect(INK, x - 1, y - 1, 16, 6); px.rect(GOLD, x, y, 14, 4); px.rect('#c98a12', x, y + 3, 14, 1); }
     }
     if (m.do === 'meter') {

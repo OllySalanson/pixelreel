@@ -73,7 +73,20 @@ if (narrators.length) log(`${narrators.join(', ')} can narrate here too`);
 const pictures = process.env.PIXELREEL_PICTURES === 'cards' ? 'cards' : 'stage';
 if (process.env.PIXELREEL_PICTURES && !PICTURE_MODES.includes(process.env.PIXELREEL_PICTURES)) log(`PIXELREEL_PICTURES: "${process.env.PIXELREEL_PICTURES}" is not one of ${PICTURE_MODES.join(', ')}; using the stage`);
 if (pictures === 'cards') log('the pictures are the cards alone, as before the stage (PIXELREEL_PICTURES=cards)');
-const reels = new Reels({ store, log, languages, narrators, pictures, record: recordWith(voice ? (...job) => voice.speak(...job) : null) });
+// The critic looks at every reel's pictures while Peter records, and mends what is wrong
+// (service/critic.mjs). It needs a credential for the Claude API and the stage switched on;
+// PIXELREEL_CRITIC=0 turns it off, and PIXELREEL_CRITIC_PER_DAY (default 100) bounds what it costs.
+let critic = null;
+if (pictures === 'stage' && process.env.PIXELREEL_CRITIC !== '0') {
+  try {
+    const { createCritic } = await import('./critic.mjs');
+    critic = createCritic({ model: process.env.PIXELREEL_CRITIC_MODEL || undefined, perDay: Number(process.env.PIXELREEL_CRITIC_PER_DAY) || 100, log });
+    log(`the critic looks at every reel's pictures, at most ${Number(process.env.PIXELREEL_CRITIC_PER_DAY) || 100} a day`);
+  } catch (err) {
+    log(`the critic stays off: ${err.message}`);   // no credential for the Claude API, most likely
+  }
+}
+const reels = new Reels({ store, log, languages, narrators, pictures, critic, record: recordWith(voice ? (...job) => voice.speak(...job) : null) });
 await reels.resume();
 const sweep = async () => {
   const gone = await reels.sweep().catch((err) => { log(`sweep failed: ${err.message}`); return []; });

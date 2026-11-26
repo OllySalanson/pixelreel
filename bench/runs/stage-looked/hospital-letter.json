@@ -1,0 +1,310 @@
+{
+ "topic": "hospital-letter",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "pictures": "stage",
+ "seconds": 21.6,
+ "rounds": 2,
+ "tokens": {
+  "in": 16334,
+  "out": 3622
+ },
+ "wishes": [],
+ "cents": 10.5,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Your hospital appointment",
+  "transition": "fade",
+  "scenes": [
+   {
+    "title": "Your appointment",
+    "caption": "What the letter says, and what to do.",
+    "say": "You have a hospital letter. Here's what it says, and what you need to do about it.",
+    "picture": {
+     "type": "title",
+     "text": "HOSPITAL LETTER",
+     "sub": "Your ear clinic visit"
+    }
+   },
+   {
+    "title": "What it is",
+    "caption": "An ear, nose and throat clinic appointment.",
+    "say": "The hospital has booked you into the ear, nose and throat clinic, because your GP referred you about hearing loss in your left ear.",
+    "picture": {
+     "type": "stage",
+     "place": "surgery",
+     "things": [
+      {
+       "id": "gp",
+       "is": "woman",
+       "wears": "doctor-coat",
+       "spot": "left",
+       "label": "Your GP"
+      },
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "middle",
+       "label": "You"
+      },
+      {
+       "id": "hosp",
+       "is": "hospital",
+       "spot": "right",
+       "label": "Hospital"
+      }
+     ],
+     "moves": [
+      {
+       "do": "send",
+       "what": "letter",
+       "from": "gp",
+       "to": "hosp",
+       "cue": "your GP referred you"
+      },
+      {
+       "do": "send",
+       "what": "letter",
+       "from": "hosp",
+       "to": "you",
+       "cue": "booked you into"
+      }
+     ]
+    }
+   },
+   {
+    "title": "When and where",
+    "caption": "Tuesday 8 December, arrive by 10.25am.",
+    "say": "It's Tuesday the eighth of December. The appointment is at twenty to eleven, but arrive by twenty-five past ten.",
+    "picture": {
+     "type": "table",
+     "columns": [
+      "What",
+      "Detail"
+     ],
+     "rows": [
+      [
+       "Day",
+       "Tue 8 Dec 2026"
+      ],
+      [
+       "Appointment",
+       "10.40am"
+      ],
+      [
+       "Arrive by",
+       "10.25am"
+      ],
+      [
+       "Where",
+       "Clinic 4, Level 2"
+      ],
+      [
+       "Zone",
+       "Blue Zone"
+      ]
+     ]
+    }
+   },
+   {
+    "title": "How long",
+    "caption": "Allow up to two hours.",
+    "say": "You'll have a hearing test before you see the doctor, so it may take up to two hours.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "clock",
+       "is": "clock",
+       "spot": "middle",
+       "up": true,
+       "label": "2 hours"
+      },
+      {
+       "id": "doc",
+       "is": "man",
+       "wears": "doctor-coat",
+       "spot": "right",
+       "label": "Doctor"
+      }
+     ],
+     "moves": [
+      {
+       "do": "meter",
+       "on": "clock",
+       "to": 1,
+       "cue": "up to two hours"
+      },
+      {
+       "do": "walk",
+       "who": "you",
+       "to": "middle",
+       "cue": "before you see the doctor"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Before you come",
+    "caption": "No ear drops for a week. Bring your medicines list.",
+    "say": "Don't use ear drops for a week before. Bring a list of your medicines, and your reading glasses. One adult may come too.",
+    "picture": {
+     "type": "icons",
+     "heading": "Before you come",
+     "items": [
+      {
+       "icon": "bottle",
+       "label": "No ear drops"
+      },
+      {
+       "icon": "document",
+       "label": "Medicine list"
+      },
+      {
+       "icon": "eye",
+       "label": "Reading glasses"
+      },
+      {
+       "icon": "person",
+       "label": "One adult"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Getting here",
+    "caption": "Parking is limited. The number 12 bus stops outside.",
+    "say": "Parking is limited, but the number twelve bus stops outside the main entrance. Need hospital transport? Ring at least three working days before.",
+    "picture": {
+     "type": "stage",
+     "place": "street",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "far-left",
+       "label": "You"
+      },
+      {
+       "id": "bus",
+       "is": "bus",
+       "spot": "left",
+       "label": "Number 12"
+      },
+      {
+       "id": "hosp",
+       "is": "hospital",
+       "spot": "right",
+       "label": "Main entrance"
+      },
+      {
+       "id": "phone",
+       "is": "phone",
+       "spot": "middle",
+       "label": "Transport"
+      }
+     ],
+     "moves": [
+      {
+       "do": "arrive",
+       "who": "bus",
+       "cue": "number twelve bus"
+      },
+      {
+       "do": "pulse",
+       "on": "phone",
+       "cue": "Ring"
+      },
+      {
+       "do": "wave",
+       "from": "you",
+       "to": "phone",
+       "cue": "at least three working days"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Can't come?",
+    "caption": "Ring as soon as you can.",
+    "say": "If you can't come, ring the number on your letter soon as you can. Miss it without telling them, and you may be sent back to your GP.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "phone",
+       "is": "phone",
+       "spot": "middle",
+       "label": "Number"
+      },
+      {
+       "id": "gp",
+       "is": "woman",
+       "wears": "doctor-coat",
+       "spot": "right",
+       "label": "Your GP"
+      }
+     ],
+     "moves": [
+      {
+       "do": "wave",
+       "from": "you",
+       "to": "phone",
+       "cue": "ring the number"
+      },
+      {
+       "do": "mark",
+       "on": "phone",
+       "with": "clock",
+       "cue": "soon as you can"
+      },
+      {
+       "do": "send",
+       "what": "letter",
+       "from": "phone",
+       "to": "gp",
+       "cue": "sent back to your GP"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "looked": {
+  "model": "claude-sonnet-5-5",
+  "effort": "low",
+  "seconds": 8.9,
+  "tokens": {
+   "in": 11026,
+   "out": 1375
+  },
+  "cents": 3.6,
+  "faults": [
+   "scene 2: the letter from the hospital to you is cued on words Peter never says, so it arrives on a guess; the GP's letter also seems to fly out of nowhere",
+   "scene 4: the clock stands on a red cross on the wall, so it looks muddled, and the meter sits over 'You' as if it were a health bar; the walk does nothing because 'You' is already in place",
+   "scene 5: the picture shows only two of the four things Peter says (drops, list). Glasses and the adult are missing. A cross on ear drops is fine, but the medicine list is the only tick",
+   "scene 6: nothing shows Parking is limited or the bus arriving. The phone floats in the air with no one ringing it",
+   "scene 7: a tick on the hospital shows 'fine' while Peter talks about missing the appointment. The home place with a hospital inside it is odd, and Reelie's bubble comes late, after the point",
+   "scene 7: the person is not shown ringing, and the GP return is not shown"
+  ],
+  "mended": true,
+  "log": [
+   "critic: hospital-letter 11026 tokens in, 1375 out (claude-sonnet-5-5); 6 faults"
+  ]
+ }
+}

@@ -1,0 +1,331 @@
+{
+ "topic": "router-reset",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "pictures": "stage",
+ "seconds": 21.8,
+ "rounds": 2,
+ "tokens": {
+  "in": 16563,
+  "out": 3854
+ },
+ "wishes": [],
+ "cents": 11.1,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Restart your broadband hub",
+  "transition": "fade",
+  "scenes": [
+   {
+    "title": "Restart hub",
+    "caption": "When the internet stops, try this first.",
+    "say": "When the internet stops working, restarting your broadband hub often fixes it. Here's how, step by step.",
+    "picture": {
+     "type": "title",
+     "text": "RESTART",
+     "sub": "Your broadband hub"
+    }
+   },
+   {
+    "title": "One device?",
+    "caption": "Check if it is just one device.",
+    "say": "First, check it's not just one device. If your phone works on Wi-Fi but your laptop doesn't, restart the laptop instead.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "phone",
+       "is": "phone",
+       "spot": "left",
+       "label": "Phone"
+      },
+      {
+       "id": "hub",
+       "is": "router",
+       "spot": "middle",
+       "label": "Hub"
+      },
+      {
+       "id": "laptop",
+       "is": "laptop",
+       "spot": "right",
+       "label": "Laptop"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "phone",
+       "with": "tick",
+       "cue": "your phone works on Wi-Fi"
+      },
+      {
+       "do": "mark",
+       "on": "laptop",
+       "with": "cross",
+       "cue": "your laptop doesn't"
+      },
+      {
+       "do": "pulse",
+       "on": "laptop",
+       "cue": "restart the laptop"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Read the light",
+    "caption": "Blue is working. Orange has lost connection.",
+    "say": "Now look at the light on the hub. Blue means it's working. Orange, or flashing orange, means it has lost its connection.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "hub",
+       "is": "router",
+       "spot": "middle",
+       "label": "Hub"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "hub",
+       "with": "tick",
+       "cue": "Blue means it's working"
+      },
+      {
+       "do": "mark",
+       "on": "hub",
+       "with": "warning",
+       "cue": "Orange"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Off and wait",
+    "caption": "Switch off. Wait a full 30 seconds.",
+    "say": "Turn the hub off at the power button or the wall socket. Then wait a full thirty seconds, so it clears its memory.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "hub",
+       "is": "router",
+       "spot": "middle",
+       "label": "Hub"
+      },
+      {
+       "id": "socket",
+       "is": "socket",
+       "spot": "right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "socket",
+       "with": "cross",
+       "cue": "Turn the hub off"
+      },
+      {
+       "do": "leave",
+       "who": "hub",
+       "cue": "Then wait"
+      },
+      {
+       "do": "meter",
+       "on": "socket",
+       "to": 1,
+       "cue": "thirty seconds"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Back on",
+    "caption": "Turn it on. Do not switch it off again.",
+    "say": "Turn it back on. The light flashes for two to three minutes while it reconnects. Don't turn it off again.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "hub",
+       "is": "router",
+       "spot": "middle",
+       "label": "Hub"
+      },
+      {
+       "id": "reelie",
+       "is": "reelie",
+       "spot": "far-right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "arrive",
+       "who": "hub",
+       "cue": "Turn it back on"
+      },
+      {
+       "do": "pulse",
+       "on": "hub",
+       "cue": "The light flashes"
+      },
+      {
+       "do": "say",
+       "who": "reelie",
+       "text": "Hands off!",
+       "cue": "Don't turn it off again"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Still stuck?",
+    "caption": "Check the cable. Orange over 10 minutes? Ring.",
+    "say": "Steady blue? Try the internet. Still nothing? Push the cable in firmly at both ends. Orange for ten minutes means a possible area fault.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "hub",
+       "is": "router",
+       "spot": "middle",
+       "label": "Hub"
+      },
+      {
+       "id": "phone",
+       "is": "phone",
+       "spot": "right",
+       "label": "Phone"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "hub",
+       "with": "tick",
+       "cue": "Steady blue"
+      },
+      {
+       "do": "send",
+       "what": "wifi",
+       "from": "hub",
+       "to": "phone",
+       "cue": "Try the internet"
+      },
+      {
+       "do": "mark",
+       "on": "hub",
+       "with": "warning",
+       "cue": "Orange for ten minutes"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Don't reset",
+    "caption": "Skip the pinhole reset button unless asked.",
+    "say": "One last thing. Don't press the tiny pinhole reset button unless they ask. It wipes your Wi-Fi name and password. To check for a fault, use the service status page or ring the number on your letter.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "hub",
+       "is": "router",
+       "spot": "middle",
+       "label": "Hub"
+      },
+      {
+       "id": "letter",
+       "is": "letter",
+       "spot": "right",
+       "label": "Letter"
+      },
+      {
+       "id": "reelie",
+       "is": "reelie",
+       "spot": "far-right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "say",
+       "who": "reelie",
+       "text": "Leave it alone",
+       "cue": "unless they ask"
+      },
+      {
+       "do": "mark",
+       "on": "hub",
+       "with": "cross",
+       "cue": "wipes your Wi-Fi name"
+      },
+      {
+       "do": "pulse",
+       "on": "letter",
+       "cue": "ring the number"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "looked": {
+  "model": "claude-sonnet-5-5",
+  "effort": "low",
+  "seconds": 10.2,
+  "tokens": {
+   "in": 11433,
+   "out": 1595
+  },
+  "cents": 3.9,
+  "faults": [
+   "scene 2: the pulse on the laptop does not show restarting; it is a ring, not a restart, which is acceptable but weak (kept)",
+   "scene 3: one hub gets tick, warning and cross stacked, so the light colours are not shown; the person is an outline with no role, and the badges replace each other",
+   "scene 3: the cross is not right for a hub that is only losing connection, and 'Blue' and 'Orange' are never seen",
+   "scene 4: the socket is shown with a cross but nothing switches off; the hub still looks on, and the meter fills over the hub with a clock overlapping it",
+   "scene 5: the pulse and the meter overlap the hub; Reelie says 'Hands off!' in the picture, which is fine, but the hub should arrive back on",
+   "scene 6: 'Phone socket' is a phone, not a socket, and the wifi sent to it is not a cable being pushed in; the label is too long; the hub moved from middle to left",
+   "scene 6: a mast stands for an area fault, which is a thing standing for something it is not",
+   "scene 7: the pinhole button is labelled on a router, so the hub looks like a button; the barrier stands between Reelie and the hub, which makes Reelie the blocker; the lock does not mean wiping, and the letter and phone call are not shown"
+  ],
+  "mended": true,
+  "log": [
+   "critic: router-reset 11433 tokens in, 1595 out (claude-sonnet-5-5); 8 faults"
+  ]
+ }
+}
