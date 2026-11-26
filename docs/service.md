@@ -507,13 +507,26 @@ thing a shared reel offers; Add to Claude is still there for anyone with their o
   given each reel's title and what is said in each scene, oldest first, with the notes each
   was made from, then the new notes to answer (`nextAsk` in `service/writer.mjs`). It
   carries on in the language and the voice of the reel it follows.
+- **A file with the notes.** The request may carry one PDF or picture with the notes:
+  `{ notes, file: { data } }` for a first reel, `{ next, notes, file: { data } }` for the
+  next, `data` being the file's bytes in base64. What it is is told from how its bytes
+  begin, as for a file sent by itself, and the same sizes apply. Claude is shown it before
+  the notes, as what the notes are about. With a file there need be no notes: the next
+  reel is then about the file, and a first reel is made as if the file had been sent by
+  itself. A file is never kept: the notes kept beside the reel end with "(with a document
+  they gave)" or "(with a picture they gave)", so the reels after it are told there was
+  one. No page is read when a file is given, even for a note that is a link, so that
+  nothing a document says can send Claude off to fetch one.
 - **Back to the one before.** `play.json` gives `follows` (`id`, `title`, `watch`) while the
   earlier reel is there, and the page shows "< Before this: <title>" over the player.
 - **What it costs.** Measured on 25 November 2026 with `claude-sonnet-5-5`: the next reel
   after the site's blue sky reel, from four notes, took 4,334 tokens in and 979 out, about
   2 cents, and answered every note in order. What one reel can cost is bounded: only the
   newest 8 reels of a chain are told (`CHAIN_MAX` in `site/js/given.js`), with at most 12
-  notes of 600 letters each, so at most about 21,000 tokens in, about 6 cents. Each one
+  notes of 600 letters each, so at most about 21,000 tokens in, about 6 cents. A file with
+  the notes adds its own: a picture a few thousand tokens at most, and a PDF is measured
+  first, with the notes and the chain, and turned away over 50,000 tokens in all (about
+  12 cents). Each one
   counts as one of Make it right here's reels: 5 an hour for each visitor, and 30 a day
   for everyone together (`PIXELREEL_TRIES_PER_HOUR`, `PIXELREEL_TRIES_PER_DAY`), which caps
   the day at about $1.80 even if every one were the dearest.
