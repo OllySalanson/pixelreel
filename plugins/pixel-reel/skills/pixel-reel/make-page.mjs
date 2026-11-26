@@ -2203,18 +2203,20 @@ const THINGS = {
   kettle: {
     group: 'At home', says: 'a kettle: a cup of tea',
     rows: [
-      '....kkkkk....',
-      '...kkeeekk...',
-      '..kkkkkkkkk..',
-      '.kwwwwwwwwkkk',
-      'kwwwwwwwwwk.k',
-      'kwwwwwwwwwk.k',
-      'kwwwwwwwwwk.k',
-      'kwwwwwwwwwkkk',
-      'kwwwwwwwwwk..',
-      'kkkkkkkkkkk..',
-      'keeeeeeeeek..',
-      'kkkkkkkkkkk..'
+      '.e...e............',
+      'e...e.............',
+      '.e...e............',
+      '........kkk.......',
+      '......kkkkkkk.....',
+      '.....krrrrrrrkkkk.',
+      'k...krrrrrrrrrk..k',
+      'kk..krrrrwrrrrk..k',
+      'krk.krrrwwrrrrk..k',
+      '.krkkrrrrrrrrrk..k',
+      '..krrrrrrrrrrrkkkk',
+      '...krrrrrrrrrrk...',
+      '...kRRRRRRRRRRk...',
+      '...kkkkkkkkkkkk...'
     ]
   },
   tv: {
