@@ -129,7 +129,7 @@ describe('POST /hear', () => {
   const asked = [];
   const hearing = { hear: async (pcm) => { asked.push(pcm.length); if (pcm.length === 6) throw new HearError('busy'); return 'why is it red'; } };
   const reels = new Reels({ store: new DiskStore(join(tmp, 'store')), record: async () => {}, video: async () => {} });
-  const server = createService({ reels, baseUrl: 'https://reels.example', hearing, writer: async () => ({}) });
+  const server = createService({ reels, baseUrl: 'https://reels.example', hearing, writer: async () => ({}), hearFor: ['https://agency.example/'] });
   const off = createService({ reels, baseUrl: 'https://reels.example' });
   let local, localOff;
   before(async () => {
@@ -158,6 +158,15 @@ describe('POST /hear', () => {
     const res = await send(new Uint8Array(100), 'https://hoops.example');
     assert.equal(res.status, 200);
     assert.equal(res.headers.get('access-control-allow-origin'), 'https://hoops.example');
+  });
+
+  it('and for a page of a site it was told of (a Bottle service of its own\'s), however its address was written', async () => {
+    const pre = await fetch(`${local}/hear`, { method: 'OPTIONS', headers: { origin: 'https://agency.example', 'access-control-request-method': 'POST', 'access-control-request-headers': 'content-type' } });
+    assert.equal(pre.status, 204);
+    assert.equal(pre.headers.get('access-control-allow-origin'), 'https://agency.example');
+    const res = await send(new Uint8Array(100), 'https://agency.example');
+    assert.equal(res.status, 200);
+    assert.equal(res.headers.get('access-control-allow-origin'), 'https://agency.example');
   });
 
   it('turns away other sites, too much, what is not sound, and says when it is busy', async () => {

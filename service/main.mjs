@@ -127,6 +127,8 @@ const hearing = writer && process.env.PIXELREEL_HEAR === '1'
   ? new Hearing({ model: process.env.PIXELREEL_HEAR_MODEL || undefined, threads: Number(process.env.THREADS) || 2, log })
   : null;
 if (hearing) log(`My notes can hear in every browser, with ${hearing.model}`);
+// other sites whose pages may use /hear too (a Message in a Bottle service of their own's sites), comma-separated origins
+const hearFor = (process.env.PIXELREEL_HEAR_FOR ?? '').split(',').map((o) => o.trim()).filter(Boolean);
 
 const replyTo = process.env.PIXELREEL_BOTTLE_REPLY_TO ?? '';
 const bottle = { key: process.env.PIXELREEL_BOTTLE_KEY ?? '', reader: process.env.PIXELREEL_BOTTLE_READER ?? '', replyTo, notify: replyTo, hook: process.env.PIXELREEL_RESEND_WEBHOOK_SECRET ?? '' };
@@ -145,7 +147,7 @@ if (bottle.mail && replyTo) {
   };
   setInterval(evening, 15 * 60_000).unref();
 }
-const server = createService({ reels, baseUrl, log, limits, writer, hearing, bottle, trustProxy: Number(process.env.PIXELREEL_TRUST_PROXY) || 0, listed: process.env.PIXELREEL_LISTED === '1', fresh: process.env.NODE_ENV !== 'production' });
+const server = createService({ reels, baseUrl, log, limits, writer, hearing, hearFor, bottle, trustProxy: Number(process.env.PIXELREEL_TRUST_PROXY) || 0, listed: process.env.PIXELREEL_LISTED === '1', fresh: process.env.NODE_ENV !== 'production' });
 server.listen(port, () => log(`Pixel Reel is at ${baseUrl}: connector ${baseUrl}/mcp, reels kept in ${store}`));
 
 const stop = () => {

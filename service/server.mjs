@@ -419,13 +419,14 @@ async function sendWatchCard(req, res, name, { reels, cards, fresh, log }) {
  * `fresh` has browsers check for a newer copy of the site's files every time, for working on it;
  * `writer` (see service/writer.mjs) switches on Make it right here, which costs money a reel;
  * `hearing` (a Hearing, service/hear.mjs) writes down notes said aloud, at POST /hear, for
- * browsers that cannot do it themselves;
+ * browsers that cannot do it themselves; `hearFor` lists the addresses (origins) of other sites
+ * whose pages may ask it too, such as those of a Message in a Bottle service of their own;
  * the server's written() resolves once every reel begun that way is written or given up on.
  * `bottle` ({ key, reader, mail, replyTo, notify, hook }, see its README) is Message in a Bottle: the note
  * button for the people on each site's list, this one's and other sites', with this site's
  * /review page where they sign in; `key` is Olly's own, and `reader` the admin key.
  */
-export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false, listed = false, fresh = false, writer = null, hearing = null, bottle = {} }) {
+export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false, listed = false, fresh = false, writer = null, hearing = null, hearFor = [], bottle = {} }) {
   const context = {
     reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, listed, fresh, writer, hearing, pages: new Map(), cards: new Map(), writing: new Set(),
     trustProxy: trustProxy === true ? 1 : Math.max(0, Math.floor(Number(trustProxy)) || 0), fewestForwarded: Infinity
@@ -437,6 +438,8 @@ export function createService({ reels, baseUrl, log = () => {}, limits = null, t
     ...(hearing ? { hear: '/hear' } : {}),
     ...bottle, store: reels.store, origins: [context.baseUrl], caller: (req) => callerOf(req, context.trustProxy), log
   });
+  // pages of other sites that may use /hear (each an origin, such as https://agency.example)
+  const others = new Set(hearFor.map((address) => new URL(address).origin));
   const server = createServer(async (req, res) => {
     try {
       const path = new URL(req.url, 'http://localhost').pathname;
@@ -444,7 +447,7 @@ export function createService({ reels, baseUrl, log = () => {}, limits = null, t
       if (await handleDaybook(req, res, { store: reels.store, reader: bottle.reader ?? '', mail: bottle.mail ?? null, to: bottle.notify ?? bottle.replyTo ?? '' })) return;
       if (await bottles.handle(req, res)) return;
       if (path === '/try') { await handleTry(req, res, context); return; }
-      if (path === '/hear') { await handleHear(req, res, context, (origin) => bottles.sites.allowed(origin)); return; }
+      if (path === '/hear') { await handleHear(req, res, context, async (origin) => others.has(origin) || bottles.sites.allowed(origin)); return; }
       if (path === '/health') { res.writeHead(200, { ...SAFE, 'content-type': 'text/plain' }).end('ok'); return; }
       // a short address to say, type on a phone or print: straight to Claude's own box for adding a connector, with Pixel Reel filled in
       if (path === '/add') { res.writeHead(302, { ...SAFE, ...UNLISTED, location: addToClaudeLink(context.baseUrl), 'cache-control': 'no-store' }).end(); return; }

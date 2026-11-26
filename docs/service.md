@@ -599,6 +599,9 @@ it, and nothing said is kept.
 - **Who may ask.** The website's own pages, and the pages of every site Message in a
   Bottle is on (its list of sites, `bottles/sites/`), from their own address: `/hear`
   answers those with `access-control-allow-origin` and takes their `OPTIONS` preflight.
+  `PIXELREEL_HEAR_FOR` adds other sites, as origins separated by commas, for a Message in a
+  Bottle service of its own whose `BOTTLE_HEAR` is `https://pixelreel.pro/hear` (Olly's
+  client previews, `https://ollysalanson.com`, whose Bottle runs at ollysalanson.com/bottle).
 
 **For Message in a Bottle's Speak, on a site of its own.** Bottle cannot import from Pixel
 Reel, so it copies the approach: where `SpeechRecognition` is missing, or `navigator.brave`

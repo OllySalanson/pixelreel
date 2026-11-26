@@ -250,6 +250,12 @@ gcloud run services update pixelreel --region europe-west1 --project pixelreel-5
   --update-secrets PIXELREEL_BOTTLE_KEY=pixelreel-bottle-key:latest,PIXELREEL_BOTTLE_READER=pixelreel-bottle-reader:latest
 ```
 
+Olly's own hosting has a Message in a Bottle service of its own too, at
+`https://ollysalanson.com/bottle` (a Node app on his NameHero hosting, keeping its notes in a
+folder there), ready for his client previews' sites; until a site moves there (`bottles site move`),
+its notes stay here. Its sites' Speak uses this service's `/hear`, so set
+`--update-env-vars PIXELREEL_HEAR_FOR=https://ollysalanson.com` (docs/service.md, "Who may ask").
+
 A person on a site's list can also send suggestions through Claude: `npm run bottles -- person
 claude <site> <person>` prints an Add to Claude link to send them (one press of Add, once it
 opens), and the address in it (`https://pixelreel.pro/bottle/mcp/<key>`), the package's README,
