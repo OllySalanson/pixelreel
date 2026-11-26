@@ -1,0 +1,310 @@
+{
+ "topic": "router-reset",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "pictures": "stage",
+ "seconds": 21.8,
+ "rounds": 2,
+ "tokens": {
+  "in": 16563,
+  "out": 3854
+ },
+ "wishes": [],
+ "cents": 7.2,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Restart your broadband hub",
+  "transition": "fade",
+  "scenes": [
+   {
+    "title": "Restart hub",
+    "caption": "When the internet stops, try this first.",
+    "say": "When the internet stops working, restarting your broadband hub often fixes it. Here's how, step by step.",
+    "picture": {
+     "type": "title",
+     "text": "RESTART",
+     "sub": "Your broadband hub"
+    }
+   },
+   {
+    "title": "One device?",
+    "caption": "Check if it is just one device.",
+    "say": "First, check it's not just one device. If your phone works on Wi-Fi but your laptop doesn't, restart the laptop instead.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "hub",
+       "is": "router",
+       "spot": "middle",
+       "label": "Hub"
+      },
+      {
+       "id": "phone",
+       "is": "phone",
+       "spot": "left",
+       "label": "Phone"
+      },
+      {
+       "id": "laptop",
+       "is": "laptop",
+       "spot": "right",
+       "label": "Laptop"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "phone",
+       "with": "tick",
+       "cue": "your phone works on Wi-Fi"
+      },
+      {
+       "do": "mark",
+       "on": "laptop",
+       "with": "cross",
+       "cue": "your laptop doesn't"
+      },
+      {
+       "do": "pulse",
+       "on": "laptop",
+       "cue": "restart the laptop"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Read the light",
+    "caption": "Blue is working. Orange has lost connection.",
+    "say": "Now look at the light on the hub. Blue means it's working. Orange, or flashing orange, means it has lost its connection.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "hub",
+       "is": "router",
+       "spot": "middle",
+       "label": "Hub"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "hub",
+       "with": "tick",
+       "cue": "Blue means it's working"
+      },
+      {
+       "do": "mark",
+       "on": "hub",
+       "with": "warning",
+       "cue": "Orange"
+      },
+      {
+       "do": "mark",
+       "on": "hub",
+       "with": "cross",
+       "cue": "lost its connection"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Off and wait",
+    "caption": "Switch off. Wait a full 30 seconds.",
+    "say": "Turn the hub off at the power button or the wall socket. Then wait a full thirty seconds, so it clears its memory.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "hub",
+       "is": "router",
+       "spot": "middle",
+       "label": "Hub"
+      },
+      {
+       "id": "socket",
+       "is": "socket",
+       "spot": "right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "socket",
+       "with": "cross",
+       "cue": "Turn the hub off"
+      },
+      {
+       "do": "mark",
+       "on": "hub",
+       "with": "clock",
+       "cue": "wait a full thirty seconds"
+      },
+      {
+       "do": "meter",
+       "on": "hub",
+       "to": 1,
+       "cue": "clears its memory"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Back on",
+    "caption": "Turn it on. Do not switch it off again.",
+    "say": "Turn it back on. The light flashes for two to three minutes while it reconnects. Don't turn it off again.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "hub",
+       "is": "router",
+       "spot": "middle",
+       "label": "Hub"
+      },
+      {
+       "id": "reelie",
+       "is": "reelie",
+       "spot": "far-right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "pulse",
+       "on": "hub",
+       "cue": "Turn it back on"
+      },
+      {
+       "do": "meter",
+       "on": "hub",
+       "to": 1,
+       "cue": "two to three minutes"
+      },
+      {
+       "do": "say",
+       "who": "reelie",
+       "text": "Hands off!",
+       "cue": "Don't turn it off again"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Still stuck?",
+    "caption": "Check the cable. Orange over 10 minutes? Ring.",
+    "say": "Steady blue? Try the internet. Still nothing? Push the cable in firmly at both ends. Orange for ten minutes means a possible area fault.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "hub",
+       "is": "router",
+       "spot": "left",
+       "label": "Hub"
+      },
+      {
+       "id": "phone",
+       "is": "phone",
+       "spot": "middle",
+       "label": "Phone socket"
+      },
+      {
+       "id": "mast",
+       "is": "mast",
+       "spot": "right",
+       "label": "Area fault?"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "hub",
+       "with": "tick",
+       "cue": "Steady blue"
+      },
+      {
+       "do": "send",
+       "what": "wifi",
+       "from": "hub",
+       "to": "phone",
+       "cue": "Push the cable in firmly"
+      },
+      {
+       "do": "mark",
+       "on": "mast",
+       "with": "warning",
+       "cue": "area fault"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Don't reset",
+    "caption": "Skip the pinhole reset button unless asked.",
+    "say": "One last thing. Don't press the tiny pinhole reset button unless they ask. It wipes your Wi-Fi name and password. To check for a fault, use the service status page or ring the number on your letter.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "hub",
+       "is": "router",
+       "spot": "middle",
+       "label": "Pinhole button"
+      },
+      {
+       "id": "reelie",
+       "is": "reelie",
+       "spot": "far-right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "block",
+       "from": "reelie",
+       "to": "hub",
+       "cue": "Don't press"
+      },
+      {
+       "do": "mark",
+       "on": "hub",
+       "with": "lock",
+       "cue": "wipes your Wi-Fi name"
+      },
+      {
+       "do": "say",
+       "who": "reelie",
+       "text": "Leave it alone",
+       "cue": "unless they ask"
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

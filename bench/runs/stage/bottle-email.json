@@ -1,0 +1,266 @@
+{
+ "topic": "bottle-email",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "pictures": "stage",
+ "seconds": 9.4,
+ "rounds": 1,
+ "tokens": {
+  "in": 8016,
+  "out": 1532
+ },
+ "wishes": [],
+ "cents": 3.1,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Email for Bottle",
+  "transition": "fade",
+  "scenes": [
+   {
+    "title": "Bottle email",
+    "caption": "What it sends, and what switching it on takes.",
+    "say": "Here's the email side of Message in a Bottle: what it can send, what works without it, and what turning it on costs.",
+    "picture": {
+     "type": "title",
+     "text": "BOTTLE EMAIL",
+     "sub": "On or off?"
+    }
+   },
+   {
+    "title": "Four emails",
+    "caption": "Bottle can send four kinds of email.",
+    "say": "Bottle can send four emails: an invitation, a sign in link, news of her notes, and word to you of new ones.",
+    "picture": {
+     "type": "icons",
+     "heading": "Four emails",
+     "items": [
+      {
+       "icon": "gift",
+       "label": "Invitation"
+      },
+      {
+       "icon": "key",
+       "label": "Sign in link"
+      },
+      {
+       "icon": "letter",
+       "label": "News of notes"
+      },
+      {
+       "icon": "bell",
+       "label": "New notes"
+      }
+     ]
+    }
+   },
+   {
+    "title": "No email yet",
+    "caption": "With no email set up, nothing leaves.",
+    "say": "Right now no email account is set up, so every email sits in an outbox. You send Laura her link on WhatsApp instead.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "laura",
+       "is": "woman",
+       "spot": "middle",
+       "label": "Laura"
+      },
+      {
+       "id": "phone",
+       "is": "phone",
+       "spot": "right",
+       "up": true
+      }
+     ],
+     "moves": [
+      {
+       "do": "send",
+       "what": "letter",
+       "from": "you",
+       "to": "laura",
+       "cue": "send Laura her link"
+      },
+      {
+       "do": "mark",
+       "on": "laura",
+       "with": "tick",
+       "cue": "on WhatsApp"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Your side",
+    "caption": "Your side needs no email at all.",
+    "say": "Laura's notes land in the queue. Each one is done, held for you, or declined with a plain reason.",
+    "picture": {
+     "type": "flow",
+     "heading": "Her notes",
+     "items": [
+      {
+       "icon": "pencil",
+       "label": "Notes"
+      },
+      {
+       "icon": "shield",
+       "label": "Three gates"
+      },
+      {
+       "icon": "tick",
+       "label": "Done, held, declined"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Email on",
+    "caption": "Laura hears back by email too.",
+    "say": "With email on, Laura gets one email listing her finished notes. It waits ten minutes, and never comes more than hourly.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "bottle",
+       "is": "server",
+       "spot": "left",
+       "label": "Bottle"
+      },
+      {
+       "id": "laura",
+       "is": "woman",
+       "spot": "right",
+       "label": "Laura"
+      }
+     ],
+     "moves": [
+      {
+       "do": "meter",
+       "on": "bottle",
+       "to": 1,
+       "cue": "waits ten minutes"
+      },
+      {
+       "do": "send",
+       "what": "letter",
+       "from": "bottle",
+       "to": "laura",
+       "cue": "one email"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Already safe",
+    "caption": "The safety is already built in.",
+    "say": "Link secrets stay hidden, scanners cannot use them up, and invitations last seven days. Turning someone off ends their links.",
+    "picture": {
+     "type": "stage",
+     "place": "plain",
+     "things": [
+      {
+       "id": "link",
+       "is": "letter",
+       "spot": "left",
+       "label": "Link"
+      },
+      {
+       "id": "lock",
+       "is": "padlock",
+       "spot": "middle"
+      },
+      {
+       "id": "laura",
+       "is": "calendar",
+       "spot": "right",
+       "label": "Seven days"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "lock",
+       "with": "lock",
+       "cue": "stay hidden"
+      },
+      {
+       "do": "mark",
+       "on": "laura",
+       "with": "clock",
+       "cue": "seven days"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Cost",
+    "caption": "About ten minutes, and nothing to pay.",
+    "say": "Switching on takes about ten minutes with a personal Resend account. The free plan covers Laura's few emails, so it costs nothing.",
+    "picture": {
+     "type": "stage",
+     "place": "office",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "laptop",
+       "is": "laptop",
+       "spot": "middle",
+       "label": "Resend"
+      },
+      {
+       "id": "clock",
+       "is": "clock",
+       "spot": "right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "clock",
+       "with": "clock",
+       "cue": "ten minutes"
+      },
+      {
+       "do": "count",
+       "on": "laptop",
+       "to": 0,
+       "before": "£",
+       "cue": "costs nothing"
+      }
+     ]
+    }
+   },
+   {
+    "title": "My pick",
+    "caption": "Start with no email. Switch on later.",
+    "say": "My pick: start with no email. Send Laura her link on WhatsApp, and turn email on whenever you want her to hear back.",
+    "picture": {
+     "type": "compare",
+     "heading": "My pick",
+     "bad": {
+      "icon": "letter",
+      "label": "Email first"
+     },
+     "good": {
+      "icon": "phone",
+      "label": "WhatsApp now"
+     }
+    }
+   }
+  ]
+ }
+}

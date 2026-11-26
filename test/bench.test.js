@@ -42,6 +42,6 @@ test('a reel\'s scenes are drawn as frames, timed to how long Peter will take', 
   assert.ok(sceneSeconds(list) >= 4);
 });
 
-test('Claude is told exactly what it was told before the stage (test/fixtures/cards-told.json)', () => {
-  assert.deepEqual(told(), JSON.parse(readFileSync(new URL('./fixtures/cards-told.json', import.meta.url), 'utf8')));
+test('with the cards, Claude is told exactly what it was told before the stage (test/fixtures/cards-told.json)', () => {
+  assert.deepEqual(told({ pictures: 'cards' }), JSON.parse(readFileSync(new URL('./fixtures/cards-told.json', import.meta.url), 'utf8')));
 });

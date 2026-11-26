@@ -11,12 +11,12 @@ import { languageName } from './reels.mjs';
 import { AGAIN, bracedIn, replyJson, TryError, writtenSoFar } from './try.mjs';
 
 /** What Claude is told by the website (exported for the test that pins it), for a reel in `language` (one of the languages besides English that are read here, or null for English) read by `narrator` (a first name, or null for Peter). */
-export const instructions = (language = null, narrator = null) => `You write pixel reels for the Pixel Reel website: short pixel-art explainers, one idea a scene, read aloud by a warm British narrator called Peter. A visitor has given one thing to explain: a few words, a web address, some writing, a document or a picture. Write the reel.
+export const instructions = (language = null, narrator = null, { pictures = 'stage' } = {}) => `You write pixel reels for the Pixel Reel website: short pixel-art explainers, one idea a scene, read aloud by a warm British narrator called Peter. A visitor has given one thing to explain: a few words, a web address, some writing, a document or a picture. Write the reel.
 
-${formatGuide(language ? [language] : [])}
+${formatGuide(language ? [language] : [], [], { pictures })}
 
 How to answer:
-- Reply with one JSON object and nothing else: the reel. No words before or after it, and no code fence.
+- Reply with one JSON object and nothing else: the reel. No words before or after it, and no code fence.${pictures === 'cards' ? '' : '\n- If the library did not have a thing you wanted on a stage, add "wishes" to the reel: a list of their short names, such as ["gas meter"].'}
 ${language
     ? `- The visitor has asked for this reel in ${languageName(language)}, whatever language what they gave is in. Write every word of it in ${languageName(language)}: the titles, the captions, what Peter says and the words in the pictures. Write it as someone who speaks ${languageName(language)} would say it, not as a translation, and set "language" to "${language}".`
     : '- Write the reel in English, whatever language what the visitor gave is in. Use British spelling.'}
@@ -145,7 +145,7 @@ const askAgain = (source) => (source.kind === 'words' ? ask(source)
  * which is what bounds the cost of one reel. `log` is told how many tokens each reel took,
  * so its cost can be watched.
  */
-export function createWriter({ client = new Anthropic({ timeout: 120_000, maxRetries: 1 }), model = 'claude-sonnet-5-5', effort = 'low', maxInputTokens = 50_000, log = () => {} } = {}) {
+export function createWriter({ client = new Anthropic({ timeout: 120_000, maxRetries: 1 }), model = 'claude-sonnet-5-5', effort = 'low', maxInputTokens = 50_000, pictures = 'stage', log = () => {} } = {}) {
   /** Runs one call to the Claude API. What goes wrong before Claude has read anything is told to the visitor in plain words, and costs them nothing. */
   const call = async (run) => {
     try {
@@ -167,7 +167,7 @@ export function createWriter({ client = new Anthropic({ timeout: 120_000, maxRet
   };
 
   async function write(source, { before = null, problems = null, onProgress = () => {} } = {}) {
-    const system = instructions(source.language ?? null, source.narrator ?? null);
+    const system = instructions(source.language ?? null, source.narrator ?? null, { pictures });
     const messages = [{ role: 'user', content: before ? askAgain(source) : ask(source) }];
     if (before && problems) {
       messages.push({ role: 'assistant', content: typeof before === 'string' ? before : JSON.stringify(before) });
@@ -228,7 +228,7 @@ export function createWriter({ client = new Anthropic({ timeout: 120_000, maxRet
    */
   write.fits = async (source) => {
     if (source.kind !== 'pdf' && source.file?.kind !== 'pdf') return;
-    const { input_tokens: size } = await call(() => client.messages.countTokens({ model, system: instructions(source.language ?? null, source.narrator ?? null), messages: [{ role: 'user', content: ask(source) }] }));
+    const { input_tokens: size } = await call(() => client.messages.countTokens({ model, system: instructions(source.language ?? null, source.narrator ?? null, { pictures }), messages: [{ role: 'user', content: ask(source) }] }));
     if (size <= maxInputTokens) return;
     log(`try: a pdf of ${size} tokens was turned away (the most is ${maxInputTokens})`);
     throw new TryError('That is too long for one reel. Give it a shorter one, or only the pages that matter.', { free: true });

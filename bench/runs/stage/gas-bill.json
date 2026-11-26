@@ -1,0 +1,290 @@
+{
+ "topic": "gas-bill",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "pictures": "stage",
+ "seconds": 22,
+ "rounds": 2,
+ "tokens": {
+  "in": 16401,
+  "out": 3832
+ },
+ "wishes": [],
+ "cents": 7.1,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Your gas bill",
+  "scenes": [
+   {
+    "title": "Your gas bill",
+    "caption": "What it says, and what to do.",
+    "say": "Your Brightwater Energy gas bill has come. Here's what it says, and what to do about it.",
+    "picture": {
+     "type": "title",
+     "text": "GAS BILL",
+     "sub": "What to do"
+    }
+   },
+   {
+    "title": "The bill",
+    "caption": "It covers 91 days of gas.",
+    "say": "Brightwater Energy sent this bill for the three months up to the second of November, ninety one days in all.",
+    "picture": {
+     "type": "stage",
+     "place": "street",
+     "things": [
+      {
+       "id": "home",
+       "is": "house",
+       "spot": "left",
+       "label": "Your home"
+      },
+      {
+       "id": "gas",
+       "is": "bank",
+       "spot": "right",
+       "label": "Brightwater"
+      },
+      {
+       "id": "reelie",
+       "is": "reelie",
+       "spot": "far-right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "flow",
+       "from": "gas",
+       "to": "home",
+       "cue": "three months"
+      },
+      {
+       "do": "send",
+       "what": "bill",
+       "from": "gas",
+       "to": "home",
+       "cue": "sent this bill"
+      }
+     ]
+    }
+   },
+   {
+    "title": "The lines",
+    "caption": "What makes up the total.",
+    "say": "The gas came to two hundred and nineteen pounds, the standing charge to twenty nine, and VAT to twelve.",
+    "picture": {
+     "type": "table",
+     "columns": [
+      "What",
+      "Cost"
+     ],
+     "rows": [
+      [
+       "Gas",
+       "£219.91"
+      ],
+      [
+       "Standing charge",
+       "£28.80"
+      ],
+      [
+       "VAT at 5%",
+       "£12.44"
+      ],
+      [
+       "Total",
+       "£261.15"
+      ]
+     ]
+    }
+   },
+   {
+    "title": "You owe",
+    "caption": "You paid £180, so you owe £81.15.",
+    "say": "You paid a hundred and eighty pounds by Direct Debit. The total was more, so you now owe eighty one pounds fifteen.",
+    "picture": {
+     "type": "stage",
+     "place": "street",
+     "things": [
+      {
+       "id": "home",
+       "is": "house",
+       "spot": "left",
+       "label": "Your home"
+      },
+      {
+       "id": "gas",
+       "is": "bank",
+       "spot": "right",
+       "label": "Brightwater"
+      }
+     ],
+     "moves": [
+      {
+       "do": "send",
+       "what": "banknote",
+       "from": "home",
+       "to": "gas",
+       "again": true,
+       "cue": "You paid"
+      },
+      {
+       "do": "count",
+       "on": "home",
+       "to": 81.15,
+       "before": "£",
+       "cue": "you now owe"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Direct Debit",
+    "caption": "It rises to £87 a month from 1 December.",
+    "say": "From the first of December, your Direct Debit goes up from sixty pounds to eighty seven, to cover the colder months.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "cal",
+       "is": "calendar",
+       "spot": "middle",
+       "label": "1 December"
+      },
+      {
+       "id": "gas",
+       "is": "bank",
+       "spot": "right",
+       "label": "Brightwater"
+      }
+     ],
+     "moves": [
+      {
+       "do": "pulse",
+       "on": "cal",
+       "cue": "first of December"
+      },
+      {
+       "do": "pile",
+       "on": "gas",
+       "count": 8,
+       "cue": "eighty seven"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Send a reading",
+    "caption": "Send a real reading by 20 November.",
+    "say": "The latest reading was only an estimate. Send a real one by the twentieth of November, and they'll correct the bill if needed.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "meter",
+       "is": "gas-meter",
+       "spot": "middle"
+      },
+      {
+       "id": "phone",
+       "is": "phone",
+       "spot": "right",
+       "up": true
+      },
+      {
+       "id": "gas",
+       "is": "bank",
+       "spot": "far-right",
+       "label": "Brightwater"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "meter",
+       "with": "question",
+       "cue": "only an estimate"
+      },
+      {
+       "do": "send",
+       "what": "document",
+       "from": "you",
+       "to": "gas",
+       "cue": "Send a real one"
+      },
+      {
+       "do": "mark",
+       "on": "gas",
+       "with": "tick",
+       "cue": "correct the bill"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Talk to them",
+    "caption": "Finding it hard to pay? Talk to them.",
+    "say": "If you're finding it hard to pay, talk to them. They can set up a payment plan, and you may get help too.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "gas",
+       "is": "person",
+       "wears": "suit",
+       "spot": "right",
+       "label": "Brightwater"
+      },
+      {
+       "id": "reelie",
+       "is": "reelie",
+       "spot": "far-right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "wave",
+       "from": "you",
+       "to": "gas",
+       "cue": "talk to them"
+      },
+      {
+       "do": "say",
+       "who": "gas",
+       "text": "We can help",
+       "cue": "payment plan"
+      },
+      {
+       "do": "say",
+       "who": "reelie",
+       "text": "Don't wait!",
+       "cue": "get help too"
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

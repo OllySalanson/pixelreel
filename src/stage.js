@@ -5,6 +5,7 @@
 // it ever runs. Pure: no DOM. pictures.js draws it and checks it; pacing.mjs times its moves.
 import { ICONS } from './icons.js';
 import { PEOPLE, personRows, THINGS, WEARS } from './library.js';
+import { PALETTE } from './palette.js';
 
 const INK = '#1a1a1a', CREAM = '#ebeac5', LIGHT = '#fdf6e3', GOLD = '#ffcc4d', TEAL = '#55d6be';
 const RED = '#d63a3a', GREEN = '#3fa34d', NAVY = '#13203a';
@@ -12,7 +13,7 @@ const RED = '#d63a3a', GREEN = '#3fa34d', NAVY = '#13203a';
 /** Where the ground is, in picture pixels: things stand on it, and their labels sit under it. */
 export const GROUND = 146;
 /** Where a thing in the air has its feet. */
-const AIR = 86;
+const AIR = 62;
 
 /** The places a stage can be, and what each is like, for whoever chooses one. */
 export const PLACES = {
@@ -38,9 +39,11 @@ export const PLACES = {
 export const SPOTS = { 'far-left': 36, left: 98, middle: 160, right: 222, 'far-right': 284 };
 const SPOT_NAMES = Object.keys(SPOTS);
 const SPOT_WIDTH = 62;
+/** How far two things side by side may run into each other, in picture pixels, before it shows. */
+const OVERLAP = 6;
 
 /** How big a thing is drawn: picture pixels to one of its drawing's. One size of pixel throughout, and a big thing a little bigger. */
-export const SIZES = { medium: 2, big: 3 };
+export const SIZES = { medium: 3, big: 4 };
 
 /** The cast who come back in every reel: Reelie, the film reel who presents. The people are in the library (woman, man, ...). */
 export const CAST = ['reelie'];
@@ -85,8 +88,22 @@ export function drawingOf(name) {
 /** What a thing on a stage is drawn from: a person dressed as they are, or the library's drawing, or an icon's. */
 const drawingFor = (th) => (Object.hasOwn(PEOPLE, th.is) ? { rows: personRows(th.is, th.wears ?? null) } : drawingOf(th.is));
 
+/** How wide a thing is drawn, in picture pixels: 0 for one that cannot be drawn. */
+export function thingWidth(th) {
+  const sc = SIZES[th.size] ?? SIZES.medium;
+  if (CAST.includes(th.is)) return 14 * sc;
+  const drawing = Array.isArray(th.rows) ? { rows: th.rows } : isThingName(th.is) ? drawingFor(th) : null;
+  return drawing ? Math.max(0, ...drawing.rows.map((r) => String(r).length)) * sc : 0;
+}
+
 /** The keys a thing and each move may have. */
-const THING_KEYS = ['id', 'is', 'spot', 'up', 'size', 'label', 'flip', 'skin', 'hair', 'wears'];
+const THING_KEYS = ['id', 'is', 'rows', 'colours', 'spot', 'up', 'size', 'label', 'flip', 'skin', 'hair', 'wears'];
+
+/** The most rows, and letters in a row, of a thing a reel draws itself. */
+export const OWN_MAX = { rows: 24, cols: 24 };
+
+/** What a thing on a stage is drawn from: the reel's own rows, or the library's or an icon's. */
+const thingDrawing = (th) => (Array.isArray(th.rows) ? { rows: th.rows, colours: th.colours ?? null } : drawingFor(th));
 const MOVE_KEYS = ['do', 'cue', 'at', 'who', 'what', 'from', 'to', 'on', 'count', 'with', 'text', 'before', 'after', 'again'];
 
 /**
@@ -99,33 +116,37 @@ export function stageProblems(p, looks = () => []) {
   if (!Array.isArray(p.things) || p.things.length < 1 || p.things.length > STAGE_MAX.things) {
     return [...problems, `picture.things must be a list of 1 to ${STAGE_MAX.things} things, such as [{ "id": "bank", "is": "bank", "spot": "left" }]`];
   }
-  const ids = new Set(), taken = new Map(), big = new Set();
+  const ids = new Set(), taken = new Map();
   p.things.forEach((th, i) => {
     const where = `picture.things[${i}]`;
     if (!isPlain(th)) { problems.push(`${where} must be an object such as { "id": "bank", "is": "bank", "spot": "left" }`); return; }
     for (const key of Object.keys(th)) if (!THING_KEYS.includes(key)) problems.push(`${where}: a thing takes ${THING_KEYS.join(', ')}, not ${key}`);
     if (!isText(th.id) || ids.has(th.id)) problems.push(`${where} needs an id of its own, a short name the moves can use`);
     ids.add(th.id);
-    if (!isThingName(th.is)) problems.push(`${where}: "${th.is}" is not something the stage can draw; it can draw ${CAST.join(', ')}, the people and things in the library, and the icons`);
+    if (th.rows !== undefined || th.colours !== undefined) {
+      problems.push(...ownProblems(th, where));
+    } else if (!isThingName(th.is)) problems.push(`${where}: "${th.is}" is not something the stage can draw; it can draw ${CAST.join(', ')}, the people and things in the library, and the icons`);
     if (!Object.hasOwn(SPOTS, th.spot)) { problems.push(`${where}.spot must be one of: ${SPOT_NAMES.join(', ')}`); return; }
     if (th.up !== undefined && typeof th.up !== 'boolean') problems.push(`${where}.up must be true or false`);
     if (th.flip !== undefined && typeof th.flip !== 'boolean') problems.push(`${where}.flip must be true or false`);
+    if (th.rows !== undefined && th.is !== undefined) problems.push(`${where}: a thing is one from the library ("is") or drawn by the reel ("rows"), not both`);
     if (th.wears !== undefined && (!Object.hasOwn(PEOPLE, th.is) || !Object.hasOwn(WEARS, th.wears))) problems.push(`${where}.wears: only a person wears anything, and it is one of: ${Object.keys(WEARS).join(', ')}`);
     if (th.size !== undefined && !Object.hasOwn(SIZES, th.size)) problems.push(`${where}.size must be one of: ${Object.keys(SIZES).join(', ')}`);
     if (th.label !== undefined && (!isText(th.label) || words(th.label) > STAGE_MAX.label)) problems.push(`${where}.label must be ${STAGE_MAX.label} words at most`);
     problems.push(...looks(th, where));
-    // two things in one spot stand on each other, and a big one fills its neighbours' too
-    const layer = th.up ? 'air' : 'ground', at = SPOT_NAMES.indexOf(th.spot), reach = th.size === 'big' ? 1 : 0;
-    if (reach) big.add(th.id);
-    if (reach && (at === 0 || at === SPOT_NAMES.length - 1)) problems.push(`${where}: a big thing needs room either side, so it cannot stand at the ${th.spot}`);
-    for (let s = at - reach; s <= at + reach; s++) {
-      const key = `${layer} ${s}`;
-      if (taken.has(key)) {
-        const other = taken.get(key);
-        problems.push(`${where}: "${th.id}" stands where "${other}" does; give it a spot of its own${reach || big.has(other) ? ', with room either side for a big thing' : ''}`);
-      } else taken.set(key, th.id);
-    }
+    // two things in one spot stand on each other
+    const key = `${th.up ? 'air' : 'ground'} ${th.spot}`;
+    if (taken.has(key)) problems.push(`${where}: "${th.id}" stands where "${taken.get(key).id}" does; give it a spot of its own`);
+    else taken.set(key, th);
   });
+  // things side by side may be wide (a house, a bus), so long as they do not run into each other
+  const placed = [...taken.entries()].map(([key, th]) => ({ layer: key.split(' ')[0], x: SPOTS[th.spot], w: thingWidth(th), th }));
+  for (const a of placed) {
+    for (const b of placed) {
+      if (a.layer !== b.layer || a.x >= b.x || (a.w + b.w) / 2 <= b.x - a.x + OVERLAP) continue;
+      problems.push(`picture.things: "${a.th.id}" and "${b.th.id}" are too wide to stand ${b.x - a.x === SPOT_WIDTH ? 'side by side' : 'so close'}; leave a spot between them${a.w > SPOT_WIDTH || b.w > SPOT_WIDTH ? ', as a wide thing such as a house or a bus needs' : ''}`);
+    }
+  }
   if (!Array.isArray(p.moves) || p.moves.length < 1 || p.moves.length > STAGE_MAX.moves) {
     return [...problems, `picture.moves must be a list of 1 to ${STAGE_MAX.moves} moves, so the picture shows something happening`];
   }
@@ -153,6 +174,22 @@ export function stageProblems(p, looks = () => []) {
     if (m.at !== undefined && (typeof m.at !== 'number' || !Number.isFinite(m.at) || m.at < 0)) problems.push(`${where}.at must be a number of seconds`);
     if (m.again !== undefined && typeof m.again !== 'boolean') problems.push(`${where}.again must be true or false`);
   });
+  return problems;
+}
+
+/** What is wrong with a thing the reel draws itself: its rows and their letters. */
+function ownProblems(th, where) {
+  const rows = th.rows, own = isPlain(th.colours) ? Object.keys(th.colours) : [];
+  if (!Array.isArray(rows) || !rows.length || rows.length > OWN_MAX.rows || !rows.every((r) => typeof r === 'string' && r.length > 0 && r.length <= OWN_MAX.cols)) {
+    return [`${where}.rows must be 1 to ${OWN_MAX.rows} rows of 1 to ${OWN_MAX.cols} letters, such as ["..kk..", ".kyyk."]`];
+  }
+  const problems = [];
+  if (new Set(rows.map((r) => r.length)).size > 1) problems.push(`${where}.rows must all be the same length, or the drawing breaks where one is not`);
+  if (th.colours !== undefined && !(isPlain(th.colours) && Object.entries(th.colours).every(([k, c]) => [...k].length === 1 && k !== '.' && typeof c === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)))) {
+    problems.push(`${where}.colours must be letters and the colours they stand for, such as { "h": "#6b3e2e" }`);
+  }
+  const odd = rows.join('').split('').find((ch) => ch !== '.' && !Object.hasOwn(PALETTE, ch) && !own.includes(ch));
+  if (odd) problems.push(`${where}.rows uses "${odd}", which is not a palette letter: add it to colours`);
   return problems;
 }
 
@@ -338,7 +375,7 @@ function reelie(px, cx, feet, r, t, talking) {
 function layout(t, p, times) {
   const things = new Map();
   for (const th of p.things) {
-    const sc = SIZES[th.size ?? 'medium'], cast = CAST.includes(th.is), rows = cast ? null : drawingFor(th).rows;
+    const sc = SIZES[th.size ?? 'medium'], cast = CAST.includes(th.is), rows = cast ? null : thingDrawing(th).rows;
     const w = cast ? 14 * sc : Math.max(...rows.map((r) => r.length)) * sc, h = cast ? 15 * sc + 2 : rows.length * sc;
     things.set(th.id, { ...th, sc, w, h, x: SPOTS[th.spot], feet: th.up ? AIR : GROUND, from: 0, gone: Infinity, walking: false });
   }
@@ -379,7 +416,7 @@ function drawThing(t, px, th, look, index) {
   if (!th.up && drop === 0) px.rect('rgba(0,0,0,0.25)', x + 4, th.feet - 1, th.w - 8, 2);   // a shadow, so it stands on the ground
   if (th.is === 'reelie') reelie(px, Math.round(th.x), th.feet + drop + bob, Math.round(th.w / 2) - 1, t, true);
   else {
-    const drawing = drawingFor(th), own = look(th, index);
+    const drawing = thingDrawing(th), own = th.rows ? null : look(th, index);
     px.sprite(drawing.rows, x, y, th.sc, th.flip === true || th.facing === -1, own || drawing.colours ? { ...drawing.colours, ...own } : null);
   }
   if (fade > 0) px.dither('#13203a', x - 2, y - 2, th.w + 4, th.h + 4, fade);
