@@ -1869,3 +1869,11 @@ straight from a phone's camera.
 The four lines were re-recorded here with Pocket TTS, and the pictures of the two scenes
 whose lines changed length were timed to them again. Nobody has listened to them yet, and
 they were not checked by speech-to-text this time.
+
+### Version 86
+
+- **The make page's microphone in Brave and Firefox.** Beside a reel, the page is told
+  whether the service can write down what is said, which is how those two browsers hear a
+  note. The make page was never told, so there My notes had no microphone at all in Brave,
+  which is Olly's browser. Found by reading the live page after Version 84 went out; it
+  had been so since the make page was given My notes (Version 81).
