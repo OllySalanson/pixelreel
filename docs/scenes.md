@@ -186,7 +186,7 @@ picture: { type: 'table', heading: 'SUNDAY BUSES', columns: ['Stop', '1st bus', 
 The icons, by what they are about:
 
 - **Paperwork and money:** `letter`, `document`, `money`, `card`, `bank`, `calendar`, `clock`, `hourglass`, `bag`, `basket`, `gift`, `chart`
-- **People and home:** `person`, `people`, `baby`, `heart`, `house`, `bed`, `key`, `lock`, `bin`, `cup`, `apple`, `egg`, `bread`, `bowl`, `bottle`, `pan`, `tap`, `shirt`, `tooth`, `pill`, `thermometer`, `dog`, `cat`
+- **People and home:** `person`, `people`, `woman`, `man`, `girl`, `boy`, `children`, `baby`, `heart`, `house`, `bed`, `key`, `lock`, `bin`, `cup`, `apple`, `egg`, `bread`, `bowl`, `bottle`, `pan`, `tap`, `shirt`, `tooth`, `pill`, `thermometer`, `dog`, `cat`
 - **Out and about:** `car`, `bus`, `train`, `plane`, `pin`, `world`, `flag`, `ball`, `trophy`, `music`, `book`, `pencil`
 - **Technology:** `phone`, `computer`, `camera`, `wifi`, `battery`, `plug`, `cog`, `search`, `speech`, `bell`, `eye`, `shield`, `rocket`
 - **Weather and nature:** `sun`, `moon`, `cloud`, `rain`, `water`, `fire`, `bolt`, `tree`
@@ -194,6 +194,17 @@ The icons, by what they are about:
 
 Pick the one that means the thing; if none does, a list, a table or a sprite says it
 better than an icon that does not fit. `every` and `start` set their timing, as for a list.
+
+People are drawn as who they are. `woman`, `man`, `girl`, `boy` and `baby` are one person
+each, and their item can say how they look: `skin` (`light`, `medium` or `deep`) and `hair`
+(`black`, `brown`, `blonde`, `ginger` or `grey`). Left out, each gets a look of their own,
+chosen from their label, so the same person looks the same in every scene and nobody is one
+colour by default. `person` is anyone at all (a plain outline), `people` a woman and a man,
+and `children` a girl and a boy.
+
+```js
+picture: { type: 'icons', items: [{ icon: 'woman', label: 'Laura', hair: 'ginger' }, { icon: 'children', label: 'Her class' }] }
+```
 
 **sprite**: pixel art of your own, from rows of [sprite letters](#sprite-letters), scaled up to
 fill the picture and dropped in, with an optional `label`. `colours` adds letters of your own.
@@ -310,9 +321,9 @@ easing curves.
 ### Sprite letters
 
 `k` ink, `w` white, `r` red, `g` green, `b` blue, `y` yellow, `o` orange, `p` purple, `t` teal,
-`s` skin, `n` brown, `e` grey, `c` cream, and capitals `B`, `R`, `N`, `G` for darker shades of
-blue, red, brown and green. Pass `colours`, such as `{ h: '#6b3e2e', s: '#c68642' }`, to add
-letters or change these for one sprite.
+`s`, `S` and `d` skin (light, medium and deep), `n` brown, `e` grey, `c` cream, and capitals `B`,
+`R`, `N`, `G` for darker shades of blue, red, brown and green. Pass `colours`, such as
+`{ h: '#6b3e2e', s: '#c68642' }`, to add letters or change these for one sprite.
 
 For anything else, write your own helpers at the top of the reel file, as the
 [example reel](../reels/what-is-pixelreel/reel.js) does for its film reel and speech bubble.

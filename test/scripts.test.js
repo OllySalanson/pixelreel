@@ -7,7 +7,7 @@ import { after, describe, it } from 'node:test';
 import { checkReel } from '../scripts/check-reel.mjs';
 import { parseScript, plainWords, reelSource } from '../scripts/from-script.mjs';
 import { createReel, titleFromName } from '../scripts/new-reel.mjs';
-import { clipFile, ENGINES, findFfmpeg, main as recordVoices, narrator, planClips, POCKET_LANGUAGES } from '../scripts/voices.mjs';
+import { clipFile, ENGINES, findFfmpeg, main as recordVoices, narrator, planClips, POCKET_LANGUAGES, speak } from '../scripts/voices.mjs';
 import { normalizeReel } from '../src/reel.js';
 
 describe('npm run new', () => {
@@ -207,6 +207,20 @@ describe('npm run voices planning', () => {
     assert.deepEqual(unused.stale, [one]);
   });
 
+});
+
+describe('npm run voices speaking', () => {
+  it('says so when Python stops at once, rather than taking the service down with it', async () => {
+    const was = process.env.PIXELREEL_PYTHON;
+    process.env.PIXELREEL_PYTHON = 'false';   // stops before it reads a word, so the job meets a closed pipe
+    try {
+      const lines = [{ text: 'A line. '.repeat(50000), wav: join(tmpdir(), 'never.wav') }];
+      await assert.rejects(speak(lines, { engine: 'pocket', voice: 'peter_yearsley' }, 1, () => {}), /Pocket TTS stopped with exit code 1/);
+    } finally {
+      if (was === undefined) delete process.env.PIXELREEL_PYTHON;
+      else process.env.PIXELREEL_PYTHON = was;
+    }
+  });
 });
 
 describe('npm run voices narrator', () => {

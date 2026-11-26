@@ -181,6 +181,8 @@ export function speak(lines, settings, threads, onDone) {
       else if (code === 0) ok();
       else fail(new Error(`${engine.name} stopped with exit code ${code}; see the message above.`));
     });
+    // a Python that stops at once closes its end first: the exit code above says so, rather than an EPIPE that would stop the service
+    child.stdin.on('error', () => {});
     child.stdin.end(JSON.stringify(job));
   });
 }

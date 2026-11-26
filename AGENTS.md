@@ -17,6 +17,7 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 - New reels record with Pocket TTS (`peter_yearsley`); the committed showreel and example reel are Kokoro `bm_george`, which `npm run voices` keeps because a reel keeps the narrator its manifest names, so re-recording them needs `scripts/setup-voices.sh kokoro` (see docs/voices.md). Keep committed audio small (mono 48k) and record in one batch.
 - The showreel (`reels/showreel/reel.js`) is the player page's default reel (`index.html`) and the README's source: its gags are timed to `CUES` taken from the recorded clips, and `docs/readme/README.md` lists the banner maker settings that remake the README's animated pictures. Changing a scene's words means re-recording, re-timing its cues, and remaking any picture that shows it.
 - To check pictures by eye, `?reel=<name>&scene=N&t=S` holds one frame; for many frames, draw them with `createKit` on a canvas of your own rather than timing screenshots of the live player.
+- People are drawn as who they are, never a man or one skin by default (Olly, 26 Nov 2026): `woman`, `man`, `girl`, `boy`, `baby` take `skin` and `hair` (`personLook` in `src/pictures.js`, which gives an undescribed person a look kept for their label), `person` is a faceless outline and `people`/`children` are mixed; the guide's words are `PEOPLE_ADVICE` in `service/mcp.mjs`. Keep any new person art to the same rule.
 - House style for all text: plain dash, never an em dash (`test/hygiene.test.js` enforces it).
 
 ## Maintaining this file

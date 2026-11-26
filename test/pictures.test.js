@@ -4,7 +4,7 @@ import { describe, it } from 'node:test';
 import { createKit } from '../src/kit.js';
 import { ICON_GROUPS, ICONS, ICON_SIZE } from '../src/icons.js';
 import { PALETTE } from '../src/palette.js';
-import { highlight, ICON_NAMES, noSignal, PICTURES, pictureProblems } from '../src/pictures.js';
+import { HAIRS, highlight, ICON_NAMES, noSignal, PERSON_ICONS, personLook, PICTURES, pictureProblems, SKINS } from '../src/pictures.js';
 import { coverage, fakeContext } from './fake-canvas.js';
 
 const examples = {
@@ -63,7 +63,7 @@ describe('ready-made pictures', () => {
   });
 
   it('says which icons there are, and checks a sprite for letters it cannot draw', () => {
-    const icons = ICON_NAMES.join(', ');
+    const icons = `${ICON_NAMES.join(', ')}. A woman, man, girl, boy, baby can also take skin (light, medium, deep) and hair (black, brown, blonde, ginger, grey)`;
     assert.deepEqual(pictureProblems({ type: 'icons', items: [{ icon: 'house' }, { icon: 'castle' }] }), [
       `picture.items must be a list of 1 to 4 { icon, label }, such as [{ "icon": "house", "label": "Home" }], with icons: ${icons}`
     ]);
@@ -155,6 +155,60 @@ describe('ready-made pictures', () => {
     assert.notEqual(colours.const, colours.n, 'keywords stand out');
     assert.notEqual(colours["'x'"], colours.n, 'and strings');
     assert.notEqual(colours['// hi'], colours.n, 'and comments');
+  });
+});
+
+describe('people', () => {
+  const colours = (picture) => {
+    const g = fakeContext();
+    createKit(g, {}).picture(picture, 30);
+    return new Set(g.rects.map((r) => r.c));
+  };
+
+  it('are a woman, a man, a girl and a boy, and anyone at all', () => {
+    assert.deepEqual(PERSON_ICONS, ['woman', 'man', 'girl', 'boy', 'baby']);
+    for (const name of [...PERSON_ICONS, 'person', 'people', 'children']) assert.ok(name in ICONS, name);
+    assert.ok(ICON_GROUPS['People and home'].includes('woman'));
+    // person is nobody in particular: a plain outline, with no face, skin or hair to make them anyone
+    assert.ok(ICONS.person.every((row) => /^[kt.]+$/.test(row)), 'person is an outline');
+  });
+
+  it('come in more than one colour: a group is never one skin', () => {
+    const skins = Object.keys(SKINS).length;
+    assert.equal(skins, 3);
+    for (const letter of ['s', 'S', 'd']) assert.ok(letter in PALETTE, `${letter} is a skin letter`);
+    for (const group of ['people', 'children']) {
+      const used = new Set([...ICONS[group].join('')].filter((ch) => ['s', 'S', 'd'].includes(ch)));
+      assert.ok(used.size >= 2, `${group} has two skins in it`);
+    }
+  });
+
+  it('look as the reel says, when it says', () => {
+    const laura = { icon: 'woman', label: 'Laura', skin: 'deep', hair: 'ginger' };
+    assert.deepEqual(pictureProblems({ type: 'icons', items: [laura, { icon: 'man', skin: 'light' }] }), []);
+    assert.deepEqual(pictureProblems({ type: 'compare', bad: { icon: 'boy', label: 'Sam', hair: 'grey' }, good: { ...laura } }), []);
+    assert.deepEqual(personLook(laura), { s: SKINS.deep, n: HAIRS.ginger });
+    const seen = colours({ type: 'icons', items: [laura] });
+    assert.ok(seen.has(SKINS.deep) && seen.has(HAIRS.ginger), 'drawn in her skin and hair');
+    assert.ok(!seen.has(PALETTE.s), 'and not in the light skin');
+    assert.ok(colours({ type: 'compare', bad: { icon: 'car', label: 'Drive' }, good: laura }).has(SKINS.deep), 'on a compare card too');
+  });
+
+  it('take a look only where there is one person to give it to, and only a look there is', () => {
+    for (const item of [{ icon: 'house', skin: 'deep' }, { icon: 'people', hair: 'black' }, { icon: 'woman', skin: 'green' }, { icon: 'man', hair: 'pink' }, { icon: 'girl', height: 'tall' }]) {
+      assert.equal(pictureProblems({ type: 'icons', items: [item] }).length, 1, JSON.stringify(item));
+    }
+  });
+
+  it('given no look, get one of their own: every skin and many hair colours, the same for the same person in every scene', () => {
+    const names = ['Laura', 'Sam', 'Priya', 'Tom', 'Ada', 'Kwame', 'Mei', 'Olly', 'Jo', 'Ravi', 'Ellen', 'Chen', 'Nia', 'Ben', 'Zara', 'Luis'];
+    const looks = names.map((label) => personLook({ icon: 'woman', label }));
+    assert.equal(new Set(looks.map((l) => l.s)).size, 3, 'all three skins');
+    assert.ok(new Set(looks.map((l) => l.n)).size >= 3, 'several hair colours');
+    assert.deepEqual(personLook({ icon: 'woman', label: 'Laura' }), personLook({ icon: 'girl', label: ' LAURA ' }, 3), 'the same person, the same look');
+    const places = [0, 1, 2, 3].map((i) => personLook({ icon: 'man' }, i).s);
+    assert.ok(new Set(places).size >= 2, 'unlabelled people side by side differ');
+    assert.equal(personLook({ icon: 'house', label: 'Home' }), null);
   });
 });
 

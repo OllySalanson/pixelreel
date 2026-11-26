@@ -2,7 +2,7 @@
 // a reel can be written by a tool, an AI agent or a web service and played safely, since
 // nothing in it ever runs. Every picture comes from the ready-made ones (pictures.js).
 // Pure: no DOM, so the same checks run in the browser, in the tools and in the tests.
-import { ICON_NAMES, PICTURES, SPRITE_MAX, TABLE_MAX } from './pictures.js';
+import { HAIRS, ICON_NAMES, PERSON_ICONS, PICTURES, SKINS, SPRITE_MAX, TABLE_MAX } from './pictures.js';
 import { PALETTE } from './palette.js';
 import { CAPTION_STYLES, LANGUAGES, normalizeReel, ReelError } from './reel.js';
 import { TRANSITIONS } from './transitions.js';
@@ -100,6 +100,11 @@ export function parseReelJson(text, options) {
 }
 
 const TEXT = { type: 'string', pattern: '\\S' };
+/** How a person icon looks; only woman, man, girl, boy and baby take them (reelFromData checks). */
+const LOOK_SCHEMAS = {
+  skin: { enum: Object.keys(SKINS), description: `For a ${PERSON_ICONS.join(', ')}: their skin. Leave it out when you do not know, and they get a look of their own.` },
+  hair: { enum: Object.keys(HAIRS), description: `For a ${PERSON_ICONS.join(', ')}: their hair. Leave it out when you do not know.` }
+};
 const KIND_SCHEMAS = {
   text: TEXT,
   list: { type: 'array', minItems: 1, items: { type: 'string' } },
@@ -115,13 +120,13 @@ const KIND_SCHEMAS = {
     type: 'object',
     additionalProperties: false,
     required: ['icon', 'label'],
-    properties: { icon: { enum: ICON_NAMES }, label: TEXT }
+    properties: { icon: { enum: ICON_NAMES }, label: TEXT, ...LOOK_SCHEMAS }
   },
   items: {
     type: 'array',
     minItems: 1,
     maxItems: 4,
-    items: { type: 'object', additionalProperties: false, required: ['icon'], properties: { icon: { enum: ICON_NAMES }, label: TEXT } }
+    items: { type: 'object', additionalProperties: false, required: ['icon'], properties: { icon: { enum: ICON_NAMES }, label: TEXT, ...LOOK_SCHEMAS } }
   },
   cells: {
     type: 'array',
