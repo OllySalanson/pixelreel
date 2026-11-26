@@ -1,0 +1,141 @@
+{
+ "topic": "school-trip",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "seconds": 7.3,
+ "rounds": 1,
+ "tokens": {
+  "in": 4456,
+  "out": 1065
+ },
+ "cents": 2,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Year 4 trip to the Science Museum",
+  "transition": "slide",
+  "scenes": [
+   {
+    "title": "Museum trip",
+    "caption": "Year 4 visits the Science Museum on 11 December.",
+    "say": "Oakfield Primary's Year 4 are off to the Science Museum, on Friday the eleventh of December. Here's what parents need to know.",
+    "picture": {
+     "type": "title",
+     "text": "MUSEUM TRIP",
+     "sub": "Year 4, Friday 11 December"
+    }
+   },
+   {
+    "title": "The day",
+    "caption": "Be in class by 8.30. Back about 3.45.",
+    "say": "Children must be in their classroom by half past eight, as the coach leaves at 8.45 sharp. Collect them from the main hall about 3.45.",
+    "picture": {
+     "type": "table",
+     "heading": "THE DAY",
+     "columns": [
+      "What",
+      "Time"
+     ],
+     "rows": [
+      [
+       "In class",
+       "8.30am"
+      ],
+      [
+       "Coach leaves",
+       "8.45am"
+      ],
+      [
+       "Back, main hall",
+       "3.45pm"
+      ]
+     ]
+    }
+   },
+   {
+    "title": "The cost",
+    "caption": "The trip costs £14.50 a child.",
+    "say": "The trip costs fourteen pounds fifty a child, covering the coach and the workshop. Pay on ParentPay by Friday the twenty-seventh of November.",
+    "picture": {
+     "type": "big",
+     "text": "£14.50",
+     "sub": "pay on ParentPay by 27 November"
+    }
+   },
+   {
+    "title": "Free meals",
+    "caption": "Free school meals means a free trip and packed lunch.",
+    "say": "If you get free school meals, the trip is free, and the school will give your child a packed lunch.",
+    "picture": {
+     "type": "flow",
+     "heading": "FREE SCHOOL MEALS",
+     "items": [
+      {
+       "icon": "bread",
+       "label": "Free meals"
+      },
+      {
+       "icon": "gift",
+       "label": "Free trip"
+      },
+      {
+       "icon": "bag",
+       "label": "Packed lunch"
+      }
+     ]
+    }
+   },
+   {
+    "title": "What to bring",
+    "caption": "Packed lunch, coat and uniform. No money, phones or toys.",
+    "say": "Pack a lunch with no glass bottles or nuts, a waterproof coat, and school uniform. Please leave money, phones and toys at home.",
+    "picture": {
+     "type": "list",
+     "heading": "BRING",
+     "items": [
+      "Packed lunch, no nuts",
+      "Waterproof coat",
+      "School uniform",
+      "No money, phones, toys"
+     ]
+    }
+   },
+   {
+    "title": "Helpers and medicine",
+    "caption": "Four helpers needed. Medicine must be in school, labelled.",
+    "say": "They need four parent helpers with a DBS check at the school. Tell the class teacher by the twenty-seventh. Medicine should be in school, labelled with a name.",
+    "picture": {
+     "type": "icons",
+     "heading": "ALSO",
+     "items": [
+      {
+       "icon": "people",
+       "label": "Four helpers"
+      },
+      {
+       "icon": "pill",
+       "label": "Labelled medicine"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Consent slip",
+    "caption": "No consent slip on ParentPay, no trip.",
+    "say": "One last thing. Fill in the consent slip on ParentPay. Without it, your child cannot go on the trip.",
+    "picture": {
+     "type": "compare",
+     "heading": "CONSENT SLIP",
+     "bad": {
+      "icon": "cross",
+      "label": "No slip, no trip"
+     },
+     "good": {
+      "icon": "tick",
+      "label": "Slip filled in"
+     }
+    }
+   }
+  ]
+ }
+}

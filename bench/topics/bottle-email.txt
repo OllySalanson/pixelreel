@@ -1,0 +1,25 @@
+The email side of Message in a Bottle
+
+The email side of Message in a Bottle
+Ahoy captain. This one is about the email side of Message in a Bottle. What emails it can send, what already works with no email at all, and what switching email on would take, and cost.
+
+1. Bottle can send four emails
+Bottle can send four kinds of email. One, an invitation, with the person's own link. Two, a sign in link, if they are on a new phone or computer. Three, news of what came of their notes. And four, word to you that new notes have come in. Every subject line names the site.
+
+2. With no email, it already works
+Right now there is no email account set up, so Bottle keeps each email in an outbox, and nothing leaves. That is fine for Laura. You send her link yourself, on WhatsApp. She opens it, leaves her notes, and sees what came of each one under My notes on the site.
+
+3. Your side needs no email
+Your side needs no email at all. Laura's notes land in the Hoops and Dreams queue. I will watch that queue and start a worker as soon as new notes arrive. Each note goes through the three gates, done, held for you, or declined with a plain reason. And your dashboard is Bottle's page of queues, with held notes at the top, and a screenshot of every note.
+
+4. With email on, Laura hears back
+If you switch email on, Laura hears back by email too. Once notes are marked done or declined, she gets one email listing them, each under a link to its page. It waits until nothing has changed for ten minutes, and she never gets more than one an hour. A note she is still waiting on just says waiting.
+
+5. The safety already built in
+The safety is already built in. Each link hides its secret code after a hash sign, so no website log keeps it. Email scanners that open links cannot use one up, only the button does. An invitation works for seven days. Turning someone off ends every link they have, for good. And because pixel reel dot pro takes no email, replies are sent to your own address.
+
+6. What switching email on takes, and costs
+Switching email on takes you about ten minutes. Make a personal Resend account, not Renew's. Add pixel reel dot pro, put in the DNS records Resend shows you, and make a key that can only send. I store the key safely and switch it on. Resend's free plan allows one hundred emails a day, and three thousand a month. Laura's few emails a day cost nothing.
+
+7. My pick
+So my pick. Start with no email. As soon as her setup is tested, you send Laura her link on WhatsApp, and her notes come straight to my queue. Switch email on later, when you want her to hear back by email. It is a ten minute job for you whenever you are ready.

@@ -1,0 +1,141 @@
+{
+ "topic": "router-reset",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "seconds": 6.4,
+ "rounds": 1,
+ "tokens": {
+  "in": 4394,
+  "out": 1018
+ },
+ "cents": 1.9,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Restarting your broadband hub",
+  "transition": "fade",
+  "scenes": [
+   {
+    "title": "Hub restart",
+    "caption": "What to do when the internet stops working.",
+    "say": "When the internet stops working, restarting the hub often sorts it. Here's how, step by step.",
+    "picture": {
+     "type": "title",
+     "text": "RESTART HUB",
+     "sub": "when the internet stops"
+    }
+   },
+   {
+    "title": "One device?",
+    "caption": "Check whether it is just one device first.",
+    "say": "First, check it's not just one device. If your phone works on Wi-Fi but your laptop doesn't, restart the laptop instead.",
+    "picture": {
+     "type": "compare",
+     "heading": "WHICH ONE?",
+     "bad": {
+      "icon": "phone",
+      "label": "Phone works"
+     },
+     "good": {
+      "icon": "computer",
+      "label": "Restart laptop"
+     }
+    }
+   },
+   {
+    "title": "Read the light",
+    "caption": "Blue is working. Orange means the connection is lost.",
+    "say": "Now look at the light on the front of the hub. Blue means all is well. Orange means it has lost its connection.",
+    "picture": {
+     "type": "table",
+     "heading": "THE LIGHT",
+     "columns": [
+      "Light",
+      "Meaning"
+     ],
+     "rows": [
+      [
+       "Blue",
+       "Working"
+      ],
+      [
+       "Orange",
+       "No connection"
+      ],
+      [
+       "Flashing orange",
+       "No connection"
+      ]
+     ]
+    }
+   },
+   {
+    "title": "Off and on",
+    "caption": "Switch it off, wait 30 seconds, switch it on.",
+    "say": "Turn the hub off, at the back or the wall. Wait a full thirty seconds. Then turn it back on.",
+    "picture": {
+     "type": "flow",
+     "heading": "OFF AND ON",
+     "items": [
+      {
+       "icon": "plug",
+       "label": "Turn off"
+      },
+      {
+       "icon": "hourglass",
+       "label": "Wait 30 seconds"
+      },
+      {
+       "icon": "bolt",
+       "label": "Turn on"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Be patient",
+    "caption": "The light flashes for 2 to 3 minutes. Leave it alone.",
+    "say": "The light will flash for two or three minutes while it reconnects. Don't turn it off again. When it's steady blue, try the internet.",
+    "picture": {
+     "type": "big",
+     "text": "2-3 MIN",
+     "sub": "leave it flashing"
+    }
+   },
+   {
+    "title": "Still stuck?",
+    "caption": "Check the cable, then wait up to 10 minutes.",
+    "say": "Still not working? Check the cable to the wall socket is pushed in at both ends. Orange for over ten minutes may mean a fault nearby.",
+    "picture": {
+     "type": "list",
+     "heading": "STILL STUCK",
+     "items": [
+      "Check cable, both ends",
+      "Orange over 10 minutes?",
+      "Check status page on mobile data",
+      "Or call your provider"
+     ]
+    }
+   },
+   {
+    "title": "Don't reset",
+    "caption": "Leave the pinhole reset button alone, unless asked.",
+    "say": "One warning. Don't press the pinhole reset button unless they ask you to. It wipes your Wi-Fi name and password, and every device needs setting up again.",
+    "picture": {
+     "type": "icons",
+     "heading": "AVOID",
+     "items": [
+      {
+       "icon": "warning",
+       "label": "Pinhole button"
+      },
+      {
+       "icon": "wifi",
+       "label": "Wi-Fi wiped"
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

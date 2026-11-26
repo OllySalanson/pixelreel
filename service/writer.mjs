@@ -10,8 +10,8 @@ import { formatGuide } from './mcp.mjs';
 import { languageName } from './reels.mjs';
 import { AGAIN, bracedIn, replyJson, TryError, writtenSoFar } from './try.mjs';
 
-/** What Claude is told, for a reel in `language` (one of the languages besides English that are read here, or null for English) read by `narrator` (a first name, or null for Peter). */
-const instructions = (language = null, narrator = null) => `You write pixel reels for the Pixel Reel website: short pixel-art explainers, one idea a scene, read aloud by a warm British narrator called Peter. A visitor has given one thing to explain: a few words, a web address, some writing, a document or a picture. Write the reel.
+/** What Claude is told by the website (exported for the test that pins it), for a reel in `language` (one of the languages besides English that are read here, or null for English) read by `narrator` (a first name, or null for Peter). */
+export const instructions = (language = null, narrator = null) => `You write pixel reels for the Pixel Reel website: short pixel-art explainers, one idea a scene, read aloud by a warm British narrator called Peter. A visitor has given one thing to explain: a few words, a web address, some writing, a document or a picture. Write the reel.
 
 ${formatGuide(language ? [language] : [])}
 

@@ -1,0 +1,139 @@
+{
+ "topic": "hospital-letter",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "seconds": 15.1,
+ "rounds": 2,
+ "tokens": {
+  "in": 9798,
+  "out": 2198
+ },
+ "cents": 4.2,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Your hospital appointment",
+  "transition": "fade",
+  "scenes": [
+   {
+    "title": "Hospital letter",
+    "caption": "An ear, nose and throat appointment.",
+    "say": "This letter is from St Anne's Hospital. It's an appointment at the ear, nose and throat clinic, about hearing loss in one ear.",
+    "picture": {
+     "type": "title",
+     "text": "EAR CLINIC",
+     "sub": "Your appointment letter"
+    }
+   },
+   {
+    "title": "When and where",
+    "caption": "Tuesday 8 December 2026, Clinic 4, Level 2.",
+    "say": "The appointment is on Tuesday the eighth of December, at twenty to eleven. Go to Clinic 4, Level 2, in the Blue Zone.",
+    "picture": {
+     "type": "table",
+     "heading": "YOUR APPOINTMENT",
+     "columns": [
+      "What",
+      "Detail"
+     ],
+     "rows": [
+      [
+       "Day",
+       "Tue 8 Dec"
+      ],
+      [
+       "Time",
+       "10.40am"
+      ],
+      [
+       "Arrive by",
+       "10.25am"
+      ],
+      [
+       "Place",
+       "Clinic 4"
+      ]
+     ]
+    }
+   },
+   {
+    "title": "Allow time",
+    "caption": "There is a hearing test first.",
+    "say": "Allow up to two hours. There's a hearing test before you see the doctor, so don't plan anything tight afterwards.",
+    "picture": {
+     "type": "icons",
+     "heading": "UP TO TWO HOURS",
+     "items": [
+      {
+       "icon": "hourglass",
+       "label": "Two hours"
+      },
+      {
+       "icon": "bell",
+       "label": "Hearing test"
+      },
+      {
+       "icon": "person",
+       "label": "See doctor"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Before you come",
+    "caption": "No ear drops for one week beforehand.",
+    "say": "For one week before, don't use any ear drops. Bring a list of your medicines, and your reading glasses if you need them.",
+    "picture": {
+     "type": "list",
+     "heading": "BEFORE YOU COME",
+     "items": [
+      "No ear drops for a week",
+      "List of your medicines",
+      "Reading glasses",
+      "One adult, if you like"
+     ]
+    }
+   },
+   {
+    "title": "Getting there",
+    "caption": "Parking is limited. The number 12 bus stops outside.",
+    "say": "Parking is limited. The number twelve bus stops right outside the main entrance. Need hospital transport? Ring at least three working days before.",
+    "picture": {
+     "type": "icons",
+     "heading": "GETTING HERE",
+     "items": [
+      {
+       "icon": "car",
+       "label": "Parking limited"
+      },
+      {
+       "icon": "bus",
+       "label": "Number 12 bus"
+      },
+      {
+       "icon": "phone",
+       "label": "Transport: ring"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Can't come?",
+    "caption": "Ring as soon as you can, or you may go back to your GP.",
+    "say": "If you can't come, ring the number on the letter as soon as you can. Miss it without telling them, and you may be sent back to your GP.",
+    "picture": {
+     "type": "compare",
+     "heading": "IF YOU CAN'T COME",
+     "bad": {
+      "icon": "cross",
+      "label": "Say nothing"
+     },
+     "good": {
+      "icon": "phone",
+      "label": "Ring them"
+     }
+    }
+   }
+  ]
+ }
+}

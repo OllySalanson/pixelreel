@@ -1,0 +1,144 @@
+{
+ "topic": "bank-scam",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "seconds": 7.2,
+ "rounds": 1,
+ "tokens": {
+  "in": 4370,
+  "out": 975
+ },
+ "cents": 1.8,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Spotting a bank phone scam",
+  "transition": "fade",
+  "scenes": [
+   {
+    "title": "Scam calls",
+    "caption": "Criminals are pretending to be your bank.",
+    "say": "Your bank has noticed a rise in phone scams. Criminals ring up, pretending to be from the fraud team.",
+    "picture": {
+     "type": "title",
+     "text": "BANK SCAMS",
+     "sub": "How to stay safe"
+    }
+   },
+   {
+    "title": "How it works",
+    "caption": "A call, text or email says your account is at risk.",
+    "say": "It might be a call, a text or an email. They say your account is at risk, and they may know your name and address.",
+    "picture": {
+     "type": "icons",
+     "heading": "THEY CONTACT YOU",
+     "items": [
+      {
+       "icon": "phone",
+       "label": "A call"
+      },
+      {
+       "icon": "speech",
+       "label": "A text"
+      },
+      {
+       "icon": "letter",
+       "label": "An email"
+      }
+     ]
+    }
+   },
+   {
+    "title": "The trick",
+    "caption": "They say: move your money to a safe account.",
+    "say": "Then comes the trick. They tell you to move your money to a safe account straight away. Even the number on your screen can look genuine.",
+    "picture": {
+     "type": "flow",
+     "heading": "THE TRICK",
+     "items": [
+      {
+       "icon": "warning",
+       "label": "Account at risk"
+      },
+      {
+       "icon": "bank",
+       "label": "Safe account"
+      },
+      {
+       "icon": "money",
+       "label": "Money gone"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Never",
+    "caption": "Your bank will never ask for these things.",
+    "say": "Your bank will never ask you to move money to a safe account. Nor for your full PIN, or your online password.",
+    "picture": {
+     "type": "list",
+     "heading": "BANK WILL NEVER",
+     "items": [
+      "Ask you to use a safe account",
+      "Ask for your full PIN",
+      "Ask for your password",
+      "Collect your card at home",
+      "Ask you to read out a code"
+     ]
+    }
+   },
+   {
+    "title": "Hang up",
+    "caption": "Hang up. Do not trust the number on your screen.",
+    "say": "If a call like that comes, hang up. Wait five minutes, or use a different phone. Then ring the number on the back of your card.",
+    "picture": {
+     "type": "flow",
+     "heading": "WHAT TO DO",
+     "items": [
+      {
+       "icon": "phone",
+       "label": "Hang up"
+      },
+      {
+       "icon": "clock",
+       "label": "Wait five minutes"
+      },
+      {
+       "icon": "card",
+       "label": "Ring number on card"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Act fast",
+    "caption": "Given details or moved money? Call at once, or ring 159.",
+    "say": "If you think you have given details away or moved money, call your bank at once. You can also ring one five nine.",
+    "picture": {
+     "type": "big",
+     "text": "159",
+     "sub": "connects you to your bank"
+    }
+   },
+   {
+    "title": "Remember",
+    "caption": "A real bank will never rush you. It is fine to say no.",
+    "say": "And remember this. A real bank will never rush you. Take your time. It is perfectly fine to say no.",
+    "picture": {
+     "type": "icons",
+     "heading": "REMEMBER",
+     "items": [
+      {
+       "icon": "clock",
+       "label": "Take your time"
+      },
+      {
+       "icon": "shield",
+       "label": "Say no"
+      }
+     ]
+    }
+   }
+  ]
+ }
+}
