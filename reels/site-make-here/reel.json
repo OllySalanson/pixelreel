@@ -59,12 +59,12 @@
       }
     },
     {
-      "title": "Make my next reel",
-      "caption": "Press Make my next reel.",
-      "say": "Then press Make my next reel. Claude writes the scenes, I read them out, and it plays in about a minute.",
+      "title": "Make my reel",
+      "caption": "Press Make my reel.",
+      "say": "Then press Make my reel. Claude writes the scenes, I read them out, and it plays in about a minute.",
       "picture": {
         "type": "sprite",
-        "label": "MAKE MY NEXT REEL",
+        "label": "MAKE MY REEL",
         "rows": [
           ".kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk.",
           "kcccccccccccccccccccccccccccccccck",

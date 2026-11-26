@@ -318,8 +318,9 @@ him:
   pressed. One at a time: another takes its place.
 - **Drop** a link or some writing anywhere on the page and it becomes a note; drop a PDF or
   a picture, or paste a picture into the line, and it is clipped on.
-- **Make my next reel** makes one reel from all the notes together, with whatever is still
-  in the line and the photo or PDF clipped to them (`POST /try` with `{ notes }`, or
+- **Make my reel** (the button says Make my next reel beside a reel, where there is one
+  before it) makes one reel from all the notes together, with whatever is still in the
+  line and the photo or PDF clipped to them (`POST /try` with `{ notes }`, or
   `{ notes, file }`; `firstAsk` in `service/writer.mjs`). A note that is a web address and
   nothing else is read with Claude's page reader; a link inside some writing is not, and
   no page is read when a file is clipped on.

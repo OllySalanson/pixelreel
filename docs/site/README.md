@@ -1855,3 +1855,17 @@ straight from a phone's camera.
 | On a phone, as the page loads | Speaking a note |
 | --- | --- |
 | ![The make page on a phone. The player, and under it, all on the first screen, My notes: one line saying Add a note with a paperclip and a microphone, and the Make my next reel button.](log/v84-my-notes-phone.jpg) | ![My notes beside the blue sky reel. The line is framed in red and holds the words heard so far; the microphone is white on a red square, and Make my next reel is gold.](log/v84-my-notes-speaking.jpg) |
+
+### Version 85
+
+- **Make my reel.** On the make page the gold button said Make my next reel, which made a
+  first-time visitor wonder what reel they had missed. There it now says Make my reel;
+  beside a reel, where there is one before it, it still says Make my next reel.
+- **Peter says what is there.** In the reel about making one he said "press Speak", and the
+  word has gone from the box. He now says "press the microphone", and "press the paperclip,
+  and add a photo of a letter", which a fourth note in his picture of My notes shows; and
+  "press Make my reel", in that reel and in the home page's.
+
+The four lines were re-recorded here with Pocket TTS, and the pictures of the two scenes
+whose lines changed length were timed to them again. Nobody has listened to them yet, and
+they were not checked by speech-to-text this time.

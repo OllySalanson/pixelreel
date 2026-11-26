@@ -1125,7 +1125,8 @@ describe('what the make-one box takes, on the home page', () => {
 
   it('has one line to write in, with a paperclip and a microphone, and one button that makes the reel: the same beside every reel', () => {
     const panel = (page) => /<aside class="mynotes"[\s\S]*?<\/aside>/.exec(page)[0];
-    for (const [name, page, most] of [['the make page', html.make, 60000], ['a reel\'s page', html.reel, 600]]) {
+    // the button says what it makes: a first reel on the make page, the next one beside a reel
+    for (const [name, page, most, makes] of [['the make page', html.make, 60000, 'Make my reel'], ['a reel\'s page', html.reel, 600, 'Make my next reel']]) {
       const box = panel(page), form = /<form class="mynotes-add" id="mynotes-add">([\s\S]*?)<\/form>/.exec(box)[1];
       // in the order they are seen: the paperclip, the line, then the microphone or the arrow that takes its place
       assert.deepEqual([...form.matchAll(/<(?:button|textarea|input)[^>]* id="([a-z-]+)"/g)].map(([, id]) => id), ['mynotes-file', 'mynotes-box', 'mynotes-mic', 'mynotes-save', 'mynotes-files'], name);
@@ -1138,9 +1139,11 @@ describe('what the make-one box takes, on the home page', () => {
         ['save', 'Add this note', 'Add this note', 'submit', 'hidden']        // shown by the script, once there are words to add
       ], name);
       assert.equal((box.match(/<button/g) ?? []).length, 4, `${name}: three small keys and one button with words`);
-      assert.match(box, /<\/form>\s*<button class="btn btn-gold mynotes-make" id="mynotes-make" type="button" disabled>Make my next reel<\/button>\s*<p class="mynotes-says" id="mynotes-says" role="status"><\/p>/, name);
+      assert.match(box, new RegExp(`</form>\\s*<button class="btn btn-gold mynotes-make" id="mynotes-make" type="button" disabled>${makes}</button>\\s*<p class="mynotes-says" id="mynotes-says" role="status"></p>`), name);
       // no words of instruction: its name, what the line is for, and the one button
-      assert.equal(box.replace(/<template[\s\S]*?<\/template>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(), 'My notes Make my next reel', name);
+      assert.equal(box.replace(/<template[\s\S]*?<\/template>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(), `My notes ${makes}`, name);
+      // and Peter calls it what it says, in the reel that plays beside it on the make page
+      if (name === 'the make page') assert.ok(JSON.parse(readFileSync(root('reels/site-how-to-make/reel.json'), 'utf8')).scenes.some((scene) => scene.say.includes(`press ${makes}.`)), 'the reel about making one names the button as it is');
       // the pictures the script puts in the list: a PDF's, and a note's X
       assert.match(box, /<template id="mynotes-paper"><svg class="px"[\s\S]*?<\/svg><\/template>\s*<template id="mynotes-cross"><svg class="ico"[^>]*><path d="[^"]+"\/><\/svg><\/template>/, name);
     }
