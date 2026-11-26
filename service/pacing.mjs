@@ -167,8 +167,29 @@ export function fitPace(said, seconds, { every, start, quickest = QUICKEST } = {
   return { start: round(Math.min(a, last)), every: round(b) };
 }
 
+/**
+ * A stage with each move set to start (`at`) as the narrator says its cue. A move whose cue is
+ * not found, or that has none, falls in step between the ones that are; they all come in
+ * order, none before the scene has come in, and the last in good time before the line ends.
+ */
+export function paceStage(picture, say, seconds) {
+  const moves = picture.moves ?? [], said = spokenAt(moves.map((m) => m.cue ?? ''), say, seconds);
+  const last = Math.max(EARLIEST, seconds - TAIL), times = said.map((t) => (t === null ? null : Math.max(EARLIEST, t - LEAD)));
+  // fill each gap between named moves evenly; before the first, from the start; after the last, to the end
+  const known = times.map((t, i) => [i, t]).filter(([, t]) => t !== null);
+  const at = times.map((t, i) => {
+    if (t !== null) return t;
+    const before = known.filter(([j]) => j < i).at(-1), after = known.find(([j]) => j > i);
+    const [i0, t0] = before ?? [-1, Math.min(0.6, last)], [i1, t1] = after ?? [moves.length, last];
+    return t0 + ((t1 - t0) * (i - i0)) / (i1 - i0);
+  });
+  for (let i = 1; i < at.length; i++) at[i] = Math.max(at[i], at[i - 1] + 0.2);   // in order, a beat apart
+  return { ...picture, moves: moves.map((m, i) => ({ ...m, at: round(Math.min(at[i], last)) })) };
+}
+
 /** A picture with its items timed to the `seconds` the narrator takes over `say`. Pictures with nothing to time come back as they are. */
 export function pacePicture(picture, say, seconds) {
+  if (picture?.type === 'stage' && Array.isArray(picture.moves) && seconds > 0) return paceStage(picture, say, seconds);
   const labels = labelsOf(picture);
   if (!labels || !(seconds > 0)) return picture;
   const usual = USUAL[picture.type];

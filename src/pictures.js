@@ -3,6 +3,7 @@
 // an AI agent can write a whole reel without a line of drawing code.
 import { ICON_SIZE, ICONS } from './icons.js';
 import { PALETTE } from './palette.js';
+import { drawStage, stageProblems } from './stage.js';
 
 const INK = '#1a1a1a', NIGHT = '#0b1220', NAVY = '#13203a', CREAM = '#ebeac5', LIGHT = '#fdf6e3', GOLD = '#ffcc4d';
 const TEAL = '#55d6be', BLUE = '#24476b', GREY = '#9fb3c8', PINK = '#ff7eb6', MUTED = '#6f87a3';
@@ -441,10 +442,29 @@ function sprite(t, px, p) {
   if (p.label && t >= 0.9) px.sign(p.label, W / 2, H - 30, fit(px, p.label, 16, W - 40), GOLD);
 }
 
+/** A thing on a stage as an icon item, for personLook: its label, or failing that its id, keeps its look the same from scene to scene. */
+const asItem = (th) => ({ icon: th.is, label: th.label ?? th.id, ...(th.skin ? { skin: th.skin } : {}), ...(th.hair ? { hair: th.hair } : {}) });
+
+/** A place, a few things standing in it, and moves between them (stage.js). */
+function stage(t, px, p) { drawStage(t, px, p, (th, i) => personLook(asItem(th), i)); }
+
+/** What is wrong with a stage beyond its fields' being there: stage.js checks it, and a person's skin and hair are checked here. */
+function stageCheck(p) {
+  return stageProblems(p, (th, where) => {
+    const wrong = [];
+    for (const key of ['skin', 'hair']) {
+      if (th[key] === undefined) continue;
+      if (!PERSON_ICONS.includes(th.is)) wrong.push(`${where}.${key}: only a ${PERSON_ICONS.join(', ')} takes ${key}`);
+      else if (!Object.hasOwn(LOOKS[key], th[key])) wrong.push(`${where}.${key} must be one of: ${Object.keys(LOOKS[key]).join(', ')}`);
+    }
+    return wrong;
+  });
+}
+
 /**
  * Every ready-made picture: its fields (a trailing ? marks optional ones), how it draws, and
  * any check beyond its fields. Kinds: text, list (of text), messages ([{ from, text }]), number,
- * flag (true or false), image (a name from images), items (1 to 4 { icon, label? }), item
+ * flag (true or false), image (a name from images), objects (a list the picture's own check looks into), items (1 to 4 { icon, label? }), item
  * ({ icon, label }), rows (sprite rows of palette letters) and colours ({ letter: '#rrggbb' }).
  */
 export const PICTURES = {
@@ -459,7 +479,8 @@ export const PICTURES = {
   flow: { fields: { items: 'items', heading: 'text?', every: 'number?', start: 'number?' }, draw: flow },
   compare: { fields: { bad: 'item', good: 'item', heading: 'text?', every: 'number?', start: 'number?' }, draw: compare },
   table: { fields: { rows: 'cells', columns: 'heads?', heading: 'text?', every: 'number?', start: 'number?' }, draw: table, check: tableShape },
-  sprite: { fields: { rows: 'rows', colours: 'colours?', label: 'text?' }, draw: sprite, check: spriteLetters }
+  sprite: { fields: { rows: 'rows', colours: 'colours?', label: 'text?' }, draw: sprite, check: spriteLetters },
+  stage: { fields: { place: 'text', things: 'objects', moves: 'objects' }, draw: stage, check: stageCheck }
 };
 
 /** The names a picture can use for an icon. */
@@ -501,6 +522,7 @@ const KINDS = {
   cells: [(v) => Array.isArray(v) && v.length >= 1 && v.length <= TABLE_MAX.rows && v.every((row) => isCells(row)),
     `must be 1 to ${TABLE_MAX.rows} rows, each a list of ${TABLE_MAX.minCols} to ${TABLE_MAX.cols} short cells of text, such as [["High Street", "9:05"], ["Station", "9:20"]]`],
   heads: [(v) => isCells(v), `must be a list of ${TABLE_MAX.minCols} to ${TABLE_MAX.cols} short headings, one for each column, such as ["Stop", "Time"]`],
+  objects: [(v) => Array.isArray(v) && v.length > 0, 'must be a list'],
   colours: [(v) => v !== null && typeof v === 'object' && !Array.isArray(v) &&
     Object.entries(v).every(([k, c]) => [...k].length === 1 && k !== '.' && k !== ' ' && typeof c === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)),
     'must be letters and the colours they stand for, such as { "h": "#6b3e2e" }']

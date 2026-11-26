@@ -4,6 +4,7 @@
 // Pure: no DOM, so the same checks run in the browser, in the tools and in the tests.
 import { HAIRS, ICON_NAMES, PERSON_ICONS, PICTURES, SKINS, SPRITE_MAX, TABLE_MAX } from './pictures.js';
 import { PALETTE } from './palette.js';
+import { CAST, MARKS, MOVES, PLACES, SIZES, SPOTS, STAGE_MAX } from './stage.js';
 import { CAPTION_STYLES, LANGUAGES, normalizeReel, ReelError } from './reel.js';
 import { TRANSITIONS } from './transitions.js';
 
@@ -26,7 +27,8 @@ export const PICTURE_NOTES = {
   flow: 'One to four icons joined by arrows, arriving in turn: how one thing leads to the next.',
   compare: 'Two cards side by side: the one to avoid, with a cross, then the one to choose, with a tick.',
   table: 'A small table for things set out in rows and columns (a timetable, a bill, prices, dates): rows arrive one by one, the newest lit.',
-  sprite: 'Pixel art of your own from rows of palette letters, scaled up to fill the picture, with an optional label.'
+  sprite: 'Pixel art of your own from rows of palette letters, scaled up to fill the picture, with an optional label.',
+  stage: 'Something happening: a place, a few things standing in it, and moves between them (a letter flies, a barrier rises, coins pile up), each as the narrator says it.'
 };
 
 const isPlainObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -157,6 +159,59 @@ const KIND_SCHEMAS = {
   }
 };
 
+/** The fields of a stage picture, as a schema: stage.js is the final word. */
+const STAGE_SCHEMAS = {
+  place: { enum: Object.keys(PLACES), description: Object.entries(PLACES).map(([name, says]) => `${name}: ${says}`).join(' ') },
+  things: {
+    type: 'array',
+    minItems: 1,
+    maxItems: STAGE_MAX.things,
+    description: 'What stands on the stage, each in a spot of its own.',
+    items: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['id', 'is', 'spot'],
+      properties: {
+        id: { ...TEXT, description: 'A short name of its own, for the moves to use.' },
+        is: { enum: [...CAST, ...ICON_NAMES], description: `What it is: ${CAST.join(', ')} (the cast), or an icon.` },
+        spot: { enum: Object.keys(SPOTS), description: 'Where it stands, left to right.' },
+        up: { type: 'boolean', description: 'True to have it in the air (a cloud, the sun, a plane), not on the ground.' },
+        size: { enum: Object.keys(SIZES), description: 'medium unless said; a big thing needs the spots either side of it clear.' },
+        label: { ...TEXT, description: `${STAGE_MAX.label} words at most.` },
+        flip: { type: 'boolean', description: 'True to face it the other way.' },
+        ...LOOK_SCHEMAS
+      }
+    }
+  },
+  moves: {
+    type: 'array',
+    minItems: 1,
+    maxItems: STAGE_MAX.moves,
+    description: 'What happens, in the order it happens.',
+    items: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['do'],
+      properties: {
+        do: { enum: Object.keys(MOVES), description: Object.entries(MOVES).map(([name, m]) => `${name}: ${m.says} (takes ${m.needs.join(', ')})`).join('. ') },
+        cue: { ...TEXT, description: 'The words the narrator says as it happens, so it happens then.' },
+        at: { type: 'number', minimum: 0, description: 'Seconds into the scene; set from the voice when it is recorded.' },
+        who: { type: 'string', description: 'The id of the thing that arrives, says, walks or leaves.' },
+        on: { type: 'string', description: 'The id of the thing it happens on.' },
+        from: { type: 'string', description: 'The id of the thing it starts from.' },
+        to: { type: ['string', 'number'], description: 'The id of the thing it goes to; a spot for walk; a number for count, or 0 to 1 for meter.' },
+        what: { enum: ICON_NAMES, description: 'The icon that is sent.' },
+        count: { type: 'integer', minimum: 1, maximum: STAGE_MAX.coins, description: 'How many coins.' },
+        with: { enum: MARKS, description: 'The badge.' },
+        text: { ...TEXT, description: `What is said, ${STAGE_MAX.say} words at most.` },
+        before: { type: 'string', description: 'Before a counted number, such as £.' },
+        after: { type: 'string', description: 'After a counted number, such as " days".' },
+        again: { type: 'boolean', description: 'True to send it again and again.' }
+      }
+    }
+  }
+};
+
 /**
  * The reel.json format as a JSON Schema (draft 2020-12), built from the ready-made pictures,
  * so it can never drift from what the player draws. Tools can hand it to an AI agent as the
@@ -169,7 +224,7 @@ export function reelSchema() {
   const pictures = Object.entries(PICTURES).map(([type, { fields }]) => {
     const properties = { type: { const: type } }, required = ['type'];
     for (const [key, want] of Object.entries(fields)) {
-      properties[key] = KIND_SCHEMAS[want.replace('?', '')];
+      properties[key] = type === 'stage' ? STAGE_SCHEMAS[key] : KIND_SCHEMAS[want.replace('?', '')];
       if (!want.endsWith('?')) required.push(key);
     }
     return { title: type, description: PICTURE_NOTES[type], type: 'object', additionalProperties: false, required, properties };

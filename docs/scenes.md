@@ -215,6 +215,34 @@ stray space or letter pushes the rest of that row sideways.
 picture: { type: 'sprite', label: 'MY CAT', colours: { h: '#6b3e2e' }, rows: ['.h....h.', 'hhh..hhh', 'hkhhhhkh', 'hhhyyhhh', '.hhhhhh.'] }
 ```
 
+**stage**: something happening, not a sign for it. A `place`, up to six `things` standing in
+it, and up to six `moves` between them, each landing on the words the narrator says.
+
+- `place`: `home`, `outside`, `street`, `night`, `sea` or `plain`.
+- `things`: each `{ "id", "is", "spot" }`. `is` is `reelie` (the film reel who presents) or
+  an icon; `spot` is `far-left`, `left`, `middle`, `right` or `far-right`, one thing to a spot
+  on the ground and one in the air (`"up": true`, for a cloud or a plane). Optional: `label`
+  (three words at most, under it), `size` (`medium`, or `big`, which needs the spots either
+  side clear), `flip`, and a person's `skin` and `hair`.
+- `moves`: each `{ "do", ... }`, in the order they happen. `arrive` (`who`) drops a thing in;
+  `send` (`what`, `from`, `to`, `again?`) flies something small across, and bounces it back
+  off a `block` (`from`, `to`), a barrier that rises between two things; `flow` (`from`, `to`)
+  is a steady stream of dots; `wave` (`from`, `to`) a sound wave; `pile` (`on`, `count` 1 to
+  10) coins; `meter` (`on`, `to` 0 to 1) a bar that fills; `count` (`on`, `to`, `before?`,
+  `after?`) a number that counts up; `mark` (`on`, `with`: `tick`, `cross`, `question`,
+  `warning`, `lock`, `clock`, `heart` or `star`) a badge; `pulse` (`on`) rings; `say`
+  (`who`, `text` of four words at most) a speech bubble; `walk` (`who`, `to` a spot); and
+  `leave` (`who`).
+- Each move's `cue` is the words the narrator says as it happens. The service times the move
+  to them once the voice is recorded; `at` (seconds) sets it by hand. With neither, the
+  moves come one after another.
+
+```js
+picture: { type: 'stage', place: 'street',
+  things: [{ id: 'home', is: 'house', spot: 'left', label: 'Your home' }, { id: 'bank', is: 'bank', spot: 'right', label: 'The bank' }],
+  moves: [{ do: 'send', what: 'letter', from: 'bank', to: 'home', cue: 'sends a letter' }, { do: 'pile', on: 'bank', count: 5, cue: 'what you owe' }] }
+```
+
 ## Transitions
 
 How one scene gives way to the next: set `transition` on the reel for every scene, or on a
