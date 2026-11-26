@@ -1,0 +1,28 @@
+Brightwater Energy - Your gas bill
+
+Account holder: Mrs S Okafor
+Account number: 8820 1145 3301
+Bill date: 3 November 2026
+Billing period: 4 August 2026 to 2 November 2026 (91 days)
+
+Your meter readings
+Previous reading (4 August, actual): 04112
+Latest reading (2 November, estimated): 04398
+Units used: 286 cubic metres, which we convert to 3,215 kWh
+
+What you used
+Gas: 3,215 kWh at 6.84p per kWh = £219.91
+Standing charge: 91 days at 31.65p per day = £28.80
+Subtotal: £248.71
+VAT at 5%: £12.44
+Total for this period: £261.15
+
+Your account
+Balance brought forward: £0.00 in credit
+Paid by Direct Debit since your last bill: £180.00 (3 payments of £60.00)
+Amount now owed: £81.15
+
+What happens next
+Your Direct Debit will go up from £60.00 to £87.00 a month from 1 December 2026, to cover the colder months.
+Your latest reading was estimated. Send us a real reading by 20 November and we will send a new bill if it is different. You can send a reading in our app, at brightwater.example/read, or by calling 0800 000 4410.
+If you are finding it hard to pay, talk to us. We can set up a payment plan, and you may be able to get help from the Warm Home Discount.

@@ -1,0 +1,128 @@
+{
+ "topic": "council-tax",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "seconds": 6.8,
+ "rounds": 1,
+ "tokens": {
+  "in": 4431,
+  "out": 923
+ },
+ "cents": 1.8,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Your Council Tax reminder",
+  "transition": "fade",
+  "scenes": [
+   {
+    "title": "Reminder",
+    "caption": "A council tax reminder: one instalment is missing.",
+    "say": "This is a reminder from Riverford District Council. One of your Council Tax instalments hasn't been paid, so let's look at what to do.",
+    "picture": {
+     "type": "title",
+     "text": "TAX REMINDER",
+     "sub": "Riverford District Council"
+    }
+   },
+   {
+    "title": "What's missing",
+    "caption": "The November instalment was due on 1 November 2026.",
+    "say": "The council says the November instalment of one hundred and forty-eight pounds, due on the first of November, hasn't arrived.",
+    "picture": {
+     "type": "table",
+     "heading": "MISSED",
+     "columns": [
+      "What",
+      "Detail"
+     ],
+     "rows": [
+      [
+       "Instalment",
+       "November"
+      ],
+      [
+       "Amount",
+       "£148.00"
+      ],
+      [
+       "Due",
+       "1 Nov 2026"
+      ]
+     ]
+    }
+   },
+   {
+    "title": "Pay in 7 days",
+    "caption": "Pay £148.00 within 7 days of the notice date.",
+    "say": "The fix is simple. Pay the one hundred and forty-eight pounds within seven days of the date on the notice, and carry on with instalments as before.",
+    "picture": {
+     "type": "big",
+     "text": "7 DAYS",
+     "sub": "to pay £148.00"
+    }
+   },
+   {
+    "title": "If you don't",
+    "caption": "Miss it, and the rest of the year's bill falls due.",
+    "say": "Miss that deadline, and you lose instalments. The remaining seven hundred and forty pounds is due at once. After that, court action and eighty-five pounds in costs are possible.",
+    "picture": {
+     "type": "flow",
+     "heading": "IF NOT PAID",
+     "items": [
+      {
+       "icon": "clock",
+       "label": "7 days pass"
+      },
+      {
+       "icon": "money",
+       "label": "£740 due"
+      },
+      {
+       "icon": "bank",
+       "label": "Court, £85"
+      }
+     ]
+    }
+   },
+   {
+    "title": "How to pay",
+    "caption": "Pay online, by phone, or at a Post Office.",
+    "say": "You can pay online, by phone at any hour, or at a Post Office or PayPoint with the barcode on your bill.",
+    "picture": {
+     "type": "icons",
+     "heading": "THREE WAYS",
+     "items": [
+      {
+       "icon": "computer",
+       "label": "Online"
+      },
+      {
+       "icon": "phone",
+       "label": "By phone"
+      },
+      {
+       "icon": "bag",
+       "label": "Post Office"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Need help",
+    "caption": "Struggling? Contact the council straight away.",
+    "say": "If money is tight, contact the council straight away. You may get a reduction or a single person discount, and Citizens Advice offers free debt advice. Already paid? Ignore this. For anything unclear, check with the council.",
+    "picture": {
+     "type": "list",
+     "heading": "IF YOU STRUGGLE",
+     "items": [
+      "Contact the council",
+      "Ask about reductions",
+      "Citizens Advice",
+      "Already paid? Ignore it"
+     ]
+    }
+   }
+  ]
+ }
+}

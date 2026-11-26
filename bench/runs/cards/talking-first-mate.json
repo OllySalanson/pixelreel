@@ -1,0 +1,165 @@
+{
+ "topic": "talking-first-mate",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "seconds": 7.9,
+ "rounds": 1,
+ "tokens": {
+  "in": 4961,
+  "out": 1195
+ },
+ "cents": 2.2,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "The talking first mate",
+  "transition": "fade",
+  "scenes": [
+   {
+    "title": "Talking mate",
+    "caption": "Speak to firstmate, and hear it answer.",
+    "say": "Ever wanted to talk to your first mate out loud? Here is how the talking version works, and what it costs.",
+    "picture": {
+     "type": "title",
+     "text": "TALKING MATE",
+     "sub": "voice for firstmate"
+    }
+   },
+   {
+    "title": "Why Amazon",
+    "caption": "Firstmate's makers chose Amazon's Nova Sonic.",
+    "say": "Firstmate's makers picked Amazon, not the mate. Nova Sonic is one model that hears your voice and speaks the answer, all in one go.",
+    "picture": {
+     "type": "flow",
+     "heading": "ONE MODEL",
+     "items": [
+      {
+       "icon": "speech",
+       "label": "You speak"
+      },
+      {
+       "icon": "cloud",
+       "label": "Nova Sonic"
+      },
+      {
+       "icon": "music",
+       "label": "It answers"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Fast",
+    "caption": "First words arrive in about 1.2 seconds.",
+    "say": "Sound streams both ways while you are still talking. So the first words of the answer arrive in about one point two seconds.",
+    "picture": {
+     "type": "big",
+     "text": "1.2 SEC",
+     "sub": "to the first words"
+    }
+   },
+   {
+    "title": "How it joins",
+    "caption": "Laptop to secure tunnel to PC to Amazon.",
+    "say": "Your laptop records and plays the sound. A secure tunnel carries it to the PC, which talks to Amazon. Your laptop never holds an Amazon password.",
+    "picture": {
+     "type": "flow",
+     "heading": "THE PATH",
+     "items": [
+      {
+       "icon": "computer",
+       "label": "Laptop"
+      },
+      {
+       "icon": "lock",
+       "label": "Secure tunnel"
+      },
+      {
+       "icon": "computer",
+       "label": "This PC"
+      },
+      {
+       "icon": "cloud",
+       "label": "Amazon"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Two tools",
+    "caption": "It reads numbers only, and drops work in an inbox.",
+    "say": "Amazon's model gets two tools. One reads numbers, never names. The other drops work in the inbox. It can never change a project itself.",
+    "picture": {
+     "type": "compare",
+     "heading": "WHAT AMAZON SEES",
+     "bad": {
+      "icon": "person",
+      "label": "Customer names"
+     },
+     "good": {
+      "icon": "chart",
+      "label": "Numbers only"
+     }
+    }
+   },
+   {
+    "title": "Not yet",
+    "caption": "Hold a key to talk. No memory. No cutting in.",
+    "say": "It has limits for now. You hold a key to talk, every question starts fresh, and you cannot cut in while it speaks.",
+    "picture": {
+     "type": "list",
+     "heading": "NOT YET",
+     "items": [
+      "Key held to talk",
+      "No memory of last question",
+      "No cutting in"
+     ]
+    }
+   },
+   {
+    "title": "The cost",
+    "caption": "Likely a pound or two a month.",
+    "say": "Speaking every message would be about five pounds a month. At today's busy pace, about nine. You would only speak some, so most likely a pound or two.",
+    "picture": {
+     "type": "table",
+     "heading": "PER MONTH",
+     "columns": [
+      "Case",
+      "Cost"
+     ],
+     "rows": [
+      [
+       "All, usual day",
+       "about £5"
+      ],
+      [
+       "All, busy day",
+       "about £9"
+      ],
+      [
+       "Some spoken",
+       "£1 to £2"
+      ]
+     ]
+    }
+   },
+   {
+    "title": "Your pick",
+    "caption": "Tell me A, B, or both.",
+    "say": "B needs your own Amazon account and a small install, in Amazon's voice. A is short answers in Peter's voice, free, about an hour. A, B, or both?",
+    "picture": {
+     "type": "compare",
+     "heading": "A OR B",
+     "bad": {
+      "icon": "cloud",
+      "label": "B: Amazon voice"
+     },
+     "good": {
+      "icon": "computer",
+      "label": "A: Peter, free"
+     }
+    }
+   }
+  ]
+ }
+}

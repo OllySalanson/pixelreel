@@ -1,0 +1,156 @@
+{
+ "topic": "bottle-email",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "seconds": 18,
+ "rounds": 2,
+ "tokens": {
+  "in": 10562,
+  "out": 2942
+ },
+ "cents": 5.1,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "The email side of Message in a Bottle",
+  "transition": "fade",
+  "scenes": [
+   {
+    "title": "Bottle email",
+    "caption": "What Bottle's email can do, and what it takes.",
+    "say": "Ahoy, captain. Here's the email side of Message in a Bottle: what it sends, what works without it, and what switching it on costs.",
+    "picture": {
+     "type": "title",
+     "text": "BOTTLE EMAIL",
+     "sub": "what it does, what it costs"
+    }
+   },
+   {
+    "title": "Four emails",
+    "caption": "Bottle can send four kinds of email.",
+    "say": "Bottle can send four emails. An invitation, a sign in link, news of what came of notes, and word to you that new notes arrived.",
+    "picture": {
+     "type": "list",
+     "heading": "FOUR EMAILS",
+     "numbered": true,
+     "items": [
+      "Invitation",
+      "Sign in link",
+      "News of notes",
+      "New notes for you"
+     ]
+    }
+   },
+   {
+    "title": "No email yet",
+    "caption": "With no email set up, nothing leaves the outbox.",
+    "say": "Right now no email account is set up, so every email just sits in an outbox. Nothing leaves. That's fine for Laura.",
+    "picture": {
+     "type": "compare",
+     "heading": "RIGHT NOW",
+     "bad": {
+      "icon": "letter",
+      "label": "Emails stay in outbox"
+     },
+     "good": {
+      "icon": "phone",
+      "label": "Link on WhatsApp"
+     }
+    }
+   },
+   {
+    "title": "Works already",
+    "caption": "Laura opens her link, leaves notes, and sees results.",
+    "say": "You send Laura her link on WhatsApp. She leaves her notes, and sees what came of each one under My notes on the site.",
+    "picture": {
+     "type": "flow",
+     "heading": "LAURA'S WAY",
+     "items": [
+      {
+       "icon": "phone",
+       "label": "WhatsApp link"
+      },
+      {
+       "icon": "pencil",
+       "label": "Leaves notes"
+      },
+      {
+       "icon": "eye",
+       "label": "Sees results"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Your side",
+    "caption": "Your side needs no email at all.",
+    "say": "Your side needs no email either. Each note goes through three gates: done, held for you, or declined with a plain reason.",
+    "picture": {
+     "type": "list",
+     "heading": "THREE GATES",
+     "items": [
+      "Done",
+      "Held for you",
+      "Declined, with a reason"
+     ]
+    }
+   },
+   {
+    "title": "Built-in safety",
+    "caption": "Links hide their secret, and invitations last seven days.",
+    "say": "The safety is already built in. Scanners cannot use a link up, invitations last seven days, and turning someone off ends all their links.",
+    "picture": {
+     "type": "icons",
+     "heading": "ALREADY SAFE",
+     "items": [
+      {
+       "icon": "lock",
+       "label": "Secret hidden"
+      },
+      {
+       "icon": "calendar",
+       "label": "Seven days"
+      },
+      {
+       "icon": "shield",
+       "label": "Links end for good"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Switching on",
+    "caption": "About ten minutes for you, and it costs nothing.",
+    "say": "Switching email on takes about ten minutes, using a personal Resend account. The free plan allows a hundred emails a day, so Laura's cost nothing.",
+    "picture": {
+     "type": "big",
+     "text": "10 MIN",
+     "sub": "and the free plan covers it"
+    }
+   },
+   {
+    "title": "My pick",
+    "caption": "Start with no email. Switch it on later.",
+    "say": "So my pick: start with no email, and send Laura her link on WhatsApp. Switch email on later, when you want her to hear back.",
+    "picture": {
+     "type": "sprite",
+     "label": "START SIMPLE",
+     "rows": [
+      "................",
+      ".kkkkkkkkkkkkkk.",
+      "kwwwwwwwwwwwwwwk",
+      "kwwwwwwwwwwwwwwk",
+      "kwwwwwwggwwwwwwk",
+      "kwwwwwwggwwwwwwk",
+      "kwwwwwggggwwwwwk",
+      "kwwwwggggggwwwwk",
+      "kwwwwwwggwwwwwwk",
+      "kwwwwwwwwwwwwwwk",
+      "kwwwwwwwwwwwwwwk",
+      ".kkkkkkkkkkkkkk."
+     ]
+    }
+   }
+  ]
+ }
+}

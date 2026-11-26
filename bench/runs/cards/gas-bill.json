@@ -1,0 +1,149 @@
+{
+ "topic": "gas-bill",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "seconds": 6.6,
+ "rounds": 1,
+ "tokens": {
+  "in": 4504,
+  "out": 1015
+ },
+ "cents": 1.9,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Your Brightwater gas bill",
+  "transition": "fade",
+  "scenes": [
+   {
+    "title": "Gas bill",
+    "caption": "A quick look at your Brightwater gas bill.",
+    "say": "Got a gas bill from Brightwater Energy? Here's what it says, and the couple of things it asks you to do.",
+    "picture": {
+     "type": "title",
+     "text": "GAS BILL",
+     "sub": "Brightwater Energy"
+    }
+   },
+   {
+    "title": "What you used",
+    "caption": "91 days of gas came to £261.15.",
+    "say": "It covers 91 days, from early August to early November. You used 3,215 kilowatt hours, and the total comes to two hundred and sixty-one pounds fifteen.",
+    "picture": {
+     "type": "table",
+     "heading": "THE BILL",
+     "columns": [
+      "Item",
+      "Cost"
+     ],
+     "rows": [
+      [
+       "Gas used",
+       "£219.91"
+      ],
+      [
+       "Standing charge",
+       "£28.80"
+      ],
+      [
+       "VAT at 5%",
+       "£12.44"
+      ],
+      [
+       "Total",
+       "£261.15"
+      ]
+     ]
+    }
+   },
+   {
+    "title": "Paid so far",
+    "caption": "You paid £180 by Direct Debit.",
+    "say": "You have already paid one hundred and eighty pounds by Direct Debit, in three payments of sixty. That leaves less to pay.",
+    "picture": {
+     "type": "flow",
+     "heading": "HOW IT ADDS UP",
+     "items": [
+      {
+       "icon": "document",
+       "label": "Bill £261.15"
+      },
+      {
+       "icon": "bank",
+       "label": "Paid £180"
+      },
+      {
+       "icon": "money",
+       "label": "Owed £81.15"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Owed now",
+    "caption": "The amount now owed is £81.15.",
+    "say": "So the amount now owed is this one.",
+    "picture": {
+     "type": "big",
+     "text": "£81.15",
+     "sub": "amount now owed"
+    }
+   },
+   {
+    "title": "Estimated",
+    "caption": "The latest reading was only a guess.",
+    "say": "The new meter reading was estimated, not read. Send a real one by 20 November, and they will send a new bill if it differs.",
+    "picture": {
+     "type": "icons",
+     "heading": "SEND A READING",
+     "items": [
+      {
+       "icon": "phone",
+       "label": "Their app"
+      },
+      {
+       "icon": "computer",
+       "label": "Their website"
+      },
+      {
+       "icon": "bell",
+       "label": "Ring them"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Direct Debit",
+    "caption": "Your Direct Debit rises to £87 on 1 December.",
+    "say": "Your monthly Direct Debit goes up from sixty pounds to eighty-seven on 1 December, to cover the colder months. If paying is hard, talk to them.",
+    "picture": {
+     "type": "compare",
+     "heading": "MONTHLY PAYMENT",
+     "bad": {
+      "icon": "money",
+      "label": "£60 now"
+     },
+     "good": {
+      "icon": "calendar",
+      "label": "£87 from 1 Dec"
+     }
+    }
+   },
+   {
+    "title": "Next steps",
+    "caption": "Send a reading by 20 November.",
+    "say": "That's it. Send a real reading by 20 November. For payment help, ring the number on your bill, and check the details with Brightwater.",
+    "picture": {
+     "type": "list",
+     "heading": "TO DO",
+     "numbered": true,
+     "items": [
+      "Send a real reading",
+      "By 20 November",
+      "Struggling? Talk to them"
+     ]
+    }
+   }
+  ]
+ }
+}

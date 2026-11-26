@@ -25,7 +25,8 @@
     "test": "node --test --test-concurrency=2 \"test/*.test.js\"",
     "lint": "eslint .",
     "bottles": "bottles --service https://pixelreel.pro --gcloud-secret pixelreel-bottle-reader --project pixelreel-515501",
-    "bottle-update": "node scripts/bottle-update.mjs"
+    "bottle-update": "node scripts/bottle-update.mjs",
+    "bench": "node scripts/bench.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

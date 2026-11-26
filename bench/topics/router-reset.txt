@@ -1,0 +1,12 @@
+How to restart your broadband hub when the internet stops working
+
+1. First, check whether it is just one device. If your phone works on Wi-Fi but your laptop does not, restart the laptop instead.
+2. Look at the light on the front of the hub. Blue means it is working. Orange or flashing orange means it has lost its connection.
+3. Turn the hub off at the power button on the back, or at the wall socket.
+4. Wait a full 30 seconds. This lets it clear its memory.
+5. Turn it back on. The light will flash for 2 to 3 minutes while it reconnects. Do not turn it off again while it flashes.
+6. When the light is steady blue, try the internet again.
+7. Still not working? Check the cable from the hub to the phone socket on the wall is pushed in firmly at both ends.
+8. If the light stays orange for more than 10 minutes, there may be a fault in your area. Check our service status page on your phone's mobile data, or call us on 0330 000 1234.
+
+Do not press the small pinhole reset button unless we ask you to. It wipes your Wi-Fi name and password, and every device would need setting up again.

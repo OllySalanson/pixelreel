@@ -5,3 +5,4 @@ models/
 .service-data/
 chat-stand-in.html
 .bottles/
+bench/runs/*.png

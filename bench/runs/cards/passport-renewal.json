@@ -1,0 +1,150 @@
+{
+ "topic": "passport-renewal",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "seconds": 6,
+ "rounds": 1,
+ "tokens": {
+  "in": 4408,
+  "out": 959
+ },
+ "cents": 1.8,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Renewing your adult passport",
+  "transition": "fade",
+  "scenes": [
+   {
+    "title": "Passport",
+    "caption": "How to renew your adult passport.",
+    "say": "Passport running out? Here's how to renew an adult passport, without any fuss.",
+    "picture": {
+     "type": "title",
+     "text": "PASSPORT",
+     "sub": "How to renew it"
+    }
+   },
+   {
+    "title": "The cost",
+    "caption": "Online costs £88.50. Paper costs £100.",
+    "say": "Renewing online costs eighty-eight pounds fifty. A paper form from the Post Office costs one hundred pounds.",
+    "picture": {
+     "type": "table",
+     "heading": "COST",
+     "columns": [
+      "How",
+      "Price"
+     ],
+     "rows": [
+      [
+       "Online",
+       "£88.50"
+      ],
+      [
+       "Paper form",
+       "£100"
+      ]
+     ]
+    }
+   },
+   {
+    "title": "What you need",
+    "caption": "A photo, a card, and your old passport.",
+    "say": "You'll need a digital photo of yourself, a credit or debit card, and your old passport.",
+    "picture": {
+     "type": "icons",
+     "heading": "YOU NEED",
+     "items": [
+      {
+       "icon": "camera",
+       "label": "Digital photo"
+      },
+      {
+       "icon": "card",
+       "label": "Bank card"
+      },
+      {
+       "icon": "book",
+       "label": "Old passport"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Your photo",
+    "caption": "Clear, in focus, no smile, no glasses.",
+    "say": "Keep the photo clear and in focus. Face uncovered, no smiling, no tilted head, and no glasses.",
+    "picture": {
+     "type": "list",
+     "heading": "YOUR PHOTO",
+     "items": [
+      "Clear and in focus",
+      "Nothing on your face",
+      "No smile or tilt",
+      "No glasses"
+     ]
+    }
+   },
+   {
+    "title": "Post it back",
+    "caption": "Your application starts when your old passport arrives.",
+    "say": "After you apply, post your old passport to them. Nothing starts until it arrives, and you get it back cancelled.",
+    "picture": {
+     "type": "flow",
+     "heading": "AFTER YOU APPLY",
+     "items": [
+      {
+       "icon": "computer",
+       "label": "Apply online"
+      },
+      {
+       "icon": "letter",
+       "label": "Post old one"
+      },
+      {
+       "icon": "clock",
+       "label": "Wait"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Allow 3 weeks",
+    "caption": "It usually takes up to 3 weeks.",
+    "say": "It usually takes up to three weeks, sometimes longer. Don't book travel until your new passport is in your hand.",
+    "picture": {
+     "type": "big",
+     "text": "3 WEEKS",
+     "sub": "don't book travel yet"
+    }
+   },
+   {
+    "title": "In a hurry?",
+    "caption": "Lost or stolen? Report it and apply for a replacement.",
+    "say": "If yours is lost or stolen, report it and apply for a replacement. In a hurry, Fast Track takes one week and costs one hundred seventy-eight pounds.",
+    "picture": {
+     "type": "table",
+     "heading": "URGENT",
+     "columns": [
+      "Service",
+      "Time",
+      "Cost"
+     ],
+     "rows": [
+      [
+       "Fast Track",
+       "1 week",
+       "£178"
+      ],
+      [
+       "Premium",
+       "Same day",
+       "£222.50"
+      ]
+     ]
+    }
+   }
+  ]
+ }
+}

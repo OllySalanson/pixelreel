@@ -1,0 +1,25 @@
+The talking first mate
+
+The talking first mate
+Ahoy captain. You asked four things. Why Amazon, how the talking first mate works, how it plugs into firstmate, and what it would cost you each month. Let me show you.
+
+1. Honestly, I did not pick Amazon
+First, to be honest, I did not choose Amazon. Firstmate's makers built this, and it came with your copy. But their pick is a good one. Amazon's Nova Sonic is a speech to speech model. One model hears your voice and speaks the answer, all in one go.
+
+2. The computer science bit
+Now the computer science. Your voice is sent as raw sound, sixteen thousand samples a second, sixteen bits each, one channel. It streams both ways at once, over one HTTP two connection, while you are still talking. The answer streams back the same way, so the first words arrive in about one point two seconds. Firstmate's makers measured that, six times each way.
+
+3. How the pieces join up
+Here is how the pieces join up. Your laptop records your voice and plays the answer. It sends the sound through a secure tunnel, called SSH, to this PC. This PC holds the conversation with Amazon. So your laptop never holds an Amazon password. Sound and control messages share one stream, packed in small labelled frames.
+
+4. How it plugs into firstmate
+This is how it plugs into firstmate. The Amazon model is given two tools. The first reads firstmate's records, like how many jobs are running and how many decisions wait for you. By default it only sends numbers, never names. Finished work and notes are never sent at all, so no customer names reach Amazon. The second tool drops real work into my inbox, and I pick it up here. It can never change a project itself.
+
+5. What it cannot do yet
+What it cannot do yet. You hold a key to talk, there is no open microphone. Every question starts fresh, so and what about that one will not work, because it does not remember the last question. And you cannot cut in while it is talking. Firstmate's makers call those step three.
+
+6. What it costs at your rate
+Now the money. Firstmate's makers measured about zero point three US cents per question and answer, or about one cent a minute while you are talking. In the last two weeks you sent me about seventy five messages on a working day, and one hundred and thirty three today. If every single one were spoken, that is about six dollars sixty a month, around five pounds. At today's busy pace every day, about twelve dollars, around nine pounds. You would only speak some of them, so most likely a pound or two.
+
+7. My pick
+So, my pick. The talking version needs your own Amazon account, not Renew's, with Nova Sonic switched on, and a small install on your laptop. It is quick and cheap, but it uses Amazon's voice, not this one. Option A is short spoken answers in this voice, Peter's, free and on this PC, about an hour to build. Tell me A, B, or both.

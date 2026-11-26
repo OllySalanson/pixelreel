@@ -1,0 +1,161 @@
+{
+ "topic": "phone-contract",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "seconds": 7.3,
+ "rounds": 1,
+ "tokens": {
+  "in": 4389,
+  "out": 1112
+ },
+ "cents": 2,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Your phone contract is ending",
+  "transition": "fade",
+  "scenes": [
+   {
+    "title": "Contract ending",
+    "caption": "Your phone contract with Skyline Mobile ends soon.",
+    "say": "A letter from Skyline Mobile says your phone contract is ending. Here is what it means, and what you can do.",
+    "picture": {
+     "type": "title",
+     "text": "CONTRACT ENDING",
+     "sub": "Skyline Mobile letter"
+    }
+   },
+   {
+    "title": "The date",
+    "caption": "Your 24-month contract ends on 5 January 2027.",
+    "say": "Your 24-month contract ends on the fifth of January, 2027. After that, the phone is paid off, so it's yours to keep.",
+    "picture": {
+     "type": "flow",
+     "heading": "WHAT HAPPENS",
+     "items": [
+      {
+       "icon": "calendar",
+       "label": "5 January 2027"
+      },
+      {
+       "icon": "phone",
+       "label": "Phone is yours"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Do nothing",
+    "caption": "Doing nothing moves you to a plan costing £32 a month.",
+    "say": "Do nothing, and you move onto their standard plan. It's thirty-two pounds a month for the same allowance, which is ten pounds more than now.",
+    "picture": {
+     "type": "table",
+     "heading": "MONTHLY COST",
+     "columns": [
+      "Plan",
+      "Per month"
+     ],
+     "rows": [
+      [
+       "Now",
+       "£22"
+      ],
+      [
+       "If you do nothing",
+       "£32"
+      ],
+      [
+       "Extra",
+       "£10"
+      ]
+     ]
+    }
+   },
+   {
+    "title": "Three choices",
+    "caption": "You can upgrade, go SIM-only, or leave.",
+    "say": "You do have choices. You can upgrade to a new phone, go SIM-only and keep yours, or leave for another network.",
+    "picture": {
+     "type": "icons",
+     "heading": "YOUR CHOICES",
+     "items": [
+      {
+       "icon": "rocket",
+       "label": "Upgrade"
+      },
+      {
+       "icon": "phone",
+       "label": "SIM-only"
+      },
+      {
+       "icon": "plane",
+       "label": "Leave"
+      }
+     ]
+    }
+   },
+   {
+    "title": "The prices",
+    "caption": "Upgrades from £25 a month. SIM-only from £8 a month.",
+    "say": "Upgrades start at twenty-five pounds a month for 24 months. SIM-only starts at eight pounds a month for 12 months, with 30 gigabytes of data.",
+    "picture": {
+     "type": "table",
+     "heading": "STARTING PRICES",
+     "columns": [
+      "Choice",
+      "Per month",
+      "Length"
+     ],
+     "rows": [
+      [
+       "Upgrade",
+       "£25",
+       "24 months"
+      ],
+      [
+       "SIM-only",
+       "£8",
+       "12 months"
+      ]
+     ]
+    }
+   },
+   {
+    "title": "Leaving",
+    "caption": "Text PAC to 65075 to keep your number. Leaving is free.",
+    "say": "If you leave, text PAC to 65075 for a free code, and give it to your new network. You keep your number, and there's no charge.",
+    "picture": {
+     "type": "flow",
+     "heading": "HOW TO LEAVE",
+     "items": [
+      {
+       "icon": "speech",
+       "label": "Text PAC"
+      },
+      {
+       "icon": "key",
+       "label": "Get code"
+      },
+      {
+       "icon": "phone",
+       "label": "Give new network"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Next step",
+    "caption": "Choose in the Skyline app, or call 150 from your mobile.",
+    "say": "So don't leave it to chance. Pick your plan in the Skyline app, or call 150 from your mobile, before the contract ends.",
+    "picture": {
+     "type": "list",
+     "heading": "TO CHANGE YOUR PLAN",
+     "items": [
+      "Open the Skyline app",
+      "Or call 150 from your mobile"
+     ]
+    }
+   }
+  ]
+ }
+}
