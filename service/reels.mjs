@@ -86,10 +86,11 @@ export class Reels {
    * @param {(raw: object) => Promise<Uint8Array>} [options.picture]   draws a reel's picture for link previews, as a PNG
    * @param {string[]} [options.languages]   the languages besides English the narrator can read here (those whose voice models are to hand)
    * @param {string[]} [options.narrators]   the narrators besides Peter that may be asked for here, by first name (see NARRATORS)
+   * @param {Function} [options.critic]   looks at a reel's pictures while it is recorded, and may mend them (createCritic in critic.mjs)
    * @param {string} [options.pictures]   'stage', or 'cards' to take only the cards, as before the stage (PIXELREEL_PICTURES; PICTURE_MODES in mcp.mjs)
    */
-  constructor({ store, record = recordWith(), video = drawVideo, picture = drawPicture, now = () => Date.now(), keepDays = KEEP_DAYS, maxQueue = 20, languages = [], narrators = [], pictures = 'stage', log = () => {} }) {
-    Object.assign(this, { store, record, video, picture, now, keepDays, maxQueue, languages, narrators, pictures, log });
+  constructor({ store, record = recordWith(), video = drawVideo, picture = drawPicture, now = () => Date.now(), keepDays = KEEP_DAYS, maxQueue = 20, languages = [], narrators = [], pictures = 'stage', critic = null, log = () => {} }) {
+    Object.assign(this, { store, record, video, picture, now, keepDays, maxQueue, languages, narrators, pictures, critic, log });
     this.queue = [];
     this.running = null;
     this.notes = new Map();   // how far each reel that is still being written has got: note()
@@ -503,6 +504,9 @@ export class Reels {
         let progress = Promise.resolve();
         const since = this.now(), sofar = [...((await this.manifest(id))?.clips ?? [])];   // a change to an earlier reel starts with the lines it kept
         let spoken = 0;
+        // the critic looks at the pictures while Peter records: pictures only, so the recording stands (critic.mjs)
+        const written = this.critic && this.pictures !== 'cards' ? await this.reel(id) : null;
+        const looking = written ? this.critic(written, { id }).catch(() => null) : null;
         const onLine = (done, of, clip = null) => {
           progress = progress.then(async () => {
             if (!(await this.status(id))) return;   // deleted meanwhile: nothing of it is put back
@@ -525,6 +529,9 @@ export class Reels {
           for (const name of await readdir(join(dir, 'audio'))) {
             await this.store.put(`reels/${id}/audio/${name}`, await readFile(join(dir, 'audio', name)));
           }
+          const looked = await looking;
+          if (looked?.faults?.length) this.log(`${id}: the critic found ${looked.faults.length}: ${looked.faults.join(' | ')}`);
+          if (looked && looked.raw !== written && (await this.status(id))) await this.store.put(`reels/${id}/reel.json`, JSON.stringify(looked.raw));
           // now the voice has a length, the pictures are timed to it: the page, the player in the chat and the video all play this
           const manifest = await this.manifest(id), raw = paceReel(await this.reel(id), manifest);
           await this.store.put(`reels/${id}/reel.json`, JSON.stringify(raw));

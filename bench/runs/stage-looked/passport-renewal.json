@@ -1,0 +1,249 @@
+{
+ "topic": "passport-renewal",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "pictures": "stage",
+ "seconds": 8,
+ "rounds": 1,
+ "tokens": {
+  "in": 7549,
+  "out": 1312
+ },
+ "wishes": [],
+ "cents": 6,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Renew your passport",
+  "transition": "wipe",
+  "scenes": [
+   {
+    "title": "Passport renewal",
+    "caption": "How to renew or replace an adult passport.",
+    "say": "Your passport is running out. Here's how to renew it, what you need, and what to watch for.",
+    "picture": {
+     "type": "title",
+     "text": "PASSPORT",
+     "sub": "Renew it online"
+    }
+   },
+   {
+    "title": "The cost",
+    "caption": "£88.50 online, or £100 with a paper form.",
+    "say": "Renewing online costs eighty eight pounds fifty. A paper form from the Post Office costs a hundred pounds.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "laptop",
+       "is": "laptop",
+       "spot": "middle",
+       "label": "Online"
+      },
+      {
+       "id": "form",
+       "is": "form",
+       "spot": "right",
+       "label": "Paper form"
+      }
+     ],
+     "moves": [
+      {
+       "do": "pile",
+       "on": "laptop",
+       "count": 4,
+       "cue": "eighty eight pounds fifty"
+      },
+      {
+       "do": "pile",
+       "on": "form",
+       "count": 8,
+       "cue": "a hundred pounds"
+      }
+     ]
+    }
+   },
+   {
+    "title": "What you need",
+    "caption": "A photo, a bank card and your old passport.",
+    "say": "You'll need a digital photo of yourself, a credit or debit card, and your old passport.",
+    "picture": {
+     "type": "icons",
+     "items": [
+      {
+       "icon": "camera",
+       "label": "Digital photo"
+      },
+      {
+       "icon": "card",
+       "label": "Bank card"
+      },
+      {
+       "icon": "book",
+       "label": "Old passport"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Your photo",
+    "caption": "Clear, in focus, no smiling, no glasses.",
+    "say": "Keep the photo clear and in focus. Stand against a plain light wall. Don't smile, don't tilt your head, and no glasses.",
+    "picture": {
+     "type": "compare",
+     "bad": {
+      "icon": "person",
+      "label": "Smiling, glasses"
+     },
+     "good": {
+      "icon": "person",
+      "label": "Plain, straight"
+     }
+    }
+   },
+   {
+    "title": "Post the old one",
+    "caption": "Your application starts when they get it.",
+    "say": "After you apply, post your old passport to them. Nothing starts until it arrives, and they send it back cancelled.",
+    "picture": {
+     "type": "stage",
+     "place": "street",
+     "things": [
+      {
+       "id": "home",
+       "is": "house",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "office",
+       "is": "town-hall",
+       "spot": "right",
+       "label": "Passport office"
+      }
+     ],
+     "moves": [
+      {
+       "do": "send",
+       "what": "passport",
+       "from": "home",
+       "to": "office",
+       "cue": "post your old passport"
+      },
+      {
+       "do": "mark",
+       "on": "office",
+       "with": "clock",
+       "cue": "Nothing starts"
+      },
+      {
+       "do": "send",
+       "what": "passport",
+       "from": "office",
+       "to": "home",
+       "cue": "send it back"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Allow 3 weeks",
+    "caption": "Do not book travel until it arrives.",
+    "say": "It usually takes up to three weeks, sometimes longer. So don't book any travel until your new passport is in your hands.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "cal",
+       "is": "calendar",
+       "spot": "middle",
+       "label": "3 weeks"
+      },
+      {
+       "id": "case",
+       "is": "suitcase",
+       "spot": "right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "meter",
+       "on": "cal",
+       "to": 1,
+       "cue": "three weeks"
+      },
+      {
+       "do": "mark",
+       "on": "case",
+       "with": "cross",
+       "cue": "don't book any travel"
+      }
+     ]
+    }
+   },
+   {
+    "title": "In a hurry?",
+    "caption": "Lost or stolen: report it first. Urgent: pay more.",
+    "say": "If it's lost or stolen, report it first and apply for a replacement. Need it sooner? Fast Track is one seventy eight, same day is two twenty two fifty.",
+    "picture": {
+     "type": "table",
+     "heading": "Urgent travel",
+     "columns": [
+      "Service",
+      "Time",
+      "Cost"
+     ],
+     "rows": [
+      [
+       "Fast Track",
+       "1 week",
+       "£178"
+      ],
+      [
+       "Online Premium",
+       "Same day",
+       "£222.50"
+      ]
+     ]
+    }
+   }
+  ]
+ },
+ "looked": {
+  "model": "claude-sonnet-5-5",
+  "effort": "low",
+  "seconds": 7,
+  "tokens": {
+   "in": 10814,
+   "out": 1037
+  },
+  "cents": 3.2,
+  "faults": [
+   "scene 2: the piles of coins are small and sit hidden beside the laptop and postbox, so the costs are hard to read, and the pile for the paper form is not much taller than the online one.",
+   "scene 2: the postbox stands for a paper form from the Post Office, but a postbox is not a form.",
+   "scene 3: the old passport is shown as an open book, which is not a passport.",
+   "scene 4: the two people are identical, so a smile, glasses and a tilted head are not shown. Both look the same.",
+   "scene 5: the old passport is sent but does not show up in the frames, and the clock mark sits on the building like a decoration. The town hall stands for a passport office, which it is not.",
+   "scene 6: the meter sits on the calendar and the cross on the suitcase floats and overlaps it, so it is unclear what is refused.",
+   "scene 2 and scene 6: 'You' is a plain yellow person, not a real person."
+  ],
+  "mended": true,
+  "log": [
+   "critic: passport-renewal 10814 tokens in, 1037 out (claude-sonnet-5-5); 7 faults"
+  ]
+ }
+}

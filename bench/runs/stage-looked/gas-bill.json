@@ -1,0 +1,326 @@
+{
+ "topic": "gas-bill",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "pictures": "stage",
+ "seconds": 22,
+ "rounds": 2,
+ "tokens": {
+  "in": 16401,
+  "out": 3832
+ },
+ "wishes": [],
+ "cents": 10.7,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Your gas bill",
+  "scenes": [
+   {
+    "title": "Your gas bill",
+    "caption": "What it says, and what to do.",
+    "say": "Your Brightwater Energy gas bill has come. Here's what it says, and what to do about it.",
+    "picture": {
+     "type": "title",
+     "text": "GAS BILL",
+     "sub": "What to do"
+    }
+   },
+   {
+    "title": "The bill",
+    "caption": "It covers 91 days of gas.",
+    "say": "Brightwater Energy sent this bill for the three months up to the second of November, ninety one days in all.",
+    "picture": {
+     "type": "stage",
+     "place": "street",
+     "things": [
+      {
+       "id": "home",
+       "is": "house",
+       "spot": "left",
+       "label": "Your home"
+      },
+      {
+       "id": "gas",
+       "is": "town-hall",
+       "spot": "right",
+       "label": "Brightwater"
+      },
+      {
+       "id": "reelie",
+       "is": "reelie",
+       "spot": "far-right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "flow",
+       "from": "gas",
+       "to": "home",
+       "cue": "three months"
+      },
+      {
+       "do": "send",
+       "what": "letter",
+       "from": "gas",
+       "to": "home",
+       "cue": "sent this bill"
+      }
+     ]
+    }
+   },
+   {
+    "title": "The lines",
+    "caption": "What makes up the total.",
+    "say": "The gas came to two hundred and nineteen pounds, the standing charge to twenty nine, and VAT to twelve.",
+    "picture": {
+     "type": "table",
+     "columns": [
+      "What",
+      "Cost"
+     ],
+     "rows": [
+      [
+       "Gas",
+       "£219.91"
+      ],
+      [
+       "Standing charge",
+       "£28.80"
+      ],
+      [
+       "VAT at 5%",
+       "£12.44"
+      ],
+      [
+       "Total",
+       "£261.15"
+      ]
+     ]
+    }
+   },
+   {
+    "title": "You owe",
+    "caption": "You paid £180, so you owe £81.15.",
+    "say": "You paid a hundred and eighty pounds by Direct Debit. The total was more, so you now owe eighty one pounds fifteen.",
+    "picture": {
+     "type": "stage",
+     "place": "street",
+     "things": [
+      {
+       "id": "home",
+       "is": "house",
+       "spot": "left",
+       "label": "Your home"
+      },
+      {
+       "id": "gas",
+       "is": "town-hall",
+       "spot": "right",
+       "label": "Brightwater"
+      },
+      {
+       "id": "reelie",
+       "is": "reelie",
+       "spot": "far-right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "send",
+       "what": "banknote",
+       "from": "home",
+       "to": "gas",
+       "again": true,
+       "cue": "You paid"
+      },
+      {
+       "do": "count",
+       "on": "home",
+       "to": 81.15,
+       "before": "£",
+       "cue": "you now owe"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Direct Debit",
+    "caption": "It rises to £87 a month from 1 December.",
+    "say": "From the first of December, your Direct Debit goes up from sixty pounds to eighty seven, to cover the colder months.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "cal",
+       "is": "calendar",
+       "spot": "middle",
+       "label": "1 December"
+      },
+      {
+       "id": "gas",
+       "is": "town-hall",
+       "spot": "right",
+       "label": "Brightwater"
+      },
+      {
+       "id": "reelie",
+       "is": "reelie",
+       "spot": "far-right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "pulse",
+       "on": "cal",
+       "cue": "first of December"
+      },
+      {
+       "do": "count",
+       "on": "gas",
+       "to": 87,
+       "before": "£",
+       "cue": "eighty seven"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Send a reading",
+    "caption": "Send a real reading by 20 November.",
+    "say": "The latest reading was only an estimate. Send a real one by the twentieth of November, and they'll correct the bill if needed.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "meter",
+       "is": "gas-meter",
+       "spot": "middle"
+      },
+      {
+       "id": "gas",
+       "is": "town-hall",
+       "spot": "right",
+       "label": "Brightwater"
+      },
+      {
+       "id": "reelie",
+       "is": "reelie",
+       "spot": "far-right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "meter",
+       "with": "question",
+       "cue": "only an estimate"
+      },
+      {
+       "do": "send",
+       "what": "document",
+       "from": "you",
+       "to": "gas",
+       "cue": "Send a real one"
+      },
+      {
+       "do": "mark",
+       "on": "gas",
+       "with": "tick",
+       "cue": "correct the bill"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Talk to them",
+    "caption": "Finding it hard to pay? Talk to them.",
+    "say": "If you're finding it hard to pay, talk to them. They can set up a payment plan, and you may get help too.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "agent",
+       "is": "person",
+       "wears": "suit",
+       "spot": "middle"
+      },
+      {
+       "id": "gas",
+       "is": "town-hall",
+       "spot": "right",
+       "label": "Brightwater"
+      },
+      {
+       "id": "reelie",
+       "is": "reelie",
+       "spot": "far-right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "wave",
+       "from": "you",
+       "to": "agent",
+       "cue": "talk to them"
+      },
+      {
+       "do": "say",
+       "who": "agent",
+       "text": "We can help",
+       "cue": "payment plan"
+      },
+      {
+       "do": "say",
+       "who": "reelie",
+       "text": "Don't wait!",
+       "cue": "get help too"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "looked": {
+  "model": "claude-sonnet-5-5",
+  "effort": "low",
+  "seconds": 8.8,
+  "tokens": {
+   "in": 11125,
+   "out": 1367
+  },
+  "cents": 3.6,
+  "faults": [
+   "scene 2: Brightwater is drawn as a bank (a pillared building), and a bank is not an energy company; the bill never visibly travels, since 'bill' is not a library thing, so only dots show",
+   "scene 4: Brightwater is a bank again; the picture also never shows the £180 already paid, only the debt",
+   "scene 5: Brightwater is a bank, and the pile of coins is far from showing a rise from £60 to £87; the 'You' person is a bare outline",
+   "scene 6: the cast has moved (Brightwater at far-right, the calendar and Reelie gone); the phone floats unused; the tick appears half cut off at the edge",
+   "scene 7: Brightwater is shown as a person in the same dark outline, in a different spot from scene 6; the whole reel should keep one cast and spots"
+  ],
+  "mended": true,
+  "log": [
+   "critic: gas-bill 11125 tokens in, 1367 out (claude-sonnet-5-5); 5 faults"
+  ]
+ }
+}

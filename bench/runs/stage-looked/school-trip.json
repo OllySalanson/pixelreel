@@ -1,0 +1,344 @@
+{
+ "topic": "school-trip",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "pictures": "stage",
+ "seconds": 9,
+ "rounds": 1,
+ "tokens": {
+  "in": 7597,
+  "out": 1398
+ },
+ "wishes": [],
+ "cents": 10.5,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Year 4 trip to the Science Museum",
+  "transition": "slide",
+  "scenes": [
+   {
+    "title": "The trip",
+    "caption": "Year 4 visits the Science Museum.",
+    "say": "Year 4 is off to the Science Museum on Friday the eleventh of December. Here's what parents need to know.",
+    "picture": {
+     "type": "title",
+     "text": "SCIENCE TRIP",
+     "sub": "Year 4 - 11 December"
+    }
+   },
+   {
+    "title": "The day",
+    "caption": "Be in class by 8.30am. Back about 3.45pm.",
+    "say": "Children must be in class by half past eight, as the coach leaves at quarter to nine. Collect them from the main hall about quarter to four.",
+    "picture": {
+     "type": "table",
+     "columns": [
+      "What",
+      "Time"
+     ],
+     "rows": [
+      [
+       "In class",
+       "8.30am"
+      ],
+      [
+       "Coach leaves",
+       "8.45am"
+      ],
+      [
+       "Back at school",
+       "3.45pm"
+      ]
+     ]
+    }
+   },
+   {
+    "title": "The cost",
+    "caption": "£14.50 a child, paid on ParentPay.",
+    "say": "The trip costs fourteen pounds fifty a child. Please pay on ParentPay by Friday the twenty seventh of November.",
+    "picture": {
+     "type": "stage",
+     "place": "school",
+     "things": [
+      {
+       "id": "parent",
+       "is": "person",
+       "spot": "left",
+       "label": "Parent"
+      },
+      {
+       "id": "school",
+       "is": "school",
+       "spot": "right",
+       "label": "School"
+      },
+      {
+       "id": "reelie",
+       "is": "reelie",
+       "spot": "far-right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "send",
+       "what": "banknote",
+       "from": "parent",
+       "to": "school",
+       "cue": "pay on ParentPay"
+      },
+      {
+       "do": "count",
+       "on": "school",
+       "to": 14.5,
+       "before": "£",
+       "cue": "fourteen pounds fifty"
+      },
+      {
+       "do": "say",
+       "who": "reelie",
+       "text": "Pay by 27 Nov",
+       "cue": "twenty seventh of November"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Free meals",
+    "caption": "Free school meals: the trip is free.",
+    "say": "If you get free school meals, the trip is free, and the school will give your child a packed lunch.",
+    "picture": {
+     "type": "stage",
+     "place": "school",
+     "things": [
+      {
+       "id": "child",
+       "is": "girl",
+       "wears": "school-uniform",
+       "spot": "left",
+       "label": "Your child"
+      },
+      {
+       "id": "lunch",
+       "is": "plate",
+       "spot": "middle",
+       "label": "Lunch"
+      },
+      {
+       "id": "school",
+       "is": "school",
+       "spot": "far-right",
+       "label": "School"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "school",
+       "with": "tick",
+       "cue": "the trip is free"
+      },
+      {
+       "do": "send",
+       "what": "parcel",
+       "from": "school",
+       "to": "child",
+       "cue": "give your child a packed lunch"
+      }
+     ]
+    }
+   },
+   {
+    "title": "What to bring",
+    "caption": "Packed lunch, coat, uniform. No money or phones.",
+    "say": "Bring a packed lunch with no glass bottles or nuts, a waterproof coat, and school uniform. No money, phones or toys.",
+    "picture": {
+     "type": "stage",
+     "place": "school",
+     "things": [
+      {
+       "id": "child",
+       "is": "girl",
+       "wears": "school-uniform",
+       "spot": "left",
+       "label": "Uniform"
+      },
+      {
+       "id": "lunch",
+       "is": "plate",
+       "spot": "middle",
+       "label": "Lunch"
+      },
+      {
+       "id": "coat",
+       "is": "umbrella",
+       "spot": "right",
+       "label": "Coat"
+      },
+      {
+       "id": "phone",
+       "is": "phone",
+       "spot": "far-right",
+       "label": "No phones"
+      }
+     ],
+     "moves": [
+      {
+       "do": "arrive",
+       "who": "lunch",
+       "cue": "Bring a packed lunch"
+      },
+      {
+       "do": "arrive",
+       "who": "coat",
+       "cue": "a waterproof coat"
+      },
+      {
+       "do": "mark",
+       "on": "child",
+       "with": "tick",
+       "cue": "school uniform"
+      },
+      {
+       "do": "mark",
+       "on": "phone",
+       "with": "cross",
+       "cue": "No money, phones or toys"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Helpers, medicine",
+    "caption": "Helpers and medicine: tell school by 27 November.",
+    "say": "They need four parent helpers with a school DBS check. Tell the class teacher. Medicine must be in school, labelled with your child's name.",
+    "picture": {
+     "type": "stage",
+     "place": "school",
+     "things": [
+      {
+       "id": "h1",
+       "is": "woman",
+       "spot": "far-left",
+       "label": "Helpers"
+      },
+      {
+       "id": "h2",
+       "is": "man",
+       "spot": "left"
+      },
+      {
+       "id": "teacher",
+       "is": "woman",
+       "wears": "suit",
+       "spot": "middle",
+       "label": "Teacher"
+      },
+      {
+       "id": "med",
+       "is": "pills",
+       "spot": "right",
+       "label": "Child's name"
+      }
+     ],
+     "moves": [
+      {
+       "do": "arrive",
+       "who": "h1",
+       "cue": "four parent helpers"
+      },
+      {
+       "do": "mark",
+       "on": "h2",
+       "with": "tick",
+       "cue": "DBS check"
+      },
+      {
+       "do": "say",
+       "who": "teacher",
+       "text": "Tell me",
+       "cue": "Tell the class teacher"
+      },
+      {
+       "do": "mark",
+       "on": "med",
+       "with": "tick",
+       "cue": "labelled with your child's name"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Consent slip",
+    "caption": "No consent slip on ParentPay, no trip.",
+    "say": "Last thing. Fill in the consent slip on ParentPay. Without it, your child cannot go. For any questions, ask the school.",
+    "picture": {
+     "type": "stage",
+     "place": "school",
+     "things": [
+      {
+       "id": "parent",
+       "is": "person",
+       "spot": "left",
+       "label": "Parent"
+      },
+      {
+       "id": "form",
+       "is": "form",
+       "spot": "middle",
+       "label": "Slip"
+      },
+      {
+       "id": "school",
+       "is": "school",
+       "spot": "right",
+       "label": "School"
+      }
+     ],
+     "moves": [
+      {
+       "do": "send",
+       "what": "form",
+       "from": "parent",
+       "to": "school",
+       "cue": "Fill in the consent slip"
+      },
+      {
+       "do": "block",
+       "from": "parent",
+       "to": "school",
+       "cue": "Without it"
+      },
+      {
+       "do": "mark",
+       "on": "school",
+       "with": "question",
+       "cue": "ask the school"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "looked": {
+  "model": "claude-sonnet-5-5",
+  "effort": "low",
+  "seconds": 17.1,
+  "tokens": {
+   "in": 23665,
+   "out": 2862
+  },
+  "cents": 7.6,
+  "faults": [
+   "scene 3: the pay move shows no banknote or coins in the final picture; Reelie is shown but says nothing and just crowds the school, and the clock badge floats beside the price without saying what it is for",
+   "scene 4: the packed lunch is a plate with a label too long for its spot, and it sits touching the school; the parcel sent to the child is not a lunch; the heart does not show the trip being free",
+   "scene 5: the compare card shows a phone and a briefcase-like bag, so it does not show a packed lunch, a coat or uniform, and toys and money are not shown; the picture is unclear without reading",
+   "scene 6: the helpers icon is a pair of people, not four; medicine is a pill with no child's name, and 'Tell the class teacher' is not shown",
+   "scene 7: the tick on the school appears at 'Without it', when the slip has not been sent, so it says the opposite of the words; the label 'Consent slip' is too long and crowds its neighbours"
+  ],
+  "mended": true,
+  "log": [
+   "critic: school-trip 23665 tokens in, 2862 out (claude-sonnet-5-5); 5 faults"
+  ]
+ }
+}

@@ -8,6 +8,9 @@
 //       and its one round of putting a reel right, and keeps each reel, its time and its
 //       cost in bench/runs/<run>/. It costs money: about 2 to 10 US cents a topic. It needs
 //       ANTHROPIC_API_KEY.
+//   npm run bench -- look <run>
+//       has the critic (service/critic.mjs) look at every reel of a run, as the service does
+//       while Peter records, and keeps what it made of them in bench/runs/<run>-looked/.
 //   npm run bench -- sheet <before> <after> [--out file.png] [--only ...]
 //       draws both runs' reels a scene at a time, one topic under another, before above
 //       after, and says what each run cost and which pictures it chose.
@@ -99,6 +102,23 @@ async function write(run, { model, effort, only, pictures }) {
   }
 }
 
+async function look(run, { model, effort, only }) {
+  const { createCritic } = await import('../service/critic.mjs');
+  const dir = join(RUNS, `${run}-looked`), kept = readRun(run);
+  mkdirSync(dir, { recursive: true });
+  for (const topic of only ?? Object.keys(kept)) {
+    const one = kept[topic];
+    if (!one?.reel) continue;
+    const logs = [], started = Date.now();
+    const critic = createCritic({ model, effort, log: (line) => logs.push(line) });
+    const { raw, faults } = await critic(one.reel, { id: topic });
+    const seconds = Math.round((Date.now() - started) / 100) / 10, tokens = tokensFrom(logs);
+    const looked = { ...one, looked: { model, effort, seconds, tokens, cents: cents(model, tokens), faults, mended: raw !== one.reel, log: logs }, reel: raw, cents: Math.round((one.cents + cents(model, tokens)) * 10) / 10, problems: benchProblems(raw) };
+    writeFileSync(join(dir, `${topic}.json`), `${JSON.stringify(looked, null, 1)}\n`);
+    console.log(`${topic.padEnd(20)} ${String(seconds).padStart(5)} s ${String(cents(model, tokens)).padStart(5)} c  ${faults.length} faults${raw !== one.reel ? ', mended' : ''}`);
+  }
+}
+
 /** A run's reels, by topic. */
 export function readRun(run) {
   const dir = join(RUNS, run);
@@ -166,6 +186,7 @@ async function main() {
   const [command, ...names] = positionals, only = values.only?.split(',').map((t) => t.trim()).filter(Boolean);
   for (const topic of only ?? []) if (!topicNames().includes(topic)) throw new Error(`there is no topic called ${topic}; there are ${topicNames().join(', ')}`);
   if (command === 'write' && names.length === 1) return write(names[0], { ...values, only });
+  if (command === 'look' && names.length === 1) return look(names[0], { ...values, only });
   if (command === 'sheet' && names.length >= 1) return sheet(names, { out: values.out, only });
   console.error('npm run bench -- write <run> [--model m] [--effort e] [--only topics]\nnpm run bench -- sheet <run> [<run> ...] [--out file.png] [--only topics]');
   process.exitCode = 2;

@@ -1,0 +1,345 @@
+{
+ "topic": "talking-first-mate",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "pictures": "stage",
+ "seconds": 8.9,
+ "rounds": 1,
+ "tokens": {
+  "in": 8102,
+  "out": 1509
+ },
+ "wishes": [],
+ "cents": 7,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "The talking first mate",
+  "transition": "fade",
+  "scenes": [
+   {
+    "title": "First mate",
+    "caption": "Talking to firstmate, and what it would cost.",
+    "say": "You asked how a talking first mate would work, and what it would cost. Here's the short version.",
+    "picture": {
+     "type": "title",
+     "text": "TALKING MATE",
+     "sub": "How it works, and the cost"
+    }
+   },
+   {
+    "title": "Not my pick",
+    "caption": "Firstmate's makers chose Amazon, not me.",
+    "say": "Honestly, I didn't pick Amazon. Firstmate's makers did. Its Nova Sonic model hears your voice and speaks the answer, all in one go.",
+    "picture": {
+     "type": "stage",
+     "place": "office",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "mic",
+       "is": "microphone",
+       "spot": "middle"
+      },
+      {
+       "id": "amazon",
+       "is": "server",
+       "spot": "right",
+       "label": "Amazon"
+      },
+      {
+       "id": "reelie",
+       "is": "reelie",
+       "spot": "far-right"
+      }
+     ],
+     "moves": [
+      {
+       "do": "wave",
+       "from": "you",
+       "to": "amazon",
+       "cue": "hears your voice"
+      },
+      {
+       "do": "wave",
+       "from": "amazon",
+       "to": "you",
+       "cue": "speaks the answer"
+      }
+     ]
+    }
+   },
+   {
+    "title": "How it joins",
+    "caption": "Your laptop talks to this PC, which talks to Amazon.",
+    "say": "Your laptop records your voice and sends it through a secure tunnel to this PC. This PC talks to Amazon, so your laptop never holds a password.",
+    "picture": {
+     "type": "stage",
+     "place": "office",
+     "things": [
+      {
+       "id": "laptop",
+       "is": "laptop",
+       "spot": "left",
+       "label": "Your laptop"
+      },
+      {
+       "id": "pc",
+       "is": "computer",
+       "spot": "middle",
+       "label": "This PC"
+      },
+      {
+       "id": "amazon",
+       "is": "server",
+       "spot": "right",
+       "label": "Amazon"
+      }
+     ],
+     "moves": [
+      {
+       "do": "flow",
+       "from": "laptop",
+       "to": "pc",
+       "cue": "secure tunnel"
+      },
+      {
+       "do": "flow",
+       "from": "pc",
+       "to": "amazon",
+       "cue": "talks to Amazon"
+      },
+      {
+       "do": "mark",
+       "on": "pc",
+       "with": "lock",
+       "cue": "never holds a password"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Two tools",
+    "caption": "One reads numbers. One drops work in my inbox.",
+    "say": "Amazon gets two tools. One reads firstmate's records, as numbers only, never names. The other drops real work in my inbox. It can't change a project.",
+    "picture": {
+     "type": "stage",
+     "place": "office",
+     "things": [
+      {
+       "id": "records",
+       "is": "document",
+       "spot": "left",
+       "label": "Records"
+      },
+      {
+       "id": "inbox",
+       "is": "computer",
+       "spot": "middle",
+       "label": "My inbox"
+      },
+      {
+       "id": "amazon",
+       "is": "server",
+       "spot": "right",
+       "label": "Amazon"
+      }
+     ],
+     "moves": [
+      {
+       "do": "send",
+       "what": "document",
+       "from": "records",
+       "to": "amazon",
+       "cue": "numbers only",
+       "again": false
+      },
+      {
+       "do": "send",
+       "what": "letter",
+       "from": "amazon",
+       "to": "inbox",
+       "cue": "drops real work"
+      },
+      {
+       "do": "block",
+       "from": "amazon",
+       "to": "records",
+       "cue": "can't change a project"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Not yet",
+    "caption": "Hold a key to talk. No memory. No cutting in.",
+    "say": "It can't do everything yet. You hold a key to talk, it forgets each question, and you can't cut in while it speaks.",
+    "picture": {
+     "type": "stage",
+     "place": "office",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "mic",
+       "is": "microphone",
+       "spot": "middle",
+       "label": "Hold a key"
+      },
+      {
+       "id": "amazon",
+       "is": "server",
+       "spot": "right",
+       "label": "Amazon"
+      }
+     ],
+     "moves": [
+      {
+       "do": "say",
+       "who": "you",
+       "text": "Hold to talk",
+       "cue": "You hold a key to talk"
+      },
+      {
+       "do": "mark",
+       "on": "amazon",
+       "with": "question",
+       "cue": "it forgets each question"
+      },
+      {
+       "do": "block",
+       "from": "you",
+       "to": "amazon",
+       "cue": "you can't cut in"
+      }
+     ]
+    }
+   },
+   {
+    "title": "The cost",
+    "caption": "About five pounds a month if every message were spoken.",
+    "say": "If every message were spoken, it's about six dollars sixty a month, around five pounds. Most likely, a pound or two.",
+    "picture": {
+     "type": "stage",
+     "place": "office",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "amazon",
+       "is": "server",
+       "spot": "right",
+       "label": "Amazon"
+      }
+     ],
+     "moves": [
+      {
+       "do": "pile",
+       "on": "you",
+       "count": 5,
+       "cue": "six dollars sixty"
+      },
+      {
+       "do": "count",
+       "on": "amazon",
+       "to": 5,
+       "before": "£",
+       "after": " a month",
+       "cue": "around five pounds"
+      },
+      {
+       "do": "pile",
+       "on": "amazon",
+       "count": 2,
+       "cue": "a pound or two"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Choose",
+    "caption": "Tell me A, B, or both.",
+    "say": "So, which one? Amazon's voice is quick and cheap. Option A is Peter's voice, free, on this PC. Tell me A, B, or both.",
+    "picture": {
+     "type": "stage",
+     "place": "office",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "amazon",
+       "is": "server",
+       "spot": "middle",
+       "label": "B: Amazon"
+      },
+      {
+       "id": "pc",
+       "is": "computer",
+       "spot": "right",
+       "label": "A: Peter, free"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "you",
+       "with": "question",
+       "cue": "which one"
+      },
+      {
+       "do": "wave",
+       "from": "amazon",
+       "to": "you",
+       "cue": "quick and cheap"
+      },
+      {
+       "do": "wave",
+       "from": "pc",
+       "to": "you",
+       "cue": "Peter's voice, free"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "looked": {
+  "model": "claude-sonnet-5-5",
+  "effort": "low",
+  "seconds": 11.2,
+  "tokens": {
+   "in": 11084,
+   "out": 1644
+  },
+  "cents": 3.9,
+  "faults": [
+   "scene 2: Reelie is in the JSON at far-right but is not in the stage as drawn, and the mic does nothing; the person is a plain 'person' for 'You', fine, but the waves cross the mic. Keep the cast and spots the same as in later scenes.",
+   "scene 3: the laptop's lock badge covers the flow dots, and 'Amazon' sits at right in this scene.",
+   "scene 4: Amazon moved from right to left, so the cast jumps; the block sits between the inbox and the records, so it reads as if the inbox is walled off from the records rather than showing that Amazon cannot change a project. Records and inbox send nothing visible.",
+   "scene 5: a list of ticks reads as 'these are good', but these are things it cannot do yet. Ticks are the wrong sign for limits.",
+   "scene 6: money is piled by 'You' and a single coin by Amazon, with no price shown, so the amounts, around five pounds and a pound or two, are not shown.",
+   "scene 7: a music note stands for Peter's voice, and a cloud for Amazon. A note is music, not a voice or an answer. The tick and cross also make it look as though A is already chosen, but Peter asks the viewer to choose."
+  ],
+  "mended": true,
+  "log": [
+   "critic: talking-first-mate 11084 tokens in, 1644 out (claude-sonnet-5-5); 6 faults"
+  ]
+ }
+}

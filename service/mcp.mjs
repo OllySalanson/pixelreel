@@ -325,8 +325,8 @@ export const EXAMPLE_STAGE_REEL = {
     { title: 'Talk to them', caption: 'Hard to pay? Ring them.',
       say: 'Finding it hard to pay? Ring them. They can spread the cost, so don\'t wait.',
       picture: { type: 'stage', place: 'home', things: [
-        { id: 'you', is: 'woman', spot: 'left', label: 'You' }, { id: 'gas', is: 'woman', wears: 'suit', spot: 'right', label: 'Gas company' },
-        { id: 'reelie', is: 'reelie', spot: 'far-right' }],
+        { id: 'reelie', is: 'reelie', spot: 'far-left' }, { id: 'you', is: 'woman', spot: 'left', label: 'You' },
+        { id: 'gas', is: 'woman', wears: 'suit', spot: 'far-right', label: 'Gas company' }],
       moves: [{ do: 'wave', from: 'you', to: 'gas', cue: 'Ring them' }, { do: 'say', who: 'gas', text: 'We can help', cue: 'spread the cost' }, { do: 'say', who: 'reelie', text: 'Don\'t wait!', cue: 'don\'t wait' }] } }
   ]
 };

@@ -1,0 +1,305 @@
+{
+ "topic": "phone-contract",
+ "model": "claude-sonnet-5-5",
+ "effort": "low",
+ "pictures": "stage",
+ "seconds": 9.7,
+ "rounds": 1,
+ "tokens": {
+  "in": 7530,
+  "out": 1585
+ },
+ "wishes": [],
+ "cents": 6.7,
+ "problems": [],
+ "reel": {
+  "format": "pixelreel/1",
+  "title": "Your phone contract is ending",
+  "transition": "fade",
+  "scenes": [
+   {
+    "title": "Contract ending",
+    "caption": "What it says, and what you can do.",
+    "say": "Your phone contract is coming to an end. Here's what that means, and what you can do about it.",
+    "picture": {
+     "type": "title",
+     "text": "CONTRACT ENDS",
+     "sub": "Your choices"
+    }
+   },
+   {
+    "title": "The end date",
+    "caption": "Your 24-month contract ends on 5 January 2027.",
+    "say": "Your twenty-four month contract with Skyline Mobile ends on the fifth of January, twenty twenty-seven. The phone is then paid off, so it's yours.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "phone",
+       "is": "phone",
+       "spot": "middle",
+       "label": "Your phone"
+      },
+      {
+       "id": "cal",
+       "is": "calendar",
+       "spot": "right",
+       "up": true
+      },
+      {
+       "id": "sky",
+       "is": "mast",
+       "spot": "far-right",
+       "label": "Skyline"
+      }
+     ],
+     "moves": [
+      {
+       "do": "mark",
+       "on": "cal",
+       "with": "clock",
+       "cue": "ends on the fifth of January"
+      },
+      {
+       "do": "mark",
+       "on": "phone",
+       "with": "heart",
+       "cue": "it's yours"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Do nothing",
+    "caption": "Doing nothing moves you to a £32 plan.",
+    "say": "Do nothing, and you move to the standard plan at thirty two pounds a month. That's ten pounds more than now.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "phone",
+       "is": "phone",
+       "spot": "middle"
+      },
+      {
+       "id": "sky",
+       "is": "mast",
+       "spot": "far-right",
+       "label": "Skyline"
+      }
+     ],
+     "moves": [
+      {
+       "do": "send",
+       "what": "money",
+       "from": "you",
+       "to": "sky",
+       "cue": "thirty two pounds a month"
+      },
+      {
+       "do": "pile",
+       "on": "sky",
+       "count": 6,
+       "cue": "thirty two pounds a month"
+      },
+      {
+       "do": "mark",
+       "on": "you",
+       "with": "warning",
+       "cue": "ten pounds more"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Three choices",
+    "caption": "Upgrade, go SIM-only, or leave.",
+    "say": "You have three choices. Upgrade to a new phone, keep your phone with a SIM-only deal, or leave for another network.",
+    "picture": {
+     "type": "icons",
+     "heading": "Your choices",
+     "items": [
+      {
+       "icon": "phone",
+       "label": "New phone"
+      },
+      {
+       "icon": "phone",
+       "label": "SIM-only"
+      },
+      {
+       "icon": "world",
+       "label": "Leave"
+      }
+     ]
+    }
+   },
+   {
+    "title": "The prices",
+    "caption": "Upgrade from £25, SIM-only from £8.",
+    "say": "Upgrades start at twenty five pounds a month for two years. SIM-only starts at eight pounds a month for a year, with thirty gigabytes.",
+    "picture": {
+     "type": "table",
+     "columns": [
+      "Choice",
+      "From",
+      "For"
+     ],
+     "rows": [
+      [
+       "Upgrade",
+       "£25/month",
+       "2 years"
+      ],
+      [
+       "SIM-only",
+       "£8/month",
+       "1 year"
+      ]
+     ]
+    }
+   },
+   {
+    "title": "Leaving",
+    "caption": "Text PAC to 65075 and keep your number.",
+    "say": "To leave, text PAC to sixty five oh seven five. You get a free code for your new network, and keep your number.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "phone",
+       "is": "phone",
+       "spot": "middle",
+       "label": "Your phone"
+      },
+      {
+       "id": "new",
+       "is": "mast",
+       "spot": "far-right",
+       "label": "New network"
+      }
+     ],
+     "moves": [
+      {
+       "do": "send",
+       "what": "letter",
+       "from": "phone",
+       "to": "new",
+       "cue": "text PAC"
+      },
+      {
+       "do": "send",
+       "what": "letter",
+       "from": "new",
+       "to": "phone",
+       "cue": "free code"
+      },
+      {
+       "do": "mark",
+       "on": "phone",
+       "with": "tick",
+       "cue": "keep your number"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Choose now",
+    "caption": "Use the Skyline app, or call 150.",
+    "say": "To choose, open the Skyline app, or call one five oh from your mobile. Do it before the fifth of January.",
+    "picture": {
+     "type": "stage",
+     "place": "home",
+     "things": [
+      {
+       "id": "you",
+       "is": "person",
+       "spot": "left",
+       "label": "You"
+      },
+      {
+       "id": "phone",
+       "is": "phone",
+       "spot": "middle",
+       "label": "App"
+      },
+      {
+       "id": "sky",
+       "is": "mast",
+       "spot": "far-right",
+       "label": "Skyline"
+      },
+      {
+       "id": "reelie",
+       "is": "reelie",
+       "spot": "far-left"
+      }
+     ],
+     "moves": [
+      {
+       "do": "pulse",
+       "on": "phone",
+       "cue": "open the Skyline app"
+      },
+      {
+       "do": "wave",
+       "from": "phone",
+       "to": "sky",
+       "cue": "call one five oh"
+      },
+      {
+       "do": "say",
+       "who": "reelie",
+       "text": "Don't wait!",
+       "cue": "Do it before"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "looked": {
+  "model": "claude-sonnet-5-5",
+  "effort": "low",
+  "seconds": 9,
+  "tokens": {
+   "in": 11243,
+   "out": 1374
+  },
+  "cents": 3.6,
+  "faults": [
+   "scene 2: the label \"Yours to keep\" is too long and runs into its neighbours; the calendar and clock badge crowd each other",
+   "scene 3: Skyline Mobile moved from far-right to right; the cast should keep its spots",
+   "scene 3: the count passes through £31 and ends on £32, but the phone is not what costs the money, and a warning on the person shows no rise; coins could show the cost",
+   "scene 4: the choices are shown with a briefcase for SIM-only and a globe for leaving; a bag or world is not a SIM or another network, and the third choice only arrives at the end",
+   "scene 5: the table has a row 'Now £22/month 20GB' that Peter never says, the 30GB for SIM-only is missing, and the text is hard to read",
+   "scene 6: a letter flies for a text message and the tick lands on the network before it is told; the phone label 'Text PAC' is not the phone's name",
+   "scene 7: the label 'Skyline Mobile' is too long and crowds its neighbours; Reelie stands next to the mast and the wave from the person goes through the phone to the mast, which does not show calling or the app"
+  ],
+  "mended": true,
+  "log": [
+   "critic: phone-contract 11243 tokens in, 1374 out (claude-sonnet-5-5); 7 faults"
+  ]
+ }
+}
