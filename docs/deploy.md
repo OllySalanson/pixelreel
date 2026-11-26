@@ -252,6 +252,12 @@ opens), and the address in it (`https://pixelreel.pro/bottle/mcp/<key>`), the pa
 "In Claude". The key is in
 the address, so it is in Cloud Run's request logs; turning the person off ends it.
 
+A live site with no email set up can have a word instead (`npm run bottles -- site word <site>
+<word>`): its people go to `<site>/suggest` (a page of the site's own with the line's
+`data-suggest`), give the word and their name, and have the button for a year. Their suggestions
+wait under Waiting on the page of queues until they are approved there once (or with `npm run
+bottles -- person approve <site> <person>`); the package's README, "A live site's word".
+
 Olly's key is `gcloud secrets versions access latest --secret pixelreel-bottle-key --project
 pixelreel-515501`. To change it, add a new version of `pixelreel-bottle-key` and redeploy;
 browsers holding the old one forget it. Everyone else's keys are kept (by their hash) in the
