@@ -33,30 +33,30 @@
             "label": "A question"
           }
         ],
-        "every": 1.8,
-        "start": 0.6
-      }
-    },
-    {
-      "title": "We write the ask",
-      "caption": "The make page writes the words. You copy them.",
-      "say": "Type it into the box on the make page, and we'll write out the words to give to Claude. Then you copy them across.",
-      "picture": {
-        "type": "list",
-        "numbered": true,
-        "items": [
-          "Type what you want",
-          "Copy the words",
-          "Give them to Claude"
-        ],
-        "every": 2.4,
+        "every": 1.5,
         "start": 0.3
       }
     },
     {
+      "title": "Add it to Claude",
+      "caption": "Add Pixel Reel to Claude first.",
+      "say": "First, add Pixel Reel to Claude. It only takes a minute, and it works with every Claude plan.",
+      "picture": {
+        "type": "list",
+        "numbered": true,
+        "items": [
+          "Add Pixel Reel to Claude",
+          "Ask for a pixel reel",
+          "Press Play"
+        ],
+        "start": 0.3,
+        "every": 0.5
+      }
+    },
+    {
       "title": "Then press play",
-      "caption": "Claude does the rest.",
-      "say": "Claude does the rest. And if you haven't added Pixel Reel to Claude yet, do that first. It only takes a minute.",
+      "caption": "Ask Claude. It does the rest.",
+      "say": "Then ask Claude for a pixel reel of anything you like. Claude writes it, I read it out, and you press Play.",
       "picture": {
         "type": "sprite",
         "label": "THEN PRESS PLAY",
