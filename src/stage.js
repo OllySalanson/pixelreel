@@ -3,7 +3,8 @@
 // narrator says: a letter flies from the bank to the house, a barrier rises, coins pile up.
 // Plain data, like every other picture, so it is checked before it is played and nothing in
 // it ever runs. Pure: no DOM. pictures.js draws it and checks it; pacing.mjs times its moves.
-import { ICON_SIZE, ICONS } from './icons.js';
+import { ICONS } from './icons.js';
+import { PEOPLE, THINGS, WEARS } from './library.js';
 
 const INK = '#1a1a1a', CREAM = '#ebeac5', LIGHT = '#fdf6e3', GOLD = '#ffcc4d', TEAL = '#55d6be';
 const RED = '#d63a3a', GREEN = '#3fa34d', NAVY = '#13203a';
@@ -16,6 +17,10 @@ const AIR = 86;
 /** The places a stage can be, and what each is like, for whoever chooses one. */
 export const PLACES = {
   home: 'Indoors at home: a wall, a window and a wooden floor.',
+  office: 'An office: a big window over the town, and a carpet.',
+  surgery: 'A doctors\u2019 surgery or a hospital: a pale wall with a red cross, and a clean floor.',
+  shop: 'Inside a shop: shelves of goods along the back.',
+  school: 'A classroom: a blackboard and a wooden floor.',
   outside: 'Outdoors by day: sky, sun and green hills.',
   street: 'A street by day: houses along the back and a pavement.',
   night: 'Outdoors at night: stars, a moon and dark hills.',
@@ -28,10 +33,10 @@ export const SPOTS = { 'far-left': 36, left: 98, middle: 160, right: 222, 'far-r
 const SPOT_NAMES = Object.keys(SPOTS);
 const SPOT_WIDTH = 62;
 
-/** How big a thing is drawn: pixels to one of its icon's. */
-export const SIZES = { small: 2, medium: 3, big: 4 };
+/** How big a thing is drawn: picture pixels to one of its drawing's. One size of pixel throughout, and a big thing a little bigger. */
+export const SIZES = { medium: 2, big: 3 };
 
-/** The cast who come back in every reel: Reelie, the film reel who presents. The people are icons (woman, man, ...). */
+/** The cast who come back in every reel: Reelie, the film reel who presents. The people are in the library (woman, man, ...). */
 export const CAST = ['reelie'];
 
 /** What each move shows, and what it takes, for whoever writes a stage (and for the checks). */
@@ -63,11 +68,16 @@ const words = (s) => String(s ?? '').trim().split(/\s+/).filter(Boolean).length;
 const isText = (v) => typeof v === 'string' && v.trim() !== '';
 const isPlain = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
-/** True for a name a thing can be: an icon or one of the cast. */
-export const isThingName = (name) => Object.hasOwn(ICONS, name) || CAST.includes(name);
+/** True for a name a thing can be: one of the cast, a person or a thing in the library, or an icon. */
+export const isThingName = (name) => CAST.includes(name) || Object.hasOwn(PEOPLE, name) || Object.hasOwn(THINGS, name) || Object.hasOwn(ICONS, name);
+
+/** The rows a thing is drawn from: the library's own drawing, or the icon of that name. */
+export function drawingOf(name) {
+  return PEOPLE[name] ?? THINGS[name] ?? (Object.hasOwn(ICONS, name) ? { rows: ICONS[name] } : null);
+}
 
 /** The keys a thing and each move may have. */
-const THING_KEYS = ['id', 'is', 'spot', 'up', 'size', 'label', 'flip', 'skin', 'hair'];
+const THING_KEYS = ['id', 'is', 'spot', 'up', 'size', 'label', 'flip', 'skin', 'hair', 'wears'];
 const MOVE_KEYS = ['do', 'cue', 'at', 'who', 'what', 'from', 'to', 'on', 'count', 'with', 'text', 'before', 'after', 'again'];
 
 /**
@@ -87,16 +97,18 @@ export function stageProblems(p, looks = () => []) {
     for (const key of Object.keys(th)) if (!THING_KEYS.includes(key)) problems.push(`${where}: a thing takes ${THING_KEYS.join(', ')}, not ${key}`);
     if (!isText(th.id) || ids.has(th.id)) problems.push(`${where} needs an id of its own, a short name the moves can use`);
     ids.add(th.id);
-    if (!isThingName(th.is)) problems.push(`${where}: "${th.is}" is not something the stage can draw; it can draw ${CAST.join(', ')} and the icons`);
+    if (!isThingName(th.is)) problems.push(`${where}: "${th.is}" is not something the stage can draw; it can draw ${CAST.join(', ')}, the people and things in the library, and the icons`);
     if (!Object.hasOwn(SPOTS, th.spot)) { problems.push(`${where}.spot must be one of: ${SPOT_NAMES.join(', ')}`); return; }
     if (th.up !== undefined && typeof th.up !== 'boolean') problems.push(`${where}.up must be true or false`);
     if (th.flip !== undefined && typeof th.flip !== 'boolean') problems.push(`${where}.flip must be true or false`);
+    if (th.wears !== undefined && (!Object.hasOwn(PEOPLE, th.is) || !Object.hasOwn(WEARS, th.wears))) problems.push(`${where}.wears: only a person wears anything, and it is one of: ${Object.keys(WEARS).join(', ')}`);
     if (th.size !== undefined && !Object.hasOwn(SIZES, th.size)) problems.push(`${where}.size must be one of: ${Object.keys(SIZES).join(', ')}`);
     if (th.label !== undefined && (!isText(th.label) || words(th.label) > STAGE_MAX.label)) problems.push(`${where}.label must be ${STAGE_MAX.label} words at most`);
     problems.push(...looks(th, where));
     // two things in one spot stand on each other, and a big one fills its neighbours' too
     const layer = th.up ? 'air' : 'ground', at = SPOT_NAMES.indexOf(th.spot), reach = th.size === 'big' ? 1 : 0;
     if (reach) big.add(th.id);
+    if (reach && (at === 0 || at === SPOT_NAMES.length - 1)) problems.push(`${where}: a big thing needs room either side, so it cannot stand at the ${th.spot}`);
     for (let s = at - reach; s <= at + reach; s++) {
       const key = `${layer} ${s}`;
       if (taken.has(key)) {
@@ -123,7 +135,7 @@ export function stageProblems(p, looks = () => []) {
       else if (!ids.has(m.to)) problems.push(`${where}.to must be the id of one of the things (${[...ids].join(', ')})`);
     }
     if (m.from !== undefined && m.from === m.to) problems.push(`${where}: a ${m.do} goes from one thing to another, not to itself`);
-    if (m.what !== undefined && !Object.hasOwn(ICONS, m.what)) problems.push(`${where}.what must be an icon, such as letter or money`);
+    if (m.what !== undefined && (!drawingOf(m.what) || Object.hasOwn(PEOPLE, m.what))) problems.push(`${where}.what must be a thing in the library or an icon, such as letter or money`);
     if (m.with !== undefined && !MARKS.includes(m.with)) problems.push(`${where}.with must be one of: ${MARKS.join(', ')}`);
     if (m.count !== undefined && (!Number.isInteger(m.count) || m.count < 1 || m.count > STAGE_MAX.coins)) problems.push(`${where}.count must be a whole number from 1 to ${STAGE_MAX.coins}`);
     if (m.text !== undefined && (!isText(m.text) || words(m.text) > STAGE_MAX.say)) problems.push(`${where}.text must be ${STAGE_MAX.say} words at most`);
@@ -176,6 +188,43 @@ function place(t, px, kind) {
     px.rect('#9a9a9a', 0, GROUND - 14, W, 14); px.rect('#bdbdbd', 0, GROUND - 14, W, 2);
     px.rect('#4a4a52', 0, GROUND, W, H - GROUND); px.rect(INK, 0, GROUND, W, 1);
     for (let x = 8; x < W; x += 40) px.rect(LIGHT, x, GROUND + 18, 20, 3);
+  } else if (kind === 'office') {
+    px.rect('#c9d3dc', 0, 0, W, GROUND); px.rect('#b4c0cb', 0, GROUND - 22, W, 22); px.rect('#9fadba', 0, GROUND - 23, W, 1);
+    // a long window over the town, high on the wall
+    px.rect(INK, 20, 8, 280, 46); px.rect('#8fd3ff', 21, 9, 278, 44);
+    for (const [x, w, h] of [[24, 30, 26], [58, 22, 36], [84, 40, 20], [128, 26, 32], [158, 34, 24], [196, 24, 38], [224, 40, 22], [268, 28, 30]]) {
+      px.rect('#6f87a3', x, 53 - h, w, h);
+      for (let wy = 56 - h; wy < 50; wy += 6) for (let wx = x + 3; wx < x + w - 3; wx += 6) px.rect('#cfe6f2', wx, wy, 3, 3);
+    }
+    for (const x of [94, 160, 226]) px.rect(INK, x, 8, 2, 46);
+    px.rect('#5d6f86', 0, GROUND, W, H - GROUND); px.rect('#4f5f74', 0, GROUND, W, 2);
+    for (let x = 0; x < W; x += 8) px.rect('#56687e', x + ((x / 8) % 2) * 4, GROUND + 12, 2, 2);
+  } else if (kind === 'surgery') {
+    px.rect('#d7eee6', 0, 0, W, GROUND); px.rect('#bfe0d4', 0, GROUND - 26, W, 26); px.rect('#9fcbbb', 0, GROUND - 27, W, 1);
+    px.rect(INK, 148, 8, 24, 24); px.rect(LIGHT, 149, 9, 22, 22); px.rect(RED, 157, 12, 6, 16); px.rect(RED, 152, 17, 16, 6);
+    px.rect(INK, 22, 12, 46, 30); px.rect('#c8925a', 23, 13, 44, 28);
+    for (const [x, y, c] of [[27, 16, LIGHT], [44, 17, '#ffe08a'], [30, 28, '#8fd3ff'], [48, 29, LIGHT]]) px.rect(c, x, y, 13, 9);
+    px.rect('#e9ecef', 0, GROUND, W, H - GROUND); px.rect('#c9ced6', 0, GROUND, W, 2);
+    for (let x = 0; x < W; x += 20) px.rect('#d5dae0', x, GROUND + 2, 1, H - GROUND - 2);
+  } else if (kind === 'shop') {
+    px.rect('#f1e2c6', 0, 0, W, GROUND);
+    for (const y of [16, 44]) {
+      px.rect('#8a5a34', 6, y + 18, W - 12, 4); px.rect(INK, 6, y + 22, W - 12, 1);
+      for (let x = 10; x < W - 14; x += 12) {
+        const n = (x - 10) / 12, c = ['#d63a3a', '#3fa34d', '#1f4e9c', '#ffcc4d', '#ff8c2a', '#8e5bd6'][(n * 5 + y) % 6];
+        const h = 10 + ((n * 7 + y) % 3) * 3;
+        px.rect(INK, x, y + 18 - h, 9, h); px.rect(c, x + 1, y + 19 - h, 7, h - 1); px.rect(LIGHT, x + 2, y + 21 - h, 5, 2);
+      }
+    }
+    px.rect('#e3cfa8', 0, GROUND - 20, W, 20);
+    for (let x = 0; x < W; x += 16) for (let y = GROUND; y < H; y += 16) px.rect(((x + y) / 16) % 2 ? '#c9ced6' : '#f4f4ee', x, y, 16, 16);
+  } else if (kind === 'school') {
+    px.rect('#efe3c4', 0, 0, W, GROUND); px.rect('#d8c49a', 0, GROUND - 22, W, 22); px.rect('#bba57a', 0, GROUND - 23, W, 1);
+    px.rect('#7a4a24', 70, 8, 180, 50); px.rect('#24533a', 74, 12, 172, 42);
+    for (const [x, y, w] of [[84, 18, 40], [84, 26, 64], [84, 34, 30], [170, 20, 52], [176, 30, 36], [168, 40, 44]]) px.rect('#cfe3d6', x, y, w, 2);
+    px.rect('#7a4a24', 64, 58, 192, 4);
+    px.rect('#a36a3a', 0, GROUND, W, H - GROUND); px.rect('#8a5a34', 0, GROUND, W, 2);
+    for (let x = 0; x < W; x += 32) px.rect('#8a5a34', x, GROUND + 2, 1, H - GROUND - 2);
   } else if (kind === 'plain') {
     px.rect(NAVY, 0, 0, W, H);
     for (let y = 4; y < H; y += 8) for (let x = 4; x < W; x += 8) px.rect('#1a2b47', x, y, 1, 1);
@@ -224,8 +273,8 @@ function reelie(px, cx, feet, r, t, talking) {
 function layout(t, p, times) {
   const things = new Map();
   for (const th of p.things) {
-    const sc = SIZES[th.size ?? 'medium'], cast = CAST.includes(th.is);
-    const w = cast ? Math.round(ICON_SIZE * sc * 0.9) : ICON_SIZE * sc, h = cast ? w + 3 : ICON_SIZE * sc;
+    const sc = SIZES[th.size ?? 'medium'], cast = CAST.includes(th.is), rows = cast ? null : drawingOf(th.is).rows;
+    const w = cast ? 14 * sc : Math.max(...rows.map((r) => r.length)) * sc, h = cast ? 15 * sc + 2 : rows.length * sc;
     things.set(th.id, { ...th, sc, w, h, x: SPOTS[th.spot], feet: th.up ? AIR : GROUND, from: 0, gone: Infinity, walking: false });
   }
   p.moves.forEach((m, i) => {
@@ -241,6 +290,7 @@ function layout(t, p, times) {
     }
   });
   for (const th of things.values()) {
+    th.x = Math.max(2 + th.w / 2, Math.min(320 - 2 - th.w / 2, th.x));   // never past the picture's edge
     th.top = th.feet - th.h;
     th.cy = th.top + th.h / 2;
   }
@@ -263,7 +313,10 @@ function drawThing(t, px, th, look, index) {
   const x = Math.round(th.x - th.w / 2), y = th.top + drop + bob;
   if (!th.up && drop === 0) px.rect('rgba(0,0,0,0.25)', x + 4, th.feet - 1, th.w - 8, 2);   // a shadow, so it stands on the ground
   if (th.is === 'reelie') reelie(px, Math.round(th.x), th.feet + drop + bob, Math.round(th.w / 2) - 1, t, true);
-  else px.sprite(ICONS[th.is], x, y, th.sc, th.flip === true || th.facing === -1, look(th, index));
+  else {
+    const drawing = drawingOf(th.is), own = look(th, index);
+    px.sprite(drawing.rows, x, y, th.sc, th.flip === true || th.facing === -1, own || drawing.colours ? { ...drawing.colours, ...own } : null);
+  }
   if (fade > 0) px.dither('#13203a', x - 2, y - 2, th.w + 4, th.h + 4, fade);
 }
 
@@ -273,8 +326,9 @@ function flying(t, px, m, a, b, at, wall) {
   if (k0 < 0 || k0 > 1) return;
   let k = k0;
   if (wall) k = k0 < 0.5 ? k0 : 1 - k0;   // to the barrier, and back
-  const x = px.lerp(a.x, b.x, k), y = px.lerp(a.cy, b.cy, k) - Math.sin(k * Math.PI) * 30;
-  px.sprite(ICONS[m.what], Math.round(x - ICON_SIZE), Math.round(y - ICON_SIZE), 2);
+  const x = px.lerp(a.x, b.x, k), y = px.lerp(a.cy, b.cy, k) - Math.sin(k * Math.PI) * 30, drawing = drawingOf(m.what);
+  const w = Math.max(...drawing.rows.map((r) => r.length)) * 2, h = drawing.rows.length * 2;
+  px.sprite(drawing.rows, Math.round(x - w / 2), Math.round(y - h / 2), 2, false, drawing.colours ?? null);
 }
 
 /** Draws stage `p` at time t, with `look(thing, i)` giving a person's colours (personLook in pictures.js). */

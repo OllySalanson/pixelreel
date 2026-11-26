@@ -19,7 +19,7 @@ const examples = {
   flow: { type: 'flow', items: [{ icon: 'person', label: 'You ask' }, { icon: 'document', label: 'Scenes' }, { icon: 'heart', label: 'You watch' }], every: 1 },
   compare: { type: 'compare', heading: 'WHICH?', bad: { icon: 'document', label: 'A long letter' }, good: { icon: 'computer', label: 'A pixel reel' } },
   table: { type: 'table', heading: 'SUNDAY BUSES', columns: ['Stop', '1st bus', '2nd bus'], rows: [['High Street', '9:05', '9:35'], ['Library', '9:12', '9:42'], ['Station', '9:20', '9:50']] },
-  stage: { type: 'stage', place: 'street', things: [{ id: 'home', is: 'house', spot: 'left', label: 'Your home' }, { id: 'bank', is: 'bank', spot: 'right' }, { id: 'reelie', is: 'reelie', spot: 'far-left', size: 'small' }], moves: [{ do: 'send', what: 'letter', from: 'bank', to: 'home', cue: 'a letter' }, { do: 'pile', on: 'bank', count: 3 }] },
+  stage: { type: 'stage', place: 'street', things: [{ id: 'home', is: 'house', spot: 'left', label: 'Your home' }, { id: 'bank', is: 'bank', spot: 'right' }, { id: 'reelie', is: 'reelie', spot: 'far-left' }], moves: [{ do: 'send', what: 'letter', from: 'bank', to: 'home', cue: 'a letter' }, { do: 'pile', on: 'bank', count: 3 }] },
   sprite: { type: 'sprite', label: 'MY CAT', colours: { h: '#6b3e2e' }, rows: ['.h....h.', 'hhh..hhh', 'hkhhhhkh', 'hhhyyhhh', '.hhhhhh.'] }
 };
 

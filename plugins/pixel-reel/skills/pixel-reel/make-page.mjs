@@ -1468,13 +1468,1148 @@ const PALETTE = {
 return { PALETTE };
 })();
 
+__m['library.js'] = (() => {
+// The stage's library: the people, things and places a stage is built from, drawn once and
+// used by every reel after. Each drawing is rows of palette letters (palette.js), drawn two
+// picture pixels to one of its own, so the stage has one size of pixel throughout. A new
+// drawing comes in through the weekly sheet (docs/library.md): what reels wished for, drawn,
+// and said yes to before it goes in.
+//
+// People are drawn as who they are (Olly, 26 Nov 2026): a woman, a man, a girl, a boy, a baby,
+// an older woman and an older man, each taking any skin and hair, and a person, an outline that
+// is anyone at all. What they wear says what they do: a doctor's coat, scrubs, a hi-vis vest, a
+// suit. Pure data: no DOM.
+
+/**
+ * The people, in rows where S is skin, H hair, C their top, T their trousers or skirt and U
+ * their shoes, so one drawing is anyone. `older` people are given grey or white hair when the
+ * reel does not say.
+ */
+const PEOPLE = {
+  woman: {
+    rows: [
+      '.....HHHH....',
+      '...HHHHHHH...',
+      '..HHHHHHHHH..',
+      '..HHSSSSSHH..',
+      '..HSSkSkSSH..',
+      '..HSSSSSSSH..',
+      '..HHSSRSSHH..',
+      '..HHHSSSHHH..',
+      '..HHH.S.HHH..',
+      '...HCCCCCH...',
+      '..CCCCCCCCC..',
+      '.SCCCCCCCCCS.',
+      '.SCCCCCCCCCS.',
+      '.S.CCCCCCC.S.',
+      '.S.CCCCCCC.S.',
+      '...TTTTTTT...',
+      '..TTTTTTTTT..',
+      '..TTTTTTTTT..',
+      '.TTTTTTTTTTT.',
+      '....SS.SS....',
+      '....SS.SS....',
+      '....SS.SS....',
+      '...UUU.UUU...'
+    ]
+  },
+  man: {
+    rows: [
+      '.............',
+      '....HHHHH....',
+      '...HHHHHHH...',
+      '...HSSSSSH...',
+      '...SSkSkSS...',
+      '...SSSSSSS...',
+      '...SSSRSSS...',
+      '....SSSSS....',
+      '.....SSS.....',
+      '...CCCCCCC...',
+      '..CCCCCCCCC..',
+      '.CCCCCCCCCCC.',
+      '.CCCCCCCCCCC.',
+      '.SCCCCCCCCCS.',
+      '.S.CCCCCCC.S.',
+      '...CCCCCCC...',
+      '...TTTTTTT...',
+      '...TTTTTTT...',
+      '...TTT.TTT...',
+      '...TTT.TTT...',
+      '...TTT.TTT...',
+      '...TTT.TTT...',
+      '..UUUU.UUUU..'
+    ]
+  },
+  girl: {
+    rows: [
+      '...HHHHH...',
+      '.HHHHHHHHH.',
+      'HHHSSSSSHHH',
+      'HHSkSSSkSHH',
+      'H.SSSSSSS.H',
+      '..SSSRSSS..',
+      '...SSSSS...',
+      '..CCCCCCC..',
+      '.CCCCCCCCC.',
+      'SCCCCCCCCCS',
+      'S.TTTTTTT.S',
+      '.TTTTTTTTT.',
+      'TTTTTTTTTTT',
+      '...SS.SS...',
+      '...SS.SS...',
+      '..UUU.UUU..'
+    ]
+  },
+  boy: {
+    rows: [
+      '...HHHHH...',
+      '..HHHHHHH..',
+      '..HSSSSSH..',
+      '..SkSSSkS..',
+      '..SSSSSSS..',
+      '..SSSRSSS..',
+      '...SSSSS...',
+      '..CCCCCCC..',
+      '.CCCCCCCCC.',
+      'SCCCCCCCCCS',
+      'S.CCCCCCC.S',
+      '..TTTTTTT..',
+      '..TTT.TTT..',
+      '..SSS.SSS..',
+      '..SSS.SSS..',
+      '.UUUU.UUUU.'
+    ]
+  },
+  baby: {
+    rows: [
+      '...HHH...',
+      '..SSSSS..',
+      '.SkSSSkS.',
+      '.SSSRSSS.',
+      '..SSSSS..',
+      '.CCCCCCC.',
+      'SCCCCCCCS',
+      '.CCCCCCC.',
+      'SSCCCCCSS',
+      '.SS...SS.'
+    ]
+  },
+  'older-woman': {
+    older: true,
+    rows: [
+      '.....HHH.....',
+      '....HHHHH....',
+      '...HHHHHHH...',
+      '..HHSSSSSHH..',
+      '..HkkSSkkSH..',
+      '..HSSSSSSSH..',
+      '...SSSRSSS...',
+      '....SSSSS....',
+      '.....SSS.....',
+      '...CCCCCCC...',
+      '..CCCCCCCCC..',
+      '.SCCCCCCCCCS.',
+      '.SCCCCCCCCCS.',
+      '.S.CCCCCCC.S.',
+      '...CCCCCCC...',
+      '..TTTTTTTTT..',
+      '..TTTTTTTTT..',
+      '..TTTTTTTTT..',
+      '..TTTTTTTTT..',
+      '....SS.SS....',
+      '....SS.SS....',
+      '....SS.SS....',
+      '...UUU.UUU...'
+    ]
+  },
+  'older-man': {
+    older: true,
+    rows: [
+      '.............',
+      '.............',
+      '....SSSSS....',
+      '..HSSSSSSSH..',
+      '..HkkSSkkSH..',
+      '...SSSSSSS...',
+      '...SHHHHHS...',
+      '....SSSSS....',
+      '.....SSS.....',
+      '...CCCCCCC...',
+      '..CCCCCCCCC..',
+      '.CCCCCCCCCCC.',
+      '.CCCCCCCCCCC.',
+      '.SCCCCCCCCCS.',
+      '.S.CCCCCCC.S.',
+      '...CCCCCCC...',
+      '...TTTTTTT...',
+      '...TTTTTTT...',
+      '...TTT.TTT...',
+      '...TTT.TTT...',
+      '...TTT.TTT...',
+      '...TTT.TTT...',
+      '..UUUU.UUUU..'
+    ]
+  },
+  person: {
+    outline: true,
+    rows: [
+      '.....kkk.....',
+      '....kCCCk....',
+      '...kCCCCCk...',
+      '...kCCCCCk...',
+      '...kCCCCCk...',
+      '....kCCCk....',
+      '.....kkk.....',
+      '...kkkkkkk...',
+      '..kCCCCCCCk..',
+      '.kCCCCCCCCCk.',
+      '.kCCCCCCCCCk.',
+      '.kCkCCCCCkCk.',
+      '.kCkCCCCCkCk.',
+      '.kCkCCCCCkCk.',
+      '..kkCCCCCkk..',
+      '...kCCCCCk...',
+      '...kCCkCCk...',
+      '...kCCkCCk...',
+      '...kCCkCCk...',
+      '...kCCkCCk...',
+      '...kCCkCCk...',
+      '...kCCkCCk...',
+      '...kkk.kkk...'
+    ]
+  }
+};
+
+/** What a person can wear, which says what they do: the colours of their top and trousers. */
+const WEARS = {
+  everyday: null,
+  'doctor-coat': { C: '#f4f4ee', T: '#2b3a52', says: 'a doctor' },
+  scrubs: { C: '#3aa6a0', T: '#3aa6a0', says: 'a nurse, or anyone at a hospital' },
+  'hi-vis': { C: '#ff8c2a', T: '#2b3a52', says: 'an engineer or a builder' },
+  suit: { C: '#24476b', T: '#1c2f4a', says: 'someone at work in an office or a bank' },
+  uniform: { C: '#1f2d4a', T: '#1f2d4a', says: 'a police officer, or anyone in a uniform' }
+};
+
+/** Everyday tops, one chosen for each person by their name so they look the same in every scene. */
+const TOPS = ['#55d6be', '#8e5bd6', '#d63a3a', '#1f4e9c', '#ff8c2a', '#3fa34d', '#ffcc4d', '#ff7eb6'];
+const LEGS = ['#2b3a52', '#24476b', '#5a3418', '#3a2f4a'];
+
+/**
+ * The things, by name: each drawing's rows, any colours of its own, its group, and what it is.
+ * A thing whose name is also an icon's is drawn from here on a stage: a bigger, finer house.
+ */
+const THINGS = {
+  // ----- post and paperwork
+  letter: {
+    group: 'Post and paperwork', says: 'a letter in its envelope',
+    rows: [
+      'kkkkkkkkkkkkkk',
+      'kwkwwwwwwwwkwk',
+      'kwwkwwwwwwkwwk',
+      'kwwwkwwwwkwwwk',
+      'kwwwwkrrkwwwwk',
+      'kwwwwwrrwwwwwk',
+      'kwwwwwwwwwwwwk',
+      'kwwwwwwwwwwwwk',
+      'kwwwwwwwwwwwwk',
+      'kkkkkkkkkkkkkk'
+    ]
+  },
+  document: {
+    group: 'Post and paperwork', says: 'a letter or a page, opened and read',
+    rows: [
+      'kkkkkkkkk...',
+      'kwwwwwwwkk..',
+      'kwbbbbwwkwk.',
+      'kwwwwwwwkkkk',
+      'kwwwwwwwwwwk',
+      'kweeeeeeeewk',
+      'kwwwwwwwwwwk',
+      'kweeeeeeewwk',
+      'kwwwwwwwwwwk',
+      'kweeeeeeeewk',
+      'kwwwwwwwwwwk',
+      'kweeeeewwwwk',
+      'kwwwwwwwwwwk',
+      'kwwwwwwkbkwk',
+      'kkkkkkkkkkkk'
+    ]
+  },
+  bill: {
+    group: 'Post and paperwork', says: 'a bill: a page with a total to pay',
+    rows: [
+      'kkkkkkkkkkkk',
+      'kwwwwwwwwwwk',
+      'kwrrrrrwwwwk',
+      'kwwwwwwwwwwk',
+      'kweeeewwweek',
+      'kweeewwwweek',
+      'kweeeewwweek',
+      'kwwwwwwwwwwk',
+      'kwkkkkkkkkwk',
+      'kwwwwwwwwwwk',
+      'kwwwwwwrrrwk',
+      'kwwwwwwrrrwk',
+      'kwwwwwwwwwwk',
+      'kkkkkkkkkkkk'
+    ]
+  },
+  parcel: {
+    group: 'Post and paperwork', says: 'a parcel',
+    rows: [
+      '..kkkkkkkkkkkk',
+      '.knnnnnyynnnnk',
+      'knnnnnnyynnnkk',
+      'kkkkkkkkkkkknk',
+      'knnnnnyynnnknk',
+      'knnnnnyynnnknk',
+      'knwwwnyynnnknk',
+      'knwwwnyynnnknk',
+      'knnnnnyynnnknk',
+      'knnnnnyynnnkk.',
+      'kkkkkkkkkkkkk.'
+    ],
+    colours: { n: '#c8925a' }
+  },
+  postbox: {
+    group: 'Post and paperwork', says: 'a red postbox',
+    rows: [
+      '...kkkkkk...',
+      '..krrrrrrk..',
+      '.krrrrrrrrk.',
+      '.kRRRRRRRRk.',
+      '.krkkkkkkrk.',
+      '.krrrrrrrrk.',
+      '.krryyyyrrk.',
+      '.krrrrrrrrk.',
+      '.krrrrrrrrk.',
+      '.krrrrrrrrk.',
+      '.krrrrrrrrk.',
+      '.krrrrrrrrk.',
+      '.krrrrrrrrk.',
+      '.kRRRRRRRRk.',
+      'kkkkkkkkkkkk',
+      'kRRRRRRRRRRk',
+      'kkkkkkkkkkkk'
+    ]
+  },
+  form: {
+    group: 'Post and paperwork', says: 'a form on a clipboard, to fill in',
+    rows: [
+      '....kkkk....',
+      'kkkkeeeekkkk',
+      'knwwkkkkwwnk',
+      'knwwwwwwwwnk',
+      'knwkwweeewnk',
+      'knwwwwwwwwnk',
+      'knwkwweeewnk',
+      'knwwwwwwwwnk',
+      'knwkwweeewnk',
+      'knwwwwwwwwnk',
+      'knwwwwwbbwnk',
+      'knwwwwbwwwnk',
+      'knnnnnnnnnnk',
+      'kkkkkkkkkkkk'
+    ],
+    colours: { n: '#b07a45' }
+  },
+  passport: {
+    group: 'Post and paperwork', says: 'a passport',
+    rows: [
+      'kkkkkkkkkk',
+      'kmmmmmmmmk',
+      'kmmmmmmmmk',
+      'kmmmyymmmk',
+      'kmmyyyymmk',
+      'kmmmyymmmk',
+      'kmmmmmmmmk',
+      'kmyyyyyymk',
+      'kmmmmmmmmk',
+      'kmmmmmmmmk',
+      'kkkkkkkkkk'
+    ],
+    colours: { m: '#7a1f3d' }
+  },
+  // ----- money
+  banknote: {
+    group: 'Money', says: 'a banknote: cash',
+    rows: [
+      'kkkkkkkkkkkkkkkk',
+      'kGggggggggggggGk',
+      'kgggGGggggyyyygk',
+      'kggGggGgggyyyygk',
+      'kggGggGgggyyyygk',
+      'kgggGGggggggggGk',
+      'kGggggggggggggGk',
+      'kkkkkkkkkkkkkkkk'
+    ]
+  },
+  wallet: {
+    group: 'Money', says: 'a wallet or a purse',
+    rows: [
+      '..kkkkkkkkkkk.',
+      '.kGGGGGGGGGGGk',
+      'knnnnnnnnnnnnk',
+      'knnnnnnnnnnnnk',
+      'knnnnnnnnkkkkk',
+      'knnnnnnnkyyyyk',
+      'knnnnnnnkyyyyk',
+      'knnnnnnnnkkkkk',
+      'knnnnnnnnnnnnk',
+      'kNNNNNNNNNNNNk',
+      'kkkkkkkkkkkkkk'
+    ],
+    colours: { G: '#3fa34d' }
+  },
+  card: {
+    group: 'Money', says: 'a bank card',
+    rows: [
+      'kkkkkkkkkkkkkk',
+      'kbbbbbbbbbbbbk',
+      'kkkkkkkkkkkkkk',
+      'kbbbbbbbbbbbbk',
+      'kbyybbbbbbbbbk',
+      'kbyybbbbbbbbbk',
+      'kbbbbbbbbbbbbk',
+      'kbwwbwwbwwbbbk',
+      'kkkkkkkkkkkkkk'
+    ]
+  },
+  'piggy-bank': {
+    group: 'Money', says: 'a piggy bank: savings',
+    rows: [
+      '......kkk.......',
+      '....kkkkkkk.....',
+      '..kkpppkkpppk...',
+      '.kpppppppppppk..',
+      'kpppkppppppppkk.',
+      'kpppppppppppppkk',
+      'kppppppppppppkpk',
+      'kppppppppppppkpk',
+      '.kppppppppppppk.',
+      '..kpkkkkkkkkpk..',
+      '..kpk......kpk..',
+      '..kkk......kkk..'
+    ],
+    colours: { p: '#ff9fc4' }
+  },
+  cashpoint: {
+    group: 'Money', says: 'a cash machine in a wall',
+    rows: [
+      'kkkkkkkkkkkkkkkk',
+      'keeeeeeeeeeeeeek',
+      'kekkkkkkkkkkkkek',
+      'kektttttttttttek',
+      'kektkkkktkkkttek',
+      'kektttttttttttek',
+      'kekkkkkkkkkkkkek',
+      'keeeeeeeeeeeeeek',
+      'keekwkwkwkeeeeek',
+      'keekwkwkwkeeeeek',
+      'keekwkwkwkeeeeek',
+      'keeeeeeeeeeeeeek',
+      'keeekkkkkkkkeeek',
+      'keeekGGGGGGkeeek',
+      'keeeeeeeeeeeeeek',
+      'kkkkkkkkkkkkkkkk',
+      'kEEEEEEEEEEEEEEk',
+      'kkkkkkkkkkkkkkkk'
+    ],
+    colours: { E: '#6f87a3', G: '#3fa34d' }
+  },
+  receipt: {
+    group: 'Money', says: 'a receipt from a till',
+    rows: [
+      'kkkkkkkkkk',
+      'kwwwwwwwwk',
+      'kwkkkkkkwk',
+      'kwwwwwwwwk',
+      'kweeeweewk',
+      'kwwwwwwwwk',
+      'kweeewweek',
+      'kwwwwwwwwk',
+      'kweeeweewk',
+      'kwwwwwwwwk',
+      'kwkkkwkkwk',
+      'kwwwwwwwwk',
+      'kwkwkwkwkk',
+      'k.k.k.k.k.'
+    ]
+  },
+  // ----- energy and the home
+  'gas-meter': {
+    group: 'Energy and the home', says: 'a gas meter, with its numbers',
+    rows: [
+      'kkkkkkkkkkkkkk',
+      'keeeeeeeeeeeek',
+      'kekkkkkkkkkkek',
+      'kekwkwkwkwkkek',
+      'kekwkwkwkwkkek',
+      'kekkkkkkkkkkek',
+      'keeeeeeeeeeeek',
+      'keeyyyyyyyyeek',
+      'keeyyyyyyyyeek',
+      'keeyyyyyyyyeek',
+      'keeeeeeeeeeeek',
+      'kkkkkkkkkkkkkk',
+      '...kOOk..kOOk.',
+      '...kOOk..kOOk.',
+      '...kOOk..kOOk.'
+    ],
+    colours: { e: '#c9ced6', y: '#e8c64a', O: '#c98a12' }
+  },
+  'electric-meter': {
+    group: 'Energy and the home', says: 'an electricity meter, with its numbers',
+    rows: [
+      'kkkkkkkkkkkk',
+      'keeeeeeeeeek',
+      'kekkkkkkkkek',
+      'kekwkwkwkkek',
+      'kekwkwkwkkek',
+      'kekkkkkkkkek',
+      'keeeeeeeeeek',
+      'keeeyyyeeeek',
+      'keeeeyyeeeek',
+      'keeeyyeeeeek',
+      'keeeeeeeeeek',
+      'kkkkkkkkkkkk'
+    ]
+  },
+  boiler: {
+    group: 'Energy and the home', says: 'a boiler: heating and hot water',
+    rows: [
+      'kkkkkkkkkkkkkk',
+      'kwwwwwwwwwwwwk',
+      'kwkkkkkkwwwwwk',
+      'kwkttttkwgwrwk',
+      'kwkkkkkkwwwwwk',
+      'kwwwwwwwwwwwwk',
+      'kwwwwwwwwwwwwk',
+      'kwwwwwwwwwwwwk',
+      'kwwwwwwwwwwwwk',
+      'kwwwwkkkkwwwwk',
+      'kwwwwkookwwwwk',
+      'kwwwwkoykwwwwk',
+      'kwwwwkkkkwwwwk',
+      'kkkkkkkkkkkkkk',
+      '...kek..kek...',
+      '...kek..kek...'
+    ]
+  },
+  radiator: {
+    group: 'Energy and the home', says: 'a radiator, warm',
+    rows: [
+      '.kkkkkkkkkkkkkkk.',
+      'kwkwkwkwkwkwkwkwk',
+      'kwkwkwkwkwkwkwkwk',
+      'kwkwkwkwkwkwkwkwk',
+      'kwkwkwkwkwkwkwkwk',
+      'kwkwkwkwkwkwkwkwk',
+      'kwkwkwkwkwkwkwkwk',
+      'kwkwkwkwkwkwkwkwk',
+      '.kkkkkkkkkkkkkkk.',
+      '..kk.........kk..'
+    ]
+  },
+  socket: {
+    group: 'Energy and the home', says: 'a plug socket in the wall',
+    rows: [
+      'kkkkkkkkkk',
+      'kwwwwwwwwk',
+      'kwwwkkwwwk',
+      'kwwwkkwwwk',
+      'kwwwwwwwwk',
+      'kwkkwwkkwk',
+      'kwkkwwkkwk',
+      'kwwwwwwwwk',
+      'kkkkkkkkkk'
+    ]
+  },
+  // ----- at home
+  house: {
+    group: 'At home', says: 'a house: home',
+    rows: [
+      '.......kkkkkkkkkkkk..kkk...',
+      '......krrrrrrrrrrrrk.kek...',
+      '.....krrrrrrrrrrrrrrkkek...',
+      '....krrrrrrrrrrrrrrrrkek...',
+      '...krrrrrrrrrrrrrrrrrrkk...',
+      '..krrrrrrrrrrrrrrrrrrrrk...',
+      '.kRRRRRRRRRRRRRRRRRRRRRRk..',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkk.',
+      '.kccccccccccccccccccccccck.',
+      '.kckkkkkkcccccccckkkkkkkck.',
+      '.kckbbwbkcccccccckbbwbkckk.',
+      '.kckbwbbkcccccccckbwbbkcck.',
+      '.kckkkkkkcccccccckkkkkkcck.',
+      '.kcccccccckkkkkcccccccccck.',
+      '.kcccccccckrrrkcccccccccck.',
+      '.kcccccccckrrrkcccccccccck.',
+      '.kcccccccckrrykcccccccccck.',
+      '.kcccccccckrrrkcccccccccck.',
+      '.kcccccccckrrrkcccccccccck.',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkkk'
+    ]
+  },
+  flats: {
+    group: 'At home', says: 'a block of flats',
+    rows: [
+      'kkkkkkkkkkkkkkkkkkkk',
+      'keeeeeeeeeeeeeeeeeek',
+      'kekkkekkkekkkekkkeek',
+      'kekbkekbkekbkekbkeek',
+      'kekkkekkkekkkekkkeek',
+      'keeeeeeeeeeeeeeeeeek',
+      'kekkkekkkekkkekkkeek',
+      'kekbkekykekbkekbkeek',
+      'kekkkekkkekkkekkkeek',
+      'keeeeeeeeeeeeeeeeeek',
+      'kekkkekkkekkkekkkeek',
+      'kekbkekbkekbkekykeek',
+      'kekkkekkkekkkekkkeek',
+      'keeeeeeeeeeeeeeeeeek',
+      'kekkkekkkekkkekkkeek',
+      'kekbkekbkekbkekbkeek',
+      'kekkkekkkekkkekkkeek',
+      'keeeeeeekkkkeeeeeeek',
+      'keeeeeeekbbkeeeeeeek',
+      'keeeeeeekbbkeeeeeeek',
+      'kkkkkkkkkkkkkkkkkkkk'
+    ],
+    colours: { e: '#b8a890' }
+  },
+  door: {
+    group: 'At home', says: 'a front door',
+    rows: [
+      'kkkkkkkkkkkk',
+      'kbbbbbbbbbbk',
+      'kbkkkkkkkkbk',
+      'kbkbbbbbbkbk',
+      'kbkbbbbbbkbk',
+      'kbkkkkkkkkbk',
+      'kbbbbbbbbbbk',
+      'kbbbkkkkbbbk',
+      'kbbbbbbbbbbk',
+      'kbbbbbbbbyyk',
+      'kbbbbbbbbyyk',
+      'kbkkkkkkkkbk',
+      'kbkbbbbbbkbk',
+      'kbkbbbbbbkbk',
+      'kbkkkkkkkkbk',
+      'kbbbbbbbbbbk',
+      'kkkkkkkkkkkk'
+    ],
+    colours: { b: '#2f7d5a' }
+  },
+  sofa: {
+    group: 'At home', says: 'a sofa',
+    rows: [
+      '...kkkkkkkkkkkkkkkk...',
+      '..kppppppppppppppppk..',
+      '..kppppppppppppppppk..',
+      '..kppppppppppppppppk..',
+      'kkkppppppppppppppppkkk',
+      'kppkkkkkkkkkkkkkkkkppk',
+      'kppkppppppppkpppppkppk',
+      'kppkppppppppkpppppkppk',
+      'kpppppppppppppppppppPk',
+      'kPPPPPPPPPPPPPPPPPPPPk',
+      'kkkkkkkkkkkkkkkkkkkkkk',
+      '.kk................kk.'
+    ],
+    colours: { p: '#c0504d', P: '#923a37' }
+  },
+  kettle: {
+    group: 'At home', says: 'a kettle: a cup of tea',
+    rows: [
+      '....kkkkk....',
+      '...kkeeekk...',
+      '..kkkkkkkkk..',
+      '.kwwwwwwwwkkk',
+      'kwwwwwwwwwk.k',
+      'kwwwwwwwwwk.k',
+      'kwwwwwwwwwk.k',
+      'kwwwwwwwwwkkk',
+      'kwwwwwwwwwk..',
+      'kkkkkkkkkkk..',
+      'keeeeeeeeek..',
+      'kkkkkkkkkkk..'
+    ]
+  },
+  tv: {
+    group: 'At home', says: 'a television',
+    rows: [
+      'kkkkkkkkkkkkkkkkkk',
+      'kbbbbbbbbbbbbbbbbk',
+      'kbBBBBBBBBBBBBBBbk',
+      'kbBBtBBBBBBBBBBBbk',
+      'kbBttBBBBBBBBBBBbk',
+      'kbBBBBBBBBBBBBBBbk',
+      'kbBBBBBBBBBBBBBBbk',
+      'kbBBBBBBBBBBBBBBbk',
+      'kbBBBBBBBBBBBBBBbk',
+      'kbbbbbbbbbbbbbbbbk',
+      'kkkkkkkkkkkkkkkkkk',
+      '.......kkkk.......',
+      '.....kkkkkkkk.....'
+    ],
+    colours: { b: '#2b2b33', B: '#3a5f8a' }
+  },
+  desk: {
+    group: 'At home', says: 'a desk or a table',
+    rows: [
+      'kkkkkkkkkkkkkkkkkkkkkkkk',
+      'knnnnnnnnnnnnnnnnnnnnnnk',
+      'kNNNNNNNNNNNNNNNNNNNNNNk',
+      'kkkkkkkkkkkkkkkkkkkkkkkk',
+      '.kNk................kNk.',
+      '.kNk................kNk.',
+      '.kNk................kNk.',
+      '.kNk................kNk.',
+      '.kNk................kNk.',
+      '.kkk................kkk.'
+    ]
+  },
+  // ----- computers and phones
+  laptop: {
+    group: 'Computers and phones', says: 'a laptop',
+    rows: [
+      '...kkkkkkkkkkkkkk...',
+      '...keeeeeeeeeeeek...',
+      '...kebbbbbbbbbbek...',
+      '...kebwwwwbbbbbek...',
+      '...kebbbbbbbbbbek...',
+      '...kebwwwbbbbbbek...',
+      '...kebbbbbbbbbbek...',
+      '...kebbbbbbbbbbek...',
+      '...keeeeeeeeeeeek...',
+      'kkkkkkkkkkkkkkkkkkkk',
+      'keeeeeeeeeeeeeeeeeek',
+      'keeeeeeekkkkeeeeeeek',
+      '.kkkkkkkkkkkkkkkkkk.'
+    ]
+  },
+  phone: {
+    group: 'Computers and phones', says: 'a mobile phone',
+    rows: [
+      'kkkkkkkkk',
+      'kkkkekkkk',
+      'kbbbbbbbk',
+      'kbwwwwbbk',
+      'kbbbbbbbk',
+      'kbttttbbk',
+      'kbbbbbbbk',
+      'kbwwwbbbk',
+      'kbbbbbbbk',
+      'kbbbbbbbk',
+      'kkkkkkkkk',
+      'kkkwwwkkk',
+      'kkkkkkkkk'
+    ]
+  },
+  computer: {
+    group: 'Computers and phones', says: 'a computer on a desk',
+    rows: [
+      'kkkkkkkkkkkkkkkkkk',
+      'keeeeeeeeeeeeeeeek',
+      'kebbbbbbbbbbbbbbek',
+      'kebwwwwwwbbbbbbbek',
+      'kebbbbbbbbbbbbbbek',
+      'kebwwwwbbbbbbbbbek',
+      'kebbbbbbbbbbbbbbek',
+      'kebbbbbbbbbbbbbbek',
+      'kebbbbbbbbbbbbbbek',
+      'keeeeeeeeeeeeeeeek',
+      'kkkkkkkkkkkkkkkkkk',
+      '.......keek.......',
+      '.......keek.......',
+      '.....kkkkkkkk.....',
+      '.....keeeeeek.....',
+      '.....kkkkkkkk.....'
+    ]
+  },
+  router: {
+    group: 'Computers and phones', says: 'a broadband hub or router, its lights on',
+    rows: [
+      '..k..........k..',
+      '..k..........k..',
+      '..k..........k..',
+      'kkkkkkkkkkkkkkkk',
+      'kwwwwwwwwwwwwwwk',
+      'kwwwwwwwwwwwwwwk',
+      'kwbwgwgwgwwwwwwk',
+      'kwwwwwwwwwwwwwwk',
+      'kkkkkkkkkkkkkkkk',
+      '.kk..........kk.'
+    ]
+  },
+  server: {
+    group: 'Computers and phones', says: 'a server: a computer somewhere else, such as the cloud',
+    rows: [
+      'kkkkkkkkkkkk',
+      'kBBBBBBBBBBk',
+      'kBggBeeeeeBk',
+      'kBBBBBBBBBBk',
+      'kkkkkkkkkkkk',
+      'kBBBBBBBBBBk',
+      'kBgyBeeeeeBk',
+      'kBBBBBBBBBBk',
+      'kkkkkkkkkkkk',
+      'kBBBBBBBBBBk',
+      'kBggBeeeeeBk',
+      'kBBBBBBBBBBk',
+      'kkkkkkkkkkkk',
+      'kBBBBBBBBBBk',
+      'kBgBBeeeeeBk',
+      'kBBBBBBBBBBk',
+      'kkkkkkkkkkkk',
+      '.kk......kk.'
+    ],
+    colours: { B: '#2b3a52' }
+  },
+  printer: {
+    group: 'Computers and phones', says: 'a printer',
+    rows: [
+      '....kkkkkkkk....',
+      '....kwwwwwwk....',
+      '....kwwwwwwk....',
+      'kkkkkkkkkkkkkkkk',
+      'keeeeeeeeeeeeeek',
+      'keeeeeeeeeeegeek',
+      'keeeeeeeeeeeeeek',
+      'kkkkkkkkkkkkkkkk',
+      'keeekwwwwwwkeeek',
+      'keeekweeeewkeeek',
+      'kkkkkwwwwwwkkkkk'
+    ]
+  },
+  padlock: {
+    group: 'Computers and phones', says: 'a padlock: locked, kept safe, a password',
+    rows: [
+      '...kkkkkk...',
+      '..kkeeeekk..',
+      '..kek..kek..',
+      '..kek..kek..',
+      'kkkkkkkkkkkk',
+      'kyyyyyyyyyyk',
+      'kyyyykkyyyyk',
+      'kyyyykkyyyyk',
+      'kyyyyykyyyyk',
+      'kyyyyyyyyyyk',
+      'kOOOOOOOOOOk',
+      'kkkkkkkkkkkk'
+    ],
+    colours: { O: '#c98a12' }
+  },
+  mast: {
+    group: 'Computers and phones', says: 'a phone mast: the mobile signal',
+    rows: [
+      '.....kk.....',
+      '....kwwk....',
+      '.....kk.....',
+      '.....kk.....',
+      '...kkkkkk...',
+      '....kkkk....',
+      '....k..k....',
+      '...kk..kk...',
+      '...k.kk.k...',
+      '...k.kk.k...',
+      '..kk....kk..',
+      '..k.kkkk.k..',
+      '..k.k..k.k..',
+      '.kk......kk.',
+      '.k.kkkkkk.k.',
+      '.k.k....k.k.',
+      'kk........kk',
+      'k..........k'
+    ]
+  },
+  // ----- health
+  pills: {
+    group: 'Health', says: 'medicine in a bottle',
+    rows: [
+      '.kkkkkkkk.',
+      '.kwwwwwwk.',
+      '.kkkkkkkk.',
+      'kooooooook',
+      'kowwwwwwok',
+      'kowrrrrwok',
+      'kowwwwwwok',
+      'kowrrrrwok',
+      'kowwwwwwok',
+      'kooooooook',
+      'kooooooook',
+      '.kkkkkkkk.'
+    ]
+  },
+  ambulance: {
+    group: 'Health', says: 'an ambulance',
+    rows: [
+      '...........kk..............',
+      '.kkkkkkkkkkbbkkkkk.........',
+      '.kwwwwwwwwwwwwwwwwkk.......',
+      '.kwwwwwwwwwwwwwwwwkbk......',
+      '.kwwwwwwrrwwwwwwwwkbbk.....',
+      '.kwwwwwrrrrwwwwwwwkbbbk....',
+      '.kwwwwwwrrwwwwwwwwkkkkkkk..',
+      '.kwwwwwwwwwwwwwwwwwwwwwwk..',
+      '.kyyyyyyyyyyyyyyyyyyyyyyyk.',
+      '.kgggyyygggyyygggyyygggyyk.',
+      '.kwwwwwwwwwwwwwwwwwwwwwwwk.',
+      '.kwwkkkwwwwwwwwwwwkkkwwwwk.',
+      '.kkkkekkkkkkkkkkkkkekkkkkk.',
+      '...kkkkk.........kkkkk.....',
+      '....kkk...........kkk......'
+    ]
+  },
+  hospital: {
+    group: 'Health', says: 'a hospital or a doctors’ surgery',
+    rows: [
+      '..........kkkkkk..........',
+      '..........kwrrwk..........',
+      '..........krrrrk..........',
+      '..........kwrrwk..........',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkk',
+      'kwwwwwwwwwwwwwwwwwwwwwwwwk',
+      'kwkkkwkkkwkkkwkkkwkkkwwwwk',
+      'kwkbkwkbkwkbkwkbkwkbkwwwwk',
+      'kwkkkwkkkwkkkwkkkwkkkwwwwk',
+      'kwwwwwwwwwwwwwwwwwwwwwwwwk',
+      'kwkkkwkkkwkkkwkkkwkkkwwwwk',
+      'kwkbkwkbkwkbkwkbkwkbkwwwwk',
+      'kwkkkwkkkwkkkwkkkwkkkwwwwk',
+      'kwwwwwwwwwwwwwwwwwwwwwwwwk',
+      'kwwwwwwwwwkkkkkkwwwwwwwwwk',
+      'kwwwwwwwwwkttttkwwwwwwwwwk',
+      'kwwwwwwwwwkttttkwwwwwwwwwk',
+      'kwwwwwwwwwkttttkwwwwwwwwwk',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkk'
+    ]
+  },
+  bed: {
+    group: 'Health', says: 'a bed',
+    rows: [
+      'kk......................',
+      'knk.....................',
+      'knkkkkkkkkkkkkkkkkkkkkk.',
+      'knkwwwkbbbbbbbbbbbbbbbbk',
+      'knkwwwkbbbbbbbbbbbbbbbbk',
+      'knkkkkkkkkkkkkkkkkkkkkkk',
+      'knnnnnnnnnnnnnnnnnnnnnnk',
+      'kkkkkkkkkkkkkkkkkkkkkkkk',
+      'knk..................knk',
+      'kkk..................kkk'
+    ]
+  },
+  // ----- out and about
+  bank: {
+    group: 'Out and about', says: 'a bank',
+    rows: [
+      '...........kkkk...........',
+      '.........kkcccckk.........',
+      '.......kkcccccccckk.......',
+      '.....kkcccccccccccckk.....',
+      '...kkcccccccyycccccccckk..',
+      '.kkcccccccccyycccccccccckk',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkk',
+      '.kccck.kccck..kccck.kccck.',
+      '..kck...kck....kck...kck..',
+      '..kck...kck....kck...kck..',
+      '..kck...kck....kck...kck..',
+      '..kck...kck....kck...kck..',
+      '..kck...kck....kck...kck..',
+      '..kck...kck....kck...kck..',
+      '.kccck.kccck..kccck.kccck.',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkk',
+      'kcccccccccccccccccccccccck',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkk'
+    ]
+  },
+  shop: {
+    group: 'Out and about', says: 'a shop',
+    rows: [
+      'kkkkkkkkkkkkkkkkkkkkkkkkkk',
+      'kcccccccccccccccccccccccck',
+      'kcckkkkkkkkkkkkkkkkkkkkcck',
+      'kckbbbbbbbbbbbbbbbbbbbbkck',
+      'kcckkkkkkkkkkkkkkkkkkkkcck',
+      'krwrwrwrwrwrwrwrwrwrwrwrwk',
+      'krwrwrwrwrwrwrwrwrwrwrwrwk',
+      '.krwrwrwrwrwrwrwrwrwrwrwk.',
+      'kcccccccccccccccccccccccck',
+      'kckkkkkkkkkkcckkkkkkkkkcck',
+      'kck88888888kcckttttttkccck',
+      'kck8yy8rr88kcckttttttkccck',
+      'kck8yy8rr88kcckttttttkccck',
+      'kck88888888kcckttttytkccck',
+      'kckkkkkkkkkkcckttttttkccck',
+      'kccccccccccccckttttttkccck',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkk'
+    ],
+    colours: { 8: '#8fd3ff' }
+  },
+  school: {
+    group: 'Out and about', says: 'a school',
+    rows: [
+      '............kk............',
+      '............krrk..........',
+      '............krrrk.........',
+      '............kk............',
+      '..........kkkkkk..........',
+      '........kkRRRRRRkk........',
+      '......kkRRRkkkkRRRkk......',
+      '....kkRRRRkwkwkRRRRRkk....',
+      '..kkRRRRRRkkkkkRRRRRRRkk..',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkk',
+      'krrrrrrrrrrrrrrrrrrrrrrrrk',
+      'krkkkkrrkkkkrrkkkkrrkkkkrk',
+      'krk88krrk88krrk88krrk88krk',
+      'krkkkkrrkkkkrrkkkkrrkkkkrk',
+      'krrrrrrrrrrkkkkrrrrrrrrrrk',
+      'krkkkkrrrrrknnkrrrrrkkkkrk',
+      'krk88krrrrrknnkrrrrrk88krk',
+      'krkkkkrrrrrknnkrrrrrkkkkrk',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkk'
+    ],
+    colours: { r: '#b5654a', R: '#7a3b2e', 8: '#8fd3ff' }
+  },
+  'town-hall': {
+    group: 'Out and about', says: 'the council: a town hall',
+    rows: [
+      '............kk............',
+      '...........kwwk...........',
+      '..........kwkwwk..........',
+      '..........kwwkwk..........',
+      '...........kwwk...........',
+      '.........kkkkkkkk.........',
+      '.........keeeeeeek........',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkk',
+      'keeeeeeeeeeeeeeeeeeeeeeeek',
+      'kekkkekkkekkkkkkekkkekkkek',
+      'kek8kek8keeeeeeek8kek8keek',
+      'kek8kek8keeeeeeek8kek8keek',
+      'kekkkekkkekkkkkkekkkekkkek',
+      'keeeeeeeeeknnnnkeeeeeeeeek',
+      'kekkkekkkeknnnnkekkkekkkek',
+      'kek8kek8keknnnnkek8kek8kek',
+      'kekkkekkkeknnnnkekkkekkkek',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkk'
+    ],
+    colours: { e: '#d8cfb8', 8: '#8fd3ff' }
+  },
+  bus: {
+    group: 'Out and about', says: 'a bus',
+    rows: [
+      '.kkkkkkkkkkkkkkkkkkkkkkkkkkk.',
+      'krrrrrrrrrrrrrrrrrrrrrrrrrrrk',
+      'krkkkkkkkkkkkkkkkkkkkkkkkkkrk',
+      'krk88k88k88k88k88k88k88k888rk',
+      'krkkkkkkkkkkkkkkkkkkkkkkkkkrk',
+      'krrrrrrrrrrrrrrrrrrrrrrrrrrrk',
+      'krkkkkkkkkkkkkkkkkkkkkkkkkkrk',
+      'krk88k88k88k88k88k88kk88kk8rk',
+      'krkkkkkkkkkkkkkkkkkkkk88kkkrk',
+      'krrrrrrrrrrrrrrrrrrrrk88krrrk',
+      'krrrrrrrrrrrrrrrrrrrrk88krryk',
+      'kkkkkkkkkkkkkkkkkkkkkkkkkkkkk',
+      '....kkkkk..........kkkkk.....',
+      '....kkekk..........kkekk.....',
+      '.....kkk............kkk......'
+    ],
+    colours: { 8: '#8fd3ff' }
+  },
+  car: {
+    group: 'Out and about', says: 'a car',
+    rows: [
+      '.......kkkkkkkkkk.......',
+      '......k88888k88888k.....',
+      '.....k888888k888888k....',
+      '..kkkkkkkkkkkkkkkkkkkkk.',
+      '.kbbbbbbbbbbbbbbbbbbbbbk',
+      'kybbbbbbbbbbbbbbbbbbbbrk',
+      'kbbbbbbbbbbbbbbbbbbbbbbk',
+      'kkkkkkkkkkkkkkkkkkkkkkkk',
+      '...kkkkk........kkkkk...',
+      '...kkekk........kkekk...',
+      '....kkk..........kkk....'
+    ],
+    colours: { 8: '#8fd3ff' }
+  },
+  van: {
+    group: 'Out and about', says: 'a van: a delivery, or an engineer coming round',
+    rows: [
+      '.kkkkkkkkkkkkkkkkkk.......',
+      '.kwwwwwwwwwwwwwwwwkkk.....',
+      '.kwwwwwwwwwwwwwwwwk88k....',
+      '.kwwwwwwwwwwwwwwwwk888k...',
+      '.kwwwwwwwwwwwwwwwwk8888k..',
+      '.kwwwwwwwwwwwwwwwwkkkkkkk.',
+      '.kwwwwwwwwwwwwwwwwwwwwwwk.',
+      '.kttttttttttttttttttttttyk',
+      '.kwwwwwwwwwwwwwwwwwwwwwwwk',
+      '.kkkkkkkkkkkkkkkkkkkkkkkkk',
+      '...kkkkk..........kkkkk...',
+      '...kkekk..........kkekk...',
+      '....kkk............kkk....'
+    ],
+    colours: { 8: '#8fd3ff' }
+  },
+  // ----- time
+  clock: {
+    group: 'Time', says: 'a clock: a time, or waiting',
+    rows: [
+      '....kkkkkk....',
+      '..kkwwwwwwkk..',
+      '.kwwwwkwwwwwk.',
+      '.kwwwwkwwwwwk.',
+      'kwwwwwkwwwwwwk',
+      'kwwwwwkwwwwwwk',
+      'kwwwwwkkkkkwwk',
+      'kwwwwwwwwwwwwk',
+      'kwwwwwwwwwwwwk',
+      '.kwwwwwwwwwwk.',
+      '.kwwwwwwwwwwk.',
+      '..kkwwwwwwkk..',
+      '....kkkkkk....'
+    ]
+  },
+  calendar: {
+    group: 'Time', says: 'a calendar: a date',
+    rows: [
+      '..kk.....kk...',
+      'kkkkkkkkkkkkkk',
+      'krrrrrrrrrrrrk',
+      'krrrrrrrrrrrrk',
+      'kkkkkkkkkkkkkk',
+      'kwwwwwwwwwwwwk',
+      'kwekwekwekwekk',
+      'kwwwwwwwwwwwwk',
+      'kwekwekwrkwekk',
+      'kwwwwwwwwwwwwk',
+      'kwekwekwekwwwk',
+      'kwwwwwwwwwwwwk',
+      'kkkkkkkkkkkkkk'
+    ]
+  }
+};
+
+/** The things by what they are about, for the guides people and agents choose from. */
+const THING_GROUPS = Object.entries(THINGS).reduce((groups, [name, thing]) => {
+  (groups[thing.group] ??= []).push(name);
+  return groups;
+}, {});
+
+return { PEOPLE, WEARS, TOPS, LEGS, THINGS, THING_GROUPS };
+})();
+
 __m['stage.js'] = (() => {
 // The stage: a ready-made picture that shows something happening, not a sign for it. A place,
 // a few things standing in it, and moves between them, each move landing on the words the
 // narrator says: a letter flies from the bank to the house, a barrier rises, coins pile up.
 // Plain data, like every other picture, so it is checked before it is played and nothing in
 // it ever runs. Pure: no DOM. pictures.js draws it and checks it; pacing.mjs times its moves.
-const { ICON_SIZE, ICONS } = __m['icons.js'];
+const { ICONS } = __m['icons.js'];
+const { PEOPLE, THINGS, WEARS } = __m['library.js'];
 
 const INK = '#1a1a1a', CREAM = '#ebeac5', LIGHT = '#fdf6e3', GOLD = '#ffcc4d', TEAL = '#55d6be';
 const RED = '#d63a3a', GREEN = '#3fa34d', NAVY = '#13203a';
@@ -1487,6 +2622,10 @@ const AIR = 86;
 /** The places a stage can be, and what each is like, for whoever chooses one. */
 const PLACES = {
   home: 'Indoors at home: a wall, a window and a wooden floor.',
+  office: 'An office: a big window over the town, and a carpet.',
+  surgery: 'A doctors\u2019 surgery or a hospital: a pale wall with a red cross, and a clean floor.',
+  shop: 'Inside a shop: shelves of goods along the back.',
+  school: 'A classroom: a blackboard and a wooden floor.',
   outside: 'Outdoors by day: sky, sun and green hills.',
   street: 'A street by day: houses along the back and a pavement.',
   night: 'Outdoors at night: stars, a moon and dark hills.',
@@ -1499,10 +2638,10 @@ const SPOTS = { 'far-left': 36, left: 98, middle: 160, right: 222, 'far-right': 
 const SPOT_NAMES = Object.keys(SPOTS);
 const SPOT_WIDTH = 62;
 
-/** How big a thing is drawn: pixels to one of its icon's. */
-const SIZES = { small: 2, medium: 3, big: 4 };
+/** How big a thing is drawn: picture pixels to one of its drawing's. One size of pixel throughout, and a big thing a little bigger. */
+const SIZES = { medium: 2, big: 3 };
 
-/** The cast who come back in every reel: Reelie, the film reel who presents. The people are icons (woman, man, ...). */
+/** The cast who come back in every reel: Reelie, the film reel who presents. The people are in the library (woman, man, ...). */
 const CAST = ['reelie'];
 
 /** What each move shows, and what it takes, for whoever writes a stage (and for the checks). */
@@ -1534,11 +2673,16 @@ const words = (s) => String(s ?? '').trim().split(/\s+/).filter(Boolean).length;
 const isText = (v) => typeof v === 'string' && v.trim() !== '';
 const isPlain = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 
-/** True for a name a thing can be: an icon or one of the cast. */
-const isThingName = (name) => Object.hasOwn(ICONS, name) || CAST.includes(name);
+/** True for a name a thing can be: one of the cast, a person or a thing in the library, or an icon. */
+const isThingName = (name) => CAST.includes(name) || Object.hasOwn(PEOPLE, name) || Object.hasOwn(THINGS, name) || Object.hasOwn(ICONS, name);
+
+/** The rows a thing is drawn from: the library's own drawing, or the icon of that name. */
+function drawingOf(name) {
+  return PEOPLE[name] ?? THINGS[name] ?? (Object.hasOwn(ICONS, name) ? { rows: ICONS[name] } : null);
+}
 
 /** The keys a thing and each move may have. */
-const THING_KEYS = ['id', 'is', 'spot', 'up', 'size', 'label', 'flip', 'skin', 'hair'];
+const THING_KEYS = ['id', 'is', 'spot', 'up', 'size', 'label', 'flip', 'skin', 'hair', 'wears'];
 const MOVE_KEYS = ['do', 'cue', 'at', 'who', 'what', 'from', 'to', 'on', 'count', 'with', 'text', 'before', 'after', 'again'];
 
 /**
@@ -1558,16 +2702,18 @@ function stageProblems(p, looks = () => []) {
     for (const key of Object.keys(th)) if (!THING_KEYS.includes(key)) problems.push(`${where}: a thing takes ${THING_KEYS.join(', ')}, not ${key}`);
     if (!isText(th.id) || ids.has(th.id)) problems.push(`${where} needs an id of its own, a short name the moves can use`);
     ids.add(th.id);
-    if (!isThingName(th.is)) problems.push(`${where}: "${th.is}" is not something the stage can draw; it can draw ${CAST.join(', ')} and the icons`);
+    if (!isThingName(th.is)) problems.push(`${where}: "${th.is}" is not something the stage can draw; it can draw ${CAST.join(', ')}, the people and things in the library, and the icons`);
     if (!Object.hasOwn(SPOTS, th.spot)) { problems.push(`${where}.spot must be one of: ${SPOT_NAMES.join(', ')}`); return; }
     if (th.up !== undefined && typeof th.up !== 'boolean') problems.push(`${where}.up must be true or false`);
     if (th.flip !== undefined && typeof th.flip !== 'boolean') problems.push(`${where}.flip must be true or false`);
+    if (th.wears !== undefined && (!Object.hasOwn(PEOPLE, th.is) || !Object.hasOwn(WEARS, th.wears))) problems.push(`${where}.wears: only a person wears anything, and it is one of: ${Object.keys(WEARS).join(', ')}`);
     if (th.size !== undefined && !Object.hasOwn(SIZES, th.size)) problems.push(`${where}.size must be one of: ${Object.keys(SIZES).join(', ')}`);
     if (th.label !== undefined && (!isText(th.label) || words(th.label) > STAGE_MAX.label)) problems.push(`${where}.label must be ${STAGE_MAX.label} words at most`);
     problems.push(...looks(th, where));
     // two things in one spot stand on each other, and a big one fills its neighbours' too
     const layer = th.up ? 'air' : 'ground', at = SPOT_NAMES.indexOf(th.spot), reach = th.size === 'big' ? 1 : 0;
     if (reach) big.add(th.id);
+    if (reach && (at === 0 || at === SPOT_NAMES.length - 1)) problems.push(`${where}: a big thing needs room either side, so it cannot stand at the ${th.spot}`);
     for (let s = at - reach; s <= at + reach; s++) {
       const key = `${layer} ${s}`;
       if (taken.has(key)) {
@@ -1594,7 +2740,7 @@ function stageProblems(p, looks = () => []) {
       else if (!ids.has(m.to)) problems.push(`${where}.to must be the id of one of the things (${[...ids].join(', ')})`);
     }
     if (m.from !== undefined && m.from === m.to) problems.push(`${where}: a ${m.do} goes from one thing to another, not to itself`);
-    if (m.what !== undefined && !Object.hasOwn(ICONS, m.what)) problems.push(`${where}.what must be an icon, such as letter or money`);
+    if (m.what !== undefined && (!drawingOf(m.what) || Object.hasOwn(PEOPLE, m.what))) problems.push(`${where}.what must be a thing in the library or an icon, such as letter or money`);
     if (m.with !== undefined && !MARKS.includes(m.with)) problems.push(`${where}.with must be one of: ${MARKS.join(', ')}`);
     if (m.count !== undefined && (!Number.isInteger(m.count) || m.count < 1 || m.count > STAGE_MAX.coins)) problems.push(`${where}.count must be a whole number from 1 to ${STAGE_MAX.coins}`);
     if (m.text !== undefined && (!isText(m.text) || words(m.text) > STAGE_MAX.say)) problems.push(`${where}.text must be ${STAGE_MAX.say} words at most`);
@@ -1647,6 +2793,43 @@ function place(t, px, kind) {
     px.rect('#9a9a9a', 0, GROUND - 14, W, 14); px.rect('#bdbdbd', 0, GROUND - 14, W, 2);
     px.rect('#4a4a52', 0, GROUND, W, H - GROUND); px.rect(INK, 0, GROUND, W, 1);
     for (let x = 8; x < W; x += 40) px.rect(LIGHT, x, GROUND + 18, 20, 3);
+  } else if (kind === 'office') {
+    px.rect('#c9d3dc', 0, 0, W, GROUND); px.rect('#b4c0cb', 0, GROUND - 22, W, 22); px.rect('#9fadba', 0, GROUND - 23, W, 1);
+    // a long window over the town, high on the wall
+    px.rect(INK, 20, 8, 280, 46); px.rect('#8fd3ff', 21, 9, 278, 44);
+    for (const [x, w, h] of [[24, 30, 26], [58, 22, 36], [84, 40, 20], [128, 26, 32], [158, 34, 24], [196, 24, 38], [224, 40, 22], [268, 28, 30]]) {
+      px.rect('#6f87a3', x, 53 - h, w, h);
+      for (let wy = 56 - h; wy < 50; wy += 6) for (let wx = x + 3; wx < x + w - 3; wx += 6) px.rect('#cfe6f2', wx, wy, 3, 3);
+    }
+    for (const x of [94, 160, 226]) px.rect(INK, x, 8, 2, 46);
+    px.rect('#5d6f86', 0, GROUND, W, H - GROUND); px.rect('#4f5f74', 0, GROUND, W, 2);
+    for (let x = 0; x < W; x += 8) px.rect('#56687e', x + ((x / 8) % 2) * 4, GROUND + 12, 2, 2);
+  } else if (kind === 'surgery') {
+    px.rect('#d7eee6', 0, 0, W, GROUND); px.rect('#bfe0d4', 0, GROUND - 26, W, 26); px.rect('#9fcbbb', 0, GROUND - 27, W, 1);
+    px.rect(INK, 148, 8, 24, 24); px.rect(LIGHT, 149, 9, 22, 22); px.rect(RED, 157, 12, 6, 16); px.rect(RED, 152, 17, 16, 6);
+    px.rect(INK, 22, 12, 46, 30); px.rect('#c8925a', 23, 13, 44, 28);
+    for (const [x, y, c] of [[27, 16, LIGHT], [44, 17, '#ffe08a'], [30, 28, '#8fd3ff'], [48, 29, LIGHT]]) px.rect(c, x, y, 13, 9);
+    px.rect('#e9ecef', 0, GROUND, W, H - GROUND); px.rect('#c9ced6', 0, GROUND, W, 2);
+    for (let x = 0; x < W; x += 20) px.rect('#d5dae0', x, GROUND + 2, 1, H - GROUND - 2);
+  } else if (kind === 'shop') {
+    px.rect('#f1e2c6', 0, 0, W, GROUND);
+    for (const y of [16, 44]) {
+      px.rect('#8a5a34', 6, y + 18, W - 12, 4); px.rect(INK, 6, y + 22, W - 12, 1);
+      for (let x = 10; x < W - 14; x += 12) {
+        const n = (x - 10) / 12, c = ['#d63a3a', '#3fa34d', '#1f4e9c', '#ffcc4d', '#ff8c2a', '#8e5bd6'][(n * 5 + y) % 6];
+        const h = 10 + ((n * 7 + y) % 3) * 3;
+        px.rect(INK, x, y + 18 - h, 9, h); px.rect(c, x + 1, y + 19 - h, 7, h - 1); px.rect(LIGHT, x + 2, y + 21 - h, 5, 2);
+      }
+    }
+    px.rect('#e3cfa8', 0, GROUND - 20, W, 20);
+    for (let x = 0; x < W; x += 16) for (let y = GROUND; y < H; y += 16) px.rect(((x + y) / 16) % 2 ? '#c9ced6' : '#f4f4ee', x, y, 16, 16);
+  } else if (kind === 'school') {
+    px.rect('#efe3c4', 0, 0, W, GROUND); px.rect('#d8c49a', 0, GROUND - 22, W, 22); px.rect('#bba57a', 0, GROUND - 23, W, 1);
+    px.rect('#7a4a24', 70, 8, 180, 50); px.rect('#24533a', 74, 12, 172, 42);
+    for (const [x, y, w] of [[84, 18, 40], [84, 26, 64], [84, 34, 30], [170, 20, 52], [176, 30, 36], [168, 40, 44]]) px.rect('#cfe3d6', x, y, w, 2);
+    px.rect('#7a4a24', 64, 58, 192, 4);
+    px.rect('#a36a3a', 0, GROUND, W, H - GROUND); px.rect('#8a5a34', 0, GROUND, W, 2);
+    for (let x = 0; x < W; x += 32) px.rect('#8a5a34', x, GROUND + 2, 1, H - GROUND - 2);
   } else if (kind === 'plain') {
     px.rect(NAVY, 0, 0, W, H);
     for (let y = 4; y < H; y += 8) for (let x = 4; x < W; x += 8) px.rect('#1a2b47', x, y, 1, 1);
@@ -1695,8 +2878,8 @@ function reelie(px, cx, feet, r, t, talking) {
 function layout(t, p, times) {
   const things = new Map();
   for (const th of p.things) {
-    const sc = SIZES[th.size ?? 'medium'], cast = CAST.includes(th.is);
-    const w = cast ? Math.round(ICON_SIZE * sc * 0.9) : ICON_SIZE * sc, h = cast ? w + 3 : ICON_SIZE * sc;
+    const sc = SIZES[th.size ?? 'medium'], cast = CAST.includes(th.is), rows = cast ? null : drawingOf(th.is).rows;
+    const w = cast ? 14 * sc : Math.max(...rows.map((r) => r.length)) * sc, h = cast ? 15 * sc + 2 : rows.length * sc;
     things.set(th.id, { ...th, sc, w, h, x: SPOTS[th.spot], feet: th.up ? AIR : GROUND, from: 0, gone: Infinity, walking: false });
   }
   p.moves.forEach((m, i) => {
@@ -1712,6 +2895,7 @@ function layout(t, p, times) {
     }
   });
   for (const th of things.values()) {
+    th.x = Math.max(2 + th.w / 2, Math.min(320 - 2 - th.w / 2, th.x));   // never past the picture's edge
     th.top = th.feet - th.h;
     th.cy = th.top + th.h / 2;
   }
@@ -1734,7 +2918,10 @@ function drawThing(t, px, th, look, index) {
   const x = Math.round(th.x - th.w / 2), y = th.top + drop + bob;
   if (!th.up && drop === 0) px.rect('rgba(0,0,0,0.25)', x + 4, th.feet - 1, th.w - 8, 2);   // a shadow, so it stands on the ground
   if (th.is === 'reelie') reelie(px, Math.round(th.x), th.feet + drop + bob, Math.round(th.w / 2) - 1, t, true);
-  else px.sprite(ICONS[th.is], x, y, th.sc, th.flip === true || th.facing === -1, look(th, index));
+  else {
+    const drawing = drawingOf(th.is), own = look(th, index);
+    px.sprite(drawing.rows, x, y, th.sc, th.flip === true || th.facing === -1, own || drawing.colours ? { ...drawing.colours, ...own } : null);
+  }
   if (fade > 0) px.dither('#13203a', x - 2, y - 2, th.w + 4, th.h + 4, fade);
 }
 
@@ -1744,8 +2931,9 @@ function flying(t, px, m, a, b, at, wall) {
   if (k0 < 0 || k0 > 1) return;
   let k = k0;
   if (wall) k = k0 < 0.5 ? k0 : 1 - k0;   // to the barrier, and back
-  const x = px.lerp(a.x, b.x, k), y = px.lerp(a.cy, b.cy, k) - Math.sin(k * Math.PI) * 30;
-  px.sprite(ICONS[m.what], Math.round(x - ICON_SIZE), Math.round(y - ICON_SIZE), 2);
+  const x = px.lerp(a.x, b.x, k), y = px.lerp(a.cy, b.cy, k) - Math.sin(k * Math.PI) * 30, drawing = drawingOf(m.what);
+  const w = Math.max(...drawing.rows.map((r) => r.length)) * 2, h = drawing.rows.length * 2;
+  px.sprite(drawing.rows, Math.round(x - w / 2), Math.round(y - h / 2), 2, false, drawing.colours ?? null);
 }
 
 /** Draws stage `p` at time t, with `look(thing, i)` giving a person's colours (personLook in pictures.js). */
@@ -1839,7 +3027,7 @@ function drawStage(t, px, p, look = () => null) {
   });
 }
 
-return { GROUND, PLACES, SPOTS, SIZES, CAST, MOVES, MARKS, STAGE_MAX, isThingName, stageProblems, moveTimes, drawStage };
+return { GROUND, PLACES, SPOTS, SIZES, CAST, MOVES, MARKS, STAGE_MAX, isThingName, drawingOf, stageProblems, moveTimes, drawStage };
 })();
 
 __m['pictures.js'] = (() => {
@@ -1848,6 +3036,7 @@ __m['pictures.js'] = (() => {
 // an AI agent can write a whole reel without a line of drawing code.
 const { ICON_SIZE, ICONS } = __m['icons.js'];
 const { PALETTE } = __m['palette.js'];
+const { PEOPLE, TOPS, LEGS, WEARS } = __m['library.js'];
 const { drawStage, stageProblems } = __m['stage.js'];
 
 const INK = '#1a1a1a', NIGHT = '#0b1220', NAVY = '#13203a', CREAM = '#ebeac5', LIGHT = '#fdf6e3', GOLD = '#ffcc4d';
@@ -2287,11 +3476,25 @@ function sprite(t, px, p) {
   if (p.label && t >= 0.9) px.sign(p.label, W / 2, H - 30, fit(px, p.label, 16, W - 40), GOLD);
 }
 
-/** A thing on a stage as an icon item, for personLook: its label, or failing that its id, keeps its look the same from scene to scene. */
-const asItem = (th) => ({ icon: th.is, label: th.label ?? th.id, ...(th.skin ? { skin: th.skin } : {}), ...(th.hair ? { hair: th.hair } : {}) });
+/**
+ * The colours a person on a stage is drawn in: the skin and hair the reel says, or a look of
+ * their own chosen from their label (or their id), so the same person looks the same in every
+ * scene and nobody is one colour by default; an older person has grey hair unless told. Their
+ * top and trousers say what they wear, or are their own everyday ones. Null for a thing that is
+ * not a person.
+ */
+function stageLook(th) {
+  const person = PEOPLE[th.is];
+  if (!person) return null;
+  const h = hash(String(th.label ?? th.id ?? th.is).trim().toLowerCase()), wears = WEARS[th.wears] ?? null;
+  const clothes = { C: wears?.C ?? TOPS[Math.floor(h / 7) % TOPS.length], T: wears?.T ?? LEGS[Math.floor(h / 61) % LEGS.length], U: INK };
+  if (person.outline) return { C: wears?.C ?? '#8fa6bf' };
+  const skin = th.skin ?? Object.keys(SKINS)[h % 3], hairs = person.older ? ['grey'] : HAIR_FOR[skin];
+  return { S: SKINS[skin], H: HAIRS[th.hair ?? hairs[Math.floor(h / 3) % hairs.length]], ...clothes };
+}
 
 /** A place, a few things standing in it, and moves between them (stage.js). */
-function stage(t, px, p) { drawStage(t, px, p, (th, i) => personLook(asItem(th), i)); }
+function stage(t, px, p) { drawStage(t, px, p, (th, i) => (PEOPLE[th.is] ? stageLook(th) : personLook({ icon: th.is, label: th.label ?? th.id }, i))); }
 
 /** What is wrong with a stage beyond its fields' being there: stage.js checks it, and a person's skin and hair are checked here. */
 function stageCheck(p) {
@@ -2299,7 +3502,8 @@ function stageCheck(p) {
     const wrong = [];
     for (const key of ['skin', 'hair']) {
       if (th[key] === undefined) continue;
-      if (!PERSON_ICONS.includes(th.is)) wrong.push(`${where}.${key}: only a ${PERSON_ICONS.join(', ')} takes ${key}`);
+      const people = Object.keys(PEOPLE).filter((name) => !PEOPLE[name].outline);
+      if (!people.includes(th.is)) wrong.push(`${where}.${key}: only a ${people.join(', ')} takes ${key}`);
       else if (!Object.hasOwn(LOOKS[key], th[key])) wrong.push(`${where}.${key} must be one of: ${Object.keys(LOOKS[key]).join(', ')}`);
     }
     return wrong;
@@ -2427,7 +3631,7 @@ function noSignal(t, px) {
   px.sign('Have you tried turning it off and on again?', W / 2, 82, 12, NIGHT, CREAM);
 }
 
-return { highlight, PERSON_ICONS, SKINS, HAIRS, personLook, TABLE_MAX, PICTURES, ICON_NAMES, SPRITE_MAX, pictureProblems, drawPicture, noSignal };
+return { highlight, PERSON_ICONS, SKINS, HAIRS, personLook, TABLE_MAX, stageLook, PICTURES, ICON_NAMES, SPRITE_MAX, pictureProblems, drawPicture, noSignal };
 })();
 
 __m['transitions.js'] = (() => {
@@ -2845,6 +4049,7 @@ __m['format.js'] = (() => {
 // Pure: no DOM, so the same checks run in the browser, in the tools and in the tests.
 const { HAIRS, ICON_NAMES, PERSON_ICONS, PICTURES, SKINS, SPRITE_MAX, TABLE_MAX } = __m['pictures.js'];
 const { PALETTE } = __m['palette.js'];
+const { PEOPLE, THINGS, WEARS } = __m['library.js'];
 const { CAST, MARKS, MOVES, PLACES, SIZES, SPOTS, STAGE_MAX } = __m['stage.js'];
 const { CAPTION_STYLES, LANGUAGES, normalizeReel, ReelError } = __m['reel.js'];
 const { TRANSITIONS } = __m['transitions.js'];
@@ -3014,13 +4219,15 @@ const STAGE_SCHEMAS = {
       required: ['id', 'is', 'spot'],
       properties: {
         id: { ...TEXT, description: 'A short name of its own, for the moves to use.' },
-        is: { enum: [...CAST, ...ICON_NAMES], description: `What it is: ${CAST.join(', ')} (the cast), or an icon.` },
+        is: { enum: [...new Set([...CAST, ...Object.keys(PEOPLE), ...Object.keys(THINGS), ...ICON_NAMES])], description: `What it is: ${CAST.join(', ')} (the cast), a person, a thing in the library, or an icon.` },
         spot: { enum: Object.keys(SPOTS), description: 'Where it stands, left to right.' },
         up: { type: 'boolean', description: 'True to have it in the air (a cloud, the sun, a plane), not on the ground.' },
         size: { enum: Object.keys(SIZES), description: 'medium unless said; a big thing needs the spots either side of it clear.' },
         label: { ...TEXT, description: `${STAGE_MAX.label} words at most.` },
         flip: { type: 'boolean', description: 'True to face it the other way.' },
-        ...LOOK_SCHEMAS
+        wears: { enum: Object.keys(WEARS), description: `For a person: what they wear, which says what they do (${Object.entries(WEARS).filter(([, w]) => w).map(([name, w]) => `${name}: ${w.says}`).join('; ')}).` },
+        skin: { ...LOOK_SCHEMAS.skin, description: 'For a person: their skin. Leave it out when you do not know, and they get a look of their own.' },
+        hair: { ...LOOK_SCHEMAS.hair, description: 'For a person: their hair. Leave it out when you do not know.' }
       }
     }
   },
@@ -3041,7 +4248,7 @@ const STAGE_SCHEMAS = {
         on: { type: 'string', description: 'The id of the thing it happens on.' },
         from: { type: 'string', description: 'The id of the thing it starts from.' },
         to: { type: ['string', 'number'], description: 'The id of the thing it goes to; a spot for walk; a number for count, or 0 to 1 for meter.' },
-        what: { enum: ICON_NAMES, description: 'The icon that is sent.' },
+        what: { enum: [...new Set([...Object.keys(THINGS), ...ICON_NAMES])], description: 'The thing that is sent.' },
         count: { type: 'integer', minimum: 1, maximum: STAGE_MAX.coins, description: 'How many coins.' },
         with: { enum: MARKS, description: 'The badge.' },
         text: { ...TEXT, description: `What is said, ${STAGE_MAX.say} words at most.` },

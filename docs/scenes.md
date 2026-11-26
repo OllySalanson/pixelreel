@@ -218,12 +218,17 @@ picture: { type: 'sprite', label: 'MY CAT', colours: { h: '#6b3e2e' }, rows: ['.
 **stage**: something happening, not a sign for it. A `place`, up to six `things` standing in
 it, and up to six `moves` between them, each landing on the words the narrator says.
 
-- `place`: `home`, `outside`, `street`, `night`, `sea` or `plain`.
-- `things`: each `{ "id", "is", "spot" }`. `is` is `reelie` (the film reel who presents) or
-  an icon; `spot` is `far-left`, `left`, `middle`, `right` or `far-right`, one thing to a spot
+- `place`: `home`, `office`, `surgery`, `shop`, `school`, `outside`, `street`, `night`, `sea` or `plain`.
+- `things`: each `{ "id", "is", "spot" }`. `is` is `reelie` (the film reel who presents), a
+  person or a thing from the library (`src/library.js`; `npm run library -- sheet` draws
+  them all on one page), or an icon; `spot` is `far-left`, `left`, `middle`, `right` or `far-right`, one thing to a spot
   on the ground and one in the air (`"up": true`, for a cloud or a plane). Optional: `label`
   (three words at most, under it), `size` (`medium`, or `big`, which needs the spots either
-  side clear), `flip`, and a person's `skin` and `hair`.
+  side clear and cannot stand at either end), `flip`, and a person's `skin`, `hair` and
+  `wears` (`doctor-coat`, `scrubs`, `hi-vis`, `suit` or `uniform`, which says what they do).
+  The people are `woman`, `man`, `girl`, `boy`, `baby`, `older-woman`, `older-man` and
+  `person` (an outline: anyone at all). Each gets a look of their own from their label unless
+  the reel says, and an older person grey hair.
 - `moves`: each `{ "do", ... }`, in the order they happen. `arrive` (`who`) drops a thing in;
   `send` (`what`, `from`, `to`, `again?`) flies something small across, and bounces it back
   off a `block` (`from`, `to`), a barrier that rises between two things; `flow` (`from`, `to`)

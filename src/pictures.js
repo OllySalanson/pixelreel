@@ -3,6 +3,7 @@
 // an AI agent can write a whole reel without a line of drawing code.
 import { ICON_SIZE, ICONS } from './icons.js';
 import { PALETTE } from './palette.js';
+import { PEOPLE, TOPS, LEGS, WEARS } from './library.js';
 import { drawStage, stageProblems } from './stage.js';
 
 const INK = '#1a1a1a', NIGHT = '#0b1220', NAVY = '#13203a', CREAM = '#ebeac5', LIGHT = '#fdf6e3', GOLD = '#ffcc4d';
@@ -442,11 +443,25 @@ function sprite(t, px, p) {
   if (p.label && t >= 0.9) px.sign(p.label, W / 2, H - 30, fit(px, p.label, 16, W - 40), GOLD);
 }
 
-/** A thing on a stage as an icon item, for personLook: its label, or failing that its id, keeps its look the same from scene to scene. */
-const asItem = (th) => ({ icon: th.is, label: th.label ?? th.id, ...(th.skin ? { skin: th.skin } : {}), ...(th.hair ? { hair: th.hair } : {}) });
+/**
+ * The colours a person on a stage is drawn in: the skin and hair the reel says, or a look of
+ * their own chosen from their label (or their id), so the same person looks the same in every
+ * scene and nobody is one colour by default; an older person has grey hair unless told. Their
+ * top and trousers say what they wear, or are their own everyday ones. Null for a thing that is
+ * not a person.
+ */
+export function stageLook(th) {
+  const person = PEOPLE[th.is];
+  if (!person) return null;
+  const h = hash(String(th.label ?? th.id ?? th.is).trim().toLowerCase()), wears = WEARS[th.wears] ?? null;
+  const clothes = { C: wears?.C ?? TOPS[Math.floor(h / 7) % TOPS.length], T: wears?.T ?? LEGS[Math.floor(h / 61) % LEGS.length], U: INK };
+  if (person.outline) return { C: wears?.C ?? '#8fa6bf' };
+  const skin = th.skin ?? Object.keys(SKINS)[h % 3], hairs = person.older ? ['grey'] : HAIR_FOR[skin];
+  return { S: SKINS[skin], H: HAIRS[th.hair ?? hairs[Math.floor(h / 3) % hairs.length]], ...clothes };
+}
 
 /** A place, a few things standing in it, and moves between them (stage.js). */
-function stage(t, px, p) { drawStage(t, px, p, (th, i) => personLook(asItem(th), i)); }
+function stage(t, px, p) { drawStage(t, px, p, (th, i) => (PEOPLE[th.is] ? stageLook(th) : personLook({ icon: th.is, label: th.label ?? th.id }, i))); }
 
 /** What is wrong with a stage beyond its fields' being there: stage.js checks it, and a person's skin and hair are checked here. */
 function stageCheck(p) {
@@ -454,7 +469,8 @@ function stageCheck(p) {
     const wrong = [];
     for (const key of ['skin', 'hair']) {
       if (th[key] === undefined) continue;
-      if (!PERSON_ICONS.includes(th.is)) wrong.push(`${where}.${key}: only a ${PERSON_ICONS.join(', ')} takes ${key}`);
+      const people = Object.keys(PEOPLE).filter((name) => !PEOPLE[name].outline);
+      if (!people.includes(th.is)) wrong.push(`${where}.${key}: only a ${people.join(', ')} takes ${key}`);
       else if (!Object.hasOwn(LOOKS[key], th[key])) wrong.push(`${where}.${key} must be one of: ${Object.keys(LOOKS[key]).join(', ')}`);
     }
     return wrong;
