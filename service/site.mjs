@@ -3,6 +3,7 @@
 // page shares, and a page each in site/pages/, written as HTML or, for the plain ones, as
 // Markdown. This puts a page together; service/static.mjs serves the files a page loads.
 import { existsSync, readFileSync } from 'node:fs';
+import { NOTE_MAX, TEXT_MAX } from '../site/js/given.js';
 import { qrSvg } from '../site/js/qr.js';
 import { SPRITES } from '../site/js/sprites.js';
 import { ICONS } from '../src/icons.js';
@@ -244,9 +245,53 @@ export function playerHtml(name = null) {
 </div>`;
 }
 
+/** A small picture for a key with no word on it: `rows` of pixels ('X' is one), drawn in the colour of the words round it. */
+function keyIcon(rows) {
+  let d = '';
+  rows.forEach((row, y) => { for (const run of row.matchAll(/X+/g)) d += `M${run.index} ${y}h${run[0].length}v1h-${run[0].length}z`; });
+  return `<svg class="ico" viewBox="0 0 ${rows[0].length} ${rows.length}" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><path d="${d}"/></svg>`;
+}
+
+/** The keys of My notes: a paperclip, a microphone, an arrow that sends a note up into the list, and the X that takes one off it. */
+const NOTE_KEYS = {
+  clip: ['..XXXXXX..', '.XXXXXXXX.', 'XX......XX', 'XX......XX', 'XX..XX..XX', 'XX..XX..XX', 'XX..XX..XX', 'XX..XX..XX', 'XX..XX..XX', 'XX..XX..XX', 'XX..XX..XX', '....XX..XX', '....XXXXXX', '.....XXXX.'],
+  x: ['XX......XX', 'XXX....XXX', '.XXX..XXX.', '..XXXXXX..', '...XXXX...', '...XXXX...', '..XXXXXX..', '.XXX..XXX.', 'XXX....XXX', 'XX......XX'],
+  mic: ['...XXXX...', '...XXXX...', '...XXXX...', 'XX.XXXX.XX', 'XX.XXXX.XX', 'XX.XXXX.XX', 'XX.XXXX.XX', 'XX..XX..XX', 'XXX....XXX', '.XXXXXXXX.', '....XX....', '....XX....', '..XXXXXX..', '..XXXXXX..'],
+  up: ['....XX....', '...XXXX...', '..XXXXXX..', '.XXXXXXXX.', 'XXXXXXXXXX', '...XXXX...', '...XXXX...', '...XXXX...', '...XXXX...', '...XXXX...', '...XXXX...']
+};
+
+/**
+ * My notes, as it stands before its script wakes it (site/js/notes.js): its name, the list,
+ * and one line to write in, with a paperclip before it (a photo or a PDF) and a microphone
+ * after it, which gives way to an arrow once there are words to add. Then the one button
+ * that makes the reel. Every key is drawn ten pixels wide, half the size of the page's
+ * pixel art, with strokes two of them wide (one --u). The two templates are pictures the script puts in the list: a PDF's, and a
+ * note's X. The same on every page that has it: `first` is the make page, where
+ * there is no reel before this one and a note may be as long as a piece of writing.
+ */
+export function notesHtml(first = false) {
+  const key = (name, id, label, more = '') => `<button class="mynotes-key mynotes-${name}" id="mynotes-${id}" aria-label="${label}" title="${label}"${more}>${keyIcon(NOTE_KEYS[name === 'file' ? 'clip' : name === 'save' ? 'up' : name])}</button>`;
+  return `<aside class="mynotes" id="mynotes" aria-labelledby="mynotes-title"${first ? ' data-first' : ''} hidden>
+  <h2 class="mynotes-title" id="mynotes-title">My notes</h2>
+  <ol class="mynotes-list" id="mynotes-list"></ol>
+  <form class="mynotes-add" id="mynotes-add">
+    ${key('file', 'file', 'Add a photo or a PDF', ' type="button"')}
+    <textarea class="mynotes-box" id="mynotes-box" rows="1" maxlength="${first ? TEXT_MAX : NOTE_MAX}" enterkeyhint="done" aria-label="Add a note" placeholder="Add a note"></textarea>
+    ${key('mic', 'mic', 'Speak', ' type="button" aria-pressed="false" hidden')}
+    ${key('save', 'save', 'Add this note', ' type="submit" hidden')}
+    <input id="mynotes-files" type="file" accept="application/pdf,image/*" hidden>
+  </form>
+  <button class="btn btn-gold mynotes-make" id="mynotes-make" type="button" disabled>Make my next reel</button>
+  <p class="mynotes-says" id="mynotes-says" role="status"></p>
+  <template id="mynotes-paper">${spriteSvg(ICONS.document, { scale: 2 })}</template>
+  <template id="mynotes-cross">${keyIcon(NOTE_KEYS.x)}</template>
+</aside>`;
+}
+
 /** The picture for {{icon:name:scale}} (an everyday icon) or {{sprite:name:scale}} (one of the site's own). */
 function art(kind, name, scale) {
   if (kind === 'player') return playerHtml(name === 'empty' ? null : name);
+  if (kind === 'mynotes') return notesHtml(name === 'first');
   const sprite = kind === 'icon' ? ICONS[name] && { rows: ICONS[name] } : SPRITES[name];
   if (!sprite) throw new Error(`the site has no ${kind} called "${name}"`);
   return spriteSvg(sprite.rows, { colours: sprite.colours, scale: Number(scale) || 4 });
@@ -254,8 +299,9 @@ function art(kind, name, scale) {
 
 /**
  * Puts `values` where `text` says {{name}}, pixel art where it says {{icon:name:scale}} or
- * {{sprite:name:scale}}, and a player where it says {{player:reel-name}}. A name with no
- * value is left as it is, to be noticed.
+ * {{sprite:name:scale}}, a player where it says {{player:reel-name}}, and My notes where it
+ * says {{mynotes:next}} ({{mynotes:first}} on the make page). A name with no value is left
+ * as it is, to be noticed.
  */
 const fill = (text, values) => text.replace(/\{\{([a-z]+)(?::([A-Za-z0-9-]+))?(?::(\d+))?\}\}/g, (all, key, name, scale) =>
   (name ? art(key, name, scale) : key in values ? values[key] : all));

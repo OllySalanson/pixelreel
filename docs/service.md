@@ -308,17 +308,23 @@ page) makes the reel itself. It is not a form: it is a reel, "How to make a pixe
 as on every reel's page. Peter says what to do, and the visitor does it in the panel beside
 him:
 
-- **Type**, or press **Speak** and say it, or **paste** anything into the box: a link, the
-  transcript of a meeting, some writing, a question. Enter (or Add) makes it a note. A note
-  here may be as long as a piece of writing (60,000 letters for all of them together), and
-  a long one shows its first six lines.
-- **PDF or photo**, a button under the box: a letter or a bill, chosen (or taken, on a
-  phone), is made into a reel at once.
+- **Type**, or press the **microphone** and say it, or **paste** anything into the line: a
+  link, the transcript of a meeting, some writing, a question. Enter (or the arrow that
+  appears beside the words) makes it a note. A note here may be as long as a piece of
+  writing (60,000 letters for all of them together), and a long one shows its first six
+  lines.
+- **The paperclip** clips on a photo or a PDF: a letter or a bill, chosen (or taken, on a
+  phone). It waits in the list with the notes, and nothing is made until the button is
+  pressed. One at a time: another takes its place.
 - **Drop** a link or some writing anywhere on the page and it becomes a note; drop a PDF or
-  a picture and it is made into a reel at once.
-- **Make my next reel** makes one reel from all the notes together (`POST /try` with
-  `{ notes }`, `firstAsk` in `service/writer.mjs`). A note that is a web address and nothing
-  else is read with Claude's page reader; a link inside some writing is not.
+  a picture, or paste a picture into the line, and it is clipped on.
+- **Make my next reel** makes one reel from all the notes together, with whatever is still
+  in the line and the photo or PDF clipped to them (`POST /try` with `{ notes }`, or
+  `{ notes, file }`; `firstAsk` in `service/writer.mjs`). A note that is a web address and
+  nothing else is read with Claude's page reader; a link inside some writing is not, and
+  no page is read when a file is clipped on.
+- **Shared from a phone** (`site/js/shared.js`), a link, some words or a file is made into
+  a reel at once, since sharing it was the asking.
 - **When the reel ends**, it offers four things to try over its last picture, each a reel
   with one press: "Why do cats knead blankets?", "How does a plane stay up?", "Why is
   yawning catching?", "How do bees make honey?". The reel's last scene names them too.
@@ -482,12 +488,33 @@ it on a phone). Whoever is watching writes down questions and thoughts as they c
 one button, **Make my next reel**, has Claude make the next reel from them. It is the main
 thing a shared reel offers; Add to Claude is still there for anyone with their own Claude.
 
-- **Typing.** The box says "Add a note". Enter saves it (Shift and Enter starts a new line);
-  so does Add. Each note has an X; pressed, it asks "Remove this note?" with "Yes, remove
-  it" and "No, keep it".
-- **Saying it.** Speak turns the microphone on: the words are written into the box as they
-  are heard, and pressing it again (it says Done then, and One moment while the last words
-  are written down) or Enter saves the note. Two ways of hearing, one button:
+- **One line, and small keys with no words on them.** Olly asked for it on 26 November
+  2026: "just a paperclip for adding things ... really simple as possible". The panel is
+  its name, the list, one line that says "Add a note" with a paperclip before it and a
+  microphone after it, and the one button with words, Make my next reel. It is the same
+  beside every reel and on the make page (`notesHtml` in `service/site.mjs`). As in the
+  chat boxes people already know, the microphone gives way to an arrow once there are
+  words in the line (`keyAfter` in `site/js/notes.js`), so there is only ever one key
+  after it. Each key is named for a screen reader, and for a mouse held over it.
+- **Typing.** Enter saves the note (Shift and Enter starts a new line); so does the arrow.
+  The line grows as it fills. Each note has an X; pressed, it asks "Remove this note?"
+  with "Yes, remove it" and "No, keep it".
+- **A photo or a PDF.** The paperclip opens the device's own chooser (on a phone, the
+  camera too). What is chosen waits in the list like a note: a photo as a small picture
+  of itself and the word Photo, a PDF by its name. Its X takes it off at once, since it
+  is still in hand. It is not kept when the page is left, as notes are.
+- **Make my next reel takes what is there**: the notes, the photo or PDF, and any words
+  still in the line, so someone who types a question and presses the button gets their
+  reel without having to add the note first. Pressed while a note is being said, it
+  finishes and saves the note first, then makes the reel. It waits for a photo that is
+  still being made smaller.
+- **Pressed with nothing to make a reel from**, the button puts the cursor in the line
+  (it is `aria-disabled` then, not switched off). It is switched off only while a reel is
+  being asked for, and beside a reel that is not ready to follow.
+- **Saying it.** The microphone turns white on red, and the line's frame red: the words are written
+  into the line as they are heard, and pressing it again (named Done then, and One moment
+  while the last words are written down) or Enter saves the note. Two ways of hearing, one
+  key:
   - **The browser's own speech recognition** where it works: Chrome, Edge and Safari, on a
     computer and a phone. It hears in the speaker's own English (`navigator.language`, so
     en-IE for someone in Ireland).
@@ -501,7 +528,8 @@ thing a shared reel offers; Add to Claude is still there for anyone with their o
 - **Kept on the device.** The notes for each reel are kept in the browser
   (`pixelreel-notes:<id>`), at most 12, of up to 600 letters each, until they are sent.
   They stay there afterwards, as notes on that reel.
-- **The whole chain.** `POST /try` with `{ next, notes }`. The new reel's status names the
+- **The whole chain.** `POST /try` with `{ next, notes }` (and `file`, when something is
+  clipped on). The new reel's status names the
   one it `follows`, and its notes are kept beside it (`notes.json`), so a reel made from
   that one can be told everything before it: `Reels.chain()` walks back, and Claude is
   given each reel's title and what is said in each scene, oldest first, with the notes each

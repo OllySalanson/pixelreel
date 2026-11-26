@@ -181,6 +181,39 @@ export function languageFor(preferred = [], offered = []) {
 }
 
 /**
+ * A file someone chose, dropped, pasted or shared, as it will be sent: { type, file } for a
+ * PDF or a picture, the picture made smaller first by `shrink` (a browser's job: see
+ * maker.js) when it is a big one; or { words } for a file of plain writing. Throws a
+ * GivenError, to show the person, for anything else, or for one that is too big.
+ */
+export async function fileGiven(file, { shrink = null } = {}) {
+  const kind = fileKind(new Uint8Array(await file.slice(0, 12).arrayBuffer()));
+  if (kind === 'application/pdf') {
+    if (file.size > PDF_MAX) throw new GivenError(SAYS.bigPdf);
+    return { type: kind, file };
+  }
+  if (kind || /^image\//.test(file.type)) {
+    // a phone's photo is several megabytes: a smaller copy uploads faster and reads just as well
+    const sent = shrink && (!kind || file.size > SHRINK_OVER) ? (await shrink(file).catch(() => null)) ?? file : file;
+    const now = sent === file ? kind : 'image/jpeg';
+    if (!now) throw new GivenError(SAYS.other);   // a kind of picture this browser cannot open, and Claude cannot either
+    if (sent.size > PICTURE_MAX) throw new GivenError(SAYS.bigPicture);
+    return { type: now, file: sent };
+  }
+  if (!isWriting(file)) throw new GivenError(SAYS.other);
+  if (file.size > TEXT_MAX * 4) throw new GivenError(SAYS.long);
+  return { words: await file.text() };
+}
+
+/** A file's bytes written as base64, which is how a file goes inside JSON (with the notes it is clipped to). */
+export async function base64Of(file) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let letters = '';
+  for (let at = 0; at < bytes.length; at += 0x8000) letters += String.fromCharCode(...bytes.subarray(at, at + 0x8000));
+  return btoa(letters);
+}
+
+/**
  * What to send the service (the headers and body of a POST to /try) for what was given:
  * { words } or { file }. A PDF or a picture goes as it is, the picture made smaller first by
  * `shrink` (a browser's job: see maker.js) when it is a big one; a file of plain writing
@@ -192,21 +225,6 @@ export async function requestFor(given, { shrink = null, language = null, narrat
   if (!given.file) return wordsRequest(given.words ?? '', language, narrator);
   // a file goes as its own bytes, so the language and the narrator asked for go beside it
   const beside = { ...(language ? { 'x-reel-language': language } : {}), ...(narrator ? { 'x-reel-narrator': narrator } : {}) };
-  let file = given.file;
-  const kind = fileKind(new Uint8Array(await file.slice(0, 12).arrayBuffer()));
-  if (kind === 'application/pdf') {
-    if (file.size > PDF_MAX) throw new GivenError(SAYS.bigPdf);
-    return { headers: { 'content-type': kind, ...beside }, body: file };
-  }
-  if (kind || /^image\//.test(file.type)) {
-    // a phone's photo is several megabytes: a smaller copy uploads faster and reads just as well
-    if (shrink && (!kind || file.size > SHRINK_OVER)) file = (await shrink(file).catch(() => null)) ?? file;
-    const now = file === given.file ? kind : 'image/jpeg';
-    if (!now) throw new GivenError(SAYS.other);   // a kind of picture this browser cannot open, and Claude cannot either
-    if (file.size > PICTURE_MAX) throw new GivenError(SAYS.bigPicture);
-    return { headers: { 'content-type': now, ...beside }, body: file };
-  }
-  if (!isWriting(file)) throw new GivenError(SAYS.other);
-  if (file.size > TEXT_MAX * 4) throw new GivenError(SAYS.long);
-  return wordsRequest(await file.text(), language, narrator);
+  const held = await fileGiven(given.file, { shrink });
+  return held.file ? { headers: { 'content-type': held.type, ...beside }, body: held.file } : wordsRequest(held.words, language, narrator);
 }

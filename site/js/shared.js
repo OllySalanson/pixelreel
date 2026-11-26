@@ -42,6 +42,6 @@ export async function startShared(notes = null) {
   history.replaceState(null, '', location.pathname);   // so that coming back to the page does not look again
   const given = await takeShared().catch(() => null);
   if (!given) return;
-  if (given.file) notes.file(given.file);
+  if (given.file) notes.file(given.file, { andMake: true });
   else if (given.words) notes.add(given.words, { andMake: true });
 }

@@ -150,13 +150,13 @@ any other app (an installable web app). Three things make it one:
   is no internet lists the kept reels, as posters to press.
 - **Sharing to it** (`site/js/shared.js`). On Android, an app on the home screen is offered
   in the phone's Share menu. The manifest's `share_target` has the phone send what was shared
-  to `/share`, where the worker puts it by, on the phone, and brings up the home page at the
-  make-one box. `shared.js` then hands it to the box the way a person would: a link or words
-  go in the box, a file goes to the box's own file chooser. Where the box makes reels itself
-  (Make it right here) it starts at once, as it does for a drop; where it does not, the
-  words for Claude are ready to copy. Only there does the manifest say a file may be shared
-  (the service writes it then, `appManifest({ files: true })`), or a phone would offer Pixel
-  Reel for a photo it cannot take. Nothing shared is sent to the service by the sharing
+  to `/share`, where the worker puts it by, on the phone, and brings up the make page.
+  `shared.js` then hands it to My notes there: a link or some words become a note, a file
+  is clipped on, and the reel is made at once, since sharing it was the asking. (Chosen
+  with the paperclip or dropped on the page, a file only waits with the notes.) Only where
+  the service makes reels itself does the manifest say a file may be shared (the service
+  writes it then, `appManifest({ files: true })`), or a phone would offer Pixel Reel for a
+  photo it cannot take. Nothing shared is sent to the service by the sharing
   itself. If the worker is not there to take it, the service answers `/share` by sending the
   browser on to the box, without reading what was sent.
 - **The lock screen.** While a reel plays, the player tells the phone what it is
@@ -1796,3 +1796,62 @@ Checked with `scripts/site-fit.js` on the home page, Your reels and the make pag
 Both were re-recorded here with Pocket TTS and their pictures timed to the recordings; their
 new lines came back from speech-to-text word for word but for sound-alikes ("reel" as
 "real"). Nobody has listened to them yet.
+
+### Version 84
+
+My notes as one simple box, as Olly asked on 26 November 2026: "It should just be a
+paperclip for adding things ... Because we're using these big buttons, it's difficult how to
+lay out ... we just need a really simple as possible, streamlined as possible."
+
+- **What went wrong.** On the make page, "PDF or photo" made a reel the moment a photo was
+  chosen: the page went off to a new reel nobody had asked for, with no chance to say what
+  was wanted of the photo. And the button was only on the make page, so beside the new reel
+  the box was a different one. Seen on the live site with a photo of a letter.
+- **One line, small keys, one button.** It is laid out like the chat boxes people already
+  use, which keep a small symbol for adding things beside the line and a microphone at its
+  end: one line to write in, a paperclip before it, a microphone after it, and one gold
+  button under it. The keys are small
+  pictures with no words, a finger wide to press. Speak, Add and PDF or photo, three big
+  buttons on two rows, have gone. It is the same box on the make page and beside every reel.
+- **The microphone gives way to an arrow** once there are words in the line, as the one in
+  iMessage does at the first letter typed, so there is only ever one key after the line. The arrow adds the
+  note; so does Enter.
+- **A photo or a PDF waits with the notes.** The paperclip clips it on: it sits in the list,
+  a photo as a small picture of itself, a PDF by its name, with an X. Nothing is made until
+  Make my next reel is pressed, and then Claude is shown it with the notes, so "what do I
+  have to do, and by when?" can be asked of a letter. A picture pasted into the line, or a
+  file dropped on the page, is clipped on the same way.
+- **Make my next reel takes what is there**: the notes, the photo, and any words still in
+  the line. Type a question, press the button, and that is all. It is blue with cream words
+  until there is something to make, then gold. Pressed while a note is being said, it
+  finishes the note first.
+- **Notes sit just above the line**, newest lowest, as messages do in a chat, so a note is
+  seen to arrive.
+- **Pressed with nothing to make a reel from**, the button puts the cursor in the line,
+  which is what is wanted next. It never does nothing.
+- **The line being written in** has a white frame in place of a ring round the frame,
+  which crowded the button under it. While a note is being said the frame is red and the
+  microphone white on red; nothing flashes.
+- **On one grid.** The paperclip, the microphone, the arrow and each note's X are drawn
+  with strokes one pixel of the page's pixel art wide, and rows, gaps and the photo's frame
+  sit on the same 4-pixel grid.
+- **On a small phone with the biggest letters** the line takes the whole width and the keys
+  go under it, and "Add a note" may take two lines: the line is as tall as that needs.
+
+Checked in the headless browser with a stand-in service at 1280 x 800, 390 x 844 and
+320 x 700, on the make page and on a reel's page: typing, Enter, the arrow, a photo and a
+PDF clipped on, a file that cannot be read, a pasted picture, a dropped link, removing,
+twelve notes, and making a reel from a note with a photo, from a PDF with words still in
+the line, and by pressing the button while speaking. The microphone was tried with the
+page marked as Brave and a stand-in for the model that hears. `scripts/site-fit.js` says
+all well at all three widths on both pages at all 27 settings, and `scripts/site-press.js`
+all well at 1280 and 390. Nobody has used it on a real phone yet, or clipped a photo
+straight from a phone's camera.
+
+| Before, at 1280 x 800 | After |
+| --- | --- |
+| ![My notes on the make page as it was: a box of two lines saying Add a note, a Speak button and an Add button side by side, a wide PDF or photo button under them, and a greyed Make my next reel button.](log/v84-my-notes-before.jpg) | ![My notes on the make page now, with one note, Why do cats purr?, and a photo of a letter clipped on, each with an X. Under them one line saying Add a note, with a paperclip before it and a microphone after it, and a gold Make my next reel button.](log/v84-my-notes-box.jpg) |
+
+| On a phone, as the page loads | Speaking a note |
+| --- | --- |
+| ![The make page on a phone. The player, and under it, all on the first screen, My notes: one line saying Add a note with a paperclip and a microphone, and the Make my next reel button.](log/v84-my-notes-phone.jpg) | ![My notes beside the blue sky reel. The line is framed in red and holds the words heard so far; the microphone is white on a red square, and Make my next reel is gold.](log/v84-my-notes-speaking.jpg) |

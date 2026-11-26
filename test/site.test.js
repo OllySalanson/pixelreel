@@ -446,7 +446,7 @@ describe('making a reel has a page of its own', () => {
     assert.match(html.make, /<h1 class="sr-only" id="make-title">Make a pixel reel<\/h1>/);
     assert.match(html.make, /<div class="reel" data-reel="site-how-to-make">/);
     assert.match(html.make, /<aside class="mynotes" id="mynotes" aria-labelledby="mynotes-title" data-first hidden>/, 'hidden until the script wakes it');
-    assert.match(html.make, /<textarea class="mynotes-box" id="mynotes-box" rows="2" maxlength="60000"/, 'room for a pasted transcript');
+    assert.match(html.make, /<textarea class="mynotes-box" id="mynotes-box" rows="1" maxlength="60000"/, 'one line, with room for a pasted transcript');
     assert.match(html.make, /<input id="mynotes-files" type="file" accept="application\/pdf,image\/\*" hidden>/);
     // when the reel ends, the things to try, each a button
     const end = html.make.slice(html.make.indexOf('<div class="reel-end" hidden>'), html.make.indexOf('<aside'));
@@ -1121,6 +1121,31 @@ describe('what the make-one box takes, on the home page', () => {
     assert.match(css, /\n#make:not\(\[data-here="on"\]\) \.gives \{ display: none; \}/);
     assert.match(html.home, /<section class="section section-tint" id="make" aria-labelledby="make-title" data-here="off">/, 'off unless the service says otherwise');
     assert.match(sitePage('home', 'https://reels.example', { values: { here: 'on' } }), /id="make" aria-labelledby="make-title" data-here="on">/);
+  });
+
+  it('has one line to write in, with a paperclip and a microphone, and one button that makes the reel: the same beside every reel', () => {
+    const panel = (page) => /<aside class="mynotes"[\s\S]*?<\/aside>/.exec(page)[0];
+    for (const [name, page, most] of [['the make page', html.make, 60000], ['a reel\'s page', html.reel, 600]]) {
+      const box = panel(page), form = /<form class="mynotes-add" id="mynotes-add">([\s\S]*?)<\/form>/.exec(box)[1];
+      // in the order they are seen: the paperclip, the line, then the microphone or the arrow that takes its place
+      assert.deepEqual([...form.matchAll(/<(?:button|textarea|input)[^>]* id="([a-z-]+)"/g)].map(([, id]) => id), ['mynotes-file', 'mynotes-box', 'mynotes-mic', 'mynotes-save', 'mynotes-files'], name);
+      assert.match(form, new RegExp(`<textarea class="mynotes-box" id="mynotes-box" rows="1" maxlength="${most}" enterkeyhint="done" aria-label="Add a note" placeholder="Add a note"></textarea>`), name);
+      // each key is a small picture with no word on it, named for a screen reader and for a mouse held over it
+      const keys = [...form.matchAll(/<button class="mynotes-key mynotes-[a-z]+" id="mynotes-([a-z]+)" aria-label="([^"]+)" title="([^"]+)" type="(button|submit)"([^>]*)><svg class="ico"[^>]*aria-hidden="true"[^>]*><path d="[^"]+"\/><\/svg><\/button>/g)];
+      assert.deepEqual(keys.map(([, id, label, title, type, more]) => [id, label, title, type, more.trim()]), [
+        ['file', 'Add a photo or a PDF', 'Add a photo or a PDF', 'button', ''],
+        ['mic', 'Speak', 'Speak', 'button', 'aria-pressed="false" hidden'],   // shown by the script, where the microphone can hear
+        ['save', 'Add this note', 'Add this note', 'submit', 'hidden']        // shown by the script, once there are words to add
+      ], name);
+      assert.equal((box.match(/<button/g) ?? []).length, 4, `${name}: three small keys and one button with words`);
+      assert.match(box, /<\/form>\s*<button class="btn btn-gold mynotes-make" id="mynotes-make" type="button" disabled>Make my next reel<\/button>\s*<p class="mynotes-says" id="mynotes-says" role="status"><\/p>/, name);
+      // no words of instruction: its name, what the line is for, and the one button
+      assert.equal(box.replace(/<template[\s\S]*?<\/template>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(), 'My notes Make my next reel', name);
+      // the pictures the script puts in the list: a PDF's, and a note's X
+      assert.match(box, /<template id="mynotes-paper"><svg class="px"[\s\S]*?<\/svg><\/template>\s*<template id="mynotes-cross"><svg class="ico"[^>]*><path d="[^"]+"\/><\/svg><\/template>/, name);
+    }
+    assert.match(panel(html.make), /^<aside class="mynotes" id="mynotes" aria-labelledby="mynotes-title" data-first hidden>/);
+    assert.match(panel(html.reel), /^<aside class="mynotes" id="mynotes" aria-labelledby="mynotes-title" hidden>/);
   });
 
   it('promises nothing the make page does not take', () => {
