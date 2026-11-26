@@ -15,8 +15,8 @@
     },
     {
       "title": "My notes",
-      "caption": "Type in My notes. Or press Speak, and talk.",
-      "say": "See My notes, right beside me? Type in it. Or press Speak, and just say it out loud.",
+      "caption": "Type in My notes. Or press the microphone, and talk.",
+      "say": "See My notes, right beside me? Type in it. Or press the microphone, and just say it out loud.",
       "picture": {
         "type": "icons",
         "items": [
@@ -30,13 +30,13 @@
           }
         ],
         "start": 1.6,
-        "every": 1.9
+        "every": 2.3
       }
     },
     {
       "title": "Anything",
-      "caption": "A link, a meeting transcript, a question.",
-      "say": "Put in anything. Paste a link to a page. The transcript of a meeting. Or a question you have always wondered about.",
+      "caption": "A link, a transcript, a question, a photo.",
+      "say": "Put in anything. Paste a link to a page. The transcript of a meeting. A question you have always wondered about. Or press the paperclip, and add a photo of a letter.",
       "picture": {
         "type": "chat",
         "title": "My notes",
@@ -52,19 +52,23 @@
           {
             "from": "You",
             "text": "How do bees make honey?"
+          },
+          {
+            "from": "You",
+            "text": "A photo of my letter"
           }
         ],
-        "start": 0.6,
-        "every": 1.8
+        "start": 1.2,
+        "every": 2.4
       }
     },
     {
       "title": "Make it",
-      "caption": "Press Make my next reel.",
-      "say": "Then press Make my next reel. Claude writes it, I read it out, and it plays in about a minute.",
+      "caption": "Press Make my reel.",
+      "say": "Then press Make my reel. Claude writes it, I read it out, and it plays in about a minute.",
       "picture": {
         "type": "big",
-        "text": "MAKE MY NEXT REEL"
+        "text": "MAKE MY REEL"
       }
     },
     {

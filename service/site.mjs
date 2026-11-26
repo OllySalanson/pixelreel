@@ -264,7 +264,7 @@ const NOTE_KEYS = {
  * My notes, as it stands before its script wakes it (site/js/notes.js): its name, the list,
  * and one line to write in, with a paperclip before it (a photo or a PDF) and a microphone
  * after it, which gives way to an arrow once there are words to add. Then the one button
- * that makes the reel. Every key is drawn ten pixels wide, half the size of the page's
+ * that makes the reel: Make my reel on the make page, Make my next reel beside a reel. Every key is drawn ten pixels wide, half the size of the page's
  * pixel art, with strokes two of them wide (one --u). The two templates are pictures the script puts in the list: a PDF's, and a
  * note's X. The same on every page that has it: `first` is the make page, where
  * there is no reel before this one and a note may be as long as a piece of writing.
@@ -281,7 +281,7 @@ export function notesHtml(first = false) {
     ${key('save', 'save', 'Add this note', ' type="submit" hidden')}
     <input id="mynotes-files" type="file" accept="application/pdf,image/*" hidden>
   </form>
-  <button class="btn btn-gold mynotes-make" id="mynotes-make" type="button" disabled>Make my next reel</button>
+  <button class="btn btn-gold mynotes-make" id="mynotes-make" type="button" disabled>${first ? 'Make my reel' : 'Make my next reel'}</button>
   <p class="mynotes-says" id="mynotes-says" role="status"></p>
   <template id="mynotes-paper">${spriteSvg(ICONS.document, { scale: 2 })}</template>
   <template id="mynotes-cross">${keyIcon(NOTE_KEYS.x)}</template>

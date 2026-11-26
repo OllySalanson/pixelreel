@@ -34,7 +34,7 @@ export async function takeShared({ store = caches } = {}) {
 
 /**
  * Call with My notes on the make page (startMaking in notes.js), once it is woken: a link or
- * some words become a note, and the reel is made at once, as if Make my next reel were
+ * some words become a note, and the reel is made at once, as if Make my reel were
  * pressed; a file is made into a reel at once.
  */
 export async function startShared(notes = null) {
