@@ -12,7 +12,7 @@ import { HEAR_MAX_BYTES, HearError } from './hear.mjs';
 import { languageFor } from '../site/js/given.js';
 import { createMcpServer } from './mcp.mjs';
 import { BusyError, isId, languageName } from './reels.mjs';
-import { addressMeant, addToClaudeLink, appManifest, robotsTxt, SITE_PAGES, SITE_POLICY, sitemapXml, sitePage, WATCH, watchPage } from './site.mjs';
+import { addressMeant, addToClaudeLink, appManifest, robotsTxt, SITE_PAGES, sitemapXml, sitePage, sitePolicy, WATCH, watchPage } from './site.mjs';
 import { sendBytes, sendSqueezed, sendStatic, squeezed, tagOf } from './static.mjs';
 import { CHAIN_MAX, languageOf, MAX_JSON_BODY, narratorOf, OWN_NAMES, PDF_MAX, sourceOf, TryError } from './try.mjs';
 
@@ -129,10 +129,10 @@ async function handleReel(req, res, id, rest, context) {
     // watcher while the voice is still being recorded. It names the reel and points at
     // its own picture, so a link sent in a message shows what it is, but holds none of its words.
     const page = sitePage('reel', baseUrl, {
-      values: { reelid: id, reeltitle: escapeHtml(status.title), here: context.writer ? 'on' : 'off', mic: context.hearing ? 'on' : 'off' }, title: `${status.title} - Pixel Reel`, path: `/r/${id}`,
+      values: { reelid: id, reeltitle: escapeHtml(status.title), here: context.writer ? 'on' : 'off', mic: context.hearing ? 'on' : 'off' }, title: `${status.title} - Pixel Reel`, path: `/r/${id}`, counting: context.counting,
       image: `${baseUrl}/r/${id}/card.png`, imagealt: `${status.title}: a pixel reel. Press Play.`
     });
-    sendSqueezed(req, res, 200, squeezed(page), { ...SAFE, ...UNLISTED, 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': SITE_POLICY });
+    sendSqueezed(req, res, 200, squeezed(page), { ...SAFE, ...UNLISTED, 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': sitePolicy(context.counting) });
     return;
   }
   if (rest === 'play.json') {
@@ -143,6 +143,8 @@ async function handleReel(req, res, id, rest, context) {
     if (status.state === 'failed') play.error = status.error;
     if (status.narrator) play.narrator = languageName(status.narrator);   // who reads it, when it is not Peter
     if (status.language) play.language = status.language;   // the language it is in, when it is not English: the player's own words follow it
+    // once it is written, what it is about (one of TOPICS in daybook.mjs), how many scenes, and the drawings it was missing, for counting (site/js/count.js): never its words
+    if (status.state !== 'writing' && status.state !== 'failed') play.about = { topic: status.topic ?? null, scenes: status.scenes ?? null, missing: status.missing ?? [] };
     // while the voice is being recorded: how many lines are done, of how many
     if (status.state === 'recording' && status.lines) Object.assign(play, { recorded: status.recorded, lines: status.lines });
     // and what there is to play already: a player may start before the last line is recorded, once `playable` says it would stay behind the recorder
@@ -376,17 +378,17 @@ export const languageChoices = (languages = []) => (languages.length ? ['english
   `<label><input type="radio" name="language" value="${language}"${language === 'english' ? ' checked' : ''}><span lang="${LANG_CODES[language] ?? 'en'}">${escapeHtml(OWN_NAMES[language] ?? languageName(language))}</span></label>`).join('\n          ') : '');
 
 
-function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages, writer, hearing, reels }, extra = {}) {
+function sendSitePage(req, res, status, name, { baseUrl, listed, fresh, pages, writer, hearing, reels, counting }, extra = {}) {
   let page = fresh ? null : pages.get(name);
   if (!page) {
     // "watch/<reel>" is the page of one of the site's own reels
-    const html = name.startsWith('watch/') ? watchPage(name.slice(6), baseUrl, { listed, here: Boolean(writer) }) : sitePage(name, baseUrl, { listed, narrators: reels.narrators ?? [], values: { here: writer ? 'on' : 'off', mic: hearing ? 'on' : 'off', languages: languageChoices(reels.languages ?? []) } });   // mic: whether the service hears, for My notes on the make page in a browser that cannot (Brave, Firefox)
+    const html = name.startsWith('watch/') ? watchPage(name.slice(6), baseUrl, { listed, here: Boolean(writer), counting }) : sitePage(name, baseUrl, { listed, counting, narrators: reels.narrators ?? [], values: { here: writer ? 'on' : 'off', mic: hearing ? 'on' : 'off', languages: languageChoices(reels.languages ?? []) } });   // mic: whether the service hears, for My notes on the make page in a browser that cannot (Brave, Firefox)
     page = squeezed(html);
     page.tag = tagOf(page.bytes);
     if (!fresh) pages.set(name, page);
   }
   const keep = status !== 200 ? 'no-store' : fresh ? 'no-cache' : 'public, max-age=300';
-  const headers = { ...SAFE, ...extra, 'content-type': 'text/html; charset=utf-8', 'cache-control': keep, 'content-security-policy': SITE_POLICY, etag: page.tag };
+  const headers = { ...SAFE, ...extra, 'content-type': 'text/html; charset=utf-8', 'cache-control': keep, 'content-security-policy': sitePolicy(counting), etag: page.tag };
   if (status === 200 && req.headers['if-none-match'] === page.tag) { res.writeHead(304, headers).end(); return; }
   sendSqueezed(req, res, status, page, headers);
 }
@@ -425,10 +427,11 @@ async function sendWatchCard(req, res, name, { reels, cards, fresh, log }) {
  * `bottle` ({ key, reader, mail, replyTo, notify, hook }, see its README) is Message in a Bottle: the note
  * button for the people on each site's list, this one's and other sites', with this site's
  * /review page where they sign in; `key` is Olly's own, and `reader` the admin key.
+ * `counting` (a Google Analytics measurement ID) has every page of the site count its visits (site/js/count.js).
  */
-export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false, listed = false, fresh = false, writer = null, hearing = null, hearFor = [], bottle = {} }) {
+export function createService({ reels, baseUrl, log = () => {}, limits = null, trustProxy = false, listed = false, fresh = false, writer = null, hearing = null, hearFor = [], bottle = {}, counting = null }) {
   const context = {
-    reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, listed, fresh, writer, hearing, pages: new Map(), cards: new Map(), writing: new Set(),
+    reels, baseUrl: baseUrl.replace(/\/$/, ''), log, limits, listed, fresh, writer, hearing, counting, pages: new Map(), cards: new Map(), writing: new Set(),
     trustProxy: trustProxy === true ? 1 : Math.max(0, Math.floor(Number(trustProxy)) || 0), fewestForwarded: Infinity
   };
   // Message in a Bottle: kept with the reels, under bottles/, which no page or listing of the reels ever reaches

@@ -223,6 +223,18 @@ change them. What each reel took is in the logs: look for lines that start `try:
 
 To switch it off again: `--update-env-vars PIXELREEL_TRY=0`.
 
+### Counting visits
+
+The site counts its visits with Google Analytics (docs/service.md, "Counting visits"): the
+property "Pixel Reel" in Olly's Analytics account (Niches), web stream `https://pixelreel.pro`.
+
+```sh
+npm run deploy -- --update-env-vars PIXELREEL_ANALYTICS=G-MJV7K1QL78
+```
+
+`PIXELREEL_ANALYTICS=` (empty) switches it off, and the pages go back to loading nothing from
+anywhere else.
+
 ### Message in a Bottle
 
 The note button (Message in a Bottle, a package of its own in the private repository

@@ -6,6 +6,7 @@
 // Anthropic's side, so this service never fetches an address a visitor gives it.
 import Anthropic from '@anthropic-ai/sdk';
 import { isLink } from '../site/js/given.js';
+import { TOPICS } from './daybook.mjs';
 import { formatGuide } from './mcp.mjs';
 import { languageName } from './reels.mjs';
 import { AGAIN, bracedIn, replyJson, TryError, writtenSoFar } from './try.mjs';
@@ -16,7 +17,7 @@ export const instructions = (language = null, narrator = null, { pictures = 'sta
 ${formatGuide(language ? [language] : [], [], { pictures })}
 
 How to answer:
-- Reply with one JSON object and nothing else: the reel. No words before or after it, and no code fence.${pictures === 'cards' ? '' : '\n- If the library did not have a thing you wanted on a stage, add "wishes" to the reel: a list of their short names, such as ["gas meter"].'}
+- Reply with one JSON object and nothing else: the reel. No words before or after it, and no code fence.${pictures === 'cards' ? '' : `\n- If the library did not have a thing you wanted on a stage, add "wishes" to the reel: a list of their short names, such as ["gas meter"].\n- Add "topic" to the reel: what it is about, broadly, as the one of these that fits best: ${TOPICS.map((t) => `"${t}"`).join(', ')}.`}
 ${language
     ? `- The visitor has asked for this reel in ${languageName(language)}, whatever language what they gave is in. Write every word of it in ${languageName(language)}: the titles, the captions, what Peter says and the words in the pictures. Write it as someone who speaks ${languageName(language)} would say it, not as a translation, and set "language" to "${language}".`
     : '- Write the reel in English, whatever language what the visitor gave is in. Use British spelling.'}

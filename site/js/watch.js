@@ -3,6 +3,7 @@
 // how far along, then hands it to the player.
 import { calm, onComfortChange } from './calm.js';
 import { reelie } from './landscape.js';
+import { aboutReel, count, firstTime } from './count.js';
 import { forgetMine, mineStorage, openedMine, readMine, rememberMine, updateMine } from './mine.js';
 import { startNotes } from './notes.js';
 import { fitCanvas, ReelPlayer } from './player.js';
@@ -95,11 +96,13 @@ export function startWatching() {
     button.addEventListener('click', async () => {
       for (const each of remakes) each.disabled = true;
       remakeSays.textContent = 'One moment.';
+      count('make_step', { step: 'make_pressed', from: 'again', how: button.dataset.remake });
       try {
         const res = await fetch('/try', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ again: id, how: button.dataset.remake }) });
         const answer = await res.json().catch(() => ({}));
         if (!res.ok || !answer.watch) throw new Error(answer.error || 'That did not work. Try again in a minute.');
         rememberMine(mine, answer);
+        await count('make_step', { step: 'reel_begun', from: 'again', how: button.dataset.remake });
         location.assign(answer.watch);
       } catch (err) {
         remakeSays.textContent = err instanceof TypeError ? (navigator.onLine === false ? 'You are not online. Check your internet, then try again.' : 'That did not work. Try again in a minute.') : err.message;
@@ -121,7 +124,11 @@ export function startWatching() {
     leadBack(play.follows);
     // if whoever is watching made this reel, their list of reels learns its name and how long it is kept; one that came to nothing comes off it
     if (play.state === 'failed' || play.state === 'gone') forgetMine(mine, id);
-    else if (play.state !== 'unreachable' && play.state !== 'writing') updateMine(mine, id, { title: play.title, expires: play.expires });
+    else if (play.state !== 'unreachable' && play.state !== 'writing') {
+      updateMine(mine, id, { title: play.title, expires: play.expires });
+      // a reel made here, counted once it is written, by whoever made it: what it is about, never what it says
+      if (readMine(mine).some((reel) => reel.id === id && reel.key) && firstTime(id)) count('reel_made', aboutReel({ name: id, ...play.about }));
+    }
     if (play.state === 'ready') {
       waiting = false;
       openedMine(mine, { id, title: play.title, expires: play.expires });   // to the top of Your reels, made here or not
@@ -129,7 +136,7 @@ export function startWatching() {
       // the recordings come from this address, wherever the service says it lives
       const clips = play.clips.map((clip) => ({ ...clip, file: new URL(clip.file).pathname }));
       playable(true);
-      player.open(showOf(id, play.reel, { clips }));
+      player.open(Object.assign(showOf(id, play.reel, { clips }), { about: play.about ?? {} }));
       for (const send of sends) send.hidden = false;
       if (play.expires) {
         document.getElementById('watch-until').textContent = DAY.format(new Date(play.expires));

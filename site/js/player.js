@@ -246,6 +246,16 @@ export class ReelPlayer {
     if (this.loading === name) this.open(show);   // unless another reel was asked for while this one loaded
   }
 
+  /**
+   * Tells the page that this reel has begun to play ('reelplay') or has played to its end
+   * ('reelend'), for counting (count.js): its name, how many scenes, and what the page knew
+   * of it (`about`, see showOf), never its words.
+   */
+  tell(what) {
+    const { name, reel, about } = this.show;
+    this.root.dispatchEvent(new CustomEvent(what, { bubbles: true, detail: { ...about, name, scenes: reel.scenes.length } }));
+  }
+
   /** Shows a reel that is already loaded (see showOf in reels.js), ready to play. */
   open(show) {
     this.stop();
@@ -258,6 +268,7 @@ export class ReelPlayer {
     this.narrator = createNarrator({ scenes: reel.scenes, clipFor, audio: this.audio, speech: window.speechSynthesis, Utterance: pacedUtterance(this.clock), timer, now });
     this.player = new Player({ count: reel.scenes.length, narrator: this.narrator, durations, onChange: (state) => this.changed(state), timer, now });
     this.intro = true;
+    this.played = false;
     this.wasEnded = false;
     this.shown = -1;
     this.fade = null;
@@ -333,6 +344,7 @@ export class ReelPlayer {
     this.player.pause();
     this.player.goTo(0);
     this.intro = true;
+    this.played = false;
     this.changed(this.player.state);
   }
 
@@ -349,6 +361,7 @@ export class ReelPlayer {
       if (clip && state.started && !this.warmed.has(clip.url)) { this.warmed.add(clip.url); new Audio().src = clip.url; }   // so it starts at once
     }
     if (state.started && state.playing) this.intro = false;
+    if (state.playing && !this.played) { this.played = true; this.tell('reelplay'); }
     const label = (key, text) => { for (const span of key.children) span.classList.toggle('on', span.textContent === text); };
     label(this.playKey, state.playing ? 'Pause' : state.ended ? 'Again' : 'Play');
     label(this.soundKey, state.muted ? 'Sound off' : 'Sound on');
@@ -372,6 +385,8 @@ export class ReelPlayer {
     [...this.words.children].forEach((p, i) => p.classList.toggle('on', i === (this.intro ? 0 : state.index + 1)));
     if (state.ended && !this.wasEnded) {
       this.live.textContent = 'The end.';
+      this.played = false;   // played again, it is counted again
+      this.tell('reelend');
       this.onEnd();
     }
     this.wasEnded = state.ended;

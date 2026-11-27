@@ -667,6 +667,18 @@ describe('make it right here, over HTTP', () => {
     assert.equal((await playOf(id)).reel.title, 'Tea');
   });
 
+  it('keeps what the reel is about apart from it, for the day book and for counting on its page', async () => {
+    answers = [{ ...tea, topic: 'Cooking', wishes: ['Teapot'] }];
+    const { id } = await (await ask('tea')).json();
+    assert.equal((await playOf(id)).about, undefined, 'nothing to count while it is being written');
+    await server.written();
+    await reels.idle();
+    assert.equal((await reels.reel(id)).topic, undefined, 'the topic is not part of the reel');
+    assert.deepEqual((await playOf(id)).about, { topic: 'cooking', scenes: 1, missing: ['teapot'] });
+    const [noted] = (await reels.store.list('daybook')).filter((key) => key.endsWith(`${id}.json`));
+    assert.deepEqual(JSON.parse(await reels.store.get(noted)).topic, 'cooking');
+  });
+
   it('gives Claude one chance to put a reel right', async () => {
     answers = [{ title: 'No scenes' }, tea];
     assert.equal((await outcome(await ask('tea'))).state, 'ready');

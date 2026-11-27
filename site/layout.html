@@ -1,6 +1,6 @@
 <!-- The shell every page of the site shares. service/site.mjs fills in the {{names}}. -->
 <!doctype html>
-<html lang="en-GB">
+<html lang="en-GB"{{count}}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -76,7 +76,7 @@
       <a href="/credits">Credits</a>
       <a href="https://github.com/OllySalanson/pixelreel">The code</a>
     </nav>
-    <p class="foot-small">No cookies. No trackers. Nothing loaded from anywhere else.</p>
+    <p class="foot-small">{{quiet}}</p>
   </div>
 </footer>
 
@@ -153,6 +153,14 @@
       <legend>Words under the pictures</legend>
       <label><input type="radio" name="words" value="few" checked><span>A few</span></label>
       <label><input type="radio" name="words" value="all"><span>Every word</span></label>
+    </fieldset>
+
+    <!-- out of sight unless visits are counted here (count.js): the visitor's own to switch off -->
+    <fieldset class="pick" data-needs-count hidden>
+      <legend>Count my visits</legend>
+      <label><input type="radio" name="count" value="on" checked><span>On</span></label>
+      <label><input type="radio" name="count" value="off"><span>Off</span></label>
+      <p class="pick-note">Pixel Reel counts visits and reels played with Google Analytics, never your words. <a href="/privacy">More about it</a>.</p>
     </fieldset>
 
     <button class="comfort-reset" type="button" data-comfort-reset>Put it all back</button>

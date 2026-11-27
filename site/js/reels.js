@@ -9,7 +9,8 @@ const loading = new Map();
 /**
  * A reel ready to play: { name, reel, clipFor, durations, line, opens }. `source` is the
  * reel's JSON, as text or already read; `manifest` its recordings ({ clips: [...] } or null),
- * whose files are found under `audioBase`.
+ * whose files are found under `audioBase`. What a page knows of a made reel besides its scenes
+ * (its topic, and the drawings it was missing) may be put in `about`, for counting (count.js).
  */
 export function showOf(name, source, manifest, audioBase = '') {
   const raw = typeof source === 'string' ? JSON.parse(source) : source;
