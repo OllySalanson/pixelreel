@@ -145,6 +145,9 @@ export function namehero({ run = gcloud, sftp = (batch) => execFileSync('sftp', 
     name: 'namehero', service: NAMEHERO.service,
     reader: () => {
       if (env.NAMEHERO_BOTTLE_READER) return env.NAMEHERO_BOTTLE_READER.trim();
+      // kept on this machine for the admin tool, where there is one; else read from the app's settings there
+      const here = join(homedir(), '.config', 'ollysalanson-bottle', 'reader-key');
+      if (!env.NAMEHERO_FROM_SETTINGS && existsSync(here)) return readFileSync(here, 'utf8').trim();
       const dir = mkdtempSync(join(tmpdir(), 'bottles-namehero-'));
       try {
         sftp(`get ${NAMEHERO.settings} ${dir}/settings.env\n`);

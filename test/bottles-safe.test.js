@@ -128,7 +128,7 @@ describe('keeping the notes safe', () => {
       throw new Error(`gcloud ${args.join(' ')}`);
     };
     const walk = (dir, under = '') => readdirSync(join(dir, under), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(dir, `${under}${e.name}/`) : [`${under}${e.name}`]));
-    const store = namehero({ run, sftp, env: {} });
+    const store = namehero({ run, sftp, env: { NAMEHERO_FROM_SETTINGS: '1' } });
     assert.deepEqual(store.backups(), [], 'none yet');
     assert.equal(store.reader(), 'nh-admin');
     assert.deepEqual(store.liveNotes(), [A]);
