@@ -287,22 +287,42 @@ The notes are what clients have told us, and are kept for good: nothing in Pixel
 bottle deletes one. Everything of the bottle's is in the reels' bucket under `bottles/` (each
 note's `note.json` and `shot.jpg`, the sites and people, keys and codes), which the 30-day rule
 never touches. A new version or revision of the service reads the same bucket, so a deploy moves
-nothing. To make sure:
+nothing.
+
+The client sites' notes (Hoops and Dreams, The Elevation Project) have one home of their own:
+the Bottle at `https://ollysalanson.com/bottle`, on NameHero (Olly, 25 Nov 2026: preview sites
+use Bottle at ollysalanson.com/bottle, not hosted on Pixel Reel). It runs the same package
+(`~/bottle-app`, started by the host's Node from `app.cjs`, its settings in `settings.env`
+beside it) and keeps its notes in `~/bottle-data/bottles`, outside the web folder. There is no
+shell there, only SFTP (`~/.ssh/namehero_deploy`), so a new version is put there by uploading
+the unpacked package into `bottle-app/node_modules/message-in-a-bottle` (keeping the old one
+aside) and then `bottle-app/tmp/restart.txt`. Pixel Reel keeps only its own site's notes, and
+passes on anything that still comes to it for the client sites (`bottles site move`, below).
+Everything here covers both places: `--of pixelreel` (the default) or `--of namehero`.
+
+To make sure:
 
 - **Backups**, in the bucket `pixelreel-515501-bottle-backups` (europe-west1, private), a folder
-  each, named by when it was made (`20261127-093000/bottles/...`). `npm run bottles-safe --
-  backup` makes one and checks it holds every note; `npm run deploy` makes one before every
-  deploy. `npm run bottles-safe -- list` lists them.
+  each, named by when it was made: `20261127-093000/bottles/...` for Pixel Reel's,
+  `namehero/20261127-093000/bottles/...` for NameHero's (fetched by SFTP). `npm run bottles-safe --
+  backup [--of namehero]` makes one and checks it holds every note; `npm run deploy` makes one of
+  Pixel Reel's before every deploy. `npm run bottles-safe -- list [--of namehero]` lists them.
+  Make one of NameHero's before changing anything there.
 - **A check that nothing has gone**: every note in the last backup must still be listed by the
   service. `npm run bottles-safe -- check` says `LOST: ...` for any that is not, with the command
   that puts it back. `npm run deploy` checks that the new version lists every note the old one
   did, and stops before deploying if a note is already lost.
-- **Once a day**: `npm run bottles-safe -- daily` (run every hour or so by a watch) makes a
-  backup when the last is a day old and checks; it prints only when a note is lost or the check
-  could not be made, never nothing when something is wrong. It needs a gcloud signed in to the
-  project; each gcloud call takes about a minute from Olly's PC, so a run takes a few minutes.
-- **Putting back**: `npm run bottles-safe -- restore <backup>` copies back every file of that
-  backup the bucket no longer has; it never replaces or deletes anything there, so a note marked
+- **Once a day**: `npm run bottles-safe -- daily` (run every hour or so by a watch) does both
+  places: a backup when the last is a day old, and the check; it prints only when a note is lost
+  or a check could not be made (each place on its own, so one that cannot be reached is said and
+  the other still looked at), never nothing when something is wrong. It needs a gcloud signed in
+  to the project and the NameHero SFTP key; each gcloud call takes about a minute from Olly's PC,
+  so a run takes a few minutes.
+- **Both places the same**, after copying a site from one to the other: `npm run bottles-safe --
+  compare <site> [<site> ...]` says, for each site, how many notes each place holds and every
+  note only one has or whose state differs.
+- **Putting back**: `npm run bottles-safe -- restore <backup> [--of namehero]` copies back every
+  file of that backup the place no longer has; it never replaces or deletes anything there, so a note marked
   since is kept as it is now. Between backups, the bucket keeps a deleted or replaced file for 7
   days (soft delete): `gcloud storage ls --soft-deleted gs://pixelreel-515501-reels/bottles/<id>/`
   and `gcloud storage restore` bring one back.
