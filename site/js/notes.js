@@ -4,6 +4,7 @@
 // from (service/writer.mjs), so the next reel answers them in context.
 // It is one line to write in, with a paperclip before it for a photo or a PDF, which waits
 // in the list like a note, and a microphone after it. Its markup is notesHtml in service/site.mjs.
+import { count } from './count.js';
 import { deviceStorage, mineStorage, rememberMine } from './mine.js';
 import { base64Of, fileGiven, GivenError, givenFrom, NOTE_MAX, NOTES_MAX, TEXT_MAX } from './given.js';
 import { shrinkPicture } from './maker.js';
@@ -117,6 +118,10 @@ export function startNotes(id, { first = false } = {}) {
   let listening = null;   // the microphone, while it is on
   let micBusy = false;    // while the browser asks whether it may be used, and while the last words said are written down
   panel.hidden = false;
+  // each step towards a reel is counted (count.js), from the make page or from the notes on a reel, never what was written
+  const from = first ? 'make' : 'notes', counted = new Set();
+  const step = (name, more = {}) => count('make_step', { step: name, from, ...more });
+  const stepOnce = (name, more) => { if (!counted.has(name)) { counted.add(name); step(name, more); } };
 
   const el = (tag, cls, text) => Object.assign(document.createElement(tag), cls ? { className: cls } : {}, text ? { textContent: text } : {});
   const button = (text, cls) => Object.assign(el('button', cls, text), { type: 'button' });
@@ -203,6 +208,8 @@ export function startNotes(id, { first = false } = {}) {
     grow();
     if (!note || full()) { settle(); return; }
     notes = [...notes, note];
+    stepOnce('note_added', { how: saidIt ? 'said' : 'typed' });
+    saidIt = false;
     if (!keep()) says.textContent = 'This browser will not keep notes, so they go when the page is left.';
     else says.textContent = '';
     draw();
@@ -245,7 +252,7 @@ export function startNotes(id, { first = false } = {}) {
   // the service writes it down (site/js/hearing.js), where the service can.
   const Speech = speechHere(), serviceHears = panel.closest('[data-mic]')?.dataset.mic === 'on' && canRecord();
   const hears = Boolean(Speech || serviceHears);
-  let useService = !Speech, before = '', saveAfter = false, makeAfter = false;
+  let useService = !Speech, before = '', saveAfter = false, makeAfter = false, saidIt = false;
   /** What the microphone does when pressed, for a screen reader and for a mouse held over it: it has no word on it. */
   const nameMic = (does) => { mic.setAttribute('aria-label', does); mic.title = does; };
   const show = (said) => {
@@ -277,6 +284,8 @@ export function startNotes(id, { first = false } = {}) {
     says.textContent = '';
     mic.classList.add('on');
     mic.setAttribute('aria-pressed', 'true');
+    saidIt = true;
+    stepOnce('mic_on');
     nameMic('Done');
     panel.classList.add('is-listening');
     settle();
@@ -337,18 +346,21 @@ export function startNotes(id, { first = false } = {}) {
   });
 
   // the next reel: made from these notes, and the photo or PDF with them, with the chain that led here (on the make page, the visitor's first)
-  async function makeFrom(given, clip = null) {
+  async function makeFrom(given, clip = null, how = 'button') {
     busy = true;
     settle();
     says.textContent = 'One moment.';
+    step('make_pressed', { how, notes: given.length, file: clip ? (clip.type === 'application/pdf' ? 'pdf' : 'picture') : 'none' });
     try {
       const data = clip ? await base64Of(clip.file) : null;
       const res = await fetch('/try', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(noteRequest(id, given, { first, storage, data })) });
       const answer = await res.json().catch(() => ({}));
       if (!res.ok || !answer.watch) throw new Error(answer.error || 'That did not work. Try again in a minute.');
       rememberMine(mineStorage(), answer);
+      await step('reel_begun');   // before the page is left, or it is lost
       location.assign(answer.watch);
     } catch (err) {
+      step('make_failed');
       says.textContent = err instanceof TypeError ? (navigator.onLine === false ? 'You are not online. Check your internet, then try again.' : 'That did not work. Try again in a minute.') : err.message;
       busy = false;
       settle();
@@ -378,13 +390,14 @@ export function startNotes(id, { first = false } = {}) {
     }
     if (held.file) {
       clipped = { file: held.file, type: held.type, name: file.name ?? '', thumb: held.type === 'application/pdf' ? null : await thumbOf(held.file), after: clipped?.after ?? notes.length };
+      stepOnce('file_added', { file: held.type === 'application/pdf' ? 'pdf' : 'picture' });
       draw();
       list.querySelector('.is-file')?.scrollIntoView({ block: 'nearest' });
     } else {
       box.value = held.words;
       save();
     }
-    if (andMake && canMake({ notes: notes.length, clipped: Boolean(clipped) })) makeFrom(notes, clipped);
+    if (andMake && canMake({ notes: notes.length, clipped: Boolean(clipped) })) makeFrom(notes, clipped, 'shared');
   }
   /** Clips `file` on, and has the button that makes the reel wait until it is. */
   const clipOn = (file, more) => { clipping = clip(file, more); return clipping; };
@@ -413,7 +426,7 @@ export function startNotes(id, { first = false } = {}) {
   });
   // things to try, on the make page when its reel ends: one press makes a reel of that, and nothing else
   for (const suggestion of document.querySelectorAll('button[data-suggest]')) {
-    suggestion.addEventListener('click', () => { if (!busy) makeFrom([suggestion.dataset.suggest]); });
+    suggestion.addEventListener('click', () => { if (!busy) makeFrom([suggestion.dataset.suggest], null, 'suggestion'); });
   }
   // coming back to this page with Back finds the button ready again
   addEventListener('pageshow', (e) => { if (e.persisted) { busy = false; says.textContent = ''; settle(); } });
@@ -422,7 +435,7 @@ export function startNotes(id, { first = false } = {}) {
   function add(words, { andMake = false } = {}) {
     box.value = words;
     save();
-    if (andMake && notes.length) makeFrom(notes, clipped);
+    if (andMake && notes.length) makeFrom(notes, clipped, 'shared');
   }
 
   draw();

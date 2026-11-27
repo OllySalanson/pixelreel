@@ -12,7 +12,7 @@ import { clipLookup, ReelError } from '../src/reel.js';
 import { staysAhead } from './ahead.mjs';
 import { limitProblems, peterMs, reelMs, slipProblems } from './limits.mjs';
 import { paceReel } from './pacing.mjs';
-import { DAYBOOK, dayOf, entryOf, plainName } from './daybook.mjs';
+import { DAYBOOK, dayOf, entryOf, gapsOf, plainName } from './daybook.mjs';
 import { narrationMs, timeline } from '../src/timing.js';
 import { NOTE_MAX } from '../site/js/given.js';
 
@@ -139,8 +139,10 @@ export class Reels {
    * many). The earlier reel need not be recorded yet: it will be by the time this one's turn comes.
    * `language` is the language its words are in, for the narrator to read it in: one of `languages`, or English.
    * `narrator` is who reads it, by first name: one of `narrators`, or Peter.
+   * `wishes` are the things it wished the library had, and `topic` what it is about (one of
+   * TOPICS in daybook.mjs): both are kept in the day book, and in its status for counting.
    */
-  async create(raw, { improves = null, language = null, narrator = null, wishes = null } = {}) {
+  async create(raw, { improves = null, language = null, narrator = null, wishes = null, topic = null } = {}) {
     const reel = this.check(raw, { slips: true });   // whoever sent it can mend it and send it again, at no cost
     const who = narrator && narrator !== 'peter' ? narrator : null;
     if (who && !(this.narrators.includes(who) && NARRATORS[who])) {
@@ -157,8 +159,9 @@ export class Reels {
     if (kept) Object.assign(status, { improves, kept });   // its recordings are fetched when this one's turn comes (run)
     if (spoken) status.language = spoken;
     if (who) status.narrator = who;
+    const noted = this.noted(status, raw, { how: 'connector', wishes, topic });
     await this.save(status);
-    await this.book(status.id, raw, { how: 'connector', wishes });
+    await this.book(status.id, noted);
     this.enqueue({ id: status.id, kind: 'voice' });
     // with nothing else in hand its recording has begun already, and whoever asked is told so
     return this.running?.id === status.id ? { ...status, state: 'recording' } : status;
@@ -261,8 +264,10 @@ export class Reels {
    */
   async write(id, given, { language = null, narrator = null } = {}) {
     // with the stage, the things the writer wished the library had come with the reel, and are kept apart from it
-    const takes = this.pictures !== 'cards' && given !== null && typeof given === 'object' && Object.hasOwn(given, 'wishes');
-    const { wishes = null, ...rest } = takes ? given : {};
+    // and what it is about (TOPICS in daybook.mjs), which is not part of the reel either
+    const takes = given !== null && typeof given === 'object' && !Array.isArray(given) && (Object.hasOwn(given, 'topic') || (this.pictures !== 'cards' && Object.hasOwn(given, 'wishes')));
+    const { wishes = null, topic = null, ...rest } = takes ? given : {};
+    if (takes && this.pictures === 'cards' && Object.hasOwn(given, 'wishes')) rest.wishes = wishes;   // not taken with the cards: the checks say so
     const raw = takes ? rest : given;
     const reel = this.check(raw);
     const status = await this.status(id);
@@ -272,20 +277,31 @@ export class Reels {
     if (language && language !== 'english' && this.languages.includes(language)) written.language = language;
     if (narrator && narrator !== 'peter' && this.narrators.includes(narrator) && NARRATORS[narrator]) written.narrator = narrator;
     await this.store.put(`reels/${id}/reel.json`, JSON.stringify(raw));
+    const noted = this.noted(written, raw, { how: 'website', wishes: this.pictures === 'cards' ? null : wishes, topic });
     await this.save(written);
-    await this.book(id, raw, { how: 'website', wishes });
+    await this.book(id, noted);
     this.enqueue({ id, kind: 'voice' });
     return written;
   }
 
   /**
-   * Notes reel `id` in the day book (daybook.mjs), with the things it wished the library had:
-   * never its words. `how` it was made: by the connector or the website. Never throws.
+   * What the day book keeps of a reel (entryOf in daybook.mjs): never its words. `how` it was
+   * made: by the connector or the website. Its topic, and the drawings it was missing, go in
+   * `status` too, for counting on its page (site/js/count.js).
    */
-  async book(id, raw, { how, wishes = null } = {}) {
+  noted(status, raw, { how, wishes = null, topic = null }) {
+    const entry = entryOf(raw, { how, wishes, topic });
+    if (entry.topic !== 'unknown') status.topic = entry.topic;
+    const gaps = gapsOf(entry);
+    if (gaps.length) status.missing = gaps;
+    return entry;
+  }
+
+  /** Notes reel `id` in the day book (daybook.mjs), as noted() gave it. Never throws. */
+  async book(id, entry) {
     try {
       const status = await this.status(id), day = dayOf(Date.parse(status?.created ?? '') || this.now());
-      await this.store.put(`${DAYBOOK}/${day}/${id}.json`, JSON.stringify({ id, at: new Date(this.now()).toISOString(), ...entryOf(raw, { how, wishes }) }));
+      await this.store.put(`${DAYBOOK}/${day}/${id}.json`, JSON.stringify({ id, at: new Date(this.now()).toISOString(), ...entry }));
     } catch (err) {
       this.log(`${id}: could not be noted in the day book: ${err.message}`);
     }
@@ -298,6 +314,8 @@ export class Reels {
       const entry = JSON.parse(await this.store.get(key));
       entry.critic = { faults: looked.faults.length, mended: looked.mended, wishes: [...new Set((looked.wishes ?? []).map(plainName).filter(Boolean))].slice(0, 5) };
       await this.store.put(key, JSON.stringify(entry));
+      const gaps = gapsOf(entry);
+      if (gaps.length) await this.update(id, { missing: gaps });   // what the critic found missing is counted too
     } catch (err) {
       this.log(`${id}: the critic's look could not be noted in the day book: ${err.message}`);
     }

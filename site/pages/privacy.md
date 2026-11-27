@@ -39,7 +39,7 @@ seen by whoever might get the link.
 
 ## This website
 
-- It uses no cookies, no trackers and no adverts, and loads nothing from anywhere else.
+{{website}}
 - If you change how it looks in Make it comfy, or choose who reads to you, that choice is
   kept on your own device. It is never sent to Pixel Reel.
 - So that it opens with no internet, your browser keeps a copy of the pages of this site

@@ -56,6 +56,46 @@ export function addressMeant(path, isId) {
 export const SITE_POLICY = "default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; media-src 'self'; " +
   "connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
 
+/** Where Google Analytics' script comes from, and where it sends what it counts (Google's own list for a content security policy). */
+const GOOGLE_SCRIPT = 'https://*.googletagmanager.com', GOOGLE_COUNTS = 'https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com';
+
+/**
+ * What a page may load where visits are counted (`counting`, a Google Analytics measurement
+ * ID, from PIXELREEL_ANALYTICS): SITE_POLICY, and Google Analytics' script and where it sends.
+ * Without one, SITE_POLICY itself.
+ */
+export const sitePolicy = (counting = null) => (counting
+  ? SITE_POLICY.replace("script-src 'self'", `script-src 'self' ${GOOGLE_SCRIPT}`).replace("img-src 'self' data:", `img-src 'self' data: ${GOOGLE_COUNTS}`).replace("connect-src 'self'", `connect-src 'self' ${GOOGLE_COUNTS}`)
+  : SITE_POLICY);
+
+/** A Google Analytics measurement ID, such as G-MJV7K1QL78, or null for anything else. */
+export const measurementOf = (id) => (typeof id === 'string' && /^G-[A-Z0-9]{4,16}$/.test(id.trim()) ? id.trim() : null);
+
+/** What the site says of itself, at its foot, on the home page and in the privacy page, where visits are counted and where not. */
+const QUIET = {
+  off: {
+    quiet: 'No cookies. No trackers. Nothing loaded from anywhere else.',
+    quietly: 'No cookies. No trackers. No adverts.',
+    website: '- It uses no cookies, no trackers and no adverts, and loads nothing from anywhere else.'
+  },
+  on: {
+    quiet: 'No adverts. Visits are counted, never your words.',
+    quietly: 'No adverts. Visits are counted, never your words.',
+    website: `- It has no adverts.
+- It counts its visits with Google Analytics, so that Pixel Reel knows what is used. It counts
+  which pages are opened, and which reels are played to the end.
+- For each reel made, it counts a word or two for what it is about (such as cooking or
+  bills), how many scenes it has, and which pictures it was missing.
+- Google is never sent anything you wrote or said, a reel's words or title, or the link to a reel.
+- Google Analytics keeps a cookie on your device, to tell one visit from another. It is never
+  used for adverts. In Europe outside the UK, there is no cookie.
+- To stop the counting, choose Off under Count my visits, in Make it comfy. If your browser
+  is set to "Do not track", or to Global Privacy Control, it is never counted.
+- Google's own privacy policy says what Google does with what it counts.
+- Apart from Google Analytics, it loads nothing from anywhere else.`
+  }
+};
+
 const escapeHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 const siteFile = (path) => new URL(`../site/${path}`, import.meta.url);
@@ -414,12 +454,13 @@ function scanCode(body, name, address, label) {
  * whole address), `imagealt` and `fetch` (files to ask for early) replace the page's own,
  * for a page that stands for many, such as a reel's.
  */
-export function sitePage(name, baseUrl, { listed = false, values = {}, title = null, description = null, path = null, image = null, imagealt = null, fetch = null, narrators = [] } = {}) {
+export function sitePage(name, baseUrl, { listed = false, values = {}, title = null, description = null, path = null, image = null, imagealt = null, fetch = null, narrators = [], counting = null } = {}) {
+  const quiet = QUIET[counting ? 'on' : 'off'];
   path ??= Object.keys(SITE_PAGES).find((p) => SITE_PAGES[p] === name) ?? '/';
   const markdown = !existsSync(siteFile(`pages/${name}.html`));
   const { facts, body } = pageFacts(readFileSync(siteFile(`pages/${name}.${markdown ? 'md' : 'html'}`), 'utf8'));
   // the connector's address is long and has no spaces: <wbr> lets a narrow screen break it before "/mcp", not mid-word
-  const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', mic: 'off', languages: '', posters: postersHtml(), voices: narratorsHtml(narrators), who: whoChoices(narrators), whoreads: whoReads(narrators), scan: scanCode(body, 'scan', `${baseUrl}/app`, 'A QR code. It opens Pixel Reel on a phone.'), scanthis: scanCode(body, 'scanthis', `${baseUrl}${path}`, 'A QR code. It opens this page on a phone.'), ...values };
+  const links = { url: escapeHtml(baseUrl), mcp: `${escapeHtml(baseUrl)}<wbr>/mcp`, add: escapeHtml(addToClaudeLink(baseUrl)), here: 'off', mic: 'off', languages: '', posters: postersHtml(), voices: narratorsHtml(narrators), who: whoChoices(narrators), whoreads: whoReads(narrators), scan: scanCode(body, 'scan', `${baseUrl}/app`, 'A QR code. It opens Pixel Reel on a phone.'), scanthis: scanCode(body, 'scanthis', `${baseUrl}${path}`, 'A QR code. It opens this page on a phone.'), ...quiet, ...values };
   // "Want one of your own?" (under a reel, and in the theatre) leads to the form where the service makes reels itself,
   // which needs no Claude and no account. Where it does not, it leads to adding Pixel Reel to Claude, the only way to make one.
   Object.assign(links, links.here === 'on' ? { ownhref: '/make', owndo: 'Make a pixel reel' } : { ownhref: '/claude', owndo: 'Add Pixel Reel to Claude' });
@@ -429,7 +470,7 @@ export function sitePage(name, baseUrl, { listed = false, values = {}, title = n
   // and every plain page offers to be read out, in full (aloud.js shows the button where the browser has a voice)
   const watch = `\n<p class="doc-reel">${facts.reel ? `<button class="btn btn-reel" type="button" data-reel="${escapeHtml(facts.reel)}">Make a pixel reel about this</button>` : ''}<button class="btn btn-paper" type="button" data-read-page data-needs-speech hidden>Read this page to me</button></p>`;
   const main = markdown
-    ? `<article class="doc">\n${markdownHtml(fill(body, { url: baseUrl, mcp: `${baseUrl}/mcp` })).replace('</h1>', () => `</h1>${watch}`)}\n</article>`
+    ? `<article class="doc">\n${markdownHtml(fill(body, { url: baseUrl, mcp: `${baseUrl}/mcp`, website: quiet.website })).replace('</h1>', () => `</h1>${watch}`)}\n</article>`
     : fill(dropComments(body), links);
   const ahead = [
     ...siteModules().map((module) => `<link rel="modulepreload" href="${module}">`),
@@ -437,6 +478,7 @@ export function sitePage(name, baseUrl, { listed = false, values = {}, title = n
   ];
   return fill(dropComments(readFileSync(siteFile('layout.html'), 'utf8')), {
     ...links,
+    count: counting ? ` data-count="${escapeHtml(counting)}"` : '',   // count.js counts the page's visits with Google Analytics
     ahead: ahead.join('\n'),
     title: escapeHtml(title),
     description: escapeHtml(description ?? facts.description ?? 'Pixel Reel turns anything wordy into a short cartoon, read to you in a warm voice. Free, and made for anyone who would rather watch than read.'),
@@ -466,10 +508,11 @@ export function sitemapXml(baseUrl) {
  * screen allows, a way to pass it on, and the other examples. A message that is sent its
  * address shows the reel's own picture (/watch/<name>/card.png).
  */
-export function watchPage(name, baseUrl, { listed = false, here = false } = {}) {
+export function watchPage(name, baseUrl, { listed = false, here = false, counting = null } = {}) {
   const title = reelTitle(name), next = WATCH[(WATCH.indexOf(name) + 1) % WATCH.length];
   return sitePage('watch', baseUrl, {
     listed,
+    counting,
     path: `/watch/${name}`,
     title: `${title} - Pixel Reel`,
     description: `${title}. A pixel reel: a short cartoon with a warm voice. Press Play, and Peter will read it to you.`,

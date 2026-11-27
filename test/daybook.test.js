@@ -3,7 +3,7 @@ import { copyFileSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, describe, it } from 'node:test';
-import { daySummary, entryOf, handleDaybook, hadRight, NO_MAIL, plainName, sendSummary, summaryText, wantedOver } from '../service/daybook.mjs';
+import { daySummary, entryOf, handleDaybook, hadRight, NO_MAIL, plainName, sendSummary, summaryHtml, summaryText, topicOf, wantedOver } from '../service/daybook.mjs';
 import { EXAMPLE_REEL, EXAMPLE_STAGE_REEL } from '../service/mcp.mjs';
 import { DiskStore } from '../service/store.mjs';
 import { addToLibrary, drawingProblems, libraryHas, libraryName, LIBRARY_FILE, recognised } from '../scripts/drawer.mjs';
@@ -14,7 +14,7 @@ after(() => rmSync(tmp, { recursive: true, force: true }));
 /** A store with a day's book: one reel with the right drawings, one that wished for two. */
 async function bookedStore() {
   const store = new DiskStore(join(tmp, `s${Math.random()}`));
-  await store.put('daybook/2026-11-26/a.json', JSON.stringify({ id: 'a', at: '2026-11-26T09:00:00Z', ...entryOf(EXAMPLE_STAGE_REEL, { how: 'website' }), critic: { faults: 2, mended: true, wishes: [] } }));
+  await store.put('daybook/2026-11-26/a.json', JSON.stringify({ id: 'a', at: '2026-11-26T09:00:00Z', ...entryOf(EXAMPLE_STAGE_REEL, { how: 'website', topic: 'bills' }), critic: { faults: 2, mended: true, wishes: [] } }));
   await store.put('daybook/2026-11-26/b.json', JSON.stringify({ id: 'b', at: '2026-11-26T10:00:00Z', ...entryOf(EXAMPLE_REEL, { wishes: ['Gas Meter', 'inhaler', '<b>'] }), critic: { faults: 1, mended: false, wishes: ['inhaler'] } }));
   await store.put('daybook/2026-11-24/c.json', JSON.stringify({ id: 'c', at: '2026-11-24T10:00:00Z', ...entryOf(EXAMPLE_REEL, { wishes: ['inhaler'] }) }));
   return store;
@@ -41,9 +41,21 @@ describe('the day book', () => {
     assert.equal(plainName('<script>'), null);
   });
 
-  it('sums up a day: how many reels, which had the right drawings, and what to draw', async () => {
+  it('keeps what a reel is about as one of a few topics, and nothing else', () => {
+    assert.equal(topicOf('Cooking'), 'cooking');
+    assert.equal(topicOf('tech help'), 'tech help');
+    assert.equal(topicOf('my nan\'s pension'), 'other', 'anything else is other, never the words');
+    assert.equal(topicOf(null), null);
+    assert.equal(entryOf(EXAMPLE_REEL).topic, 'unknown');
+  });
+
+  it('sums up a day: how many reels, what about, which had the right drawings, and what to draw', async () => {
     const s = await daySummary(await bookedStore(), '2026-11-26');
     assert.equal(s.reels, 2);
+    assert.deepEqual(s.topics, [{ topic: 'bills', reels: 1 }, { topic: 'unknown', reels: 1 }]);
+    assert.match(summaryText(s), /About: bills 1, unknown 1\./);
+    assert.match(summaryText(s), /- Your gas bill \(bills, /);
+    assert.match(summaryHtml(s), /<h2>What about<\/h2>\n<ul><li>bills <small>\(1 reel\)/);
     assert.equal(s.right, 1);
     assert.deepEqual(s.wanted, [{ name: 'gas meter', reels: 1 }, { name: 'inhaler', reels: 1 }]);
     assert.ok(hadRight({ wishes: [], own: [], critic: { faults: 3, mended: true } }), 'faults the critic mended still leave the right drawings');

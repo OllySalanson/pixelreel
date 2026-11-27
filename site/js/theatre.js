@@ -4,7 +4,7 @@
 import { rateOf } from './pace.js';
 import { addTalker, hush, ReelPlayer } from './player.js';
 import { loadReel } from './reels.js';
-import { phoneShare, sendReel, sentWords } from './send.js';
+import { countSent, phoneShare, sendReel, sentWords } from './send.js';
 
 const COPIED_MS = 4000;   // how long the send button says "Link copied"
 
@@ -70,6 +70,7 @@ export function startTheatre() {
   send.addEventListener('click', async () => {
     const path = `/watch/${run.queue[run.at]}`, url = location.origin + path;
     const how = await sendReel(player.show?.reel.title ?? 'A pixel reel', url, { share: phoneShare() });
+    countSent(how, path);
     sent.textContent = sentWords(how, url);
     if (how === 'failed') { location.assign(path); return; }   // its own page, where the address can be copied by hand
     if (how !== 'copied') return;

@@ -1,9 +1,10 @@
 // Wakes the website up: the players, the theatre, the scenery and pictures, Make it comfy, the menu,
 // the box that writes what to say to Claude (or makes the reel), the list of reels made here,
-// the page a shared reel is watched on, and what makes it an app on a phone. Without it the pages still read and link.
+// the page a shared reel is watched on, what makes it an app on a phone, and counting visits where the service says to. Without it the pages still read and link.
 import { startAloud } from './aloud.js';
 import { startApp } from './app.js';
 import { startComfort } from './comfort.js';
+import { startCounting } from './count.js';
 import { startKept } from './kept.js';
 import { startCopying, startHere } from './maker.js';
 import { startMenu } from './menu.js';
@@ -21,6 +22,7 @@ import { startHearing, startTheatre } from './theatre.js';
 import { startVoice } from './voice.js';
 import { startWatching } from './watch.js';
 
+startCounting();   // first, so that it hears every reel played
 startComfort();
 startMenu();
 startApp();

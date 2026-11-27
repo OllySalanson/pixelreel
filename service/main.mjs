@@ -25,6 +25,7 @@
 // PIXELREEL_LANGUAGES (such as french,spanish) lets reels be made in other languages Peter can read.
 // PIXELREEL_NARRATORS (such as anna,stuart) lets someone ask for a narrator other than Peter.
 // PIXELREEL_PICTURES=cards puts the pictures back to the cards alone, as before the stage.
+// PIXELREEL_ANALYTICS (a Google Analytics measurement ID, G-...) counts the website's visits there.
 // PIXELREEL_BOTTLE_KEY is Olly's own key to Message in a Bottle's note button (the link
 // #bottle=<key>), and PIXELREEL_BOTTLE_READER the admin key, which adds sites and people and
 // reads the notes (the message-in-a-bottle package's README). It sends email through Resend
@@ -40,6 +41,7 @@ import { CLAUDE_ADDRESSES, RateLimit } from './limits.mjs';
 import { NARRATORS, recordWith, Reels } from './reels.mjs';
 import { PICTURE_MODES } from './mcp.mjs';
 import { createService } from './server.mjs';
+import { measurementOf } from './site.mjs';
 import { DiskStore, S3Store } from './store.mjs';
 import { POCKET_LANGUAGES } from '../scripts/voices.mjs';
 import { WarmVoice } from './voice.mjs';
@@ -147,7 +149,11 @@ if (bottle.mail && replyTo) {
   };
   setInterval(evening, 15 * 60_000).unref();
 }
-const server = createService({ reels, baseUrl, log, limits, writer, hearing, hearFor, bottle, trustProxy: Number(process.env.PIXELREEL_TRUST_PROXY) || 0, listed: process.env.PIXELREEL_LISTED === '1', fresh: process.env.NODE_ENV !== 'production' });
+// counting visits with Google Analytics: never from a checkout unless asked, so that working on the site is not counted
+const counting = measurementOf(process.env.PIXELREEL_ANALYTICS ?? '');
+if (process.env.PIXELREEL_ANALYTICS && !counting) log(`PIXELREEL_ANALYTICS: "${process.env.PIXELREEL_ANALYTICS}" is not a Google Analytics measurement ID (G-...); visits are not counted`);
+else if (counting) log(`visits are counted with Google Analytics (${counting})`);
+const server = createService({ reels, baseUrl, log, limits, writer, hearing, hearFor, bottle, counting, trustProxy: Number(process.env.PIXELREEL_TRUST_PROXY) || 0, listed: process.env.PIXELREEL_LISTED === '1', fresh: process.env.NODE_ENV !== 'production' });
 server.listen(port, () => log(`Pixel Reel is at ${baseUrl}: connector ${baseUrl}/mcp, reels kept in ${store}`));
 
 const stop = () => {

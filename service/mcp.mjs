@@ -17,6 +17,7 @@ import { clockTime } from '../src/timing.js';
 import { LIMITS } from './limits.mjs';
 import { promptList, promptMessages, WHAT_TO_PUT_IN } from './prompts.mjs';
 import { BusyError, KEEP_DAYS, languageName } from './reels.mjs';
+import { TOPICS } from './daybook.mjs';
 
 /** The player shown inside the chat (an MCP App), and how hosts are told to show it. */
 export const PLAYER_URI = 'ui://pixelreel/player.html';
@@ -127,7 +128,7 @@ function reelInput(languages = [], narrators = [], pictures = 'stage') {
       description: 'Who reads the reel aloud. Leave it out for Peter; set it only when the person asks for another voice.'
     };
   }
-  if (pictures !== 'cards') reel.properties.wishes = WISHES_INPUT;
+  if (pictures !== 'cards') Object.assign(reel.properties, { wishes: WISHES_INPUT, topic: TOPIC_INPUT });
   reel.properties.improves = {
     type: 'string',
     description: 'To change a reel: the id of that reel, or its link. Send the whole reel again with the changes; the lines you leave word for word as they were keep their recordings, so it is ready sooner. If you do not have its scenes (it was made in another chat), get_reel gives them.'
@@ -261,6 +262,12 @@ const WISHES_INPUT = {
   maxItems: 5,
   items: { type: 'string', maxLength: 40 },
   description: 'Things you wanted on a stage that the library does not have (you drew your own, or used something near it), such as "gas meter" or "wheelchair": they are drawn for later reels. Leave it out when the library had all you needed.'
+};
+
+/** What Claude says the reel is about, broadly: one of TOPICS, so Olly can see what reels are made about, and never anything the person wrote. */
+const TOPIC_INPUT = {
+  enum: TOPICS,
+  description: 'What the reel is about, broadly: the one of these that fits best, or "other".'
 };
 
 /** What Claude is told about the stage: the one question, the rules, and the library. Built from the library itself, so it never drifts. */
@@ -464,11 +471,12 @@ export function createMcpServer({ reels, baseUrl, client = 'local', limits = nul
           // not part of the reel: which earlier reel this one is a change to, the language it is in, and who reads it
           const { improves, language, narrator, ...reel } = args;
           // with the stage, the things Claude wished the library had: not part of the reel, and kept for the weekly sheet
-          const wishes = pictures === 'cards' ? null : reel.wishes;
-          if (pictures !== 'cards') delete reel.wishes;
+          // and what it is about (TOPICS in daybook.mjs), for the day book and for counting
+          const wishes = pictures === 'cards' ? null : reel.wishes, topic = pictures === 'cards' ? null : reel.topic;
+          if (pictures !== 'cards') { delete reel.wishes; delete reel.topic; }
           const word = (value) => (typeof value === 'string' ? value : null);
           const made = await reels.create(reel.format === undefined ? { format: REEL_FORMAT, ...reel } : reel,
-            { improves: word(improves) && reelId(improves), language: word(language), narrator: word(narrator), wishes });
+            { improves: word(improves) && reelId(improves), language: word(language), narrator: word(narrator), wishes, topic: word(topic) });
           limits?.reels.count(client);   // only a reel that is made counts: one sent back to be fixed does not
           return describe(made, baseUrl);
         } catch (err) {

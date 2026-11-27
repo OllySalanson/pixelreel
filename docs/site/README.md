@@ -75,7 +75,7 @@ narrator ([Who reads](#who-reads)).
 | `site/layout.html` | The shell every page shares: the bar across the top, the foot, Make it comfy and the theatre. |
 | `site/pages/*.html`, `*.md` | A page each. The comment at the top holds its `title` and `description`. Plain pages are Markdown. `reel.html` is the page every shared reel is watched on (`/r/<id>`), and `watch.html` the page each of the site's own reels has to be sent by (`/watch/<name>`: the examples in `EXAMPLES`, in `service/site.mjs`, which also writes their posters). |
 | `site/css/site.css` | The whole look. |
-| `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` is Make it comfy; `boot.js` runs before the page is drawn, to put its settings back and to keep the bar across the top on one row; `signal.js` is the test card on a page that is not there; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `send.js` copies words and passes a reel on; `ruler.js` is the reading ruler; `pace.js` is the clock that lets Peter read slower or quicker; `sprites.js` is the site's own pixel art. |
+| `site/js/` | `main.js` wakes the page up; `player.js` is the player; `theatre.js` plays a reel over the page; `shots.js` draws reel pictures as illustrations; `scenery.js` and `landscape.js` draw the night scenes; `comfort.js` is Make it comfy; `boot.js` runs before the page is drawn, to put its settings back and to keep the bar across the top on one row; `signal.js` is the test card on a page that is not there; `maker.js` writes what to say to Claude; `watch.js` is the page a shared reel is watched on; `send.js` copies words and passes a reel on; `count.js` counts visits with Google Analytics, where the service says to; `ruler.js` is the reading ruler; `pace.js` is the clock that lets Peter read slower or quicker; `sprites.js` is the site's own pixel art. |
 | `site/js/menu.js` | The menu a Menu button opens, where the bar across the top has no room for its links (`boot.js` decides): the same links as big rows, with Make it comfy and the way to add Pixel Reel to Claude. A link added to the bar goes in the menu too (a test says so). |
 | `site/js/aloud.js` | Press words to hear them: works out what a press reads (never a button, a link or a player), and says it with the browser's own voice a sentence at a time, at the pace chosen. It takes its turn with the players, so only one thing talks. |
 | `site/js/qr.js` | Makes a QR code from an address, with nothing loaded from anywhere else. The service draws it into a page where the page says `{{scan}}`: the code that opens the page about the phone. |
@@ -100,7 +100,10 @@ kit and transitions as `src/main.js`, with the site's own buttons round it. The 
 without JavaScript, except that reels need it to play.
 
 A page loads nothing from anywhere else, sets no cookies, and its content security policy
-(`SITE_POLICY` in `service/site.mjs`) allows only the site's own files. That rules out
+(`SITE_POLICY` in `service/site.mjs`) allows only the site's own files. The one exception is
+Google Analytics, where the service counts visits (`PIXELREEL_ANALYTICS`, as live; see
+[service.md](../service.md#counting-visits)): then the policy lets in Google's script, and the
+foot, the home page and the privacy page say what is counted. That rules out
 inline styles and scripts, so pages have none (`test/site.test.js` checks).
 
 An address that is nearly right still gets there. A link to a reel is often copied with

@@ -1,12 +1,25 @@
 // The day book: a line for every reel made, and each day's summary for Olly. Kept under
 // daybook/<day>/<id>.json in the reels' store, apart from the reels, so it outlives them. It
-// keeps no more than the summary needs: a reel's title cut to a few words, how many scenes and
-// of what kind, which drawings it used, what it wished the library had, and what the critic
-// made of it. Never what was said, a caption, a label, or anything the visitor gave.
+// keeps no more than the summary needs: a reel's title cut to a few words, its topic (one of
+// TOPICS), how many scenes and of what kind, which drawings it used, what it wished the
+// library had, and what the critic made of it. Never what was said, a caption, a label, or anything the visitor gave.
 import { CAST } from '../src/stage.js';
 
 /** The folder in the store. */
 export const DAYBOOK = 'daybook';
+
+/**
+ * What a reel can be about, as its writer says (the topic in make_reel and the website's
+ * writer): a few broad words, so that Olly can see what people make reels about, here and in
+ * Google Analytics (site/js/count.js), and never anything a visitor wrote.
+ */
+export const TOPICS = ['bills', 'money', 'health', 'cooking', 'tech help', 'school', 'work', 'home', 'family', 'letters and forms', 'law', 'travel', 'science', 'nature', 'history', 'news', 'sport', 'hobbies', 'pixel reel', 'other'];
+
+/** A reel's topic, as one of TOPICS: anything else is "other", and none at all null. */
+export const topicOf = (topic) => (topic === undefined || topic === null || topic === '' ? null : TOPICS.includes(String(topic).trim().toLowerCase()) ? String(topic).trim().toLowerCase() : 'other');
+
+/** The drawings a reel was missing, from its line in the day book: what it wished for, drew by hand, or the critic wished for. */
+export const gapsOf = (entry) => [...new Set([...entry.wishes, ...entry.own, ...(entry.critic?.wishes ?? [])])];
 
 /** The day a time falls on, as YYYY-MM-DD (UTC). */
 export const dayOf = (ms) => new Date(ms).toISOString().slice(0, 10);
@@ -18,7 +31,7 @@ export function plainName(text) {
 }
 
 /** What the day book keeps of a reel (reel.json, parsed): never its words. */
-export function entryOf(raw, { how = 'connector', wishes = [] } = {}) {
+export function entryOf(raw, { how = 'connector', wishes = [], topic = null } = {}) {
   const kinds = {}, things = new Set(), own = new Set();
   for (const scene of raw.scenes ?? []) {
     const p = scene.picture, kind = p?.type ?? 'card';
@@ -30,7 +43,7 @@ export function entryOf(raw, { how = 'connector', wishes = [] } = {}) {
   }
   const title = String(raw.title ?? '').split(/\s+/).slice(0, 6).join(' ').slice(0, 60);
   return {
-    title, how, scenes: (raw.scenes ?? []).length, kinds, things: [...things].sort(), own: [...own].sort(),
+    title, how, topic: topicOf(topic) ?? 'unknown', scenes: (raw.scenes ?? []).length, kinds, things: [...things].sort(), own: [...own].sort(),
     wishes: [...new Set((Array.isArray(wishes) ? wishes : []).map(plainName).filter(Boolean))].slice(0, 5)
   };
 }
@@ -48,11 +61,18 @@ export async function entriesFor(store, day) {
 /** The drawings wished for, most wanted first: from the wishes, the things drawn by hand, and the critic's. */
 export function wanted(entries) {
   const count = new Map();
-  for (const e of entries) for (const name of new Set([...e.wishes, ...e.own, ...(e.critic?.wishes ?? [])])) count.set(name, (count.get(name) ?? 0) + 1);
+  for (const e of entries) for (const name of gapsOf(e)) count.set(name, (count.get(name) ?? 0) + 1);
   return [...count].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([name, reels]) => ({ name, reels }));
 }
 
-/** A day's summary: how many reels, which had the right drawings, and the drawings to make. */
+/** How many reels were about each topic, most first. An entry from before topics were kept is "unknown". */
+export function topicsOf(entries) {
+  const count = new Map();
+  for (const e of entries) count.set(e.topic ?? 'unknown', (count.get(e.topic ?? 'unknown') ?? 0) + 1);
+  return [...count].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([topic, reels]) => ({ topic, reels }));
+}
+
+/** A day's summary: how many reels, what about, which had the right drawings, and the drawings to make. */
 export async function daySummary(store, day) {
   const entries = await entriesFor(store, day);
   return {
@@ -61,7 +81,8 @@ export async function daySummary(store, day) {
     right: entries.filter(hadRight).length,
     stages: entries.reduce((n, e) => n + (e.kinds.stage ?? 0), 0),
     scenes: entries.reduce((n, e) => n + e.scenes, 0),
-    each: entries.map((e) => ({ title: e.title, how: e.how, scenes: e.scenes, stages: e.kinds.stage ?? 0, right: hadRight(e), critic: e.critic ?? null, gaps: [...new Set([...e.wishes, ...e.own, ...(e.critic?.wishes ?? [])])] })),
+    topics: topicsOf(entries),
+    each: entries.map((e) => ({ title: e.title, how: e.how, topic: e.topic ?? 'unknown', scenes: e.scenes, stages: e.kinds.stage ?? 0, right: hadRight(e), critic: e.critic ?? null, gaps: gapsOf(e) })),
     wanted: wanted(entries)
   };
 }
@@ -79,8 +100,9 @@ export function summaryText(s) {
   const lines = [
     `Pixel Reel, ${s.day}: ${s.reels} reel${s.reels === 1 ? '' : 's'} made, ${s.scenes} scenes, ${s.stages} of them a stage.`,
     `${s.right} of ${s.reels} had the right drawings.`,
+    `About: ${s.topics.map((t) => `${t.topic} ${t.reels}`).join(', ')}.`,
     '',
-    ...s.each.map((e) => `- ${e.title} (${e.scenes} scenes, ${e.stages} stages, by ${e.how}): ${e.right ? 'the right drawings' : `missing ${e.gaps.join(', ') || 'drawings the critic could not mend'}`}${e.critic?.faults ? `; the critic found ${e.critic.faults} fault${e.critic.faults === 1 ? '' : 's'}${e.critic.mended ? ' and mended them' : ''}` : ''}.`)
+    ...s.each.map((e) => `- ${e.title} (${e.topic}, ${e.scenes} scenes, ${e.stages} stages, by ${e.how}): ${e.right ? 'the right drawings' : `missing ${e.gaps.join(', ') || 'drawings the critic could not mend'}`}${e.critic?.faults ? `; the critic found ${e.critic.faults} fault${e.critic.faults === 1 ? '' : 's'}${e.critic.mended ? ' and mended them' : ''}` : ''}.`)
   ];
   if (s.wanted.length) lines.push('', 'Drawings to make, most wanted first:', ...s.wanted.map((w) => `- ${w.name} (${w.reels} reel${w.reels === 1 ? '' : 's'})`));
   return lines.join('\n');
@@ -106,7 +128,7 @@ export function summaryHtml(s) {
 </style></head><body><main>
 <h1>Pixel Reel, ${esc(s.day)}</h1>
 <div class="big"><div><b>${s.reels}</b>reels</div><div><b>${s.right}</b>right drawings</div><div><b>${s.stages}</b>stages of ${s.scenes} scenes</div></div>
-${s.reels ? `<h2>Each reel</h2>\n<ul>${s.each.map((e) => `<li>${esc(e.title)} <small>(${e.scenes} scenes, ${e.stages} stages, by ${esc(e.how)})</small>: ${e.right ? '<span class="ok">the right drawings</span>' : `<span class="gap">missing ${esc(e.gaps.join(', ') || 'drawings the critic could not mend')}</span>`}</li>`).join('')}</ul>` : '<p>No reels were made.</p>'}
+${s.reels ? `<h2>What about</h2>\n<ul>${s.topics.map((t) => `<li>${esc(t.topic)} <small>(${t.reels} reel${t.reels === 1 ? '' : 's'})</small></li>`).join('')}</ul>\n` : ''}${s.reels ? `<h2>Each reel</h2>\n<ul>${s.each.map((e) => `<li>${esc(e.title)} <small>(${esc(e.topic)}, ${e.scenes} scenes, ${e.stages} stages, by ${esc(e.how)})</small>: ${e.right ? '<span class="ok">the right drawings</span>' : `<span class="gap">missing ${esc(e.gaps.join(', ') || 'drawings the critic could not mend')}</span>`}</li>`).join('')}</ul>` : '<p>No reels were made.</p>'}
 ${s.wanted.length ? `<h2>Drawings to make</h2>\n<ul>${s.wanted.map((w) => `<li>${esc(w.name)} <small>(${w.reels} reel${w.reels === 1 ? '' : 's'})</small></li>`).join('')}</ul>` : ''}
 </main></body></html>
 `;

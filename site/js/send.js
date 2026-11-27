@@ -1,5 +1,6 @@
 // Getting things out of the page and into someone's hands: copying words, and passing a
 // reel on. Nothing here touches the page until it is asked to, so Node can test it.
+import { count, reelName } from './count.js';
 
 /** Puts `text` on the clipboard. Resolves to whether it worked. */
 export async function copyText(text) {
@@ -41,6 +42,13 @@ export async function sendReel(title, url, { share = null, copy = copyText, word
   return (await copy(url)) ? 'copied' : 'failed';
 }
 
+/** Counts a reel passed on (count.js), by the page it is on (`path`): how it went, and which reel, never to whom. */
+export function countSent(how, path) {
+  if (how !== 'shared' && how !== 'copied') return;
+  const reel = /^\/(?:r|watch)\/([^/]+)$/.exec(path)?.[1];
+  count('reel_shared', { method: how === 'shared' ? 'share' : 'copy', reel: reel ? reelName(reel) : 'page' });
+}
+
 /** What to say after sendReel: nothing when a phone took over, or when they changed their mind. */
 export const sentWords = (how, url) => ({ copied: 'Link copied. Paste it into a message.', failed: `That did not copy. The link is ${url}` })[how] ?? '';
 
@@ -56,8 +64,10 @@ export function startSending() {
     const says = document.querySelector(button.dataset.says);
     button.hidden = false;
     button.addEventListener('click', async () => {
-      const url = location.origin + (button.dataset.path ?? location.pathname);
-      says.textContent = sentWords(await sendReel(button.dataset.send, url, { share: phoneShare(), words: button.dataset.words ?? null }), url);
+      const path = button.dataset.path ?? location.pathname, url = location.origin + path;
+      const how = await sendReel(button.dataset.send, url, { share: phoneShare(), words: button.dataset.words ?? null });
+      countSent(how, path);
+      says.textContent = sentWords(how, url);
     });
   }
 }

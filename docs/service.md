@@ -662,7 +662,8 @@ The local tools (`npm run voices`, `page`, `video`) have no such limits.
 - Reels are deleted after 30 days, or at once with `delete_reel`.
 - The voice is recorded on the service's own machine. The words are never sent to another
   company.
-- A reel's page loads nothing from anywhere else: its content security policy allows only the
+- A reel's page loads nothing from anywhere else (but Google Analytics, where visits are
+  counted: [Counting visits](#counting-visits)): its content security policy allows only the
   service's own files. The page names the reel and points at its first picture (so a link
   sent in a message shows what it is) but holds none of its words: the player fetches those.
 - Search engines are asked not to list any reel, its recordings or its video.
@@ -674,6 +675,48 @@ The local tools (`npm run voices`, `page`, `video`) have no such limits.
   deleted. The emails it sends them (an invitation, a sign-in link, word that a note is
   done) go through Resend once it has a key (docs/deploy.md), so Resend sees each person's
   address and the email; until then none is sent.
+
+## Counting visits
+
+`PIXELREEL_ANALYTICS` (a Google Analytics 4 measurement ID, `G-...`; off from a checkout, and
+`G-MJV7K1QL78` live, the property "Pixel Reel" in Olly's Analytics account) has every page of
+the website count its visits: the layout's `<html data-count>`, read by `site/js/count.js`, and
+a content security policy (`sitePolicy` in `service/site.mjs`) that lets Google's script in
+and lets it send. Without it a page loads nothing from anywhere else and says so at its foot.
+
+- **It never slows a reel.** Google's script is fetched only once the page has loaded and the
+  browser is idle.
+- **What Google is never told:** a made reel's address (its id is what lets someone watch it:
+  `/r/<id>` is sent as `/r/reel`), its title, anything after `?` or `#` in an address (but a
+  campaign's `utm_` words), another site's address past its name, and anything anyone wrote
+  or said. Turn **File downloads** off in the stream's Enhanced measurement: it would send the
+  address of a made reel's video.
+- **Consent mode:** nothing is ever kept for adverts (`ad_storage`, `ad_user_data` and
+  `ad_personalization` are denied, Google signals off). Analytics cookies are allowed, except
+  in the EEA and Switzerland (`ASK_FIRST`), where the site asks nobody, so Google gets
+  cookieless pings only. A browser with Do Not Track or Global Privacy Control is not counted
+  at all, and anyone can switch it off in Make it comfy (Count my visits, kept on the device).
+- **The events**, with `page` (which page) on each:
+
+| Event | When | Params |
+| --- | --- | --- |
+| `reel_played`, `reel_completed` | A reel starts, or plays to its end (each play again counts again) | `reel` (a site reel's name, or `made`), `scenes`, and for a made reel `topic` and `missing` |
+| `reel_made` | A reel made on the website is written, on its page, for whoever made it, once a device | `reel: made`, `topic`, `scenes`, `missing` |
+| `reel_shared` | Send it to someone worked | `method` (`share` or `copy`), `reel` |
+| `add_to_claude` | A press on a link to `/claude` (`step: page`) or to Claude itself (`step: add`) | `step`, `where` (`bar`, `menu`, `foot`, `theatre`, `reel end` or `page`) |
+| `make_button` | A press on a link to `/make` | `where` |
+| `make_step` | The make funnel: `note_added` (`how`: typed or said), `mic_on`, `file_added`, `make_pressed` (`how`: button, suggestion, shared, simpler, shorter; `notes`, `file`), `reel_begun`, `make_failed` | `step`, `from` (`make`, `notes` on a reel, or `again`) |
+
+- **Topics.** Whoever writes a reel (the website's writer, and Claude through `make_reel`)
+  names what it is about as one of `TOPICS` in `service/daybook.mjs` ("bills", "health",
+  "cooking", "tech help" and so on). It is kept apart from the reel, in its status (with the
+  drawings it was missing, for `missing`) and in the day book, whose summary counts them.
+- **In Google Analytics**, register these as event-scoped custom dimensions (Admin, Custom
+  definitions) so reports can use them: `topic`, `reel`, `missing`, `step`, `from`, `how`,
+  `where`, `method`, `page`; and `scenes` as a custom metric. A funnel exploration over
+  `make_step` by `step`, then `reel_made` and `reel_completed`, is the make funnel.
+- To see it work, open the live site and watch Realtime in Google Analytics, or DebugView
+  with Google's Tag Assistant connected to the page.
 
 ## How it fits together
 
